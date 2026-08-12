@@ -5200,3 +5200,248 @@ button:active,
         text-align: center;
     }
 }
+
+/* About and 404 UI alignment */
+.static-page--about .static-page__hero {
+    padding: 48px 0 56px;
+    background: color-mix(in srgb, var(--color-primary) 3%, var(--color-bg));
+}
+
+.static-page--about .static-page__hero .breadcrumb {
+    margin-bottom: 32px;
+}
+
+.static-page--about .static-page__hero-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+    gap: 40px 64px;
+}
+
+.static-page--about .static-page__hero h1 {
+    font-size: clamp(2.75rem, 7vw, 4.5rem);
+    line-height: 1.06;
+}
+
+.static-page--about .static-page__hero-copy > p {
+    margin-top: 20px;
+    font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+    line-height: 1.75;
+}
+
+.static-page--about .static-page__mascot {
+    max-height: 280px;
+    overflow: visible;
+}
+
+.static-page--about .static-page__mascot img {
+    width: min(100%, 250px);
+    max-height: 280px;
+    object-fit: contain;
+    object-position: center bottom;
+}
+
+.static-page--about .static-page__body {
+    padding-block: 80px;
+}
+
+.static-page--about .static-page__prose {
+    width: min(100%, 760px);
+}
+
+.static-page--about .static-page__prose > section + section,
+.static-page--about .static-page__editor-content + section {
+    margin-top: 72px;
+}
+
+.static-page--about .static-page__prose h2,
+.static-page--about .static-page__editor-content h2 {
+    margin-bottom: 22px;
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    line-height: 1.25;
+}
+
+.static-page--about .static-page__prose p,
+.static-page--about .static-page__prose li,
+.static-page--about .static-page__editor-content {
+    font-size: clamp(1rem, 2vw, 1.0625rem);
+    line-height: 1.9;
+}
+
+.static-page--about .static-page__lead {
+    font-size: clamp(1.5rem, 4vw, 2rem) !important;
+}
+
+.static-page--about .static-page__updated {
+    margin-top: 72px !important;
+}
+
+.static-page--about .static-page__cta {
+    padding-block: 72px;
+    box-shadow: none;
+}
+
+.static-page--about .static-page__cta-inner {
+    gap: 24px 48px;
+}
+
+.static-page--about .static-page__button {
+    min-height: 48px;
+    transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease, transform 200ms var(--ease-out);
+}
+
+.error404 .search-page__hero {
+    padding: 48px 0 56px;
+    background: color-mix(in srgb, var(--color-primary) 2%, var(--color-bg));
+}
+
+.error404 .not-found-hero__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 280px);
+    gap: 40px 64px;
+}
+
+.error404 .not-found-hero__layout h1 {
+    font-size: clamp(2.25rem, 6vw, 4rem);
+    line-height: 1.12;
+}
+
+.error404 .not-found-hero__layout h1 > span {
+    margin-bottom: 12px;
+    font-size: clamp(4.75rem, 11vw, 7.5rem);
+}
+
+.error404 .search-page__hero-copy > p:last-child {
+    max-width: 38rem;
+    font-size: clamp(0.9375rem, 2vw, 1rem);
+    line-height: 1.75;
+}
+
+.error404 .not-found-hero__mascot img {
+    width: min(100%, 230px);
+    max-height: 280px;
+    object-fit: contain;
+    object-position: center bottom;
+}
+
+.error404 .search-results {
+    padding-block: 80px;
+}
+
+.error404 .search-empty {
+    min-height: 360px;
+    gap: 16px;
+    padding: 40px 24px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+}
+
+.error404 .search-empty > span {
+    width: 44px;
+    height: 44px;
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
+
+.error404 .search-page__form {
+    width: min(100%, 640px);
+    margin-top: 16px;
+}
+
+.error404 .search-page__form > div {
+    min-height: 56px;
+    padding: 5px 5px 5px 16px;
+    border-radius: var(--radius-md);
+    box-shadow: none;
+}
+
+.error404 .search-page__form > div:focus-within {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.error404 .search-page__form button {
+    min-height: 44px;
+    transition: background-color 200ms ease, transform 200ms var(--ease-out);
+}
+
+.error404 .search-empty__links {
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.error404 .search-empty__links a {
+    min-height: 44px;
+    transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+}
+
+@media (max-width: 767px) {
+    .static-page--about .static-page__hero,
+    .error404 .search-page__hero {
+        padding: 40px 0 48px;
+    }
+
+    .static-page--about .static-page__hero .breadcrumb {
+        margin-bottom: 24px;
+    }
+
+    .static-page--about .static-page__hero-layout,
+    .error404 .not-found-hero__layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+    }
+
+    .static-page--about .static-page__mascot,
+    .error404 .not-found-hero__mascot {
+        max-height: none;
+    }
+
+    .static-page--about .static-page__mascot img,
+    .error404 .not-found-hero__mascot img {
+        width: min(100%, 200px);
+        max-height: 230px;
+    }
+
+    .static-page--about .static-page__body,
+    .error404 .search-results {
+        padding-block: 64px;
+    }
+
+    .static-page--about .static-page__prose > section + section,
+    .static-page--about .static-page__editor-content + section {
+        margin-top: 56px;
+    }
+
+    .static-page--about .static-page__updated {
+        margin-top: 56px !important;
+    }
+
+    .static-page--about .static-page__cta {
+        padding-block: 64px;
+    }
+
+    .error404 .search-empty {
+        min-height: 0;
+        padding: 32px 20px;
+    }
+
+    .error404 .search-page__form > div {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 8px;
+        padding-left: 14px;
+    }
+
+    .error404 .search-page__form button {
+        padding-inline: 14px;
+    }
+}
+
+@media (max-width: 390px) {
+    .error404 .search-empty__links {
+        display: grid;
+        width: 100%;
+    }
+
+    .error404 .search-empty__links a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
