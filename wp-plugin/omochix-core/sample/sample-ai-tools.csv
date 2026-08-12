@@ -1,0 +1,3 @@
+title,slug,company_name,official_url,short_description,pricing_type,japanese_support,tool_status,rating_overall,is_featured,display_order,category,feature,tag,platform
+ChatGPT,chatgpt,OpenAI,https://chatgpt.com/,"文章作成、調査、画像生成、コード作成まで幅広く対応する総合型AI。",freemium,full,active,4.9,1,10,"AIチャット,文章生成","文章作成,要約,Web検索","初心者向け,日本語対応,無料プランあり","Web,iOS,Android"
+Claude,claude,Anthropic,https://claude.ai/,"長文の読解や自然な文章作成、資料分析を得意とする生成AI。",freemium,full,active,4.8,1,20,"AIチャット,文章生成","文章作成,要約,コード生成","初心者向け,日本語対応","Web,iOS,Android"

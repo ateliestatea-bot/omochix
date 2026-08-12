@@ -1,0 +1,17 @@
+{
+  "name": "OmochiX",
+  "short_name": "OmochiX",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#f7f7f5",
+  "background_color": "#f7f7f5",
+  "icons": [
+    {
+      "src": "assets/img/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

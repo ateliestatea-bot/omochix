@@ -1,0 +1,22 @@
+
+.DS_Store
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+wp-config.php
+
+# Logs, caches, and temporary files
+*.log
+*.cache
+*.tmp
+*.swp
+*.swo
+*~
+
+# Local tooling and dependency directories
+.idea/
+.vscode/
+node_modules/
+vendor/
