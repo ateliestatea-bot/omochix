@@ -4563,3 +4563,213 @@ button:active,
         margin-top: 40px;
     }
 }
+
+/* AI tool archive UI alignment */
+.tool-archive__hero {
+    padding: 48px 0;
+    background: color-mix(in srgb, var(--color-primary) 2%, var(--color-bg));
+}
+
+.tool-archive__hero .breadcrumb {
+    margin-bottom: 32px;
+}
+
+.tool-archive__hero-grid {
+    gap: 32px 48px;
+}
+
+.tool-archive__hero h1 {
+    font-size: clamp(2.75rem, 6vw, 4.5rem);
+    line-height: 1.05;
+}
+
+.tool-archive__hero-copy > p:last-child {
+    margin-top: 20px;
+    font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+    line-height: 1.75;
+}
+
+.tool-archive__search > div {
+    min-height: 50px;
+    padding: 3px 3px 3px 14px;
+    border-radius: var(--radius-sm);
+    box-shadow: none;
+}
+
+.tool-archive__search > div:focus-within {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.tool-archive__search input {
+    min-height: 42px;
+}
+
+.tool-archive__search button {
+    min-height: 42px;
+    border-radius: calc(var(--radius-sm) - 2px);
+}
+
+.tool-filter {
+    padding: 24px 0;
+    background: var(--color-bg);
+}
+
+.tool-filter__form {
+    gap: 16px;
+}
+
+.tool-filter__field select,
+.tool-filter__submit {
+    height: 50px;
+    min-height: 50px;
+    border-radius: var(--radius-sm);
+}
+
+.tool-filter__reset {
+    padding-block: 12px;
+    line-height: 1.5;
+}
+
+.tool-archive__layout {
+    padding-block: 80px;
+}
+
+.tool-results__header {
+    margin-bottom: 32px;
+}
+
+.tool-results__grid {
+    gap: 24px;
+}
+
+.tool-list-card__link {
+    padding: 24px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    transition: background-color 200ms ease, border-color 200ms ease, transform 200ms var(--ease-out);
+}
+
+.tool-list-card__link:hover {
+    background: color-mix(in srgb, var(--color-primary) 3%, var(--color-surface));
+    border-color: color-mix(in srgb, var(--color-primary) 28%, var(--color-line));
+    box-shadow: none;
+    transform: translateY(-2px);
+}
+
+.tool-list-card__logo {
+    flex-basis: 60px;
+    width: 60px;
+    height: 60px;
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+.tool-list-card__identity h3 {
+    display: -webkit-box;
+    overflow: hidden;
+    min-height: 2.7em;
+    font-size: 19px;
+    line-height: 1.35;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.tool-list-card__identity p {
+    line-height: 1.5;
+}
+
+.tool-list-card__description {
+    min-height: 5.1em;
+    margin-top: 14px;
+    line-height: 1.7;
+}
+
+.tool-list-card__tags {
+    gap: 6px;
+    margin-top: 16px;
+}
+
+.tool-list-card__tags li {
+    max-width: 100%;
+    padding: 5px 8px;
+    overflow-wrap: anywhere;
+}
+
+.tool-list-card__more {
+    padding-top: 20px;
+}
+
+.tool-results__empty {
+    min-height: 280px;
+    padding: 40px 24px;
+    background: var(--color-surface);
+    box-shadow: none;
+}
+
+.tool-results__empty > span {
+    width: 44px;
+    height: 44px;
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
+
+.tool-archive .pagination {
+    margin-top: 48px;
+}
+
+.tool-archive .pagination > ul.page-numbers {
+    gap: 8px;
+}
+
+.tool-archive .pagination :is(a, span).page-numbers {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 12px;
+    transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+}
+
+@media (max-width: 767px) {
+    .tool-archive__hero {
+        padding: 40px 0;
+    }
+
+    .tool-archive__hero .breadcrumb {
+        margin-bottom: 24px;
+    }
+
+    .tool-archive__hero h1 {
+        font-size: clamp(2.5rem, 13vw, 3.5rem);
+    }
+
+    .tool-archive__search {
+        max-width: none;
+    }
+
+    .tool-filter__form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .tool-filter__submit {
+        grid-column: auto;
+        width: 100%;
+    }
+
+    .tool-archive__layout {
+        padding-block: 64px;
+    }
+
+    .tool-results__header {
+        margin-bottom: 28px;
+    }
+
+    .tool-list-card__identity h3 {
+        font-size: 18px;
+    }
+
+    .tool-archive .pagination {
+        margin-top: 40px;
+    }
+}
