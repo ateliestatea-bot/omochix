@@ -27,7 +27,7 @@ GoogleのNotebookLMは「Gemini Notebook」へ名称変更されました。Gemi
 
 ## 抜粋
 
-Googleは2026年7月16日、NotebookLMをGemini Notebookへ名称変更しました。独立したResearch製品を維持しつつ、Gemini連携とSourceに基づく分析を拡張します。
+Googleは2026年7月16日、NotebookLMをGemini Notebookへ名称変更しました。独立したリサーチ製品を維持しつつ、Gemini連携と登録したソースに基づく分析を拡張します。
 
 ## 事実確認サマリー
 
@@ -61,15 +61,15 @@ Googleは2026年7月16日、AIリサーチツール「NotebookLM」の名称を�
 
 一方、Notebookの役割がGeminiアプリへ完全に吸収されたわけではありません。Googleは、Gemini Notebookが引き続き独立した製品であり、リサーチを中心とする役割を維持すると説明しています。
 
-変更の中心は、GoogleのAI製品群との接続を明確にすることです。既存のNotebookはGeminiアプリのナビゲーションにも表示され、GeminiアプリとGemini Notebookのどちらからでも閲覧、編集、チャットができます。Notebook名、ソース、カスタム指示などの変更は相互に同期されます。
+変更の中心は、GoogleのAI製品群との接続を明確にすることです。対応する個人NotebookはGeminiアプリのナビゲーションにも表示され、GeminiアプリとGemini Notebookのどちらからでも閲覧、編集、チャットができます。Notebook名、ソース（Notebookへ登録して回答の根拠にする資料）、カスタム指示などの変更は相互に同期されます。共有Notebookなど一部はGeminiアプリに表示されない場合があります。
 
 ただし、両方の画面で同じ回答になるとは限りません。Google公式Helpによると、Gemini Notebook内の回答はNotebookへ登録したソースだけを根拠にします。Geminiアプリ側ではNotebookのソースに加え、Web検索など別のツールが回答に含まれる場合があります。
 
-また、Audio Overview、Video Overview、インフォグラフィック、スライドなど、Studioの成果物はGeminiアプリ側では生成できません。これらはGemini Notebook側の機能として提供されます。
+また、Audio Overview、Video Overview、インフォグラフィック、スライドなど、Studioの成果物（登録資料を基に生成する音声・動画・資料）はGeminiアプリ側では生成できません。これらはGemini Notebook側の機能として提供されます。
 
 ## 今回何が変わった？
 
-名称変更と同時に注目されるのが、各Notebookへ安全なクラウドコンピューターを与える更新です。Googleによると、Gemini NotebookはNotebook内のソースに基づいてコードを書き、実行できるようになります。
+名称変更と同時に注目されるのが、各Notebookへ安全なクラウドコンピューター（Google側の隔離された環境でコードを実行する仕組み）を与える更新です。Googleによると、Gemini NotebookはNotebook内のソースに基づいてコードを書き、実行できるようになります。
 
 これにより、文章を要約するだけでなく、データを計算し、グラフや表を作り、より複雑な分析を行う用途が想定されています。Googleは、PDFレポート、表計算、スライド、CSVやJSONなど、複数形式の成果物を作成・ダウンロードできる機能も案内しています。
 

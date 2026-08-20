@@ -27,7 +27,7 @@ CursorのiPad対応を解説。iPhone・iPadからCloud Agentへ開発を依頼�
 
 ## 抜粋
 
-Cursorは2026年7月29日、iPad向けLayoutを発表しました。iPhone・iPadからCloud Agentへ依頼し、DiffやPRを確認してDesktopへ引き継ぐ流れを解説します。
+Cursorは2026年7月29日、iPad向け画面を発表しました。iPhone・iPadからクラウド上のAIへ依頼し、コードの差分や変更内容を確認してPC版へ引き継ぐ流れを解説します。
 
 ## 事実確認サマリー
 
@@ -54,7 +54,7 @@ Cursorは2026年7月29日、iPad向けLayoutを発表しました。iPhone・iPa
 
 Cursorは2026年7月29日、AIコーディング環境「Cursor」のiPad対応を発表しました。iPhone向けアプリは同年6月29日から公開ベータとして提供されており、今回の更新でiPadの広い画面に合わせた専用レイアウトと、iPhone・iPad共通のPRレビュー機能が追加されています。
 
-注目点は、iPadでPC版のコードエディターをそのまま再現したことではありません。外出先からCloud Agentへ作業を依頼し、進捗や成果物を確認し、Pull Requestをレビューするという、Agent中心の開発フローをMobileへ広げたことです。
+注目点は、iPadでPC版のコードエディターをそのまま再現したことではありません。外出先からCloud Agent（クラウド上の環境でコード変更やテストを進めるAI）へ作業を依頼し、進捗や成果物を確認し、Pull Request／PR（コード変更を取り込む前に内容を確認する仕組み）をレビューするという、Agent中心の開発フローをMobileへ広げたことです。
 
 では「外出先からAIへ開発指示を出し、帰宅後にPCで最終確認する」という使い方は、公式仕様でどこまで可能なのでしょうか。
 
@@ -66,33 +66,37 @@ iPad版は画面の広さを生かし、複数のAgentチャットをサイド�
 
 iPhoneとiPadでは、進行中の作業、確認が必要な項目、レビュー中のPRをまとめるInboxも追加されました。1つのチャットから複数PRが作られた場合に、すべてのPRを開く機能にも対応しています。
 
+GitHubに加え、BitbucketやAzure DevOpsなどのSCM（コードと変更履歴を管理するサービス）にも対応しています。サービスによって利用できるPR機能に差がないかは、公開直前に確認が必要です。
+
 ## iPad・iPhone・Webから何ができる？
 
-iPhoneとiPadのCursorアプリでは、Repositoryを選び、Cloud Agentへタスクを依頼できます。音声入力、モデル選択、Slash Commandにも対応します。
+iPhoneとiPadのCursorアプリでは、Repository（コードと変更履歴をまとめて管理する保存場所）を選び、Cloud Agentへタスクを依頼できます。音声入力、モデル選択、Slash Commandにも対応します。
 
 Agentの完了や追加入力、レビュー可能な状態は、Live ActivitiesやPush通知で確認できます。
 
-デモ、スクリーンショット、ログ、コード差分をMobileから確認でき、レビュー画面では次の操作が可能です。
+デモ、スクリーンショット、ログ、コードのDiff（変更前後の差分）をMobileから確認でき、レビュー画面では次の操作が可能です。
 
-- PRのコメント、Check、Approvalを確認する
-- Reviewerを追加・変更する
+- PRのコメント、Check（自動テストなどの確認結果）、Approval（変更を取り込んでよいという承認）を確認する
+- Reviewer（変更内容を確認する担当者）を追加・変更する
 - Agentへコメント対応を依頼する
 - PRを作成、レビュー、マージする
 - 複数PRを持つSessionを確認する
 
-Webブラウザーからは`cursor.com/agents`へアクセスし、GitHubアカウントを接続してAgentを開始できます。Desktop、Tablet、Mobileに対応し、iOSやAndroidではPWAとしてホーム画面へ追加する方法も公式Docsで案内されています。
+Webブラウザーからは`cursor.com/agents`へアクセスし、GitHubアカウントを接続してAgentを開始できます。Desktop、Tablet、Mobileに対応し、iOSやAndroidではPWA（Webサイトをアプリのようにホーム画面から使う仕組み）として追加する方法も公式Docsで案内されています。
 
 ただし、2026年7月29日に発表されたネイティブアプリのiPad対応はiOS向けです。AndroidはWeb / PWAでの利用が公式案内の中心で、同等のネイティブAndroidアプリについては確認できませんでした。
 
 ## AIエージェントはどこで動く？
 
-Mobileから新しく開始するCloud Agentは、利用者のiPadやiPhone上でコードをビルドするのではありません。Cursorが用意する独立した仮想マシン上で、開発環境を構築して動作します。
+Mobileから新しく開始するCloud Agentは、利用者のiPadやiPhone上でコードをビルドするのではありません。Cursorが用意する独立したVM（仮想マシン。クラウド上に用意された作業用コンピューター）で、開発環境を構築して動作します。
 
 Cloud AgentはRepositoryへ接続し、コード変更、テスト、動作確認を行い、スクリーンショット、動画、ログなどを生成できます。レビュー可能なPRを作る流れも案内されています。
 
+Cloud Agentは、コードや開発環境に関するデータをCursor側のクラウドへ保存して処理します。従来のPrivacy Mode（Legacy）では利用できず、Cloud Agentに対応するPrivacy Mode設定が必要です。会社のソースコードをクラウドへ保存してよいか、所属組織のセキュリティポリシーを利用前に確認してください。環境スナップショットや会話履歴には保持期間があるため、実際に導入するときはCursor公式Docsの最新条件も確認する必要があります。
+
 Cloud Agentの実行中はLaptopを起動しておく必要がなく、ローカルSessionをCloudへ移して処理を継続することもできます。
 
-一方、Remote Controlは別の仕組みです。PC上で動いているローカルAgentをiPhoneから継続操作するため、PCが到達可能な状態である必要があります。CursorにはPCを起動状態に保つ設定がありますが、Cloud AgentのようにPCから独立して動くわけではありません。
+一方、Remote Control（PC上で動くAgentを別端末から操作する機能）は別の仕組みです。PC上で動いているローカルAgentをiPhoneから継続操作するため、PCが到達可能な状態である必要があります。CursorにはPCを起動状態に保つ設定がありますが、Cloud AgentのようにPCから独立して動くわけではありません。
 
 TeamsとEnterpriseでRemote Controlを利用する場合、管理者がCursor Dashboardから機能を有効にする必要があります。
 
@@ -143,7 +147,7 @@ CursorのiPad・iPhone対応は、移動中や会議の合間にもAgentへ作�
 
 > **OmochiX編集部の見解**
 >
-> Cursor Mobileの特徴は、特定のAIモデルそのものより、Repository、Cloud開発環境、成果物、PRレビュー、Desktopへの引き継ぎを一つの流れにまとめている点です。
+> Cursor Mobileの特徴は、特定のAIモデルそのものより、コードの保存場所、クラウド開発環境、成果物、PRレビュー、PC版への引き継ぎを一つの流れにまとめている点です。
 
 Cursorでは複数モデルを選べるため、ChatGPT、Codex、Claudeとはモデル性能だけでなく、接続先、実行環境、差分確認、承認方法まで含めて比較する必要があります。
 
@@ -155,7 +159,7 @@ Cursor公式情報だけでは、他社製品との包括的な性能優劣は�
 
 Cursor for iOSとiPadは、すべての有料プランで提供されます。2026年8月12日時点の公式料金ページでは、Individual Proが月額20ドルから、Teams Standardが1ユーザーあたり月額40ドルです。税金や上位プラン、年払い、Enterpriseの条件は別です。
 
-ProにはCloud Agentが含まれ、Pro+とUltraではAgentの利用枠が増えます。消費量はモデルで異なり、上限後のOn-demand Usageでは追加請求の可能性があります。残量とToken内訳はDashboardで確認してください。
+ProにはCloud Agentが含まれ、Pro+とUltraではAgentの利用枠が増えます。消費量はモデルで異なり、上限後のOn-demand Usage（契約内の利用枠を超えた分を追加料金で使う仕組み）では追加請求の可能性があります。残量とToken内訳はDashboardで確認してください。
 
 無料のHobbyプランには限定的なAgent Requestがありますが、公式ChangelogはiOS / iPadアプリの対象を「すべての有料プラン」としています。無料プランで同じMobileアプリ機能を利用できるとは確認できませんでした。
 
@@ -168,7 +172,7 @@ Cursorは2026年7月29日、iPad対応をすべての有料プランへ提供し
 - iPad専用レイアウトで複数AgentとPR差分を確認
 - iPhone・iPadからCloud Agentへ作業を依頼可能
 - Cloud Agentは独立VMで動き、Laptopを閉じても継続
-- GitHub連携によりPRの作成・レビュー・マージへ対応
+- 接続したコード管理サービスを通じてPRの作成・レビュー・マージへ対応
 - ローカルAgentのRemote ControlではPCを起動状態に保つ必要あり
 - MobileはAgent管理とレビューが中心で、Desktop IDEの全工程を置き換えるものではない
 
@@ -209,6 +213,11 @@ OmochiXでは今後、実際にiPhone・iPadからCloud Agentへ依頼し、PR�
    - 公開日: 要確認
    - 更新日: 要確認
    - 最終確認日: 2026-08-12
+7. **Secrets & Network — Cursor Docs**
+   - URL: https://cursor.com/docs/cloud-agent/security-network
+   - 公開日: 要確認
+   - 更新日: 要確認
+   - 最終確認日: 2026-08-20
 
 最終確認日：2026年8月12日
 
