@@ -37,10 +37,10 @@ if (have_posts()) :
         $omochix_features   = get_the_terms($omochix_tool_id, 'ai_tool_feature');
         $omochix_tags       = get_the_terms($omochix_tool_id, 'ai_tool_tag');
         $omochix_platforms  = get_the_terms($omochix_tool_id, 'ai_tool_platform');
-        $omochix_categories = is_wp_error($omochix_categories) ? [] : (array) $omochix_categories;
-        $omochix_features   = is_wp_error($omochix_features) ? [] : (array) $omochix_features;
-        $omochix_tags       = is_wp_error($omochix_tags) ? [] : (array) $omochix_tags;
-        $omochix_platforms  = is_wp_error($omochix_platforms) ? [] : (array) $omochix_platforms;
+        $omochix_categories = is_array($omochix_categories) ? $omochix_categories : [];
+        $omochix_features   = is_array($omochix_features) ? $omochix_features : [];
+        $omochix_tags       = is_array($omochix_tags) ? $omochix_tags : [];
+        $omochix_platforms  = is_array($omochix_platforms) ? $omochix_platforms : [];
 
         $omochix_pricing_labels = [
             'free' => __('無料', 'omochix'), 'freemium' => __('無料プランあり', 'omochix'),

@@ -64,12 +64,8 @@ $omochix_platforms = get_terms([
     'hide_empty' => true,
     'orderby'    => 'name',
 ]);
-if (is_wp_error($omochix_categories)) {
-    $omochix_categories = [];
-}
-if (is_wp_error($omochix_platforms)) {
-    $omochix_platforms = [];
-}
+$omochix_categories = is_array($omochix_categories) ? $omochix_categories : [];
+$omochix_platforms  = is_array($omochix_platforms) ? $omochix_platforms : [];
 
 $omochix_tax_query = [];
 if ($omochix_category && term_exists($omochix_category, 'ai_tool_category')) {
@@ -318,7 +314,7 @@ if (is_wp_error($omochix_sidebar_categories)) {
                         $omochix_pricing_value = get_post_meta($omochix_tool_id, 'pricing_type', true) ?: 'contact';
                         $omochix_jp_value      = get_post_meta($omochix_tool_id, 'japanese_support', true) ?: 'unknown';
                         $omochix_tool_terms    = get_the_terms($omochix_tool_id, 'ai_tool_category');
-                        $omochix_tool_terms    = is_wp_error($omochix_tool_terms) ? [] : (array) $omochix_tool_terms;
+                        $omochix_tool_terms    = is_array($omochix_tool_terms) ? $omochix_tool_terms : [];
                         $omochix_pricing_label = function_exists('omochix_core_get_pricing_type_label')
                             ? omochix_core_get_pricing_type_label($omochix_pricing_value)
                             : ($omochix_pricing_options[$omochix_pricing_value] ?? __('要問い合わせ', 'omochix'));
