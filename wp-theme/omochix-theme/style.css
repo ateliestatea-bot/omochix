@@ -3,7 +3,7 @@ Theme Name: OmochiX Theme
 Theme URI: https://omochix.com
 Author: OmochiX
 Description: Official custom WordPress theme for OmochiX.
-Version: 1.10.6
+Version: 1.10.7
 Requires at least: 6.8
 Requires PHP: 8.1
 Text Domain: omochix
@@ -3631,6 +3631,23 @@ button:active,
 }
 
 /* Final Hero visual balance */
+:root:not([data-theme="dark"]) .home-hero__eyebrow {
+    color: #2d2d2a;
+}
+
+:root:not([data-theme="dark"]) .home-hero__title {
+    color: #20201e;
+}
+
+:root:not([data-theme="dark"]) .home-hero__description {
+    color: #4f4f4b;
+}
+
+:root:not([data-theme="dark"]) .home-hero__popular > span,
+:root:not([data-theme="dark"]) .home-hero__popular a {
+    color: #555550;
+}
+
 @media (min-width: 1081px) {
     .home-hero__visual {
         transform: translateX(-30px);
