@@ -51,7 +51,10 @@ $omochix_footer_links = array_filter(array_map('array_filter', $omochix_footer_l
             <?php endforeach; ?>
         </nav>
 
-        <?php // SNS links remain hidden until official account URLs are confirmed. ?>
+        <section class="site-footer__social" aria-labelledby="footer-social-title">
+            <h2 id="footer-social-title"><?php esc_html_e('公式SNS', 'omochix'); ?></h2>
+            <?php get_template_part('template-parts/social-links'); ?>
+        </section>
 
         <div class="site-footer__bottom">
             <p>&copy; <?php echo esc_html(wp_date('Y')); ?> OmochiX</p>

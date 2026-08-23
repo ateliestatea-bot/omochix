@@ -310,6 +310,11 @@ get_header();
                         </div>
                     </div>
                 </section>
+                <section class="article-social-follow" aria-labelledby="article-social-follow-title">
+                    <h2 id="article-social-follow-title"><?php esc_html_e('OmochiXをフォロー', 'omochix'); ?></h2>
+                    <p><?php esc_html_e('最新のAIニュースや活用情報をSNSでも配信しています。', 'omochix'); ?></p>
+                    <?php get_template_part('template-parts/social-links'); ?>
+                </section>
         <?php endwhile; ?>
     <?php endif; ?>
 </main>
