@@ -93,6 +93,14 @@ while (have_posts()) :
                         <p><?php esc_html_e('AIは判断を助ける道具であり、すべての答えを代わりに決めるものではありません。利便性と限界の両方を伝え、安心して選べる情報を提供します。', 'omochix'); ?></p>
                     </section>
 
+                    <section aria-labelledby="about-disclaimer-title">
+                        <h2 id="about-disclaimer-title"><?php esc_html_e('免責事項', 'omochix'); ?></h2>
+                        <p><?php esc_html_e('本サイトが掲載するAIニュース・AIツールの情報は、正確性・最新性を保証するものではありません。', 'omochix'); ?></p>
+                        <p><?php esc_html_e('AIツール等の利用可否・適否についてのご判断は、利用者ご自身の責任で行ってください。', 'omochix'); ?></p>
+                        <p><?php esc_html_e('本サイトからリンクする外部サイトの内容について、OmochiXは責任を負いません。', 'omochix'); ?></p>
+                        <p><?php esc_html_e('掲載内容は、必要に応じて予告なく訂正・更新することがあります。', 'omochix'); ?></p>
+                    </section>
+
                     <p class="static-page__updated">
                         <?php esc_html_e('最終更新日：', 'omochix'); ?>
                         <time datetime="<?php echo esc_attr(get_the_modified_date(DATE_W3C)); ?>"><?php echo esc_html(get_the_modified_date('Y年n月j日')); ?></time>
@@ -108,27 +116,34 @@ while (have_posts()) :
                     <?php endif; ?>
                 </div>
             <?php elseif ('company' === $omochix_static_page_type) : ?>
+                <?php $omochix_company_contact_url = omochix_get_published_page_url('contact'); ?>
                 <div class="static-page__prose">
                     <dl class="static-page__facts">
                         <div>
-                            <dt><?php esc_html_e('サイト名', 'omochix'); ?></dt>
-                            <dd><?php echo esc_html(get_bloginfo('name')); ?></dd>
-                        </div>
-                        <div>
                             <dt><?php esc_html_e('運営', 'omochix'); ?></dt>
-                            <dd><?php echo esc_html(get_option('omochix_company_name', __('OmochiX編集部', 'omochix'))); ?></dd>
+                            <dd><?php esc_html_e('OmochiX編集部', 'omochix'); ?></dd>
                         </div>
                         <div>
-                            <dt><?php esc_html_e('所在地', 'omochix'); ?></dt>
-                            <dd><?php esc_html_e('運営者確認待ち', 'omochix'); ?></dd>
+                            <dt><?php esc_html_e('運営形態', 'omochix'); ?></dt>
+                            <dd><?php esc_html_e('個人運営', 'omochix'); ?></dd>
+                        </div>
+                        <div>
+                            <dt><?php esc_html_e('内容', 'omochix'); ?></dt>
+                            <dd><?php esc_html_e('AIに関するニュース・ツール・活用情報等の情報提供', 'omochix'); ?></dd>
                         </div>
                         <div>
                             <dt><?php esc_html_e('お問い合わせ', 'omochix'); ?></dt>
-                            <dd><?php esc_html_e('要設定', 'omochix'); ?></dd>
+                            <dd>
+                                <?php if ($omochix_company_contact_url) : ?>
+                                    <a href="<?php echo esc_url($omochix_company_contact_url); ?>"><?php esc_html_e('Contactページ', 'omochix'); ?></a>
+                                <?php else : ?>
+                                    <?php esc_html_e('Contactページ', 'omochix'); ?>
+                                <?php endif; ?>
+                            </dd>
                         </div>
                         <div>
-                            <dt><?php esc_html_e('設立', 'omochix'); ?></dt>
-                            <dd><?php esc_html_e('運営者確認待ち', 'omochix'); ?></dd>
+                            <dt><?php esc_html_e('対応', 'omochix'); ?></dt>
+                            <dd><?php esc_html_e('お問い合わせには順次対応いたします。内容により返信までお時間をいただく場合があります。', 'omochix'); ?></dd>
                         </div>
                         <div>
                             <dt><?php esc_html_e('更新日', 'omochix'); ?></dt>
@@ -140,10 +155,78 @@ while (have_posts()) :
                         <div class="static-page__editor-content">
                             <?php the_content(); ?>
                         </div>
-                    <?php else : ?>
-                        <div class="static-page__notice" role="status">
-                            <h2><?php esc_html_e('運営情報を準備中です。', 'omochix'); ?></h2>
-                            <p><?php esc_html_e('会社名、所在地、連絡先などの確定情報を管理画面から設定した後に公開してください。', 'omochix'); ?></p>
+                    <?php endif; ?>
+                </div>
+            <?php elseif ('privacy' === $omochix_static_page_type) : ?>
+                <?php $omochix_privacy_contact_url = omochix_get_published_page_url('contact'); ?>
+                <div class="static-page__prose">
+                    <p><?php esc_html_e('OmochiX編集部（以下「当メディア」）は、本サイトをご利用いただく皆さまの個人情報を適切に取り扱うため、以下のとおりプライバシーポリシーを定めます。', 'omochix'); ?></p>
+
+                    <section aria-labelledby="privacy-collection-title">
+                        <h2 id="privacy-collection-title"><?php esc_html_e('1. 個人情報の取得', 'omochix'); ?></h2>
+                        <p><?php esc_html_e('当メディアは、お問い合わせフォームを通じて、お名前・メールアドレス・お問い合わせ内容をご提供いただく場合があります。', 'omochix'); ?></p>
+                    </section>
+
+                    <section aria-labelledby="privacy-purpose-title">
+                        <h2 id="privacy-purpose-title"><?php esc_html_e('2. 利用目的', 'omochix'); ?></h2>
+                        <p><?php esc_html_e('取得した個人情報は、お問い合わせ内容の確認、対応、必要な連絡・返信のためにのみ利用します。あらかじめお知らせした目的の範囲を超えて利用することはありません。', 'omochix'); ?></p>
+                    </section>
+
+                    <section aria-labelledby="privacy-management-title">
+                        <h2 id="privacy-management-title"><?php esc_html_e('3. 個人情報の管理', 'omochix'); ?></h2>
+                        <p><?php esc_html_e('取得した個人情報は、利用目的の達成に必要な期間のみ保持し、不要となった場合は適切に削除します。', 'omochix'); ?></p>
+                    </section>
+
+                    <section aria-labelledby="privacy-third-party-title">
+                        <h2 id="privacy-third-party-title"><?php esc_html_e('4. 第三者提供', 'omochix'); ?></h2>
+                        <p><?php esc_html_e('取得した個人情報は、法令に基づく場合等を除き、ご本人の同意なく第三者に提供しません。', 'omochix'); ?></p>
+                    </section>
+
+                    <section aria-labelledby="privacy-rights-title">
+                        <h2 id="privacy-rights-title"><?php esc_html_e('5. 開示・訂正・削除・利用停止等', 'omochix'); ?></h2>
+                        <p><?php esc_html_e('ご自身の個人情報の開示・訂正・削除・利用停止等をご希望の場合は、下記のお問い合わせ窓口までご連絡ください。内容を確認のうえ、法令に従い遅滞なく対応します。本人確認のため、追加の情報をお伺いする場合があります。', 'omochix'); ?></p>
+                    </section>
+
+                    <section aria-labelledby="privacy-contact-title">
+                        <h2 id="privacy-contact-title"><?php esc_html_e('6. お問い合わせ窓口', 'omochix'); ?></h2>
+                        <p>
+                            <?php if ($omochix_privacy_contact_url) : ?>
+                                <?php
+                                echo wp_kses(
+                                    sprintf(
+                                        /* translators: %s: contact page link markup. */
+                                        __('個人情報に関するお問い合わせは、%sよりご連絡ください。', 'omochix'),
+                                        '<a href="' . esc_url($omochix_privacy_contact_url) . '">' . esc_html__('お問い合わせフォーム', 'omochix') . '</a>'
+                                    ),
+                                    ['a' => ['href' => []]]
+                                );
+                                ?>
+                            <?php else : ?>
+                                <?php esc_html_e('個人情報に関するお問い合わせは、お問い合わせフォームよりご連絡ください。', 'omochix'); ?>
+                            <?php endif; ?>
+                        </p>
+                        <p><?php esc_html_e('運営者に関する法令上の開示事項については、お問い合わせフォームよりご請求ください。法令に従い、本人確認のうえ遅滞なく回答します。', 'omochix'); ?></p>
+                    </section>
+
+                    <section aria-labelledby="privacy-cookies-title">
+                        <h2 id="privacy-cookies-title"><?php esc_html_e('7. Cookie・localStorage・アクセス解析等', 'omochix'); ?></h2>
+                        <p><?php esc_html_e('本サイトは、ダークモード表示設定を保存するために、お使いのブラウザのlocalStorageを利用しています。この情報が外部へ送信されることはありません。', 'omochix'); ?></p>
+                        <p><?php esc_html_e('本サイトは現在、アクセス解析ツール・広告配信ツール・アフィリエイトタグを使用していません。将来これらを導入する場合は、本ポリシーを改定してお知らせします。', 'omochix'); ?></p>
+                    </section>
+
+                    <section aria-labelledby="privacy-changes-title">
+                        <h2 id="privacy-changes-title"><?php esc_html_e('8. プライバシーポリシーの変更', 'omochix'); ?></h2>
+                        <p><?php esc_html_e('本ポリシーの内容は、法令の変更やサイト運営状況の変化に応じて、予告なく改定することがあります。改定後の内容は、本ページに掲載した時点から効力を持ちます。', 'omochix'); ?></p>
+                    </section>
+
+                    <p class="static-page__updated">
+                        <?php esc_html_e('制定・最終改定日：', 'omochix'); ?>
+                        <time datetime="<?php echo esc_attr(get_the_modified_date(DATE_W3C)); ?>"><?php echo esc_html(get_the_modified_date('Y年n月j日')); ?></time>
+                    </p>
+
+                    <?php if ($omochix_page_content) : ?>
+                        <div class="static-page__editor-content">
+                            <?php the_content(); ?>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -173,7 +256,7 @@ while (have_posts()) :
                         </section>
                         <section aria-labelledby="contact-hours-title">
                             <h2 id="contact-hours-title"><?php esc_html_e('対応時間', 'omochix'); ?></h2>
-                            <p><?php esc_html_e('運営者確認待ち', 'omochix'); ?></p>
+                            <p><?php esc_html_e('お問い合わせには順次対応いたします。内容により返信までお時間をいただく場合があります。', 'omochix'); ?></p>
                         </section>
                     <?php endif; ?>
                 </div>
