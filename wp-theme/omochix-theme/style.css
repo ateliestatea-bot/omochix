@@ -3671,6 +3671,20 @@ button:active,
     color: #555550;
 }
 
+/* .home-hero keeps its light gradient background (--mock-gradient) even in
+   dark mode, so its text must stay dark regardless of theme to stay legible. */
+:root[data-theme="dark"] .home-hero__eyebrow {
+    color: #2d2d2a;
+}
+
+:root[data-theme="dark"] .home-hero__title {
+    color: #20201e;
+}
+
+:root[data-theme="dark"] .home-hero__description {
+    color: #4f4f4b;
+}
+
 @media (min-width: 1081px) {
     .home-hero__visual {
         transform: translateX(-30px);
