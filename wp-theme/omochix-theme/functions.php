@@ -10,6 +10,7 @@ if (!defined('ABSPATH')) {
 }
 
 require_once get_theme_file_path('/inc/seo.php');
+require_once get_theme_file_path('/inc/contact-form.php');
 
 function omochix_setup() {
     add_theme_support('title-tag');
@@ -67,6 +68,16 @@ function omochix_enqueue_assets() {
         wp_enqueue_script(
             'omochix-article',
             get_template_directory_uri() . '/assets/js/article.js',
+            [],
+            $theme->get('Version'),
+            true
+        );
+    }
+
+    if (is_page('contact')) {
+        wp_enqueue_script(
+            'omochix-contact-form',
+            get_template_directory_uri() . '/assets/js/contact-form.js',
             [],
             $theme->get('Version'),
             true

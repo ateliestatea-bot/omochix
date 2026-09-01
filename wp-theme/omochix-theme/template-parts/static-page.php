@@ -153,22 +153,16 @@ while (have_posts()) :
                         <div class="static-page__editor-content">
                             <?php the_content(); ?>
                         </div>
-                    <?php else : ?>
+                    <?php elseif ('contact' !== $omochix_static_page_type) : ?>
                         <div class="static-page__notice" role="status">
-                            <h2>
-                                <?php
-                                if ('contact' === $omochix_static_page_type) {
-                                    esc_html_e('お問い合わせフォームを準備中です。', 'omochix');
-                                } else {
-                                    esc_html_e('ページ内容を準備中です。', 'omochix');
-                                }
-                                ?>
-                            </h2>
+                            <h2><?php esc_html_e('ページ内容を準備中です。', 'omochix'); ?></h2>
                             <p><?php esc_html_e('確認済みの内容をWordPress管理画面から入力した後に公開してください。', 'omochix'); ?></p>
                         </div>
                     <?php endif; ?>
 
                     <?php if ('contact' === $omochix_static_page_type) : ?>
+                        <?php get_template_part('template-parts/contact-form'); ?>
+
                         <section aria-labelledby="contact-response-title">
                             <h2 id="contact-response-title"><?php esc_html_e('返信について', 'omochix'); ?></h2>
                             <p><?php esc_html_e('返信目安と受付条件は、お問い合わせ窓口の運用内容が確定した後にご案内します。', 'omochix'); ?></p>
