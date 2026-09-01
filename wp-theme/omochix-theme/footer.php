@@ -21,7 +21,7 @@ $omochix_footer_links = [
     ],
     __('サポート', 'omochix') => [
         __('お問い合わせ', 'omochix')       => omochix_get_published_page_url('contact'),
-        __('プライバシーポリシー', 'omochix') => get_privacy_policy_url(),
+        __('プライバシーポリシー', 'omochix') => get_privacy_policy_url() ?: omochix_get_published_page_url('privacy-policy'),
         __('利用規約', 'omochix')         => omochix_get_published_page_url('terms'),
         __('運営者情報', 'omochix')        => omochix_get_published_page_url('company'),
     ],

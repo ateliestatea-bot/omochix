@@ -93,7 +93,6 @@ if (!defined('ABSPATH')) {
                         <li><span aria-disabled="true"><?php esc_html_e('お問い合わせ', 'omochix'); ?><small><?php esc_html_e('準備中', 'omochix'); ?></small></span></li>
                     <?php endif; ?>
                 </ul>
-                <a class="primary-nav__login" href="<?php echo esc_url(wp_login_url()); ?>"><?php esc_html_e('ログイン', 'omochix'); ?></a>
             </div>
         </nav>
 
@@ -105,7 +104,6 @@ if (!defined('ABSPATH')) {
             <button class="icon-button" type="button" data-search-open aria-haspopup="dialog" aria-controls="site-search" aria-label="<?php esc_attr_e('サイト内を検索', 'omochix'); ?>">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg>
             </button>
-            <a class="login-button" href="<?php echo esc_url(wp_login_url()); ?>"><?php esc_html_e('ログイン', 'omochix'); ?></a>
         </div>
     </div>
 </header>

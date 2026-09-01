@@ -60,6 +60,7 @@ while (have_posts()) :
 
         <div class="static-page__container static-page__body">
             <?php if ('about' === $omochix_static_page_type) : ?>
+                <?php $omochix_about_company_url = omochix_get_published_page_url('company'); ?>
                 <div class="static-page__prose">
                     <section aria-labelledby="about-omochix-title">
                         <h2 id="about-omochix-title"><?php esc_html_e('OmochiXとは', 'omochix'); ?></h2>
@@ -91,6 +92,26 @@ while (have_posts()) :
                     <section aria-labelledby="about-ai-title">
                         <h2 id="about-ai-title"><?php esc_html_e('AIとの付き合い方', 'omochix'); ?></h2>
                         <p><?php esc_html_e('AIは判断を助ける道具であり、すべての答えを代わりに決めるものではありません。利便性と限界の両方を伝え、安心して選べる情報を提供します。', 'omochix'); ?></p>
+                    </section>
+
+                    <section aria-labelledby="about-operator-title">
+                        <h2 id="about-operator-title"><?php esc_html_e('運営情報', 'omochix'); ?></h2>
+                        <p>
+                            <?php if ($omochix_about_company_url) : ?>
+                                <?php
+                                echo wp_kses(
+                                    sprintf(
+                                        /* translators: %s: company page link markup. */
+                                        __('OmochiXの運営者情報は%sでご確認いただけます。', 'omochix'),
+                                        '<a href="' . esc_url($omochix_about_company_url) . '">' . esc_html__('運営情報ページ', 'omochix') . '</a>'
+                                    ),
+                                    ['a' => ['href' => []]]
+                                );
+                                ?>
+                            <?php else : ?>
+                                <?php esc_html_e('OmochiXの運営者情報は運営情報ページでご確認いただけます。', 'omochix'); ?>
+                            <?php endif; ?>
+                        </p>
                     </section>
 
                     <section aria-labelledby="about-disclaimer-title">
