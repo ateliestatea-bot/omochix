@@ -97,6 +97,7 @@ function omochix_handle_contact_submission() {
 
     $header_name = str_replace(['<', '>', ',', "\r", "\n"], '', $name);
     $headers     = ['Content-Type: text/plain; charset=UTF-8'];
+    $headers[]   = 'From: OmochiX <info@omochix.com>';
     $headers[]   = sprintf('Reply-To: %s <%s>', $header_name, $email);
 
     $sent = wp_mail($to, $subject, $body, $headers);
