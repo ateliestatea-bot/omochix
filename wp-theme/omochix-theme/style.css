@@ -3577,6 +3577,14 @@ button:active,
     }
 }
 
+/* Tablet-only: the mobile/desktop object-fit: contain overrides don't reach
+   768-1080px, so the mascot's ears get cropped by the default object-fit: cover. */
+@media (min-width: 768px) and (max-width: 1080px) {
+    .home-hero__image-frame img {
+        object-fit: contain;
+    }
+}
+
 /* Mobile Hero reading and character zones */
 @media (max-width: 767px) {
     .home-hero__inner {
