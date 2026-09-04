@@ -61,7 +61,11 @@ get_header();
                         <nav class="breadcrumb" aria-label="<?php esc_attr_e('パンくずリスト', 'omochix'); ?>">
                             <ol>
                                 <li><a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Home', 'omochix'); ?></a></li>
-                                <li><a href="<?php echo esc_url($omochix_news_url); ?>"><?php echo esc_html($omochix_news_title); ?></a></li>
+                                <?php if ($omochix_primary_category) : ?>
+                                    <li><a href="<?php echo esc_url(get_category_link($omochix_primary_category)); ?>"><?php echo esc_html($omochix_primary_category->name); ?></a></li>
+                                <?php else : ?>
+                                    <li><a href="<?php echo esc_url($omochix_news_url); ?>"><?php echo esc_html($omochix_news_title); ?></a></li>
+                                <?php endif; ?>
                                 <li aria-current="page"><?php echo esc_html($omochix_post_title); ?></li>
                             </ol>
                         </nav>
