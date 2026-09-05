@@ -3,7 +3,7 @@ Theme Name: OmochiX Theme
 Theme URI: https://omochix.com
 Author: OmochiX
 Description: Official custom WordPress theme for OmochiX.
-Version: 1.11.0
+Version: 1.12.0
 Requires at least: 6.8
 Requires PHP: 8.1
 Text Domain: omochix
@@ -43,6 +43,11 @@ Text Domain: omochix
     --motion-stagger: 40ms;
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --glow-focus: 0 0 0 3px rgba(110, 75, 255, 0.16);
+    /* OmochiX Visual Editorial v2 accent tokens */
+    --omx-purple: var(--color-primary);
+    --omx-blue: #2563eb;
+    --omx-cyan: #0e7490;
+    --omx-amber: #b45309;
 }
 
 :root[data-theme="dark"] {
@@ -2196,6 +2201,139 @@ body { overflow-x: clip; }
 .article-content code { padding: 2px 6px; background: var(--color-hover); border: 1px solid var(--color-line); border-radius: 4px; font: 0.88em ui-monospace, SFMono-Regular, Menlo, monospace; }
 .article-content pre { max-width: 100%; margin: 40px 0; padding: 20px; overflow-x: auto; color: #eee; background: #151515; border-radius: var(--radius-md); line-height: 1.7; -webkit-overflow-scrolling: touch; }
 .article-content pre code { padding: 0; color: inherit; background: transparent; border: 0; }
+
+/* ==========================================================================
+   Visual Editorial v2
+   Reusable article-content components (Key Point / Stat / Comparison /
+   Process-Flow / Icon Feature Grid / OmochiX Test / Note-Warning / Summary).
+   Every selector is namespaced with "omx-" and scoped under .article-content
+   so it only activates inside post bodies pasted from the code editor and
+   never collides with other theme classes. Icons are CSS mask-image SVGs
+   (currentColor-driven), so no extra HTTP requests or JS are introduced.
+   ========================================================================== */
+.article-content {
+    --omx-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12l5 5L20 6'/%3E%3C/svg%3E");
+    --omx-icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v6'/%3E%3Ccircle cx='12' cy='7.5' r='1' fill='black' stroke='none'/%3E%3C/svg%3E");
+    --omx-icon-warning: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 2 20h20L12 3Z'/%3E%3Cpath d='M12 10v5'/%3E%3Ccircle cx='12' cy='18' r='1' fill='black' stroke='none'/%3E%3C/svg%3E");
+    --omx-icon-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h16'/%3E%3Cpath d='M13 5l7 7-7 7'/%3E%3C/svg%3E");
+    --omx-icon-flask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2v6.8L3.5 18a2 2 0 0 0 1.7 3h13.6a2 2 0 0 0 1.7-3L15 8.8V2'/%3E%3Cpath d='M8 2h8'/%3E%3Cpath d='M7 15h10'/%3E%3C/svg%3E");
+    --omx-icon-bolt: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2 4 14h6l-1 8 9-12h-6l1-8Z'/%3E%3C/svg%3E");
+    --omx-icon-shield: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4Z'/%3E%3Cpath d='M9 12l2 2 4-4'/%3E%3C/svg%3E");
+    --omx-icon-coin: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v10'/%3E%3Cpath d='M15 9.6c0-1.5-1.3-2.6-3-2.6s-3 1-3 2.3c0 3 6 1.4 6 4.4 0 1.5-1.3 2.5-3 2.5s-3-1-3-2.5'/%3E%3C/svg%3E");
+    --omx-icon-chat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H8l-4 4V5Z'/%3E%3C/svg%3E");
+    --omx-icon-plug: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 3v4M15 3v4'/%3E%3Cpath d='M6 7h12v4a6 6 0 0 1-12 0V7Z'/%3E%3Cpath d='M12 17v4'/%3E%3C/svg%3E");
+    --omx-icon-lock: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='11' width='16' height='9' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E");
+    --omx-icon-chart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20V10'/%3E%3Cpath d='M12 20V4'/%3E%3Cpath d='M20 20v-7'/%3E%3C/svg%3E");
+    --omx-icon-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' stroke='none'%3E%3Cpath d='M12 3l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 18l-6.1 3.6 1.4-6.8-5.1-4.7 6.9-.8L12 3Z'/%3E%3C/svg%3E");
+    --omx-icon-dot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4' fill='black'/%3E%3C/svg%3E");
+}
+
+.article-content .omx-icon {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+.article-content .omx-icon--check { -webkit-mask-image: var(--omx-icon-check); mask-image: var(--omx-icon-check); }
+.article-content .omx-icon--info { -webkit-mask-image: var(--omx-icon-info); mask-image: var(--omx-icon-info); }
+.article-content .omx-icon--warning { -webkit-mask-image: var(--omx-icon-warning); mask-image: var(--omx-icon-warning); }
+.article-content .omx-icon--arrow { -webkit-mask-image: var(--omx-icon-arrow); mask-image: var(--omx-icon-arrow); }
+.article-content .omx-icon--flask { -webkit-mask-image: var(--omx-icon-flask); mask-image: var(--omx-icon-flask); }
+.article-content .omx-icon--bolt { -webkit-mask-image: var(--omx-icon-bolt); mask-image: var(--omx-icon-bolt); }
+.article-content .omx-icon--shield { -webkit-mask-image: var(--omx-icon-shield); mask-image: var(--omx-icon-shield); }
+.article-content .omx-icon--coin { -webkit-mask-image: var(--omx-icon-coin); mask-image: var(--omx-icon-coin); }
+.article-content .omx-icon--chat { -webkit-mask-image: var(--omx-icon-chat); mask-image: var(--omx-icon-chat); }
+.article-content .omx-icon--plug { -webkit-mask-image: var(--omx-icon-plug); mask-image: var(--omx-icon-plug); }
+.article-content .omx-icon--lock { -webkit-mask-image: var(--omx-icon-lock); mask-image: var(--omx-icon-lock); }
+.article-content .omx-icon--chart { -webkit-mask-image: var(--omx-icon-chart); mask-image: var(--omx-icon-chart); }
+.article-content .omx-icon--star { -webkit-mask-image: var(--omx-icon-star); mask-image: var(--omx-icon-star); }
+.article-content .omx-icon--dot { -webkit-mask-image: var(--omx-icon-dot); mask-image: var(--omx-icon-dot); }
+
+/* 1. Key Point */
+.article-content .omx-keypoint { display: flex; gap: 14px; margin: 40px 0; padding: 20px 24px; background: color-mix(in srgb, var(--omx-purple) 6%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--omx-purple) 24%, var(--color-line)); border-left: 4px solid var(--omx-purple); border-radius: var(--radius-md); }
+.article-content .omx-keypoint .omx-icon { margin-top: 2px; color: var(--omx-purple); }
+.article-content .omx-keypoint__label { margin: 0 0 4px; color: var(--color-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.article-content .omx-keypoint__text { margin: 0; color: var(--color-text); font-size: 1em; line-height: 1.8; }
+.article-content .omx-keypoint__text + .omx-keypoint__text { margin-top: 8px; }
+
+/* 2. Stat Card */
+.article-content .omx-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 40px 0; }
+.article-content .omx-stat { padding: 24px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.article-content .omx-stat__value { margin: 0; background: linear-gradient(120deg, var(--omx-purple), var(--omx-blue)); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: clamp(2.25rem, 6vw, 3rem); font-weight: 750; letter-spacing: -0.03em; line-height: 1.1; }
+.article-content .omx-stat__unit { background: none; -webkit-text-fill-color: var(--color-muted); color: var(--color-muted); font-size: 0.4em; font-weight: 650; }
+.article-content .omx-stat__desc { margin: 8px 0 0; color: var(--color-text); font-size: 0.9375em; line-height: 1.7; }
+.article-content .omx-stat__source { margin: 12px 0 0; color: var(--color-muted); font-size: 11px; }
+
+/* 3. Comparison Cards */
+.article-content .omx-compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 40px 0; }
+.article-content .omx-compare__card { padding: 24px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.article-content .omx-compare__card--best { border-color: color-mix(in srgb, var(--omx-purple) 45%, var(--color-line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--omx-purple) 45%, transparent); }
+.article-content .omx-compare__badge { display: inline-block; margin: 0 0 12px; padding: 4px 10px; background: var(--omx-purple); border-radius: var(--radius-pill); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; }
+.article-content .omx-compare__name { margin: 0 0 8px; font-size: 1.125em; letter-spacing: -0.02em; }
+.article-content .omx-compare__desc { margin: 0 0 16px; color: var(--color-muted); font-size: 0.875em; line-height: 1.7; }
+.article-content .omx-compare__list { display: grid; gap: 8px; margin: 0; padding: 16px 0 0; border-top: 1px solid var(--color-line); list-style: none; font-size: 0.875em; }
+.article-content .omx-compare__list li { display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 0; }
+.article-content .omx-compare__list li span { color: var(--color-muted); }
+
+/* 4. Process / Flow */
+.article-content .omx-flow { display: flex; flex-wrap: wrap; gap: 28px; margin: 40px 0; padding: 0; list-style: none; }
+.article-content .omx-flow__step { position: relative; flex: 1 1 150px; margin: 0; padding: 20px; text-align: center; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.article-content .omx-flow__step:not(:last-child)::after { content: ""; position: absolute; top: 50%; right: -22px; width: 16px; height: 16px; background-color: var(--omx-blue); transform: translateY(-50%); -webkit-mask: var(--omx-icon-arrow) center / contain no-repeat; mask: var(--omx-icon-arrow) center / contain no-repeat; }
+.article-content .omx-flow__number { display: grid; place-items: center; width: 30px; height: 30px; margin: 0 auto 12px; background: color-mix(in srgb, var(--omx-blue) 12%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--omx-blue) 30%, var(--color-line)); border-radius: 50%; color: var(--color-text); font-size: 13px; font-weight: 700; }
+.article-content .omx-flow__title { margin: 0 0 4px; font-size: 0.9375em; font-weight: 650; letter-spacing: -0.01em; }
+.article-content .omx-flow__desc { margin: 0; color: var(--color-muted); font-size: 0.8125em; line-height: 1.6; }
+
+/* 5. Icon Feature Grid */
+.article-content .omx-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 40px 0; }
+.article-content .omx-feature { padding: 22px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.article-content .omx-feature .omx-icon { width: 26px; height: 26px; margin-bottom: 14px; color: var(--omx-cyan); }
+.article-content .omx-feature__title { margin: 0 0 6px; font-size: 0.9375em; font-weight: 650; letter-spacing: -0.01em; }
+.article-content .omx-feature__desc { margin: 0; color: var(--color-muted); font-size: 0.8125em; line-height: 1.7; }
+
+/* 6. OmochiX Test / Hands-on */
+.article-content .omx-test { margin: 40px 0; padding: 24px; background: color-mix(in srgb, var(--omx-cyan) 6%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--omx-cyan) 26%, var(--color-line)); border-radius: var(--radius-md); }
+.article-content .omx-test__header { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+.article-content .omx-test__header .omx-icon { width: 20px; height: 20px; color: var(--omx-cyan); }
+.article-content .omx-test__label { margin: 0; color: var(--color-muted); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.article-content .omx-test__body p { margin: 0; color: var(--color-text); font-size: 0.9375em; line-height: 1.8; }
+.article-content .omx-test__body p + p { margin-top: 12px; }
+
+/* 7. Note / Warning */
+.article-content .omx-note { display: flex; gap: 12px; margin: 32px 0; padding: 16px 20px; background: var(--color-hover); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.article-content .omx-note .omx-icon { width: 18px; height: 18px; margin-top: 2px; color: var(--color-muted); }
+.article-content .omx-note p { margin: 0; color: var(--color-text); font-size: 0.875em; line-height: 1.8; }
+.article-content .omx-note p + p { margin-top: 10px; }
+.article-content .omx-note--warning { background: color-mix(in srgb, var(--omx-amber) 8%, var(--color-surface)); border-color: color-mix(in srgb, var(--omx-amber) 30%, var(--color-line)); }
+.article-content .omx-note--warning .omx-icon { color: var(--omx-amber); }
+
+/* 8. Summary */
+.article-content .omx-summary { margin: 48px 0; padding: 24px 28px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.article-content .omx-summary__label { margin: 0 0 14px; color: var(--color-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.article-content .omx-summary__list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: omx-summary; }
+.article-content .omx-summary__list li { position: relative; margin: 0; padding: 0 0 0 28px; color: var(--color-text); font-size: 0.9375em; line-height: 1.7; counter-increment: omx-summary; }
+.article-content .omx-summary__list li::before { content: counter(omx-summary); position: absolute; left: 0; top: 0.05em; display: grid; place-items: center; width: 18px; height: 18px; background: color-mix(in srgb, var(--omx-purple) 14%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--omx-purple) 30%, var(--color-line)); border-radius: 50%; color: var(--color-text); font-size: 10px; font-weight: 700; }
+
+@media (max-width: 767px) {
+    .article-content .omx-flow { flex-direction: column; gap: 32px; }
+    .article-content .omx-flow__step:not(:last-child)::after { top: auto; right: auto; bottom: -24px; left: 50%; transform: translateX(-50%) rotate(90deg); }
+}
+
+@media (max-width: 480px) {
+    .article-content .omx-keypoint,
+    .article-content .omx-test,
+    .article-content .omx-summary,
+    .article-content .omx-stat,
+    .article-content .omx-feature,
+    .article-content .omx-compare__card { padding: 18px; }
+    .article-content .omx-note { padding: 14px 16px; }
+}
 
 .article-toc { padding: 24px; background: var(--color-hover); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
 .article-toc--inline { margin-bottom: 48px; }
