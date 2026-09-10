@@ -90,6 +90,64 @@ function omochix_slim_seo_normalize_schema_graph($graph) {
 add_filter('slim_seo_schema_graph', 'omochix_slim_seo_normalize_schema_graph', 20);
 
 /**
+ * Remove a breadcrumb level that duplicates the name of the level right after it.
+ *
+ * Slim SEO's auto-generated breadcrumb trail can include both the WordPress
+ * "posts page" ancestor and the post's primary category ancestor. When both
+ * happen to carry the same display name (e.g. a posts page and a category
+ * that are both named 「AIニュース」), the visible breadcrumb only shows one
+ * level but the structured data shows two, which no longer matches Google's
+ * breadcrumb markup guidance. This is a no-op for any trail that has no such
+ * consecutive duplicate, so other post types and categories are unaffected.
+ *
+ * @param array<int, array<string, mixed>> $graph Slim SEO schema graph.
+ * @return array<int, array<string, mixed>>
+ */
+function omochix_dedupe_breadcrumb_schema_graph($graph) {
+    foreach ($graph as $index => $entity) {
+        if (!is_array($entity) || !isset($entity['@type']) || 'BreadcrumbList' !== $entity['@type']) {
+            continue;
+        }
+
+        $items = isset($entity['itemListElement']) && is_array($entity['itemListElement'])
+            ? $entity['itemListElement']
+            : [];
+
+        $deduped = [];
+        foreach ($items as $i => $item) {
+            $next = $items[$i + 1] ?? null;
+            if (
+                is_array($item) && is_array($next)
+                && isset($item['name'], $next['name'])
+                && $item['name'] === $next['name']
+            ) {
+                // Drop the earlier, less specific level (e.g. the posts page);
+                // keep the one that follows (e.g. the actual category), which
+                // is what the visible on-page breadcrumb links to.
+                continue;
+            }
+            $deduped[] = $item;
+        }
+
+        if (count($deduped) === count($items)) {
+            continue;
+        }
+
+        foreach ($deduped as $position => &$deduped_item) {
+            if (is_array($deduped_item)) {
+                $deduped_item['position'] = $position + 1;
+            }
+        }
+        unset($deduped_item);
+
+        $graph[$index]['itemListElement'] = array_values($deduped);
+    }
+
+    return $graph;
+}
+add_filter('slim_seo_schema_graph', 'omochix_dedupe_breadcrumb_schema_graph', 20);
+
+/**
  * Determine whether the current archive or parameterized view must not be indexed.
  *
  * A term needs at least two public objects for the MVP index threshold. Editors

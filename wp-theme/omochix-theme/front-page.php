@@ -482,34 +482,44 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
     <?php
     /**
      * Purpose-led categories.
-     * Existing terms use their canonical archive; missing terms use a valid
-     * search URL rather than linking to an archive that may not exist.
+     * Each card must resolve to a real archive (a post type archive or an
+     * existing taxonomy term). A card with no real destination yet is
+     * skipped rather than linking to an empty, noindexed search page.
      */
     $omochix_categories = [];
     foreach (omochix_get_front_page_categories() as $omochix_category_item) {
-        $omochix_category_term = null;
-        $omochix_category_url  = '';
+        $omochix_category_url   = '';
         $omochix_category_count = 0;
 
-        if (taxonomy_exists($omochix_category_item['taxonomy'])) {
+        if (!empty($omochix_category_item['post_type'])) {
+            if (post_type_exists($omochix_category_item['post_type'])) {
+                $omochix_archive_link = get_post_type_archive_link($omochix_category_item['post_type']);
+                if ($omochix_archive_link) {
+                    $omochix_post_counts     = wp_count_posts($omochix_category_item['post_type']);
+                    $omochix_category_url   = $omochix_archive_link;
+                    $omochix_category_count = isset($omochix_post_counts->publish) ? (int) $omochix_post_counts->publish : 0;
+                }
+            }
+        } elseif (!empty($omochix_category_item['taxonomy']) && taxonomy_exists($omochix_category_item['taxonomy'])) {
             $omochix_category_term = get_term_by('slug', $omochix_category_item['slug'], $omochix_category_item['taxonomy']);
 
             // A name match makes existing Japanese terms work even before slugs are standardized.
             if (!$omochix_category_term) {
                 $omochix_category_term = get_term_by('name', $omochix_category_item['name'], $omochix_category_item['taxonomy']);
             }
-        }
 
-        if ($omochix_category_term && !is_wp_error($omochix_category_term)) {
-            $omochix_term_link = get_term_link($omochix_category_term);
-            if (!is_wp_error($omochix_term_link)) {
-                $omochix_category_url   = $omochix_term_link;
-                $omochix_category_count = max(0, (int) $omochix_category_term->count);
+            if ($omochix_category_term && !is_wp_error($omochix_category_term)) {
+                $omochix_term_link = get_term_link($omochix_category_term);
+                if (!is_wp_error($omochix_term_link)) {
+                    $omochix_category_url   = $omochix_term_link;
+                    $omochix_category_count = max(0, (int) $omochix_category_term->count);
+                }
             }
         }
 
+        // Skip cards with no real archive yet instead of linking to an empty search page.
         if (!$omochix_category_url) {
-            $omochix_category_url = add_query_arg('s', $omochix_category_item['name'], home_url('/'));
+            continue;
         }
 
         $omochix_category_item['url']   = $omochix_category_url;

@@ -224,14 +224,17 @@ function omochix_get_starter_ai_tools() {
  * Return the purpose-led category definitions used on the front page.
  *
  * Slugs and taxonomy names are intentionally explicit so each item can be
- * connected to a real term without changing the front-page template.
+ * connected to a real term without changing the front-page template. An item
+ * with `post_type` resolves to that post type's archive instead of a taxonomy
+ * term. A card that cannot resolve to a real archive is skipped entirely by
+ * the front page rather than falling back to a search URL.
  *
  * @return array<int, array<string, string>>
  */
 function omochix_get_front_page_categories() {
     return [
         ['name' => __('AIニュース', 'omochix'), 'slug' => 'ai-news', 'taxonomy' => 'category', 'description' => __('AIの最新動向を知る', 'omochix'), 'icon' => 'news'],
-        ['name' => __('AIツール', 'omochix'), 'slug' => 'ai-tools', 'taxonomy' => 'ai_tool_category', 'description' => __('目的に合うAIサービスを探す', 'omochix'), 'icon' => 'tools'],
+        ['name' => __('AIツール', 'omochix'), 'post_type' => 'ai_tool', 'description' => __('目的に合うAIサービスを探す', 'omochix'), 'icon' => 'tools'],
         ['name' => __('チュートリアル', 'omochix'), 'slug' => 'tutorial', 'taxonomy' => 'category', 'description' => __('使い方を手順から学ぶ', 'omochix'), 'icon' => 'tutorial'],
         ['name' => __('プロンプト集', 'omochix'), 'slug' => 'prompts', 'taxonomy' => 'category', 'description' => __('すぐ使える指示文を見つける', 'omochix'), 'icon' => 'prompt'],
         ['name' => __('ビジネス', 'omochix'), 'slug' => 'business', 'taxonomy' => 'category', 'description' => __('仕事と業務改善に活かす', 'omochix'), 'icon' => 'business'],
