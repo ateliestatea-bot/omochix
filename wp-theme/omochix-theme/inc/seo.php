@@ -100,52 +100,52 @@ add_filter('slim_seo_schema_graph', 'omochix_slim_seo_normalize_schema_graph', 2
  * breadcrumb markup guidance. This is a no-op for any trail that has no such
  * consecutive duplicate, so other post types and categories are unaffected.
  *
- * @param array<int, array<string, mixed>> $graph Slim SEO schema graph.
- * @return array<int, array<string, mixed>>
+ * Hooked on Slim SEO's per-entity `slim_seo_schema_breadcrumblist` filter
+ * (not the aggregate `slim_seo_schema_graph`) so this only ever touches the
+ * BreadcrumbList entity itself.
+ *
+ * @param array<string, mixed> $schema Slim SEO's BreadcrumbList schema entity.
+ * @return array<string, mixed>
  */
-function omochix_dedupe_breadcrumb_schema_graph($graph) {
-    foreach ($graph as $index => $entity) {
-        if (!is_array($entity) || !isset($entity['@type']) || 'BreadcrumbList' !== $entity['@type']) {
-            continue;
-        }
-
-        $items = isset($entity['itemListElement']) && is_array($entity['itemListElement'])
-            ? $entity['itemListElement']
-            : [];
-
-        $deduped = [];
-        foreach ($items as $i => $item) {
-            $next = $items[$i + 1] ?? null;
-            if (
-                is_array($item) && is_array($next)
-                && isset($item['name'], $next['name'])
-                && $item['name'] === $next['name']
-            ) {
-                // Drop the earlier, less specific level (e.g. the posts page);
-                // keep the one that follows (e.g. the actual category), which
-                // is what the visible on-page breadcrumb links to.
-                continue;
-            }
-            $deduped[] = $item;
-        }
-
-        if (count($deduped) === count($items)) {
-            continue;
-        }
-
-        foreach ($deduped as $position => &$deduped_item) {
-            if (is_array($deduped_item)) {
-                $deduped_item['position'] = $position + 1;
-            }
-        }
-        unset($deduped_item);
-
-        $graph[$index]['itemListElement'] = array_values($deduped);
+function omochix_dedupe_breadcrumb_schema($schema) {
+    if (!is_array($schema) || !isset($schema['itemListElement']) || !is_array($schema['itemListElement'])) {
+        return $schema;
     }
 
-    return $graph;
+    $items = $schema['itemListElement'];
+
+    $deduped = [];
+    foreach ($items as $i => $item) {
+        $next = $items[$i + 1] ?? null;
+        if (
+            is_array($item) && is_array($next)
+            && isset($item['name'], $next['name'])
+            && $item['name'] === $next['name']
+        ) {
+            // Drop the earlier, less specific level (e.g. the posts page);
+            // keep the one that follows (e.g. the actual category), which
+            // is what the visible on-page breadcrumb links to.
+            continue;
+        }
+        $deduped[] = $item;
+    }
+
+    if (count($deduped) === count($items)) {
+        return $schema;
+    }
+
+    foreach ($deduped as $position => &$deduped_item) {
+        if (is_array($deduped_item)) {
+            $deduped_item['position'] = $position + 1;
+        }
+    }
+    unset($deduped_item);
+
+    $schema['itemListElement'] = array_values($deduped);
+
+    return $schema;
 }
-add_filter('slim_seo_schema_graph', 'omochix_dedupe_breadcrumb_schema_graph', 20);
+add_filter('slim_seo_schema_breadcrumblist', 'omochix_dedupe_breadcrumb_schema');
 
 /**
  * Determine whether the current archive or parameterized view must not be indexed.
