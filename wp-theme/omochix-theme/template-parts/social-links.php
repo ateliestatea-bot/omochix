@@ -19,7 +19,7 @@ $omochix_social_links = omochix_get_social_links();
                 <?php if ('x' === $omochix_social_link['icon']) : ?>
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.2 4.5h3.7l3.8 5.1 4.4-5.1h1.7l-5.3 6.1 5.9 7.9h-3.7l-4.1-5.5-4.8 5.5H5.1l5.7-6.5-5.6-7.5Zm2.5 1.4 7.8 10.5h1.3L9 5.9H7.7Z"/></svg>
                 <?php elseif ('instagram' === $omochix_social_link['icon']) : ?>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.6" cy="6.5" r="1"/></svg>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4" fill="var(--color-bg)"/><circle cx="17.6" cy="6.5" r="1"/></svg>
                 <?php elseif ('tiktok' === $omochix_social_link['icon']) : ?>
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14.2 3.5h3.1c.2 1.7 1.1 2.8 2.7 3.4v3a8.2 8.2 0 0 1-2.7-.8v5.8a5.6 5.6 0 1 1-4.8-5.5v3.1a2.5 2.5 0 1 0 1.7 2.4V3.5Z"/></svg>
                 <?php else : ?>
