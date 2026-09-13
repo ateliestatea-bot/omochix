@@ -90,7 +90,54 @@ function omochix_slim_seo_normalize_schema_graph($graph) {
 add_filter('slim_seo_schema_graph', 'omochix_slim_seo_normalize_schema_graph', 20);
 
 /**
- * Remove a breadcrumb level that duplicates the name of the level right after it.
+ * Enrich Slim SEO's Organization and WebSite entities with brand identity
+ * fields Slim SEO does not populate on its own.
+ *
+ * Slim SEO's Organization node only ever contains `@type`, `@id`, `url`, and
+ * `name` (plus `logo`/`image` when a Site Icon or Custom Logo is configured
+ * in Settings > General / Customizer — a WordPress admin setting, not a code
+ * concern). `alternateName`, `description`, and `sameAs` are never populated
+ * by Slim SEO itself, so search engines and AI answer engines have no
+ * machine-readable definition of what OmochiX is beyond its bare name. This
+ * fills in only those three fields, using the same real, live social URLs
+ * the site footer already links to (see omochix_get_social_links()) — never
+ * placeholder or unverified URLs.
+ *
+ * @param array<int, array<string, mixed>> $graph Slim SEO schema graph.
+ * @return array<int, array<string, mixed>>
+ */
+function omochix_enrich_brand_entity_schema($graph) {
+    $description   = __('OmochiX（オモチックス）は、AIニュース・AI開発・AIツール・AI活用を扱う日本のAI専門メディア＆プラットフォームです。', 'omochix');
+    $alternate_names = ['オモチックス', 'OmochiX AI'];
+    $same_as       = wp_list_pluck(omochix_get_social_links(), 'url');
+
+    foreach ($graph as $index => $entity) {
+        if (!is_array($entity) || !isset($entity['@type'])) {
+            continue;
+        }
+
+        if ('Organization' === $entity['@type']) {
+            $graph[$index] += [
+                'alternateName' => $alternate_names,
+                'description'   => $description,
+                'sameAs'        => $same_as,
+            ];
+        }
+
+        if ('WebSite' === $entity['@type']) {
+            $graph[$index] += [
+                'alternateName' => $alternate_names,
+            ];
+        }
+    }
+
+    return $graph;
+}
+add_filter('slim_seo_schema_graph', 'omochix_enrich_brand_entity_schema', 20);
+
+/**
+ * Remove a breadcrumb level that duplicates the name of the level right after it,
+ * and point the AI News category level at the URL it now permanently redirects to.
  *
  * Slim SEO's auto-generated breadcrumb trail can include both the WordPress
  * "posts page" ancestor and the post's primary category ancestor. When both
@@ -99,6 +146,13 @@ add_filter('slim_seo_schema_graph', 'omochix_slim_seo_normalize_schema_graph', 2
  * level but the structured data shows two, which no longer matches Google's
  * breadcrumb markup guidance. This is a no-op for any trail that has no such
  * consecutive duplicate, so other post types and categories are unaffected.
+ *
+ * Separately, /category/ai-news/ now permanently redirects (301, via a Slim
+ * SEO redirect rule) to the WordPress posts page at /ai-news/, since both
+ * expose the same "AIニュース" content by design. The surviving breadcrumb
+ * item for that category should reference the final URL directly instead of
+ * one that immediately redirects; see omochix_get_category_url() for the
+ * single place that decision is made for on-page links.
  *
  * Hooked on Slim SEO's per-entity `slim_seo_schema_breadcrumblist` filter
  * (not the aggregate `slim_seo_schema_graph`) so this only ever touches the
@@ -112,7 +166,23 @@ function omochix_dedupe_breadcrumb_schema($schema) {
         return $schema;
     }
 
-    $items = $schema['itemListElement'];
+    $original_items = $schema['itemListElement'];
+    $items          = $original_items;
+
+    $ai_news_category = get_category_by_slug('ai-news');
+    if ($ai_news_category instanceof WP_Term) {
+        $redirected_url = get_category_link($ai_news_category);
+        $canonical_url  = omochix_get_category_url($ai_news_category);
+
+        if ($redirected_url && $canonical_url && $redirected_url !== $canonical_url) {
+            foreach ($items as &$item) {
+                if (is_array($item) && isset($item['item']) && $item['item'] === $redirected_url) {
+                    $item['item'] = $canonical_url;
+                }
+            }
+            unset($item);
+        }
+    }
 
     $deduped = [];
     foreach ($items as $i => $item) {
@@ -130,7 +200,7 @@ function omochix_dedupe_breadcrumb_schema($schema) {
         $deduped[] = $item;
     }
 
-    if (count($deduped) === count($items)) {
+    if ($deduped === $original_items) {
         return $schema;
     }
 
@@ -172,7 +242,7 @@ function omochix_is_noindex_archive_request() {
         return true;
     }
 
-    if (is_category() || is_tax('ai_tool_category')) {
+    if (is_category() || is_tag() || is_tax('ai_tool_category')) {
         $term = get_queried_object();
         return $term instanceof WP_Term && (int) $term->count < 2;
     }
@@ -219,7 +289,14 @@ function omochix_filter_slim_seo_sitemap_taxonomies($taxonomies) {
 add_filter('slim_seo_sitemap_taxonomies', 'omochix_filter_slim_seo_sitemap_taxonomies');
 
 /**
- * Exclude thin term archives from taxonomy sitemap output.
+ * Exclude thin term archives, and the AI News category, from taxonomy sitemap output.
+ *
+ * The "ai-news" category is excluded unconditionally (regardless of its post
+ * count) because its archive URL, /category/ai-news/, now permanently
+ * redirects to the WordPress posts page at /ai-news/ (see the Slim SEO
+ * redirect rule and omochix_get_category_url()). Submitting a URL in the
+ * sitemap that only ever 301s elsewhere provides no value. No other category
+ * is affected by this exclusion.
  *
  * @param WP_Term[]|int[] $terms      Retrieved terms.
  * @param string[]        $taxonomies Requested taxonomies.
@@ -231,7 +308,15 @@ function omochix_filter_thin_sitemap_terms($terms, $taxonomies) {
     }
 
     return array_values(array_filter($terms, static function ($term) {
-        return !$term instanceof WP_Term || (int) $term->count >= 2;
+        if (!$term instanceof WP_Term) {
+            return true;
+        }
+
+        if ('category' === $term->taxonomy && 'ai-news' === $term->slug) {
+            return false;
+        }
+
+        return (int) $term->count >= 2;
     }));
 }
 add_filter('get_terms', 'omochix_filter_thin_sitemap_terms', 10, 2);

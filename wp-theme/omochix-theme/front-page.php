@@ -19,6 +19,7 @@ $omochix_hero = [
     'title_first' => __('AIで世界の情報を、', 'omochix'),
     'title_last'  => __('もっとシンプルに。', 'omochix'),
     'description' => __('最新のAIニュース、便利なAIツール、実践的な活用方法まで。あなたのAIライフを、OmochiXがナビゲートします。', 'omochix'),
+    'entity_description' => __('OmochiX（オモチックス）は、AIニュース・AI開発・AIツール・AI活用をわかりやすく発信するAI専門メディアです。', 'omochix'),
     'image_alt'   => __('紫色のパーカーを着たフレンチブルドッグ「おもち」', 'omochix'),
 ];
 
@@ -52,6 +53,10 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
 
                 <p class="home-hero__description">
                     <?php echo esc_html($omochix_hero['description']); ?>
+                </p>
+
+                <p class="home-hero__description">
+                    <?php echo esc_html($omochix_hero['entity_description']); ?>
                 </p>
 
                 <form class="home-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
@@ -509,8 +514,10 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
             }
 
             if ($omochix_category_term && !is_wp_error($omochix_category_term)) {
-                $omochix_term_link = get_term_link($omochix_category_term);
-                if (!is_wp_error($omochix_term_link)) {
+                $omochix_term_link = ('category' === $omochix_category_item['taxonomy'])
+                    ? omochix_get_category_url($omochix_category_term)
+                    : get_term_link($omochix_category_term);
+                if ($omochix_term_link && !is_wp_error($omochix_term_link)) {
                     $omochix_category_url   = $omochix_term_link;
                     $omochix_category_count = max(0, (int) $omochix_category_term->count);
                 }

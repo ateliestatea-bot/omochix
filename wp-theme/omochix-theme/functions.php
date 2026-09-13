@@ -235,6 +235,7 @@ function omochix_get_front_page_categories() {
     return [
         ['name' => __('AIニュース', 'omochix'), 'slug' => 'ai-news', 'taxonomy' => 'category', 'description' => __('AIの最新動向を知る', 'omochix'), 'icon' => 'news'],
         ['name' => __('AIツール', 'omochix'), 'post_type' => 'ai_tool', 'description' => __('目的に合うAIサービスを探す', 'omochix'), 'icon' => 'tools'],
+        ['name' => __('AI開発', 'omochix'), 'slug' => 'ai-development', 'taxonomy' => 'category', 'description' => __('AI開発を実践的に学ぶ', 'omochix'), 'icon' => 'code'],
         ['name' => __('チュートリアル', 'omochix'), 'slug' => 'tutorial', 'taxonomy' => 'category', 'description' => __('使い方を手順から学ぶ', 'omochix'), 'icon' => 'tutorial'],
         ['name' => __('プロンプト集', 'omochix'), 'slug' => 'prompts', 'taxonomy' => 'category', 'description' => __('すぐ使える指示文を見つける', 'omochix'), 'icon' => 'prompt'],
         ['name' => __('ビジネス', 'omochix'), 'slug' => 'business', 'taxonomy' => 'category', 'description' => __('仕事と業務改善に活かす', 'omochix'), 'icon' => 'business'],
@@ -242,6 +243,49 @@ function omochix_get_front_page_categories() {
         ['name' => __('デザイン', 'omochix'), 'slug' => 'design', 'taxonomy' => 'category', 'description' => __('制作と表現の幅を広げる', 'omochix'), 'icon' => 'design'],
         ['name' => __('ライフスタイル', 'omochix'), 'slug' => 'lifestyle', 'taxonomy' => 'category', 'description' => __('暮らしを便利に整える', 'omochix'), 'icon' => 'life'],
     ];
+}
+
+/**
+ * Return OmochiX's real, live official social profile URLs.
+ *
+ * Single source of truth for the footer social links and the Organization
+ * schema's `sameAs` property, so the two never drift apart.
+ *
+ * @return array<int, array<string, string>>
+ */
+function omochix_get_social_links() {
+    return [
+        ['name' => 'X', 'label' => 'OmochiX on X', 'url' => 'https://x.com/omochix528', 'icon' => 'x'],
+        ['name' => 'Instagram', 'label' => 'OmochiX on Instagram', 'url' => 'https://www.instagram.com/omochix528/', 'icon' => 'instagram'],
+        ['name' => 'TikTok', 'label' => 'OmochiX on TikTok', 'url' => 'https://www.tiktok.com/@omochix528', 'icon' => 'tiktok'],
+        ['name' => 'YouTube', 'label' => 'OmochiX on YouTube', 'url' => 'https://www.youtube.com/channel/UCiU0SZYcHnVnIf-LNMYvTgg', 'icon' => 'youtube'],
+    ];
+}
+
+/**
+ * Resolve a category's canonical front-end URL.
+ *
+ * The "AIニュース" category (slug `ai-news`) shares its content with the
+ * WordPress posts page (`page_for_posts`): /category/ai-news/ permanently
+ * redirects to that posts page via a Slim SEO redirect rule. Every internal
+ * link should point at the posts page directly instead of bouncing through
+ * that redirect, so this is the single place that decision is made.
+ *
+ * @param WP_Term $category Category term.
+ * @return string
+ */
+function omochix_get_category_url($category) {
+    if ($category instanceof WP_Term && 'ai-news' === $category->slug) {
+        $posts_page_id = (int) get_option('page_for_posts');
+        if ($posts_page_id) {
+            $permalink = get_permalink($posts_page_id);
+            if ($permalink) {
+                return $permalink;
+            }
+        }
+    }
+
+    return get_category_link($category);
 }
 
 /**

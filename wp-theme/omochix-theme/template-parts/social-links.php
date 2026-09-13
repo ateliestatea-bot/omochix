@@ -9,32 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$omochix_social_links = [
-    [
-        'name'  => 'X',
-        'label' => 'OmochiX on X',
-        'url'   => 'https://x.com/omochix528',
-        'icon'  => 'x',
-    ],
-    [
-        'name'  => 'Instagram',
-        'label' => 'OmochiX on Instagram',
-        'url'   => 'https://www.instagram.com/omochix528/',
-        'icon'  => 'instagram',
-    ],
-    [
-        'name'  => 'TikTok',
-        'label' => 'OmochiX on TikTok',
-        'url'   => 'https://www.tiktok.com/@omochix528',
-        'icon'  => 'tiktok',
-    ],
-    [
-        'name'  => 'YouTube',
-        'label' => 'OmochiX on YouTube',
-        'url'   => 'https://www.youtube.com/channel/UCiU0SZYcHnVnIf-LNMYvTgg',
-        'icon'  => 'youtube',
-    ],
-];
+$omochix_social_links = omochix_get_social_links();
 ?>
 
 <ul class="social-links">
