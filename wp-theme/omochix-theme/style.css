@@ -4856,6 +4856,7 @@ button:active,
    and the plain article list below), so the heading reads as paired with
    its 3 cards rather than a generic section header. */
 .news-index [aria-labelledby="hub-read-first-title"] .news-results__header {
+    margin-top: 12px;
     margin-bottom: 20px;
 }
 
