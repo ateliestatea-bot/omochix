@@ -289,6 +289,41 @@ function omochix_get_category_url($category) {
 }
 
 /**
+ * Return hub-page configuration for the category archives that should show
+ * curated hero copy, "read first" picks, and topic navigation instead of a
+ * plain post list.
+ *
+ * Categories with no entry here (i.e. every category except the ones opted
+ * in below) render category.php exactly as before this function existed —
+ * name, description, article grid — so this is additive and cannot regress
+ * any other category archive.
+ *
+ * @param string $slug Category slug.
+ * @return array{tagline: string, read_first: array<int, array<string, string>>, topics: array<int, array<string, string>>}|null
+ */
+function omochix_get_category_hub_config($slug) {
+    $hubs = [
+        'ai-development' => [
+            'tagline' => __('Claude Code・MCP・AIエージェント・自動開発を実践的に学ぶ', 'omochix'),
+            'read_first' => [
+                ['url' => 'https://omochix.com/claude-code-ai-development-guide/', 'title' => __('Claude Code完全ガイド', 'omochix')],
+                ['url' => 'https://omochix.com/claude-code-mcp-guide-2026/', 'title' => __('Claude Code × MCP完全ガイド', 'omochix')],
+                ['url' => 'https://omochix.com/claude-code-ai-development-stack-2026/', 'title' => __('Claude CodeでAI自動開発環境を作る', 'omochix')],
+            ],
+            'topics' => [
+                ['name' => __('Claude Code', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'claude-code'],
+                ['name' => __('MCP', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'mcp'],
+                ['name' => __('AI自動開発', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => '自動開発'],
+                ['name' => __('QA / E2E', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'e2eテスト'],
+                ['name' => __('AIコーディング比較', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'ai比較'],
+            ],
+        ],
+    ];
+
+    return $hubs[$slug] ?? null;
+}
+
+/**
  * Resolve an optional page without producing a known 404 link.
  *
  * @param string $path        Page path without surrounding slashes.

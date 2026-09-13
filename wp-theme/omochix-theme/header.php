@@ -65,9 +65,11 @@ if (!defined('ABSPATH')) {
                     <?php
                     $omochix_posts_page_id = (int) get_option('page_for_posts');
                     $omochix_posts_page    = $omochix_posts_page_id ? get_post($omochix_posts_page_id) : null;
+                    $omochix_ai_dev_category = get_category_by_slug('ai-development');
                     $omochix_default_menu = [
                         __('AIニュース', 'omochix') => $omochix_posts_page instanceof WP_Post && 'publish' === $omochix_posts_page->post_status ? get_permalink($omochix_posts_page) : '',
                         __('AIツール', 'omochix')   => get_post_type_archive_link('ai_tool'),
+                        __('AI開発', 'omochix')     => $omochix_ai_dev_category instanceof WP_Term ? omochix_get_category_url($omochix_ai_dev_category) : '',
                         __('動画', 'omochix')      => omochix_get_published_page_url('videos'),
                         __('コミュニティ', 'omochix') => omochix_get_published_page_url('community'),
                         __('About', 'omochix')     => omochix_get_published_page_url('about'),
