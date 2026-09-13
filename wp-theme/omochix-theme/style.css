@@ -1626,7 +1626,7 @@ body { overflow-x: clip; }
 
 .pagination { margin-top: 64px; }
 .pagination ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.pagination .page-numbers { display: grid; min-width: 40px; min-height: 40px; place-items: center; padding: 8px 12px; border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 12px; text-decoration: none; }
+.pagination ul .page-numbers { display: grid; min-width: 40px; min-height: 40px; place-items: center; padding: 8px 12px; border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 12px; text-decoration: none; }
 .pagination a.page-numbers:hover { border-color: var(--color-primary); background: var(--color-hover); }
 .pagination .current { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
 .news-results__empty { display: grid; min-height: 320px; place-items: center; align-content: center; gap: 16px; padding: 32px; color: var(--color-muted); background: var(--color-hover); border: 1px solid var(--color-line); border-radius: var(--radius-md); text-align: center; }
@@ -4734,7 +4734,7 @@ button:active,
     gap: 8px;
 }
 
-.news-index .pagination .page-numbers {
+.news-index .pagination :is(a, span).page-numbers {
     min-width: 44px;
     min-height: 44px;
     padding: 8px 12px;
