@@ -54,18 +54,23 @@ $omochix_hero_lead = $omochix_hub
 $omochix_paged = max(1, (int) get_query_var('paged'), (int) get_query_var('page'));
 
 // Resolve the hub's "read first" picks from their real, existing posts by
-// URL, so the cards always reflect the actual post (thumbnail, excerpt,
-// permalink); only the display title is overridden with the curated label.
-// A pick that no longer resolves to a real post is skipped, never a broken link.
+// URL, so the cards always reflect the actual post (thumbnail, permalink);
+// the display title and description are overridden with the curated hub
+// config copy rather than the post's own title/excerpt — article excerpts
+// can surface incidental in-article hero label text (e.g. an English
+// heading fragment) that reads poorly as hub navigation copy. A pick that
+// no longer resolves to a real post is skipped, never a broken link.
 $omochix_hub_read_first_query = null;
 $omochix_hub_titles           = [];
+$omochix_hub_descriptions     = [];
 if ($omochix_hub && !empty($omochix_hub['read_first'])) {
     $omochix_hub_post_ids = [];
     foreach ($omochix_hub['read_first'] as $omochix_pick) {
         $omochix_pick_id = url_to_postid($omochix_pick['url']);
         if ($omochix_pick_id) {
-            $omochix_hub_post_ids[]                = $omochix_pick_id;
-            $omochix_hub_titles[$omochix_pick_id]  = $omochix_pick['title'];
+            $omochix_hub_post_ids[]                     = $omochix_pick_id;
+            $omochix_hub_titles[$omochix_pick_id]       = $omochix_pick['title'];
+            $omochix_hub_descriptions[$omochix_pick_id] = $omochix_pick['description'] ?? '';
         }
     }
     if ($omochix_hub_post_ids) {
@@ -96,8 +101,9 @@ if ($omochix_hub && !empty($omochix_hub['topics'])) {
             : get_tag_link($omochix_topic_term);
         if ($omochix_topic_url && !is_wp_error($omochix_topic_url)) {
             $omochix_hub_topics[] = [
-                'name' => $omochix_topic['name'],
-                'url'  => $omochix_topic_url,
+                'name'        => $omochix_topic['name'],
+                'description' => $omochix_topic['description'] ?? '',
+                'url'         => $omochix_topic_url,
             ];
         }
     }
@@ -146,31 +152,29 @@ $omochix_popular_query = new WP_Query([
             <header class="news-results__header">
                 <h2 id="hub-read-first-title"><?php esc_html_e('まず読む3本', 'omochix'); ?></h2>
             </header>
-            <div class="news-results__grid">
+            <div class="hub-picks__grid">
+                <?php $omochix_pick_number = 0; ?>
                 <?php while ($omochix_hub_read_first_query->have_posts()) : $omochix_hub_read_first_query->the_post(); ?>
                     <?php
-                    $omochix_pick_image   = get_the_post_thumbnail_url(get_the_ID(), 'large');
+                    $omochix_pick_number++;
+                    $omochix_pick_image   = get_the_post_thumbnail_url(get_the_ID(), 'thumbnail');
                     $omochix_pick_title   = $omochix_hub_titles[get_the_ID()] ?? get_the_title();
-                    $omochix_pick_excerpt = wp_trim_words(wp_strip_all_tags(get_the_excerpt()), 46, '…');
+                    $omochix_pick_excerpt = $omochix_hub_descriptions[get_the_ID()] ?? '';
+                    if (!$omochix_pick_excerpt) {
+                        $omochix_pick_excerpt = wp_trim_words(wp_strip_all_tags(get_the_excerpt()), 22, '…');
+                    }
                     ?>
-                    <article class="news-list-card">
-                        <a class="news-list-card__link" href="<?php the_permalink(); ?>" aria-label="<?php echo esc_attr(sprintf(__('記事を読む：%s', 'omochix'), $omochix_pick_title)); ?>">
-                            <div class="news-list-card__media">
+                    <article class="hub-pick-card">
+                        <a class="hub-pick-card__link" href="<?php the_permalink(); ?>" aria-label="<?php echo esc_attr(sprintf(__('記事を読む：%s', 'omochix'), $omochix_pick_title)); ?>">
+                            <div class="hub-pick-card__top">
+                                <span class="hub-pick-card__number"><?php echo esc_html(sprintf('%02d', $omochix_pick_number)); ?></span>
                                 <?php if ($omochix_pick_image) : ?>
-                                    <img src="<?php echo esc_url($omochix_pick_image); ?>" width="640" height="360" alt="" loading="lazy" decoding="async">
-                                <?php else : ?>
-                                    <div class="news-list-card__placeholder" role="img" aria-label="<?php esc_attr_e('OmochiX AIニュースのアイキャッチ画像', 'omochix'); ?>"><span aria-hidden="true">O</span></div>
+                                    <span class="hub-pick-card__media"><img src="<?php echo esc_url($omochix_pick_image); ?>" width="40" height="40" alt="" loading="lazy" decoding="async"></span>
                                 <?php endif; ?>
                             </div>
-                            <div class="news-list-card__body">
-                                <div class="news-list-card__meta">
-                                    <span><?php echo esc_html($omochix_category_name); ?></span>
-                                    <time datetime="<?php echo esc_attr(get_the_date(DATE_W3C)); ?>"><?php echo esc_html(get_the_date('Y.m.d')); ?></time>
-                                </div>
-                                <h3><?php echo esc_html($omochix_pick_title); ?></h3>
-                                <p><?php echo esc_html($omochix_pick_excerpt); ?></p>
-                                <span class="news-list-card__more"><?php esc_html_e('続きを読む', 'omochix'); ?><span aria-hidden="true">→</span></span>
-                            </div>
+                            <h3 class="hub-pick-card__title"><?php echo esc_html($omochix_pick_title); ?></h3>
+                            <p class="hub-pick-card__excerpt"><?php echo esc_html($omochix_pick_excerpt); ?></p>
+                            <span class="hub-pick-card__cta"><?php esc_html_e('読む', 'omochix'); ?><span aria-hidden="true">→</span></span>
                         </a>
                     </article>
                 <?php endwhile; wp_reset_postdata(); ?>
@@ -183,9 +187,17 @@ $omochix_popular_query = new WP_Query([
             <header class="news-results__header">
                 <h2 id="hub-topics-title"><?php esc_html_e('トピックから探す', 'omochix'); ?></h2>
             </header>
-            <div class="sidebar-tags">
+            <div class="hub-topics__grid">
                 <?php foreach ($omochix_hub_topics as $omochix_topic_link) : ?>
-                    <a href="<?php echo esc_url($omochix_topic_link['url']); ?>"><?php echo esc_html($omochix_topic_link['name']); ?></a>
+                    <a class="hub-topic-card" href="<?php echo esc_url($omochix_topic_link['url']); ?>">
+                        <span class="hub-topic-card__text">
+                            <span class="hub-topic-card__name"><?php echo esc_html($omochix_topic_link['name']); ?></span>
+                            <?php if ($omochix_topic_link['description']) : ?>
+                                <span class="hub-topic-card__description"><?php echo esc_html($omochix_topic_link['description']); ?></span>
+                            <?php endif; ?>
+                        </span>
+                        <span class="hub-topic-card__arrow" aria-hidden="true">→</span>
+                    </a>
                 <?php endforeach; ?>
             </div>
         </section>

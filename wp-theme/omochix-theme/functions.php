@@ -306,16 +306,16 @@ function omochix_get_category_hub_config($slug) {
         'ai-development' => [
             'tagline' => __('Claude Code・MCP・AIエージェント・自動開発を実践的に学ぶ', 'omochix'),
             'read_first' => [
-                ['url' => 'https://omochix.com/claude-code-ai-development-guide/', 'title' => __('Claude Code完全ガイド', 'omochix')],
-                ['url' => 'https://omochix.com/claude-code-mcp-guide-2026/', 'title' => __('Claude Code × MCP完全ガイド', 'omochix')],
-                ['url' => 'https://omochix.com/claude-code-ai-development-stack-2026/', 'title' => __('Claude CodeでAI自動開発環境を作る', 'omochix')],
+                ['url' => 'https://omochix.com/claude-code-ai-development-guide/', 'title' => __('Claude Code完全ガイド', 'omochix'), 'description' => __('Claude Codeの基本から料金・使い方・実践的なAI開発までまとめて解説。', 'omochix')],
+                ['url' => 'https://omochix.com/claude-code-mcp-guide-2026/', 'title' => __('Claude Code × MCP完全ガイド', 'omochix'), 'description' => __('MCPの仕組みと接続方法、外部ツールをClaude Codeから操作する方法を解説。', 'omochix')],
+                ['url' => 'https://omochix.com/claude-code-ai-development-stack-2026/', 'title' => __('Claude CodeでAI自動開発環境を作る', 'omochix'), 'description' => __('仕様・デザイン・実装・QA・本番監視までをつないだAI開発環境の全体像を解説。', 'omochix')],
             ],
             'topics' => [
-                ['name' => __('Claude Code', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'claude-code'],
-                ['name' => __('MCP', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'mcp'],
-                ['name' => __('AI自動開発', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => '自動開発'],
-                ['name' => __('QA / E2E', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'e2eテスト'],
-                ['name' => __('AIコーディング比較', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'ai比較'],
+                ['name' => __('Claude Code', 'omochix'), 'description' => __('Claude Codeの基礎・使い方・実践', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'claude-code'],
+                ['name' => __('MCP', 'omochix'), 'description' => __('外部ツール連携・おすすめMCP', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'mcp'],
+                ['name' => __('AI自動開発', 'omochix'), 'description' => __('AIエージェントによる開発自動化', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => '自動開発'],
+                ['name' => __('QA / E2E', 'omochix'), 'description' => __('Playwright・自動テスト・品質管理', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'e2eテスト'],
+                ['name' => __('AIコーディング比較', 'omochix'), 'description' => __('Claude Code・Codexなどの比較', 'omochix'), 'taxonomy' => 'post_tag', 'slug' => 'ai比較'],
             ],
         ],
     ];
