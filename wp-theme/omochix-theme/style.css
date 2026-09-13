@@ -4828,9 +4828,36 @@ button:active,
     .hub-picks__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* Category hub: tighten the shared hero's bottom padding for this one
+   category only, via its unique body class (confirmed against the live
+   body_class() output — WordPress emits "category-ai-development" for this
+   archive). This overrides only padding-bottom on the shared .news-index__hero
+   rule, leaving padding-top and every other category/(/ai-news/) untouched. */
+.category-ai-development .news-index__hero {
+    padding-bottom: 32px;
+}
+
+@media (max-width: 767px) {
+    .category-ai-development .news-index__hero {
+        padding-bottom: 24px;
+    }
+}
+
 /* Scoped to this section's own heading id (unique to the hub) rather than a
-   shared class, so this never affects /ai-news/ or any other category. */
-.news-index [aria-labelledby="hub-read-first-title"] { margin-bottom: 48px; }
+   shared class, so this never affects /ai-news/ or any other category.
+   margin-bottom keeps a clearly larger gap before the next section, so
+   "read first" reads as one tight unit while still being visually distinct
+   from "topics" below it. */
+.news-index [aria-labelledby="hub-read-first-title"] {
+    margin-bottom: 56px;
+}
+
+/* Tighter than the shared .news-results__header spacing (used by /ai-news/
+   and the plain article list below), so the heading reads as paired with
+   its 3 cards rather than a generic section header. */
+.news-index [aria-labelledby="hub-read-first-title"] .news-results__header {
+    margin-bottom: 20px;
+}
 
 /* Category hub: topic navigation */
 .hub-topics__grid {
