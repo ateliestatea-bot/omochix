@@ -2320,9 +2320,66 @@ body { overflow-x: clip; }
 .article-content .omx-summary__list li { position: relative; margin: 0; padding: 0 0 0 28px; color: var(--color-text); font-size: 0.9375em; line-height: 1.7; counter-increment: omx-summary; }
 .article-content .omx-summary__list li::before { content: counter(omx-summary); position: absolute; left: 0; top: 0.05em; display: grid; place-items: center; width: 18px; height: 18px; background: color-mix(in srgb, var(--omx-purple) 14%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--omx-purple) 30%, var(--color-line)); border-radius: 50%; color: var(--color-text); font-size: 10px; font-weight: 700; }
 
+/* 9. Article intro ("この記事でわかること") */
+.article-content .omx-article-intro { margin: 40px 0; padding: 24px 28px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.article-content .omx-article-intro__label { margin: 0 0 16px; color: var(--color-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.article-content .omx-article-intro__list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.article-content .omx-article-intro__list li { display: flex; gap: 10px; margin: 0; padding: 0; color: var(--color-text); font-size: 0.9375em; line-height: 1.7; }
+.article-content .omx-article-intro__list .omx-icon { width: 18px; height: 18px; margin-top: 3px; color: var(--omx-purple); }
+
+/* 10. Conclusion box ("結論") */
+.article-content .omx-conclusion-box { margin: 40px 0; padding: 24px 28px; background: color-mix(in srgb, var(--omx-purple) 6%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--omx-purple) 26%, var(--color-line)); border-radius: var(--radius-md); }
+.article-content .omx-conclusion-box__header { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+.article-content .omx-conclusion-box__header .omx-icon { width: 20px; height: 20px; color: var(--omx-purple); }
+.article-content .omx-conclusion-box__label { margin: 0; color: var(--color-muted); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.article-content .omx-conclusion-box__body p { margin: 0; color: var(--color-text); font-size: 1.0625em; font-weight: 550; line-height: 1.85; }
+.article-content .omx-conclusion-box__body p + p { margin-top: 12px; }
+
+/* 11. Compare grid (role/responsibility split — distinct from .omx-compare's
+   product-vs-product ranking: no "best" badge, icon-led role cards instead) */
+.article-content .omx-compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 40px 0; }
+.article-content .omx-compare-grid__card { padding: 24px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.article-content .omx-compare-grid__card .omx-icon { width: 24px; height: 24px; margin-bottom: 14px; color: var(--omx-blue); }
+.article-content .omx-compare-grid__name { margin: 0 0 8px; font-size: 1.0625em; font-weight: 650; letter-spacing: -0.02em; }
+.article-content .omx-compare-grid__desc { margin: 0 0 16px; color: var(--color-muted); font-size: 0.875em; line-height: 1.7; }
+.article-content .omx-compare-grid__list { display: grid; gap: 8px; margin: 0; padding: 16px 0 0; border-top: 1px solid var(--color-line); list-style: none; font-size: 0.8125em; }
+.article-content .omx-compare-grid__list li { position: relative; margin: 0; padding: 0 0 0 14px; color: var(--color-text); }
+.article-content .omx-compare-grid__list li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 5px; height: 5px; background: var(--omx-blue); border-radius: 50%; }
+
+/* 12. Code block (header bar wraps the existing .article-content pre/code
+   untouched — only the wrapper and header are new) */
+.article-content .omx-code-block { margin: 40px 0; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+.article-content .omx-code-block__header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #1f1f1f; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.article-content .omx-code-block__dots { display: flex; flex-shrink: 0; gap: 6px; }
+.article-content .omx-code-block__dots span { width: 8px; height: 8px; background: rgba(255, 255, 255, 0.18); border-radius: 50%; }
+.article-content .omx-code-block__filename { margin-right: auto; overflow: hidden; color: #ccc; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.article-content .omx-code-block__lang { flex-shrink: 0; padding: 2px 8px; color: #aaa; background: rgba(255, 255, 255, 0.08); border-radius: var(--radius-pill); font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.article-content .omx-code-block pre { margin: 0; border-radius: 0; }
+
+/* 13. Warning box (a heavier, section-level sibling of the existing
+   .omx-note--warning inline aside — same amber accent, same icon system) */
+.article-content .omx-warning-box { margin: 40px 0; padding: 24px 28px; background: color-mix(in srgb, var(--omx-amber) 8%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--omx-amber) 30%, var(--color-line)); border-radius: var(--radius-md); }
+.article-content .omx-warning-box__header { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+.article-content .omx-warning-box__header .omx-icon { width: 20px; height: 20px; color: var(--omx-amber); }
+.article-content .omx-warning-box__label { margin: 0; color: var(--color-muted); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.article-content .omx-warning-box__body p { margin: 0; color: var(--color-text); font-size: 0.9375em; line-height: 1.8; }
+.article-content .omx-warning-box__body p + p { margin-top: 12px; }
+
+/* 14. CTA box (end-of-article related-reading card) */
+.article-content .omx-cta-box { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; margin: 48px 0; padding: 28px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+.article-content .omx-cta-box__label { margin: 0 0 8px; color: var(--color-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.article-content .omx-cta-box__title { margin: 0 0 6px; color: var(--color-text); font-size: 1.0625em; font-weight: 650; letter-spacing: -0.02em; }
+.article-content .omx-cta-box__desc { margin: 0; color: var(--color-muted); font-size: 0.875em; line-height: 1.7; }
+.article-content .omx-cta-box__button { display: inline-flex; flex-shrink: 0; align-items: center; gap: 8px; padding: 12px 20px; color: #fff; background: var(--color-primary); border-radius: var(--radius-sm); font-size: 13px; font-weight: 650; text-decoration: none; transition: transform var(--motion-fast) ease, box-shadow var(--motion-fast) ease; }
+.article-content .omx-cta-box__button:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.article-content .omx-cta-box__button span { transition: transform var(--motion-fast) ease; }
+.article-content .omx-cta-box__button:hover span { transform: translateX(3px); }
+
 @media (max-width: 767px) {
     .article-content .omx-flow { flex-direction: column; gap: 32px; }
     .article-content .omx-flow__step:not(:last-child)::after { top: auto; right: auto; bottom: -24px; left: 50%; transform: translateX(-50%) rotate(90deg); }
+    .article-content .omx-cta-box { flex-direction: column; align-items: stretch; }
+    .article-content .omx-cta-box__button { justify-content: center; }
 }
 
 @media (max-width: 480px) {
@@ -2331,7 +2388,12 @@ body { overflow-x: clip; }
     .article-content .omx-summary,
     .article-content .omx-stat,
     .article-content .omx-feature,
-    .article-content .omx-compare__card { padding: 18px; }
+    .article-content .omx-compare__card,
+    .article-content .omx-article-intro,
+    .article-content .omx-conclusion-box,
+    .article-content .omx-compare-grid__card,
+    .article-content .omx-warning-box,
+    .article-content .omx-cta-box { padding: 18px; }
     .article-content .omx-note { padding: 14px 16px; }
 }
 
