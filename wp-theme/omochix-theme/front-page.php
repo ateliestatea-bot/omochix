@@ -188,40 +188,35 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
     /**
      * Latest news configuration.
      * Change post_type to "news" when a dedicated news post type is introduced.
+     *
+     * This section shows AI News category posts only, newest first. Sticky
+     * posts are reserved exclusively for the "recommended reading" section
+     * below (see $omochix_sticky_ids there), so they are excluded here —
+     * this is what guarantees the two sections never show the same post.
      */
-    $omochix_news_post_type = 'post';
-    $omochix_news_limit     = 4;
-    $omochix_sticky_ids     = array_values(array_filter(array_map('absint', (array) get_option('sticky_posts', []))));
-    $omochix_news_posts     = [];
+    $omochix_news_post_type   = 'post';
+    $omochix_news_limit       = 4;
+    $omochix_sticky_ids       = array_values(array_filter(array_map('absint', (array) get_option('sticky_posts', []))));
+    $omochix_news_category    = get_category_by_slug('ai-news');
+    $omochix_news_category_id = $omochix_news_category instanceof WP_Term ? (int) $omochix_news_category->term_id : 0;
+    $omochix_news_posts       = [];
 
-    // Sticky posts are deliberately queried first so editorial picks take priority.
-    if (!empty($omochix_sticky_ids)) {
-        $omochix_featured_news = new WP_Query([
-            'post_type'           => $omochix_news_post_type,
-            'post_status'         => 'publish',
-            'posts_per_page'      => $omochix_news_limit,
-            'post__in'            => $omochix_sticky_ids,
-            'orderby'             => 'post__in',
-            'ignore_sticky_posts' => true,
-            'no_found_rows'       => true,
-        ]);
-        $omochix_news_posts = $omochix_featured_news->posts;
-    }
-
-    // Fill any remaining positions with the newest non-sticky posts.
-    $omochix_remaining_news = $omochix_news_limit - count($omochix_news_posts);
-    if ($omochix_remaining_news > 0) {
+    // If the "ai-news" category can't be resolved, skip the query entirely
+    // rather than falling back to an unfiltered (and therefore wrong) list;
+    // the existing empty-state markup below already handles $omochix_news_posts === [].
+    if ($omochix_news_category_id) {
         $omochix_latest_news = new WP_Query([
             'post_type'           => $omochix_news_post_type,
             'post_status'         => 'publish',
-            'posts_per_page'      => $omochix_remaining_news,
+            'posts_per_page'      => $omochix_news_limit,
+            'cat'                 => $omochix_news_category_id,
             'post__not_in'        => $omochix_sticky_ids,
             'orderby'             => 'date',
             'order'               => 'DESC',
             'ignore_sticky_posts' => true,
             'no_found_rows'       => true,
         ]);
-        $omochix_news_posts = array_merge($omochix_news_posts, $omochix_latest_news->posts);
+        $omochix_news_posts = $omochix_latest_news->posts;
     }
 
     $omochix_posts_page_id = (int) get_option('page_for_posts');
@@ -598,58 +593,41 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
     <?php
     /**
      * Recommended reading.
-     * Editorial signals use native tags/meta and gracefully fall back to the
-     * newest posts. Each query is capped and skips count queries for speed.
+     * WordPress's native Sticky Posts feature is the sole editorial signal
+     * here — editors mark up to 3 posts as sticky from the post edit screen
+     * (Publish box > "Stick to the top of the blog"), no custom meta box or
+     * field required. $omochix_sticky_ids and $omochix_news_category_id are
+     * computed earlier, in the "latest AI news" section above. Remaining
+     * slots are filled with the newest posts outside the AI News category,
+     * so this section leans toward guides, comparisons, and AI-development
+     * pieces rather than duplicating breaking news.
      */
     $omochix_recommended_posts = [];
     $omochix_recommended_ids   = [];
-    $omochix_recommend_rules   = [
-        [
-            'label' => __('AI初心者向け', 'omochix'),
-            'args'  => ['tag' => 'ai-beginner'],
-        ],
-        [
-            'label' => __('人気記事', 'omochix'),
-            'args'  => ['meta_key' => 'post_views_count', 'orderby' => 'meta_value_num'],
-        ],
-        [
-            'label' => __('編集部おすすめ', 'omochix'),
-            'args'  => [
-                'meta_query' => [
-                    [
-                        'key'     => 'is_recommended',
-                        'value'   => ['1', 'true', 'yes'],
-                        'compare' => 'IN',
-                    ],
-                ],
-            ],
-        ],
-    ];
 
-    foreach ($omochix_recommend_rules as $omochix_recommend_rule) {
-        $omochix_rule_query = new WP_Query(array_merge([
+    if (!empty($omochix_sticky_ids)) {
+        $omochix_sticky_query = new WP_Query([
             'post_type'           => 'post',
             'post_status'         => 'publish',
-            'posts_per_page'      => 1,
-            'post__not_in'        => $omochix_recommended_ids,
-            'order'               => 'DESC',
+            'posts_per_page'      => 3,
+            'post__in'            => $omochix_sticky_ids,
+            'orderby'             => 'post__in',
             'ignore_sticky_posts' => true,
             'no_found_rows'       => true,
-        ], $omochix_recommend_rule['args']));
+        ]);
 
-        if (!empty($omochix_rule_query->posts)) {
-            $omochix_selected_post       = $omochix_rule_query->posts[0];
+        foreach ($omochix_sticky_query->posts as $omochix_sticky_post) {
             $omochix_recommended_posts[] = [
-                'post'  => $omochix_selected_post,
-                'label' => $omochix_recommend_rule['label'],
+                'post'  => $omochix_sticky_post,
+                'label' => __('編集部おすすめ', 'omochix'),
             ];
-            $omochix_recommended_ids[]            = $omochix_selected_post->ID;
+            $omochix_recommended_ids[] = $omochix_sticky_post->ID;
         }
     }
 
     $omochix_recommended_slots = 3 - count($omochix_recommended_posts);
     if ($omochix_recommended_slots > 0) {
-        $omochix_recommended_fallback = new WP_Query([
+        $omochix_recommended_fallback_args = [
             'post_type'           => 'post',
             'post_status'         => 'publish',
             'posts_per_page'      => $omochix_recommended_slots,
@@ -658,7 +636,11 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
             'order'               => 'DESC',
             'ignore_sticky_posts' => true,
             'no_found_rows'       => true,
-        ]);
+        ];
+        if ($omochix_news_category_id) {
+            $omochix_recommended_fallback_args['category__not_in'] = [$omochix_news_category_id];
+        }
+        $omochix_recommended_fallback = new WP_Query($omochix_recommended_fallback_args);
 
         foreach ($omochix_recommended_fallback->posts as $omochix_fallback_post) {
             $omochix_recommended_posts[] = [
