@@ -163,6 +163,23 @@ function omochix_core_get_initial_terms() {
 			'slack'            => 'Slack',
 			'discord'          => 'Discord',
 		),
+		'prompt_category'  => array(
+			'sales'          => '営業',
+			'marketing'      => 'マーケティング',
+			'development'    => '開発',
+			'image'          => '画像',
+			'video'          => '動画',
+			'writing'        => '文章',
+			'documents'      => '資料',
+			'productivity'   => '業務効率化',
+		),
+		'prompt_model'     => array(
+			'chatgpt' => 'ChatGPT',
+			'claude'  => 'Claude',
+			'gemini'  => 'Gemini',
+			'image'   => 'Image',
+			'video'   => 'Video',
+		),
 	);
 }
 

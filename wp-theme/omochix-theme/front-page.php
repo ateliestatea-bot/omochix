@@ -145,6 +145,12 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
             'icon'        => 'tools',
         ],
         [
+            'label'       => __('学ぶ', 'omochix'),
+            'description' => __('AIを使う・作るための実践ガイド', 'omochix'),
+            'url'         => omochix_get_published_page_url('learn'),
+            'icon'        => 'learn',
+        ],
+        [
             'label'       => __('動画', 'omochix'),
             'description' => __('動画でAI活用を学ぶ', 'omochix'),
             'url'         => omochix_get_published_page_url('videos'),
