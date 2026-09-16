@@ -11,6 +11,7 @@ if (!defined('ABSPATH')) {
 
 require_once get_theme_file_path('/inc/seo.php');
 require_once get_theme_file_path('/inc/contact-form.php');
+require_once get_theme_file_path('/inc/learn.php');
 
 function omochix_setup() {
     add_theme_support('title-tag');
@@ -78,6 +79,16 @@ function omochix_enqueue_assets() {
         wp_enqueue_script(
             'omochix-contact-form',
             get_template_directory_uri() . '/assets/js/contact-form.js',
+            [],
+            $theme->get('Version'),
+            true
+        );
+    }
+
+    if (is_singular('prompt')) {
+        wp_enqueue_script(
+            'omochix-prompt',
+            get_template_directory_uri() . '/assets/js/prompt.js',
             [],
             $theme->get('Version'),
             true
@@ -237,7 +248,12 @@ function omochix_get_front_page_categories() {
         ['name' => __('AIツール', 'omochix'), 'post_type' => 'ai_tool', 'description' => __('目的に合うAIサービスを探す', 'omochix'), 'icon' => 'tools'],
         ['name' => __('AI開発', 'omochix'), 'slug' => 'ai-development', 'taxonomy' => 'category', 'description' => __('AI開発を実践的に学ぶ', 'omochix'), 'icon' => 'code'],
         ['name' => __('チュートリアル', 'omochix'), 'slug' => 'tutorial', 'taxonomy' => 'category', 'description' => __('使い方を手順から学ぶ', 'omochix'), 'icon' => 'tutorial'],
-        ['name' => __('プロンプト集', 'omochix'), 'slug' => 'prompts', 'taxonomy' => 'category', 'description' => __('すぐ使える指示文を見つける', 'omochix'), 'icon' => 'prompt'],
+        // Points at the "prompt" CPT archive (/prompts), the new Prompt
+        // Library. The pre-existing "prompts" `category` taxonomy term is
+        // intentionally left untouched (see AGENTS.md handoff notes) so
+        // older posts filed under it keep their URLs; it is simply no longer
+        // this card's destination.
+        ['name' => __('プロンプト集', 'omochix'), 'post_type' => 'prompt', 'description' => __('すぐ使えるプロンプトを見つける', 'omochix'), 'icon' => 'prompt'],
         ['name' => __('ビジネス', 'omochix'), 'slug' => 'business', 'taxonomy' => 'category', 'description' => __('仕事と業務改善に活かす', 'omochix'), 'icon' => 'business'],
         ['name' => __('開発・技術', 'omochix'), 'slug' => 'development', 'taxonomy' => 'category', 'description' => __('開発や技術情報を深める', 'omochix'), 'icon' => 'code'],
         ['name' => __('デザイン', 'omochix'), 'slug' => 'design', 'taxonomy' => 'category', 'description' => __('制作と表現の幅を広げる', 'omochix'), 'icon' => 'design'],

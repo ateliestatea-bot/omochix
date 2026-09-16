@@ -23,10 +23,15 @@ require_once OMOCHIX_CORE_DIR . 'includes/taxonomies.php';
 require_once OMOCHIX_CORE_DIR . 'includes/meta-schema.php';
 require_once OMOCHIX_CORE_DIR . 'includes/compatibility.php';
 require_once OMOCHIX_CORE_DIR . 'includes/software-application-schema.php';
+require_once OMOCHIX_CORE_DIR . 'includes/prompt-post-type.php';
+require_once OMOCHIX_CORE_DIR . 'includes/prompt-taxonomies.php';
+require_once OMOCHIX_CORE_DIR . 'includes/prompt-meta-schema.php';
 require_once OMOCHIX_CORE_DIR . 'admin/meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/save-meta.php';
 require_once OMOCHIX_CORE_DIR . 'admin/list-table.php';
 require_once OMOCHIX_CORE_DIR . 'admin/csv-importer.php';
+require_once OMOCHIX_CORE_DIR . 'admin/prompt-meta-boxes.php';
+require_once OMOCHIX_CORE_DIR . 'admin/save-prompt-meta.php';
 
 /**
  * Register plugin data structures.
@@ -37,6 +42,9 @@ function omochix_core_init() {
 	omochix_core_register_post_types();
 	omochix_core_register_taxonomies();
 	omochix_core_register_post_meta();
+	omochix_core_register_prompt_post_type();
+	omochix_core_register_prompt_taxonomies();
+	omochix_core_register_prompt_post_meta();
 }
 add_action( 'init', 'omochix_core_init' );
 
@@ -48,6 +56,8 @@ add_action( 'init', 'omochix_core_init' );
 function omochix_core_activate() {
 	omochix_core_register_post_types();
 	omochix_core_register_taxonomies();
+	omochix_core_register_prompt_post_type();
+	omochix_core_register_prompt_taxonomies();
 	omochix_core_insert_initial_terms();
 	flush_rewrite_rules();
 }
