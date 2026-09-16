@@ -96,6 +96,67 @@ function omochix_get_learn_section_id($post) {
 }
 
 /**
+ * Return the direct, published child pages of a Learn page (any section, any
+ * depth), ordered menu_order ASC then title ASC.
+ *
+ * Reused by page-learn-article.php to auto-list a section's articles (e.g.
+ * "/learn/tools" listing "GitHub" / "Vercel" / "Neon") without any per-page
+ * configuration: adding a new child page under a Learn section is enough for
+ * it to appear here.
+ *
+ * @param int $parent_id Parent page ID.
+ * @return WP_Post[]
+ */
+function omochix_get_learn_child_pages($parent_id) {
+    return get_pages([
+        'parent'      => (int) $parent_id,
+        'post_status' => 'publish',
+        'sort_column' => 'menu_order,post_title',
+        'sort_order'  => 'ASC',
+    ]);
+}
+
+/**
+ * Fallback card descriptions for Learn child pages that do not have an
+ * excerpt set yet, keyed by page path (same "learn/..." path format used by
+ * omochix_get_learn_categories() above). Setting an excerpt on the page
+ * itself in WordPress admin always takes priority over an entry here — this
+ * map only covers the initial Tools pages until their excerpts are filled
+ * in.
+ *
+ * @return array<string, string>
+ */
+function omochix_get_learn_child_default_descriptions() {
+    return [
+        'learn/tools/github' => __('コードを保存・管理する', 'omochix'),
+        'learn/tools/vercel' => __('Webサイト・アプリを公開する', 'omochix'),
+        'learn/tools/neon'   => __('アプリのデータを保存する', 'omochix'),
+    ];
+}
+
+/**
+ * Resolve a Learn child page's card description: its excerpt, a known
+ * default for that page's path, or a short generic fallback.
+ *
+ * @param WP_Post $page Child page.
+ * @return string
+ */
+function omochix_get_learn_child_description($page) {
+    if (has_excerpt($page)) {
+        return trim(wp_strip_all_tags(get_the_excerpt($page)));
+    }
+
+    $defaults = omochix_get_learn_child_default_descriptions();
+    $path     = get_page_uri($page);
+
+    if (isset($defaults[$path])) {
+        return $defaults[$path];
+    }
+
+    return __('詳しく見る', 'omochix');
+}
+
+/**
  * Serve the common Learn Article template to every Learn descendant page
  * that has not been assigned a more specific template of its own.
  *
