@@ -23,6 +23,9 @@ get_header();
             $omochix_post_image    = get_the_post_thumbnail_url($omochix_post_id, 'full');
             $omochix_post_category = get_the_category();
             $omochix_primary_category = !empty($omochix_post_category) ? $omochix_post_category[0] : null;
+            $omochix_primary_category_ancestors = $omochix_primary_category instanceof WP_Term
+                ? omochix_get_category_ancestors($omochix_primary_category)
+                : [];
             $omochix_post_tags     = get_the_tags();
             $omochix_content_size  = strlen(wp_strip_all_tags(get_the_content()));
             $omochix_reading_time  = max(1, (int) ceil($omochix_content_size / 1200));
@@ -62,7 +65,10 @@ get_header();
                             <ol>
                                 <li><a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Home', 'omochix'); ?></a></li>
                                 <?php if ($omochix_primary_category) : ?>
-                                    <li><a href="<?php echo esc_url(get_category_link($omochix_primary_category)); ?>"><?php echo esc_html($omochix_primary_category->name); ?></a></li>
+                                    <?php foreach ($omochix_primary_category_ancestors as $omochix_ancestor_category) : ?>
+                                        <li><a href="<?php echo esc_url(omochix_get_category_url($omochix_ancestor_category)); ?>"><?php echo esc_html($omochix_ancestor_category->name); ?></a></li>
+                                    <?php endforeach; ?>
+                                    <li><a href="<?php echo esc_url(omochix_get_category_url($omochix_primary_category)); ?>"><?php echo esc_html($omochix_primary_category->name); ?></a></li>
                                 <?php else : ?>
                                     <li><a href="<?php echo esc_url($omochix_news_url); ?>"><?php echo esc_html($omochix_news_title); ?></a></li>
                                 <?php endif; ?>
@@ -72,7 +78,7 @@ get_header();
 
                         <div class="article-header__copy">
                             <?php if ($omochix_primary_category) : ?>
-                                <a class="article-header__category" href="<?php echo esc_url(get_category_link($omochix_primary_category)); ?>"><?php echo esc_html($omochix_primary_category->name); ?></a>
+                                <a class="article-header__category" href="<?php echo esc_url(omochix_get_category_url($omochix_primary_category)); ?>"><?php echo esc_html($omochix_primary_category->name); ?></a>
                             <?php endif; ?>
                             <h1><?php the_title(); ?></h1>
                             <?php if ($omochix_post_excerpt) : ?>

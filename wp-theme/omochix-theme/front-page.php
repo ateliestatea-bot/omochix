@@ -560,6 +560,7 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
                 <svg class="popular-categories__icon-sprite" aria-hidden="true">
                     <symbol id="category-icon-news" viewBox="0 0 24 24"><path d="M5 4.5h11.5A2.5 2.5 0 0 1 19 7v12.5H6.5A1.5 1.5 0 0 1 5 18V4.5Z"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5"/></symbol>
                     <symbol id="category-icon-tools" viewBox="0 0 24 24"><path d="m14.5 5 4.5 4.5-9.5 9.5H5v-4.5L14.5 5Z"/><path d="m12.5 7 4.5 4.5M5 19h14"/></symbol>
+                    <symbol id="category-icon-safety" viewBox="0 0 24 24"><path d="M12 3.5 5.5 6v5.2c0 5 2.9 7.9 6.5 9 3.6-1.1 6.5-4 6.5-9V6L12 3.5Z"/><path d="m9.2 12 2 2 3.6-4"/></symbol>
                     <symbol id="category-icon-tutorial" viewBox="0 0 24 24"><path d="M4 6.5 12 3l8 3.5-8 3.5-8-3.5Z"/><path d="M7 9v5.5c2.8 2 7.2 2 10 0V9M20 7v6"/></symbol>
                     <symbol id="category-icon-prompt" viewBox="0 0 24 24"><path d="M5 5h14v11H9l-4 3V5Z"/><path d="M8.5 9h7M8.5 12h4"/></symbol>
                     <symbol id="category-icon-business" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 7V5h6v2M4 12h16M10 12v2h4v-2"/></symbol>

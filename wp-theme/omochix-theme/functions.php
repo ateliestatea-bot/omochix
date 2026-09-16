@@ -247,6 +247,7 @@ function omochix_get_front_page_categories() {
         ['name' => __('AIニュース', 'omochix'), 'slug' => 'ai-news', 'taxonomy' => 'category', 'description' => __('AIの最新動向を知る', 'omochix'), 'icon' => 'news'],
         ['name' => __('AIツール', 'omochix'), 'post_type' => 'ai_tool', 'description' => __('目的に合うAIサービスを探す', 'omochix'), 'icon' => 'tools'],
         ['name' => __('AI開発', 'omochix'), 'slug' => 'ai-development', 'taxonomy' => 'category', 'description' => __('AI開発を実践的に学ぶ', 'omochix'), 'icon' => 'code'],
+        ['name' => __('AI Safety', 'omochix'), 'slug' => 'ai-safety', 'taxonomy' => 'category', 'description' => __('詐欺・フィッシングなどAI悪用のリスクから身を守る', 'omochix'), 'icon' => 'safety'],
         ['name' => __('チュートリアル', 'omochix'), 'slug' => 'tutorial', 'taxonomy' => 'category', 'description' => __('使い方を手順から学ぶ', 'omochix'), 'icon' => 'tutorial'],
         // Points at the "prompt" CPT archive (/prompts), the new Prompt
         // Library. The pre-existing "prompts" `category` taxonomy term is
@@ -302,6 +303,34 @@ function omochix_get_category_url($category) {
     }
 
     return get_category_link($category);
+}
+
+/**
+ * Return a category's ancestor terms, root-first.
+ *
+ * Powers full-depth breadcrumbs (Home > parent > child > …) for any
+ * hierarchical category set up in the admin, with no per-slug code needed:
+ * a category with no parent simply returns an empty array.
+ *
+ * @param WP_Term $category Category term.
+ * @return array<int, WP_Term>
+ */
+function omochix_get_category_ancestors($category) {
+    if (!($category instanceof WP_Term)) {
+        return [];
+    }
+
+    $ancestor_ids = array_reverse(get_ancestors($category->term_id, 'category', 'taxonomy'));
+
+    $ancestors = [];
+    foreach ($ancestor_ids as $ancestor_id) {
+        $ancestor = get_term($ancestor_id, 'category');
+        if ($ancestor instanceof WP_Term) {
+            $ancestors[] = $ancestor;
+        }
+    }
+
+    return $ancestors;
 }
 
 /**

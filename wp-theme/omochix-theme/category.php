@@ -31,6 +31,9 @@ $omochix_category_name = $omochix_category_term instanceof WP_Term
 $omochix_category_description = $omochix_category_term instanceof WP_Term
     ? trim(wp_strip_all_tags(category_description($omochix_category_term->term_id)))
     : '';
+$omochix_category_ancestors = $omochix_category_term instanceof WP_Term
+    ? omochix_get_category_ancestors($omochix_category_term)
+    : [];
 
 // Opt-in hub configuration (curated tagline, "read first" picks, topic nav)
 // for select categories. Categories with no entry keep the plain name +
@@ -134,6 +137,9 @@ $omochix_popular_query = new WP_Query([
             <nav class="breadcrumb" aria-label="<?php esc_attr_e('パンくずリスト', 'omochix'); ?>">
                 <ol>
                     <li><a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Home', 'omochix'); ?></a></li>
+                    <?php foreach ($omochix_category_ancestors as $omochix_ancestor_category) : ?>
+                        <li><a href="<?php echo esc_url(omochix_get_category_url($omochix_ancestor_category)); ?>"><?php echo esc_html($omochix_ancestor_category->name); ?></a></li>
+                    <?php endforeach; ?>
                     <li aria-current="page"><?php echo esc_html($omochix_category_name); ?></li>
                 </ol>
             </nav>
