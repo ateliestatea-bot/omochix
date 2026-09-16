@@ -65,6 +65,12 @@ while (have_posts()) :
     $omochix_related_posts = array_slice(array_filter($omochix_siblings, static function ($sibling) use ($omochix_next_post) {
         return !$omochix_next_post || $sibling->ID !== $omochix_next_post->ID;
     }), 0, 3);
+
+    // A section page (e.g. "/learn/tools") auto-lists its own direct child
+    // pages ("/learn/tools/github", ...) so a new article only needs to be
+    // created under it to appear here — no separate config to maintain.
+    $omochix_learn_children = omochix_get_learn_child_pages($omochix_learn_post_id);
+    $omochix_has_content    = '' !== trim((string) get_the_content());
     ?>
 
     <main class="learn-article" id="main-content">
@@ -102,18 +108,39 @@ while (have_posts()) :
             </div>
         </header>
 
-        <div class="learn-article__container learn-article__body">
-            <div class="learn-article__content article-content">
-                <?php if (trim((string) get_the_content())) : ?>
-                    <?php the_content(); ?>
-                <?php else : ?>
-                    <div class="static-page__notice" role="status">
-                        <h2><?php esc_html_e('ページ内容を準備中です。', 'omochix'); ?></h2>
-                        <p><?php esc_html_e('確認済みの内容をWordPress管理画面から入力した後に公開してください。', 'omochix'); ?></p>
-                    </div>
-                <?php endif; ?>
+        <?php if ($omochix_has_content || !$omochix_learn_children) : ?>
+            <div class="learn-article__container learn-article__body">
+                <div class="learn-article__content article-content">
+                    <?php if ($omochix_has_content) : ?>
+                        <?php the_content(); ?>
+                    <?php else : ?>
+                        <div class="static-page__notice" role="status">
+                            <h2><?php esc_html_e('ページ内容を準備中です。', 'omochix'); ?></h2>
+                            <p><?php esc_html_e('確認済みの内容をWordPress管理画面から入力した後に公開してください。', 'omochix'); ?></p>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
+
+        <?php if ($omochix_learn_children) : ?>
+            <section class="learn-categories" aria-labelledby="learn-children-title">
+                <div class="learn-article__container">
+                    <header class="learn-hub__section-header">
+                        <h2 id="learn-children-title"><?php esc_html_e('このカテゴリで学ぶ', 'omochix'); ?></h2>
+                    </header>
+                    <div class="learn-categories__grid">
+                        <?php foreach ($omochix_learn_children as $omochix_child) : ?>
+                            <a class="learn-category-card" href="<?php echo esc_url(get_permalink($omochix_child)); ?>">
+                                <strong><?php echo esc_html(get_the_title($omochix_child)); ?></strong>
+                                <span><?php echo esc_html(omochix_get_learn_child_description($omochix_child)); ?></span>
+                                <span class="learn-category-card__arrow" aria-hidden="true">→</span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
 
         <?php if ($omochix_next_post instanceof WP_Post) : ?>
             <section class="learn-article__next" aria-labelledby="learn-next-title">
