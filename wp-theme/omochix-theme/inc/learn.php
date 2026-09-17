@@ -190,12 +190,13 @@ add_filter('template_include', 'omochix_template_include_for_learn');
  */
 function omochix_get_learn_categories() {
     $cards = [
-        ['name' => __('AI入門', 'omochix'), 'description' => __('AIの基本を、ゼロから理解する', 'omochix'), 'path' => 'learn/basics'],
+        ['name' => __('AI入門', 'omochix'), 'description' => __('AIの基本を、ゼロから理解する', 'omochix'), 'path' => 'learn/ai-basics'],
         ['name' => __('プロンプト', 'omochix'), 'description' => __('すぐ使えるプロンプトを探す', 'omochix'), 'url' => get_post_type_archive_link('prompt')],
         ['name' => __('AI仕事術', 'omochix'), 'description' => __('日々の仕事にAIを取り入れる', 'omochix'), 'path' => 'learn/work'],
         ['name' => __('開発入門', 'omochix'), 'description' => __('AIを使った開発の基礎を学ぶ', 'omochix'), 'path' => 'learn/development'],
         ['name' => __('Tools', 'omochix'), 'description' => __('学習・開発に使う定番ツール', 'omochix'), 'path' => 'learn/tools'],
         ['name' => __('Tutorials', 'omochix'), 'description' => __('手順に沿って実際に手を動かす', 'omochix'), 'path' => 'learn/tutorials'],
+        ['name' => __('作って公開する', 'omochix'), 'description' => __('AIで作ったものを実際に公開する', 'omochix'), 'path' => 'learn/build-and-publish'],
     ];
 
     $resolved = [];
@@ -225,7 +226,7 @@ function omochix_get_learn_categories() {
  */
 function omochix_get_learn_learning_path_steps() {
     $steps = [
-        ['number' => '01', 'title' => __('基礎', 'omochix'), 'description' => __('AIの基本用語と考え方を知る', 'omochix'), 'path' => 'learn/basics'],
+        ['number' => '01', 'title' => __('基礎', 'omochix'), 'description' => __('AIの基本用語と考え方を知る', 'omochix'), 'path' => 'learn/ai-basics'],
         ['number' => '02', 'title' => __('AIで作る', 'omochix'), 'description' => __('AIを使って手を動かしはじめる', 'omochix'), 'path' => 'learn/development'],
         ['number' => '03', 'title' => __('GitHub', 'omochix'), 'description' => __('コードをバージョン管理して保存する', 'omochix'), 'path' => 'learn/tools/github'],
         ['number' => '04', 'title' => __('Vercel', 'omochix'), 'description' => __('作ったサービスをデプロイする', 'omochix'), 'path' => 'learn/tools/vercel'],

@@ -230,9 +230,10 @@ function omochix_is_noindex_archive_request() {
         return true;
     }
 
-    $news_parameters = ['news_category', 'news_tag', 'news_order', 'news_search'];
-    $tool_parameters = ['tool_search', 'tool_category', 'pricing', 'japanese', 'platform', 'tool_order'];
-    $request_keys    = array_keys($_GET); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only public filters.
+    $news_parameters   = ['news_category', 'news_tag', 'news_order', 'news_search'];
+    $tool_parameters   = ['tool_search', 'tool_category', 'pricing', 'japanese', 'platform', 'tool_order'];
+    $prompt_parameters = ['prompt_search', 'prompt_category', 'prompt_model', 'prompt_difficulty', 'prompt_order'];
+    $request_keys      = array_keys($_GET); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only public filters.
 
     if (is_home() && array_intersect($news_parameters, $request_keys)) {
         return true;
@@ -242,7 +243,11 @@ function omochix_is_noindex_archive_request() {
         return true;
     }
 
-    if (is_category() || is_tag() || is_tax('ai_tool_category')) {
+    if (is_post_type_archive('prompt') && array_intersect($prompt_parameters, $request_keys)) {
+        return true;
+    }
+
+    if (is_category() || is_tag() || is_tax(['ai_tool_category', 'prompt_category', 'prompt_model'])) {
         $term = get_queried_object();
         return $term instanceof WP_Term && (int) $term->count < 2;
     }
@@ -303,7 +308,9 @@ add_filter('slim_seo_sitemap_taxonomies', 'omochix_filter_slim_seo_sitemap_taxon
  * @return WP_Term[]|int[]
  */
 function omochix_filter_thin_sitemap_terms($terms, $taxonomies) {
-    if (!get_query_var('ss_sitemap') || !array_intersect(['category', 'ai_tool_category'], (array) $taxonomies)) {
+    $thin_taxonomies = ['category', 'ai_tool_category', 'prompt_category', 'prompt_model'];
+
+    if (!get_query_var('ss_sitemap') || !array_intersect($thin_taxonomies, (array) $taxonomies)) {
         return $terms;
     }
 
