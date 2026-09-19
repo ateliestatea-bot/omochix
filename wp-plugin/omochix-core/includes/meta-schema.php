@@ -96,7 +96,150 @@ function omochix_core_get_meta_schema() {
 			'default'  => 0,
 			'sanitize' => 'nonnegative_integer',
 		),
+
+		// v2: Quick Summary additions. The theme already reads api_available
+		// and commercial_use (single-ai_tool.php) but no schema or editor
+		// field has ever existed for them, so every existing post reads as
+		// '' today; normalizing '' to 'unknown' below is therefore exactly
+		// correct and touches no real editorial data.
+		'api_available'        => array(
+			'type'     => 'string',
+			'default'  => 'unknown',
+			'sanitize' => 'support_level',
+		),
+		'commercial_use'       => array(
+			'type'     => 'string',
+			'default'  => 'unknown',
+			'sanitize' => 'support_level',
+		),
+		'supported_devices'    => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'string_array',
+		),
+		'supported_models'     => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'string_array',
+		),
+
+		// v2: detailed sections. Each renders on the front end only when
+		// non-empty, so existing posts with none of these set are unaffected.
+		'strengths'             => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'string_array',
+		),
+		'weaknesses'            => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'string_array',
+		),
+		'recommended_use_cases' => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'string_array',
+		),
+		'not_recommended_for'  => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'string_array',
+		),
+		'integrations'          => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'string_array',
+		),
+		'notes'                 => array(
+			'type'     => 'string',
+			'default'  => '',
+			'sanitize' => 'textarea',
+		),
+		'pricing_details'       => array(
+			'type'     => 'string',
+			'default'  => '',
+			'sanitize' => 'textarea',
+		),
+		'api_sdk_info'          => array(
+			'type'     => 'string',
+			'default'  => '',
+			'sanitize' => 'textarea',
+		),
+		'security_info'         => array(
+			'type'     => 'string',
+			'default'  => '',
+			'sanitize' => 'textarea',
+		),
+		'omochix_view'          => array(
+			'type'     => 'string',
+			'default'  => '',
+			'sanitize' => 'textarea',
+		),
+
+		// v2: information freshness, distinct from WordPress's own modified date.
+		'info_checked_date'     => array(
+			'type'     => 'string',
+			'default'  => '',
+			'sanitize' => 'date',
+		),
+
+		// v2: manually curated relations to other OmochiX content. Stored as
+		// plain post ID arrays; the theme re-validates existence, post type
+		// and publish status at render time (see includes/relations.php), so
+		// a later-trashed or unpublished related item never breaks this page.
+		'related_learn_ids'   => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'post_id_array',
+		),
+		'related_news_ids'    => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'post_id_array',
+		),
+		'related_lab_ids'     => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'post_id_array',
+		),
+		'related_compare_ids' => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'post_id_array',
+		),
 	);
+}
+
+/**
+ * Normalize a tri-state (plus "unknown") support-level value.
+ *
+ * Used for fields where "we don't know" must be representable as a first-class
+ * state rather than defaulting to a false negative.
+ *
+ * @param mixed $value Stored or submitted value.
+ * @return string
+ */
+function omochix_core_normalize_support_level( $value ) {
+	if ( in_array( $value, array( 'yes', 'partial', 'no', 'unknown' ), true ) ) {
+		return $value;
+	}
+	return 'unknown';
+}
+
+/**
+ * Return the translated support-level label.
+ *
+ * @param mixed $value Current value.
+ * @return string
+ */
+function omochix_core_get_support_level_label( $value ) {
+	$labels = array(
+		'yes'     => __( '対応', 'omochix-core' ),
+		'partial' => __( '一部対応', 'omochix-core' ),
+		'no'      => __( '非対応', 'omochix-core' ),
+		'unknown' => __( '未確認', 'omochix-core' ),
+	);
+	return $labels[ omochix_core_normalize_support_level( $value ) ];
 }
 
 /**
@@ -201,6 +344,24 @@ function omochix_core_sanitize_meta_value( $value, $key ) {
 		case 'enum':
 			$value = sanitize_text_field( $value );
 			return in_array( $value, $field['options'], true ) ? $value : $field['default'];
+		case 'support_level':
+			return omochix_core_normalize_support_level( sanitize_text_field( $value ) );
+		case 'post_id_array':
+			if ( ! is_array( $value ) ) {
+				return array();
+			}
+			$ids = array_map( 'absint', $value );
+			$ids = array_filter( $ids, static function ( $id ) {
+				return $id > 0;
+			} );
+			return array_values( array_unique( $ids ) );
+		case 'date':
+			$value = sanitize_text_field( $value );
+			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+				return '';
+			}
+			$parts = explode( '-', $value );
+			return checkdate( (int) $parts[1], (int) $parts[2], (int) $parts[0] ) ? $value : '';
 		case 'boolean':
 			return in_array( $value, array( true, 1, '1', 'true', 'yes', 'on' ), true );
 		case 'rating':

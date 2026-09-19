@@ -76,12 +76,13 @@ function omochix_core_get_software_application_schema() {
 	}
 
 	$schema = array(
-		'@type'        => 'SoftwareApplication',
-		'@id'          => $url . '#softwareapplication',
-		'name'         => $name,
-		'url'          => $url,
-		'dateModified' => get_post_modified_time( DATE_W3C, true, $post ),
-		'inLanguage'   => 'ja-JP',
+		'@type'         => 'SoftwareApplication',
+		'@id'           => $url . '#softwareapplication',
+		'name'          => $name,
+		'url'           => $url,
+		'datePublished' => get_post_time( DATE_W3C, true, $post ),
+		'dateModified'  => get_post_modified_time( DATE_W3C, true, $post ),
+		'inLanguage'    => 'ja-JP',
 	);
 
 	$description = get_post_meta( $post->ID, 'short_description', true );
@@ -111,6 +112,36 @@ function omochix_core_get_software_application_schema() {
 	$official_url = esc_url_raw( (string) get_post_meta( $post->ID, 'official_url', true ), array( 'http', 'https' ) );
 	if ( $official_url && untrailingslashit( $official_url ) !== untrailingslashit( $url ) ) {
 		$schema['sameAs'] = $official_url;
+	}
+
+	$company_name = sanitize_text_field( wp_strip_all_tags( (string) get_post_meta( $post->ID, 'company_name', true ) ) );
+	if ( '' !== $company_name ) {
+		$schema['provider'] = array(
+			'@type' => 'Organization',
+			'name'  => $company_name,
+		);
+	}
+
+	// A single editorial rating is represented as a Review (one identified
+	// author, OmochiX), never as AggregateRating: AggregateRating implies an
+	// aggregation of many independent ratings, which a lone editorial score
+	// is not. Only emitted when rating_overall is real, verified data (see
+	// save-meta.php, which deletes the meta entirely rather than storing 0).
+	$rating = get_post_meta( $post->ID, 'rating_overall', true );
+	if ( '' !== $rating && is_numeric( $rating ) && (float) $rating > 0 ) {
+		$schema['review'] = array(
+			'@type'        => 'Review',
+			'reviewRating' => array(
+				'@type'       => 'Rating',
+				'ratingValue' => (float) $rating,
+				'bestRating'  => 5,
+				'worstRating' => 1,
+			),
+			'author'       => array(
+				'@type' => 'Organization',
+				'name'  => 'OmochiX',
+			),
+		);
 	}
 
 	return $schema;
