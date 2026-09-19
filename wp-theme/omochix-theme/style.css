@@ -1988,12 +1988,24 @@ body { overflow-x: clip; }
 .tool-editor-rating__empty { margin: 0; color: var(--color-muted); font-size: 12px; }
 .tool-detail__sidebar { display: grid; align-content: start; gap: 40px; min-width: 0; }
 
-.tool-detail-related { padding: var(--section-space) 0; background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg)); border-top: 1px solid var(--color-line); }
+/* Top padding is 48px, not the full --section-space, for the same reason as
+   .tool-hub above: the section immediately before this one (.tool-hub when
+   present, otherwise .tool-detail__layout) already contributes a full
+   --section-space of its own bottom padding, so a full section-space here
+   too would double the gap. 48px matches .tool-structured's/.tool-hub's
+   existing "after a border-top divider" rhythm. Bottom padding stays a full
+   --section-space since .tool-detail-cta below gets the same top-padding
+   treatment, so gaps never stack twice in either direction. */
+.tool-detail-related { padding: 48px 0 var(--section-space); background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg)); border-top: 1px solid var(--color-line); }
 .tool-detail-section-header { margin-bottom: 40px; }
-.tool-related-articles { background: var(--color-bg); }
+/* .related-articles is shared with single.php's blog "関連記事"; this
+   scoped override only applies on the AI Tool page, where the section right
+   above (.tool-detail-related) already contributes a full --section-space
+   of bottom padding — see the .tool-detail-related comment above. */
+.tool-related-articles { padding-top: 48px; background: var(--color-bg); }
 [data-theme="dark"] .tool-detail-related { background: #111; }
 
-.tool-detail-cta { padding: var(--section-space) 0; border-top: 1px solid var(--color-line); }
+.tool-detail-cta { padding: 48px 0 var(--section-space); border-top: 1px solid var(--color-line); }
 .tool-detail-cta__inner { display: grid; gap: 32px; }
 .tool-detail-cta h2 { margin: 0; font-size: clamp(1.75rem, 6vw, 2.5rem); letter-spacing: -0.05em; }
 .tool-detail-cta__links { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -2961,7 +2973,7 @@ button:active,
 .tool-detail__tabs {
     position: sticky;
     z-index: 20;
-    top: 64px;
+    top: var(--header-height);
     border-bottom: 1px solid var(--color-line);
     background: rgba(var(--color-bg-rgb), 0.94);
     -webkit-backdrop-filter: blur(16px);
@@ -2983,17 +2995,32 @@ button:active,
     text-decoration: none;
 }
 
-.tool-detail__tabs a:first-child,
 .tool-detail__tabs a:hover {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.tool-detail__tabs a.is-active {
     color: var(--color-primary);
     border-bottom-color: var(--color-primary);
 }
 
 #tool-overview,
 #tool-features,
+#tool-details,
 #tool-rating,
+#tool-view,
+#tool-updates,
+#tool-changelog,
+#tool-hub,
 #related-tools-title {
-    scroll-margin-top: 140px;
+    scroll-margin-top: calc(var(--header-height) + 70px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    body.single-ai_tool {
+        scroll-behavior: smooth;
+    }
 }
 
 .static-page--about .static-page__hero {
@@ -5375,16 +5402,11 @@ button:active,
     transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
 }
 
-.tool-detail__tabs a:first-child {
+.tool-detail__tabs a:hover,
+.tool-detail__tabs a.is-active {
     color: var(--color-primary);
     background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
     border-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-line));
-}
-
-.tool-detail__tabs a:hover {
-    color: var(--color-primary);
-    background: var(--color-hover);
-    border-color: var(--color-line);
 }
 
 .tool-detail__tabs a:focus-visible {
@@ -5508,8 +5530,12 @@ button:active,
 }
 
 .tool-detail-related {
-    padding-block: 80px;
+    padding: 48px 0 80px;
     background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg));
+}
+
+.tool-related-articles {
+    padding-top: 48px;
 }
 
 .tool-detail-section-header {
@@ -5565,7 +5591,7 @@ button:active,
 }
 
 .tool-detail-cta {
-    padding-block: 80px;
+    padding: 48px 0 80px;
 }
 
 .tool-detail-cta__inner {
@@ -6501,19 +6527,11 @@ a.learn-path__step:hover {
    data, so a tool with none of this filled in looks exactly as it did before.
    ========================================================================= */
 
-#tool-details,
-#tool-view,
-#tool-updates,
-#tool-changelog,
-#tool-hub {
-    scroll-margin-top: 140px;
-}
-
 /* --- Detail info (pricing details, API/SDK, security, notes, lists) --- */
 .tool-detail-info { margin-top: var(--section-space); padding-top: 48px; border-top: 1px solid var(--color-line); }
 .tool-detail-info > header > p { margin: 0 0 12px; color: var(--color-primary); font-size: 9px; font-weight: 750; letter-spacing: 0.15em; }
 .tool-detail-info > header h2 { margin: 0; font-size: clamp(1.75rem, 6vw, 2.5rem); line-height: 1.2; letter-spacing: -0.05em; }
-.tool-detail-info__grid { display: grid; gap: 16px; margin-top: 32px; }
+.tool-detail-info__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 32px; }
 .tool-detail-info__block { padding: 24px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
 .tool-detail-info__block h3 { margin: 0; font-size: 15px; letter-spacing: -0.025em; }
 .tool-detail-info__block p { margin: 14px 0 0; color: var(--color-muted); font-size: 13px; line-height: 1.75; white-space: pre-line; }
@@ -6574,12 +6592,20 @@ a.learn-path__step:hover {
 .tool-changelog__more summary { color: var(--color-primary); font-size: 12px; font-weight: 650; cursor: pointer; }
 .tool-changelog__more .tool-changelog__list { margin-top: 14px; }
 
-/* --- Related content hub: Learn / News / Lab / Compare --- */
-.tool-hub { padding: var(--section-space) 0; background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg)); border-top: 1px solid var(--color-line); }
+/* --- Related content hub: Learn / News / Lab / Compare ---
+   Top padding is 48px (not the full --section-space used for the page's
+   major section wrappers) because .tool-detail__layout directly above this
+   already contributes a full --section-space of bottom padding; stacking
+   two full section-space gaps back to back read as one oversized void with
+   nothing in it. 48px matches the existing "after a border-top divider"
+   rhythm already used by .tool-structured just above in this file. */
+.tool-hub { padding: 48px 0 var(--section-space); background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg)); border-top: 1px solid var(--color-line); }
 .tool-hub__group { margin-top: 40px; }
 .tool-hub__group:first-of-type { margin-top: 32px; }
 .tool-hub__group h3 { margin: 0 0 18px; font-size: 17px; letter-spacing: -0.02em; }
-.tool-hub__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+/* auto-fit (not auto-fill) collapses unused tracks, so a single card never
+   leaves visibly empty column space beside it. */
+.tool-hub__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .tool-hub-card {
     display: grid;
     gap: 6px;
@@ -6597,15 +6623,6 @@ a.learn-path__step:hover {
 .tool-hub-card > span:not(.tool-hub-card__arrow) { color: var(--color-muted); font-size: 12px; line-height: 1.6; }
 .tool-hub-card time { color: var(--color-muted); font-size: 11px; }
 .tool-hub-card__arrow { justify-self: end; color: var(--color-primary); font-size: 13px; }
-
-@media (min-width: 640px) {
-    .tool-detail-info__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .tool-hub__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (min-width: 768px) {
-    .tool-hub__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
 
 :root[data-theme="dark"] .tool-updates__status--improved { background: rgba(14, 116, 144, 0.18); }
 :root[data-theme="dark"] .tool-updates__status--fixed { background: rgba(21, 128, 61, 0.18); }

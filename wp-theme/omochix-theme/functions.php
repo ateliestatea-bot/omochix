@@ -94,6 +94,16 @@ function omochix_enqueue_assets() {
             true
         );
     }
+
+    if (is_singular('ai_tool')) {
+        wp_enqueue_script(
+            'omochix-tool-detail',
+            get_template_directory_uri() . '/assets/js/tool-detail.js',
+            [],
+            $theme->get('Version'),
+            true
+        );
+    }
 }
 add_action('wp_enqueue_scripts', 'omochix_enqueue_assets');
 

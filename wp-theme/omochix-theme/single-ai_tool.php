@@ -48,6 +48,7 @@ if (have_posts()) :
         $omochix_api_sdk_info    = get_post_meta($omochix_tool_id, 'api_sdk_info', true);
         $omochix_security_info   = get_post_meta($omochix_tool_id, 'security_info', true);
         $omochix_view            = get_post_meta($omochix_tool_id, 'omochix_view', true);
+        $omochix_has_overview    = '' !== trim(wp_strip_all_tags(get_the_content()));
 
         $omochix_product_updates = function_exists('omochix_core_get_product_updates')
             ? omochix_core_get_product_updates($omochix_tool_id, 6)
@@ -187,11 +188,17 @@ if (have_posts()) :
         ]) : null;
 
         // Related posts: tool-name search first, then matching category and tag slugs.
+        // Product Hub's manually curated "最新ニュース" (related_news_ids) already
+        // covers the tool's most relevant news; excluding those IDs here keeps
+        // this auto section from repeating the same articles Product Hub just
+        // showed, per the v2.1 "no duplicate news lists" requirement.
+        $omochix_hub_news_ids = wp_list_pluck($omochix_related_news, 'ID');
         $omochix_related_post_ids = [];
         if ($omochix_tool_name) {
             $omochix_name_posts = new WP_Query([
                 'post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 3,
                 's' => $omochix_tool_name, 'fields' => 'ids', 'no_found_rows' => true,
+                'post__not_in' => $omochix_hub_news_ids,
             ]);
             $omochix_related_post_ids = $omochix_name_posts->posts;
         }
@@ -207,7 +214,7 @@ if (have_posts()) :
                 'post_type'      => 'post',
                 'post_status'    => 'publish',
                 'posts_per_page' => 3 - count($omochix_related_post_ids),
-                'post__not_in'   => $omochix_related_post_ids,
+                'post__not_in'   => array_merge($omochix_related_post_ids, $omochix_hub_news_ids),
                 'fields'         => 'ids',
                 'no_found_rows'  => true,
                 'orderby'        => 'date',
@@ -296,12 +303,12 @@ if (have_posts()) :
 
                 <nav class="tool-detail__tabs" aria-label="<?php esc_attr_e('AIツール詳細のセクション', 'omochix'); ?>">
                     <div class="tool-detail__container">
-                        <a href="#tool-overview"><?php esc_html_e('概要', 'omochix'); ?></a>
-                        <a href="#tool-features"><?php esc_html_e('特徴', 'omochix'); ?></a>
-                        <a href="#tool-rating"><?php esc_html_e('評価', 'omochix'); ?></a>
-                        <?php if ($omochix_product_updates) : ?><a href="#tool-updates"><?php esc_html_e('アップデート', 'omochix'); ?></a><?php endif; ?>
-                        <?php if ($omochix_related_learn || $omochix_related_news || $omochix_related_lab || $omochix_related_compare) : ?><a href="#tool-hub"><?php esc_html_e('関連コンテンツ', 'omochix'); ?></a><?php endif; ?>
-                        <a href="#related-tools-title"><?php esc_html_e('関連ツール', 'omochix'); ?></a>
+                        <?php if ($omochix_has_overview) : ?><a href="#tool-overview" data-tool-nav-link><?php esc_html_e('概要', 'omochix'); ?></a><?php endif; ?>
+                        <?php if (array_filter(wp_list_pluck($omochix_structured_sections, 'items'))) : ?><a href="#tool-features" data-tool-nav-link><?php esc_html_e('特徴', 'omochix'); ?></a><?php endif; ?>
+                        <a href="#tool-rating" data-tool-nav-link><?php esc_html_e('評価', 'omochix'); ?></a>
+                        <?php if ($omochix_product_updates) : ?><a href="#tool-updates" data-tool-nav-link><?php esc_html_e('アップデート', 'omochix'); ?></a><?php endif; ?>
+                        <?php if ($omochix_related_learn || $omochix_related_news || $omochix_related_lab || $omochix_related_compare) : ?><a href="#tool-hub" data-tool-nav-link><?php esc_html_e('関連コンテンツ', 'omochix'); ?></a><?php endif; ?>
+                        <?php if ($omochix_related_tools && $omochix_related_tools->have_posts()) : ?><a href="#related-tools-title" data-tool-nav-link><?php esc_html_e('関連ツール', 'omochix'); ?></a><?php endif; ?>
                     </div>
                 </nav>
 
@@ -312,9 +319,11 @@ if (have_posts()) :
                             <?php include __DIR__ . '/template-parts/tool-quick-summary.php'; ?>
                         </section>
 
-                        <section class="tool-content article-content" id="tool-overview" aria-label="<?php esc_attr_e('AIツールの詳細', 'omochix'); ?>">
-                            <?php the_content(); ?>
-                        </section>
+                        <?php if ($omochix_has_overview) : ?>
+                            <section class="tool-content article-content" id="tool-overview" aria-label="<?php esc_attr_e('AIツールの詳細', 'omochix'); ?>">
+                                <?php the_content(); ?>
+                            </section>
+                        <?php endif; ?>
 
                         <?php if (array_filter(wp_list_pluck($omochix_structured_sections, 'items'))) : ?>
                             <section class="tool-structured" id="tool-features" aria-labelledby="tool-structured-title">
@@ -373,15 +382,6 @@ if (have_posts()) :
                             <?php endif; ?>
                         </section>
 
-                        <?php if ($omochix_view) : ?>
-                            <section class="tool-view" id="tool-view" aria-labelledby="tool-view-title">
-                                <p class="tool-view__label"><?php esc_html_e('OMOCHIX VIEW', 'omochix'); ?></p>
-                                <h2 id="tool-view-title" class="sr-only"><?php esc_html_e('OmochiX編集部の見解', 'omochix'); ?></h2>
-                                <div class="tool-view__body"><?php echo wp_kses_post(wpautop($omochix_view)); ?></div>
-                                <p class="tool-view__disclaimer"><?php esc_html_e('※ 公式情報ではなく、OmochiX編集部独自の見解です。', 'omochix'); ?></p>
-                            </section>
-                        <?php endif; ?>
-
                         <?php if ($omochix_product_updates) : ?>
                             <section class="tool-updates" id="tool-updates" aria-labelledby="tool-updates-title">
                                 <header><p><?php esc_html_e('LATEST UPDATES', 'omochix'); ?></p><h2 id="tool-updates-title"><?php echo esc_html(sprintf(__('%sの最新アップデート', 'omochix'), $omochix_tool_name)); ?></h2></header>
@@ -429,6 +429,15 @@ if (have_posts()) :
                                         </ol>
                                     </details>
                                 <?php endif; ?>
+                            </section>
+                        <?php endif; ?>
+
+                        <?php if ($omochix_view) : ?>
+                            <section class="tool-view" id="tool-view" aria-labelledby="tool-view-title">
+                                <p class="tool-view__label"><?php esc_html_e('OMOCHIX VIEW', 'omochix'); ?></p>
+                                <h2 id="tool-view-title" class="sr-only"><?php esc_html_e('OmochiX編集部の見解', 'omochix'); ?></h2>
+                                <div class="tool-view__body"><?php echo wp_kses_post(wpautop($omochix_view)); ?></div>
+                                <p class="tool-view__disclaimer"><?php esc_html_e('※ 公式情報ではなく、OmochiX編集部独自の見解です。', 'omochix'); ?></p>
                             </section>
                         <?php endif; ?>
                     </div>

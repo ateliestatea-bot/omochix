@@ -290,6 +290,56 @@
 	margin-bottom: 24px;
 }
 
+.omochix-relation-picker__count {
+	margin-left: 8px;
+	color: #646970;
+	font-size: 12px;
+	font-weight: 400;
+}
+
+.omochix-relation-picker__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+
+.omochix-relation-picker__chips[hidden] {
+	display: none;
+}
+
+.omochix-relation-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 4px 3px 10px;
+	background: #f0f0f1;
+	border: 1px solid #dcdcde;
+	border-radius: 999px;
+	font-size: 12px;
+	line-height: 1.6;
+}
+
+.omochix-relation-chip__remove {
+	display: inline-grid;
+	width: 18px;
+	height: 18px;
+	padding: 0;
+	place-items: center;
+	color: #646970;
+	background: transparent;
+	border: 0;
+	border-radius: 50%;
+	cursor: pointer;
+	font-size: 13px;
+	line-height: 1;
+}
+
+.omochix-relation-chip__remove:hover {
+	color: #cc1818;
+	background: #fff;
+}
+
 .omochix-relation-picker__filter {
 	margin-bottom: 6px;
 }
