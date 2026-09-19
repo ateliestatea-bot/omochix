@@ -2028,8 +2028,13 @@ body { overflow-x: clip; }
 @media (min-width: 1100px) {
     .tool-detail__layout { grid-template-columns: minmax(0, 760px) 280px; justify-content: space-between; gap: 64px; }
     .tool-detail__sidebar { position: sticky; top: calc(var(--header-height) + 32px); }
-    .tool-summary--mobile { display: none; }
-    .tool-summary--sidebar { display: block; }
+    /* Quick Summary now renders once (see single-ai_tool.php), always using
+       the .tool-summary--mobile markup/CSS, so it must stay visible at this
+       width too — it is no longer mobile-only despite the class name, which
+       is left as-is per the "don't touch the retained Quick Summary's
+       HTML/CSS" instruction. .tool-summary--sidebar no longer matches any
+       element and is intentionally left as harmless unused CSS rather than
+       touched further. */
 }
 
 /* Unified site search */

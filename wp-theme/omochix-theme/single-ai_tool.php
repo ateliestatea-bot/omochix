@@ -443,11 +443,6 @@ if (have_posts()) :
                     </div>
 
                     <aside class="tool-detail__sidebar" aria-label="<?php esc_attr_e('ツール選びの補助情報', 'omochix'); ?>">
-                        <section class="tool-summary tool-summary--sidebar" aria-labelledby="tool-summary-sidebar-title">
-                            <h2 id="tool-summary-sidebar-title"><?php esc_html_e('クイックサマリー', 'omochix'); ?></h2>
-                            <?php include __DIR__ . '/template-parts/tool-quick-summary.php'; ?>
-                            <?php if ($omochix_official_url) : ?><a class="tool-summary__cta" href="<?php echo esc_url($omochix_official_url); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('公式サイトを見る', 'omochix'); ?><span aria-hidden="true">↗</span><span class="sr-only"><?php esc_html_e('（外部サイトを新しいタブで開きます）', 'omochix'); ?></span></a><?php endif; ?>
-                        </section>
                         <?php if ($omochix_categories) : ?>
                             <section class="sidebar-panel" aria-labelledby="same-category-title">
                                 <h2 id="same-category-title"><?php esc_html_e('同じカテゴリー', 'omochix'); ?></h2>
