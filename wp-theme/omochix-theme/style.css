@@ -5381,46 +5381,8 @@ button:active,
     background: linear-gradient(145deg, color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)), var(--color-hover));
 }
 
-.tool-detail__tabs {
-    position: static;
-    z-index: auto;
-    top: auto;
-    background: var(--color-bg);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-}
-
-.tool-detail__tabs .tool-detail__container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    overflow: visible;
-    padding-block: 8px;
-}
-
-.tool-detail__tabs a {
-    min-height: 44px;
-    padding: 12px 16px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    line-height: 1.45;
-    transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
-}
-
-.tool-detail__tabs a:hover,
-.tool-detail__tabs a.is-active {
-    color: var(--color-primary);
-    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
-    border-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-line));
-}
-
 .tool-detail__tabs a:focus-visible {
     outline-offset: 2px;
-}
-
-.tool-detail__layout {
-    gap: 64px;
-    padding-block: 80px;
 }
 
 .tool-detail__main {
@@ -5481,11 +5443,6 @@ button:active,
     margin-block: 36px;
 }
 
-.tool-structured {
-    margin-top: 80px;
-    padding-top: 48px;
-}
-
 .tool-structured__grid {
     gap: 24px;
     margin-top: 32px;
@@ -5532,11 +5489,6 @@ button:active,
 .tool-editor-rating__score strong {
     color: var(--color-primary);
     font-size: clamp(2.75rem, 8vw, 4rem);
-}
-
-.tool-detail-related {
-    padding: 48px 0 80px;
-    background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg));
 }
 
 .tool-related-articles {
@@ -5593,10 +5545,6 @@ button:active,
 .tool-related-articles .related-card h3 {
     font-size: 17px;
     line-height: 1.5;
-}
-
-.tool-detail-cta {
-    padding: 48px 0 80px;
 }
 
 .tool-detail-cta__inner {
@@ -5665,16 +5613,40 @@ button:active,
         width: 100%;
     }
 
+    .tool-detail__tabs {
+        position: static;
+        z-index: auto;
+        top: auto;
+        background: var(--color-bg);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
     .tool-detail__tabs .tool-detail__container {
+        flex-wrap: wrap;
         gap: 4px;
+        overflow: visible;
         padding-block: 8px;
     }
 
     .tool-detail__tabs a {
         flex: 1 1 calc(50% - 4px);
+        min-height: 44px;
         justify-content: center;
+        padding-block: 12px;
         padding-inline: 12px;
         text-align: center;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        line-height: 1.45;
+        transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+    }
+
+    .tool-detail__tabs a:hover,
+    .tool-detail__tabs a.is-active {
+        color: var(--color-primary);
+        background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
+        border-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-line));
     }
 
     .tool-detail__layout,
