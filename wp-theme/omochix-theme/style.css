@@ -1988,12 +1988,24 @@ body { overflow-x: clip; }
 .tool-editor-rating__empty { margin: 0; color: var(--color-muted); font-size: 12px; }
 .tool-detail__sidebar { display: grid; align-content: start; gap: 40px; min-width: 0; }
 
-.tool-detail-related { padding: var(--section-space) 0; background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg)); border-top: 1px solid var(--color-line); }
+/* Top padding is 48px, not the full --section-space, for the same reason as
+   .tool-hub above: the section immediately before this one (.tool-hub when
+   present, otherwise .tool-detail__layout) already contributes a full
+   --section-space of its own bottom padding, so a full section-space here
+   too would double the gap. 48px matches .tool-structured's/.tool-hub's
+   existing "after a border-top divider" rhythm. Bottom padding stays a full
+   --section-space since .tool-detail-cta below gets the same top-padding
+   treatment, so gaps never stack twice in either direction. */
+.tool-detail-related { padding: 48px 0 var(--section-space); background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg)); border-top: 1px solid var(--color-line); }
 .tool-detail-section-header { margin-bottom: 40px; }
-.tool-related-articles { background: var(--color-bg); }
+/* .related-articles is shared with single.php's blog "関連記事"; this
+   scoped override only applies on the AI Tool page, where the section right
+   above (.tool-detail-related) already contributes a full --section-space
+   of bottom padding — see the .tool-detail-related comment above. */
+.tool-related-articles { padding-top: 48px; background: var(--color-bg); }
 [data-theme="dark"] .tool-detail-related { background: #111; }
 
-.tool-detail-cta { padding: var(--section-space) 0; border-top: 1px solid var(--color-line); }
+.tool-detail-cta { padding: 48px 0 var(--section-space); border-top: 1px solid var(--color-line); }
 .tool-detail-cta__inner { display: grid; gap: 32px; }
 .tool-detail-cta h2 { margin: 0; font-size: clamp(1.75rem, 6vw, 2.5rem); letter-spacing: -0.05em; }
 .tool-detail-cta__links { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -2016,8 +2028,13 @@ body { overflow-x: clip; }
 @media (min-width: 1100px) {
     .tool-detail__layout { grid-template-columns: minmax(0, 760px) 280px; justify-content: space-between; gap: 64px; }
     .tool-detail__sidebar { position: sticky; top: calc(var(--header-height) + 32px); }
-    .tool-summary--mobile { display: none; }
-    .tool-summary--sidebar { display: block; }
+    /* Quick Summary now renders once (see single-ai_tool.php), always using
+       the .tool-summary--mobile markup/CSS, so it must stay visible at this
+       width too — it is no longer mobile-only despite the class name, which
+       is left as-is per the "don't touch the retained Quick Summary's
+       HTML/CSS" instruction. .tool-summary--sidebar no longer matches any
+       element and is intentionally left as harmless unused CSS rather than
+       touched further. */
 }
 
 /* Unified site search */
@@ -2961,7 +2978,7 @@ button:active,
 .tool-detail__tabs {
     position: sticky;
     z-index: 20;
-    top: 64px;
+    top: var(--header-height);
     border-bottom: 1px solid var(--color-line);
     background: rgba(var(--color-bg-rgb), 0.94);
     -webkit-backdrop-filter: blur(16px);
@@ -2983,17 +3000,32 @@ button:active,
     text-decoration: none;
 }
 
-.tool-detail__tabs a:first-child,
 .tool-detail__tabs a:hover {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.tool-detail__tabs a.is-active {
     color: var(--color-primary);
     border-bottom-color: var(--color-primary);
 }
 
 #tool-overview,
 #tool-features,
+#tool-details,
 #tool-rating,
+#tool-view,
+#tool-updates,
+#tool-changelog,
+#tool-hub,
 #related-tools-title {
-    scroll-margin-top: 140px;
+    scroll-margin-top: calc(var(--header-height) + 70px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    body.single-ai_tool {
+        scroll-behavior: smooth;
+    }
 }
 
 .static-page--about .static-page__hero {
@@ -5349,51 +5381,8 @@ button:active,
     background: linear-gradient(145deg, color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)), var(--color-hover));
 }
 
-.tool-detail__tabs {
-    position: static;
-    z-index: auto;
-    top: auto;
-    background: var(--color-bg);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-}
-
-.tool-detail__tabs .tool-detail__container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    overflow: visible;
-    padding-block: 8px;
-}
-
-.tool-detail__tabs a {
-    min-height: 44px;
-    padding: 12px 16px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    line-height: 1.45;
-    transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
-}
-
-.tool-detail__tabs a:first-child {
-    color: var(--color-primary);
-    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
-    border-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-line));
-}
-
-.tool-detail__tabs a:hover {
-    color: var(--color-primary);
-    background: var(--color-hover);
-    border-color: var(--color-line);
-}
-
 .tool-detail__tabs a:focus-visible {
     outline-offset: 2px;
-}
-
-.tool-detail__layout {
-    gap: 64px;
-    padding-block: 80px;
 }
 
 .tool-detail__main {
@@ -5454,11 +5443,6 @@ button:active,
     margin-block: 36px;
 }
 
-.tool-structured {
-    margin-top: 80px;
-    padding-top: 48px;
-}
-
 .tool-structured__grid {
     gap: 24px;
     margin-top: 32px;
@@ -5507,9 +5491,8 @@ button:active,
     font-size: clamp(2.75rem, 8vw, 4rem);
 }
 
-.tool-detail-related {
-    padding-block: 80px;
-    background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg));
+.tool-related-articles {
+    padding-top: 48px;
 }
 
 .tool-detail-section-header {
@@ -5562,10 +5545,6 @@ button:active,
 .tool-related-articles .related-card h3 {
     font-size: 17px;
     line-height: 1.5;
-}
-
-.tool-detail-cta {
-    padding-block: 80px;
 }
 
 .tool-detail-cta__inner {
@@ -5634,16 +5613,40 @@ button:active,
         width: 100%;
     }
 
+    .tool-detail__tabs {
+        position: static;
+        z-index: auto;
+        top: auto;
+        background: var(--color-bg);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
     .tool-detail__tabs .tool-detail__container {
+        flex-wrap: wrap;
         gap: 4px;
+        overflow: visible;
         padding-block: 8px;
     }
 
     .tool-detail__tabs a {
         flex: 1 1 calc(50% - 4px);
+        min-height: 44px;
         justify-content: center;
+        padding-block: 12px;
         padding-inline: 12px;
         text-align: center;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        line-height: 1.45;
+        transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+    }
+
+    .tool-detail__tabs a:hover,
+    .tool-detail__tabs a.is-active {
+        color: var(--color-primary);
+        background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
+        border-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-line));
     }
 
     .tool-detail__layout,
@@ -6489,3 +6492,115 @@ a.learn-path__step:hover {
     .prompt-filter__reset { grid-column: auto; }
     .prompt-detail__layout { grid-template-columns: minmax(0, 1fr) 280px; }
 }
+
+/* =========================================================================
+   AI Tools v2 (Product Hub)
+   Additive only — reuses existing tokens (--color-*, --radius-*, --shadow-*,
+   --motion-*, --section-space) and structural classes (.tool-detail__container,
+   .tool-detail-section-header, .tool-structured__panel idiom) already defined
+   above. No existing rule in this file is modified or removed. Mobile-first;
+   `min-width` media queries progressively enhance, matching the rest of the
+   file. All sections here render only when a tool has the corresponding
+   data, so a tool with none of this filled in looks exactly as it did before.
+   ========================================================================= */
+
+/* --- Detail info (pricing details, API/SDK, security, notes, lists) --- */
+.tool-detail-info { margin-top: var(--section-space); padding-top: 48px; border-top: 1px solid var(--color-line); }
+.tool-detail-info > header > p { margin: 0 0 12px; color: var(--color-primary); font-size: 9px; font-weight: 750; letter-spacing: 0.15em; }
+.tool-detail-info > header h2 { margin: 0; font-size: clamp(1.75rem, 6vw, 2.5rem); line-height: 1.2; letter-spacing: -0.05em; }
+.tool-detail-info__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 32px; }
+.tool-detail-info__block { padding: 24px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.tool-detail-info__block h3 { margin: 0; font-size: 15px; letter-spacing: -0.025em; }
+.tool-detail-info__block p { margin: 14px 0 0; color: var(--color-muted); font-size: 13px; line-height: 1.75; white-space: pre-line; }
+.tool-detail-info__block ul { display: grid; gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.tool-detail-info__block li { position: relative; padding-left: 18px; color: var(--color-muted); font-size: 13px; line-height: 1.7; }
+.tool-detail-info__block li::before { position: absolute; top: 0.75em; left: 0; width: 5px; height: 5px; background: var(--color-primary); border-radius: 50%; content: ""; }
+
+/* --- OmochiX VIEW callout --- */
+.tool-view {
+    margin-top: 64px;
+    padding: 28px;
+    background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface));
+    border: 1px solid var(--color-line);
+    border-left: 3px solid var(--color-primary);
+    border-radius: var(--radius-md);
+}
+.tool-view__label { margin: 0 0 12px; color: var(--color-primary); font-size: 9px; font-weight: 750; letter-spacing: 0.15em; }
+.tool-view__body { color: var(--color-text); font-size: 14px; line-height: 1.85; }
+.tool-view__body > :first-child { margin-top: 0; }
+.tool-view__body > :last-child { margin-bottom: 0; }
+.tool-view__disclaimer { margin: 16px 0 0; color: var(--color-muted); font-size: 11px; }
+
+/* --- Latest updates --- */
+.tool-updates { margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--color-line); }
+.tool-updates > header > p { margin: 0 0 12px; color: var(--color-primary); font-size: 9px; font-weight: 750; letter-spacing: 0.15em; }
+.tool-updates > header h2 { margin: 0; font-size: clamp(1.5rem, 5vw, 2rem); letter-spacing: -0.04em; }
+.tool-updates__list { display: grid; gap: 14px; margin: 28px 0 0; padding: 0; list-style: none; }
+.tool-updates__item { padding: 20px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.tool-updates__meta { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; color: var(--color-muted); font-size: 11px; }
+.tool-updates__status { padding: 3px 9px; border-radius: var(--radius-pill); font-size: 10px; font-weight: 700; background: var(--color-hover); color: var(--color-muted); }
+.tool-updates__status--new { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, var(--color-hover)); }
+.tool-updates__status--improved { color: #0e7490; background: rgba(14, 116, 144, 0.1); }
+.tool-updates__status--fixed { color: #15803d; background: rgba(21, 128, 61, 0.1); }
+.tool-updates__status--beta { color: #b45309; background: rgba(180, 83, 9, 0.1); }
+.tool-updates__status--deprecated { color: var(--color-muted); background: var(--color-hover); }
+.tool-updates__item h3 { margin: 0; font-size: 16px; letter-spacing: -0.02em; }
+.tool-updates__item p { margin: 8px 0 0; color: var(--color-muted); font-size: 13px; line-height: 1.7; }
+.tool-updates__link { display: inline-flex; align-items: center; gap: 4px; margin-top: 12px; color: var(--color-primary); font-size: 12px; font-weight: 650; text-decoration: none; }
+
+/* --- Changelog --- */
+.tool-changelog { margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--color-line); }
+.tool-changelog > header > p { margin: 0 0 12px; color: var(--color-primary); font-size: 9px; font-weight: 750; letter-spacing: 0.15em; }
+.tool-changelog > header h2 { margin: 0; font-size: clamp(1.5rem, 5vw, 2rem); letter-spacing: -0.04em; }
+.tool-changelog__list { display: grid; gap: 0; margin: 28px 0 0; padding: 0; list-style: none; }
+.tool-changelog__list li {
+    display: grid;
+    grid-template-columns: minmax(84px, auto) minmax(0, 1fr);
+    gap: 4px 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--color-line);
+    font-size: 13px;
+}
+.tool-changelog__list li:first-child { padding-top: 0; }
+.tool-changelog__list li time { color: var(--color-muted); font-size: 12px; }
+.tool-changelog__list li span { grid-column: 2; color: var(--color-text); line-height: 1.6; }
+.tool-changelog__list li a { grid-column: 2; color: var(--color-primary); font-size: 12px; font-weight: 650; text-decoration: none; }
+.tool-changelog__more { margin-top: 16px; }
+.tool-changelog__more summary { color: var(--color-primary); font-size: 12px; font-weight: 650; cursor: pointer; }
+.tool-changelog__more .tool-changelog__list { margin-top: 14px; }
+
+/* --- Related content hub: Learn / News / Lab / Compare ---
+   Top padding is 48px (not the full --section-space used for the page's
+   major section wrappers) because .tool-detail__layout directly above this
+   already contributes a full --section-space of bottom padding; stacking
+   two full section-space gaps back to back read as one oversized void with
+   nothing in it. 48px matches the existing "after a border-top divider"
+   rhythm already used by .tool-structured just above in this file. */
+.tool-hub { padding: 48px 0 var(--section-space); background: color-mix(in srgb, var(--color-surface) 42%, var(--color-bg)); border-top: 1px solid var(--color-line); }
+.tool-hub__group { margin-top: 40px; }
+.tool-hub__group:first-of-type { margin-top: 32px; }
+.tool-hub__group h3 { margin: 0 0 18px; font-size: 17px; letter-spacing: -0.02em; }
+/* auto-fit (not auto-fill) collapses unused tracks, so a single card never
+   leaves visibly empty column space beside it. */
+.tool-hub__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.tool-hub-card {
+    display: grid;
+    gap: 6px;
+    padding: 18px 20px;
+    color: inherit;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: border-color var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+.tool-hub-card:hover { border-color: color-mix(in srgb, var(--color-primary) 32%, var(--color-line)); transform: translateY(-2px); }
+.tool-hub-card:focus-visible { outline-offset: 4px; }
+.tool-hub-card strong { font-size: 14px; letter-spacing: -0.02em; }
+.tool-hub-card > span:not(.tool-hub-card__arrow) { color: var(--color-muted); font-size: 12px; line-height: 1.6; }
+.tool-hub-card time { color: var(--color-muted); font-size: 11px; }
+.tool-hub-card__arrow { justify-self: end; color: var(--color-primary); font-size: 13px; }
+
+:root[data-theme="dark"] .tool-updates__status--improved { background: rgba(14, 116, 144, 0.18); }
+:root[data-theme="dark"] .tool-updates__status--fixed { background: rgba(21, 128, 61, 0.18); }
+:root[data-theme="dark"] .tool-updates__status--beta { background: rgba(180, 83, 9, 0.18); }

@@ -44,6 +44,11 @@ function omochix_core_save_ai_tool_meta( $post_id ) {
 	foreach ( omochix_core_get_meta_schema() as $key => $field ) {
 		if ( 'boolean' === $field['type'] ) {
 			$raw_value = isset( $submitted[ $key ] ) ? $submitted[ $key ] : false;
+		} elseif ( 'post_id_array' === $field['sanitize'] ) {
+			// A <select multiple> submits nothing at all when the editor
+			// clears every selection, exactly like an unchecked checkbox;
+			// treat that as "no relations", not "field absent from screen".
+			$raw_value = isset( $submitted[ $key ] ) ? $submitted[ $key ] : array();
 		} elseif ( array_key_exists( $key, $submitted ) ) {
 			$raw_value = $submitted[ $key ];
 		} else {
