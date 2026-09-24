@@ -203,6 +203,14 @@ $omochix_sidebar_categories = get_terms([
 if (is_wp_error($omochix_sidebar_categories)) {
     $omochix_sidebar_categories = [];
 }
+
+// Compare CTA: pulls the latest Compare-classified article (omochix_content_role
+// meta, see includes/post-content-role.php) instead of a hardcoded URL, so the
+// card always points at whichever comparison article is currently live.
+$omochix_compare_hub_posts = function_exists('omochix_core_get_posts_by_content_role')
+    ? omochix_core_get_posts_by_content_role('compare', 1)
+    : [];
+$omochix_compare_hub_post = $omochix_compare_hub_posts ? $omochix_compare_hub_posts[0] : null;
 ?>
 
 <main class="tool-archive" id="main-content">
@@ -232,6 +240,24 @@ if (is_wp_error($omochix_sidebar_categories)) {
             </div>
         </div>
     </header>
+
+    <?php if ($omochix_compare_hub_post) : ?>
+        <section class="tool-hub" aria-labelledby="tool-compare-hub-title">
+            <div class="tool-archive__container">
+                <header class="tool-detail-section-header">
+                    <p><?php esc_html_e('COMPARE', 'omochix'); ?></p>
+                    <h2 id="tool-compare-hub-title"><?php esc_html_e('主要AIモデルを比較', 'omochix'); ?></h2>
+                </header>
+                <div class="tool-hub__grid">
+                    <a class="tool-hub-card" href="<?php echo esc_url(get_permalink($omochix_compare_hub_post)); ?>">
+                        <strong><?php echo esc_html(get_the_title($omochix_compare_hub_post)); ?></strong>
+                        <span><?php echo esc_html(wp_trim_words(wp_strip_all_tags($omochix_compare_hub_post->post_excerpt ?: $omochix_compare_hub_post->post_content), 40, '…')); ?></span>
+                        <span class="tool-hub-card__arrow"><?php esc_html_e('3モデルを比較する', 'omochix'); ?> <span aria-hidden="true">→</span></span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <section class="tool-filter" aria-labelledby="tool-filter-title">
         <div class="tool-archive__container">
