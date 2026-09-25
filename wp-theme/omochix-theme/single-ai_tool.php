@@ -276,8 +276,12 @@ if (have_posts()) :
                                 </dl>
                                 <?php if ($omochix_categories || $omochix_platforms) : ?>
                                     <div class="tool-detail__taxonomy">
-                                        <?php foreach (array_slice($omochix_categories, 0, 2) as $omochix_term) : ?><span><?php echo esc_html($omochix_term->name); ?></span><?php endforeach; ?>
-                                        <?php foreach (array_slice($omochix_platforms, 0, 3) as $omochix_term) : ?><span><?php echo esc_html($omochix_term->name); ?></span><?php endforeach; ?>
+                                        <?php foreach (array_slice($omochix_categories, 0, 2) as $omochix_term) : ?>
+                                            <?php $omochix_term_url = get_term_link($omochix_term); ?>
+                                            <?php if (is_wp_error($omochix_term_url)) : ?><span><?php echo esc_html($omochix_term->name); ?></span><?php else : ?><a href="<?php echo esc_url($omochix_term_url); ?>"><?php echo esc_html($omochix_term->name); ?></a><?php endif; ?>
+                                        <?php endforeach; ?>
+                                        <?php // ai_tool_platform has no public term archive; link to the archive's existing platform filter instead. ?>
+                                        <?php foreach (array_slice($omochix_platforms, 0, 3) as $omochix_term) : ?><a href="<?php echo esc_url(add_query_arg('platform', $omochix_term->slug, $omochix_archive_url)); ?>"><?php echo esc_html($omochix_term->name); ?></a><?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>
                                 <p class="tool-detail__updated">

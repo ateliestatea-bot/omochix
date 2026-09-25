@@ -242,7 +242,7 @@ function omochix_is_noindex_archive_request() {
         return true;
     }
 
-    if (is_post_type_archive('ai_tool') && array_intersect($tool_parameters, $request_keys)) {
+    if ((is_post_type_archive('ai_tool') || is_tax('ai_tool_category')) && array_intersect($tool_parameters, $request_keys)) {
         return true;
     }
 

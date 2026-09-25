@@ -3,6 +3,8 @@
  * AI tool archive.
  *
  * Filters use WordPress query APIs and remain fully functional without JavaScript.
+ * Also rendered for ai_tool_category term archives (taxonomy-ai_tool_category.php),
+ * where the queried term becomes the fixed category filter.
  *
  * @package OmochiX
  */
@@ -24,6 +26,13 @@ $omochix_pricing  = isset($_GET['pricing']) ? sanitize_key(wp_unslash($_GET['pri
 $omochix_japanese = isset($_GET['japanese']) ? sanitize_key(wp_unslash($_GET['japanese'])) : '';
 $omochix_platform = isset($_GET['platform']) ? sanitize_title(wp_unslash($_GET['platform'])) : '';
 $omochix_order    = isset($_GET['tool_order']) ? sanitize_key(wp_unslash($_GET['tool_order'])) : 'latest';
+
+// On /ai-tools/category/{slug}/ the URL itself is the category filter.
+$omochix_context_term = is_tax('ai_tool_category') ? get_queried_object() : null;
+$omochix_context_term = $omochix_context_term instanceof WP_Term ? $omochix_context_term : null;
+if ($omochix_context_term) {
+    $omochix_category = $omochix_context_term->slug;
+}
 
 $omochix_pricing_options = [
     'free'     => __('無料', 'omochix'),
@@ -219,16 +228,30 @@ $omochix_compare_hub_post = $omochix_compare_hub_posts ? $omochix_compare_hub_po
             <nav class="breadcrumb" aria-label="<?php esc_attr_e('パンくずリスト', 'omochix'); ?>">
                 <ol>
                     <li><a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Home', 'omochix'); ?></a></li>
-                    <li aria-current="page"><?php esc_html_e('AIツール', 'omochix'); ?></li>
+                    <?php if ($omochix_context_term) : ?>
+                        <li><a href="<?php echo esc_url($omochix_archive_url); ?>"><?php esc_html_e('AIツール', 'omochix'); ?></a></li>
+                        <li aria-current="page"><?php echo esc_html($omochix_context_term->name); ?></li>
+                    <?php else : ?>
+                        <li aria-current="page"><?php esc_html_e('AIツール', 'omochix'); ?></li>
+                    <?php endif; ?>
                 </ol>
             </nav>
             <div class="tool-archive__hero-grid">
                 <div class="tool-archive__hero-copy">
-                    <p class="tool-archive__eyebrow"><?php esc_html_e('FIND YOUR AI TOOL', 'omochix'); ?></p>
-                    <h1><?php esc_html_e('AIツール', 'omochix'); ?></h1>
-                    <p><?php esc_html_e('目的や使い方に合うAIツールを、料金・日本語対応・利用環境から比較して見つけられます。', 'omochix'); ?></p>
+                    <p class="tool-archive__eyebrow"><?php echo $omochix_context_term ? esc_html__('AI TOOLS CATEGORY', 'omochix') : esc_html__('FIND YOUR AI TOOL', 'omochix'); ?></p>
+                    <h1><?php echo $omochix_context_term ? esc_html($omochix_context_term->name) : esc_html__('AIツール', 'omochix'); ?></h1>
+                    <?php if ($omochix_context_term && $omochix_context_term->description) : ?>
+                        <p><?php echo esc_html(wp_strip_all_tags($omochix_context_term->description)); ?></p>
+                    <?php elseif ($omochix_context_term) : ?>
+                        <p><?php echo esc_html(sprintf(__('%sのAIツールを、料金・日本語対応・利用環境から比較して見つけられます。', 'omochix'), $omochix_context_term->name)); ?></p>
+                    <?php else : ?>
+                        <p><?php esc_html_e('目的や使い方に合うAIツールを、料金・日本語対応・利用環境から比較して見つけられます。', 'omochix'); ?></p>
+                    <?php endif; ?>
                 </div>
                 <form class="tool-archive__search" role="search" method="get" action="<?php echo esc_url($omochix_archive_url); ?>">
+                    <?php if ($omochix_context_term) : ?>
+                        <input type="hidden" name="tool_category" value="<?php echo esc_attr($omochix_category); ?>">
+                    <?php endif; ?>
                     <label for="tool-hero-search"><?php esc_html_e('AIツールを検索', 'omochix'); ?></label>
                     <div>
                         <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
@@ -383,7 +406,7 @@ $omochix_compare_hub_post = $omochix_compare_hub_posts ? $omochix_compare_hub_po
                 <?php
                 $omochix_add_args = array_filter([
                     'tool_search'   => $omochix_search,
-                    'tool_category' => $omochix_category,
+                    'tool_category' => $omochix_context_term ? '' : $omochix_category,
                     'pricing'       => $omochix_pricing,
                     'japanese'      => $omochix_japanese,
                     'platform'      => $omochix_platform,
