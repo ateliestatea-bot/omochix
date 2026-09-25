@@ -3,7 +3,9 @@
  * Prompt Library archive ("/prompts").
  *
  * Mirrors archive-ai_tool.php's query/filter shape for consistency; remains
- * fully functional without JavaScript.
+ * fully functional without JavaScript. Also rendered for prompt_category and
+ * prompt_model term archives (taxonomy-prompt_*.php), where the queried term
+ * becomes the fixed category/model filter.
  *
  * @package OmochiX
  */
@@ -22,6 +24,18 @@ $omochix_category   = isset($_GET['prompt_category']) ? sanitize_title(wp_unslas
 $omochix_model       = isset($_GET['prompt_model']) ? sanitize_title(wp_unslash($_GET['prompt_model'])) : '';
 $omochix_difficulty = isset($_GET['prompt_difficulty']) ? sanitize_key(wp_unslash($_GET['prompt_difficulty'])) : '';
 $omochix_order       = isset($_GET['prompt_order']) ? sanitize_key(wp_unslash($_GET['prompt_order'])) : 'latest';
+
+// On /prompts/category/{slug}/ and /prompts/model/{slug}/ the URL itself is the filter.
+$omochix_context_term = is_tax(['prompt_category', 'prompt_model']) ? get_queried_object() : null;
+$omochix_context_term = $omochix_context_term instanceof WP_Term ? $omochix_context_term : null;
+$omochix_context_url  = $omochix_context_term ? get_term_link($omochix_context_term) : '';
+$omochix_context_url  = is_wp_error($omochix_context_url) ? '' : $omochix_context_url;
+if ($omochix_context_term && 'prompt_category' === $omochix_context_term->taxonomy) {
+    $omochix_category = $omochix_context_term->slug;
+} elseif ($omochix_context_term) {
+    $omochix_model = $omochix_context_term->slug;
+}
+$omochix_fixed_taxonomy = $omochix_context_term ? $omochix_context_term->taxonomy : '';
 
 $omochix_difficulty_options = [
     'beginner'     => __('初級', 'omochix'),
@@ -44,6 +58,14 @@ $omochix_categories = get_terms(['taxonomy' => 'prompt_category', 'hide_empty' =
 $omochix_models     = get_terms(['taxonomy' => 'prompt_model', 'hide_empty' => true, 'orderby' => 'name']);
 $omochix_categories = is_array($omochix_categories) ? $omochix_categories : [];
 $omochix_models     = is_array($omochix_models) ? $omochix_models : [];
+// Keep an empty context term selectable so the filter form preserves it.
+if ($omochix_context_term && 0 === (int) $omochix_context_term->count) {
+    if ('prompt_category' === $omochix_fixed_taxonomy) {
+        array_unshift($omochix_categories, $omochix_context_term);
+    } else {
+        array_unshift($omochix_models, $omochix_context_term);
+    }
+}
 
 $omochix_tax_query = [];
 if ($omochix_category && term_exists($omochix_category, 'prompt_category')) {
@@ -69,6 +91,11 @@ $omochix_query_args = [
     'paged'          => $omochix_paged,
     's'              => $omochix_search,
 ];
+if ('' !== $omochix_search) {
+    // Opts this query into omochix_extend_prompt_search_sql() (functions.php),
+    // which also matches prompt body/usage and prompt term names.
+    $omochix_query_args['omochix_prompt_search'] = true;
+}
 if ($omochix_tax_query) {
     $omochix_query_args['tax_query'] = $omochix_tax_query;
 }
@@ -95,16 +122,36 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
             <nav class="breadcrumb" aria-label="<?php esc_attr_e('パンくずリスト', 'omochix'); ?>">
                 <ol>
                     <li><a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Home', 'omochix'); ?></a></li>
-                    <li aria-current="page"><?php esc_html_e('プロンプトライブラリ', 'omochix'); ?></li>
+                    <?php if ($omochix_context_term) : ?>
+                        <li><a href="<?php echo esc_url($omochix_archive_url); ?>"><?php esc_html_e('プロンプトライブラリ', 'omochix'); ?></a></li>
+                        <li aria-current="page"><?php echo esc_html($omochix_context_term->name); ?></li>
+                    <?php else : ?>
+                        <li aria-current="page"><?php esc_html_e('プロンプトライブラリ', 'omochix'); ?></li>
+                    <?php endif; ?>
                 </ol>
             </nav>
             <div class="prompt-archive__hero-grid">
                 <div class="prompt-archive__hero-copy">
-                    <p class="prompt-archive__eyebrow"><?php esc_html_e('PROMPT LIBRARY', 'omochix'); ?></p>
-                    <h1><?php esc_html_e('プロンプトライブラリ', 'omochix'); ?></h1>
-                    <p><?php esc_html_e('目的やAIツールに合わせて、すぐ使えるプロンプトを見つけられます。', 'omochix'); ?></p>
+                    <?php if ($omochix_context_term) : ?>
+                        <p class="prompt-archive__eyebrow"><?php echo 'prompt_category' === $omochix_fixed_taxonomy ? esc_html__('PROMPT CATEGORY', 'omochix') : esc_html__('PROMPTS BY AI', 'omochix'); ?></p>
+                        <h1><?php echo esc_html(sprintf(__('%sのプロンプト', 'omochix'), $omochix_context_term->name)); ?></h1>
+                        <?php if ($omochix_context_term->description) : ?>
+                            <p><?php echo esc_html(wp_strip_all_tags($omochix_context_term->description)); ?></p>
+                        <?php elseif ('prompt_category' === $omochix_fixed_taxonomy) : ?>
+                            <p><?php echo esc_html(sprintf(__('「%s」のプロンプトを、対応AIや難易度から探せます。', 'omochix'), $omochix_context_term->name)); ?></p>
+                        <?php else : ?>
+                            <p><?php echo esc_html(sprintf(__('対応AI「%s」のプロンプトを、目的や難易度から探せます。', 'omochix'), $omochix_context_term->name)); ?></p>
+                        <?php endif; ?>
+                    <?php else : ?>
+                        <p class="prompt-archive__eyebrow"><?php esc_html_e('PROMPT LIBRARY', 'omochix'); ?></p>
+                        <h1><?php esc_html_e('プロンプトライブラリ', 'omochix'); ?></h1>
+                        <p><?php esc_html_e('目的やAIツールに合わせて、すぐ使えるプロンプトを見つけられます。', 'omochix'); ?></p>
+                    <?php endif; ?>
                 </div>
                 <form class="prompt-archive__search" role="search" method="get" action="<?php echo esc_url($omochix_archive_url); ?>">
+                    <?php if ($omochix_context_term) : ?>
+                        <input type="hidden" name="<?php echo esc_attr($omochix_fixed_taxonomy); ?>" value="<?php echo esc_attr($omochix_context_term->slug); ?>">
+                    <?php endif; ?>
                     <label for="prompt-hero-search"><?php esc_html_e('プロンプトを検索', 'omochix'); ?></label>
                     <div>
                         <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
@@ -158,8 +205,14 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
                     </select>
                 </div>
                 <button class="prompt-filter__submit" type="submit"><?php esc_html_e('絞り込む', 'omochix'); ?></button>
-                <?php if ($omochix_search || $omochix_category || $omochix_model || $omochix_difficulty || 'latest' !== $omochix_order) : ?>
-                    <a class="prompt-filter__reset" href="<?php echo esc_url($omochix_archive_url); ?>"><?php esc_html_e('条件をクリア', 'omochix'); ?></a>
+                <?php
+                // The term fixed by a term archive URL is not a clearable filter there.
+                $omochix_has_filters = $omochix_search || $omochix_difficulty || 'latest' !== $omochix_order
+                    || ($omochix_category && 'prompt_category' !== $omochix_fixed_taxonomy)
+                    || ($omochix_model && 'prompt_model' !== $omochix_fixed_taxonomy);
+                ?>
+                <?php if ($omochix_has_filters) : ?>
+                    <a class="prompt-filter__reset" href="<?php echo esc_url($omochix_context_url ?: $omochix_archive_url); ?>"><?php esc_html_e('条件をクリア', 'omochix'); ?></a>
                 <?php endif; ?>
             </form>
         </div>
@@ -206,8 +259,8 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
                 <?php
                 $omochix_add_args = array_filter([
                     'prompt_search'     => $omochix_search,
-                    'prompt_category'   => $omochix_category,
-                    'prompt_model'      => $omochix_model,
+                    'prompt_category'   => 'prompt_category' === $omochix_fixed_taxonomy ? '' : $omochix_category,
+                    'prompt_model'      => 'prompt_model' === $omochix_fixed_taxonomy ? '' : $omochix_model,
                     'prompt_difficulty' => $omochix_difficulty,
                     'prompt_order'      => 'latest' !== $omochix_order ? $omochix_order : '',
                 ]);
@@ -240,7 +293,7 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
                 <?php if ($omochix_popular_categories) : ?>
                     <ul class="sidebar-links">
                         <?php foreach ($omochix_popular_categories as $omochix_term) : ?>
-                            <li><a href="<?php echo esc_url(get_term_link($omochix_term)); ?>"><span><?php echo esc_html($omochix_term->name); ?></span><small><?php echo esc_html(number_format_i18n($omochix_term->count)); ?></small></a></li>
+                            <li><a href="<?php echo esc_url(get_term_link($omochix_term)); ?>"<?php if ($omochix_context_term && $omochix_context_term->term_id === $omochix_term->term_id) : ?> aria-current="page"<?php endif; ?>><span><?php echo esc_html($omochix_term->name); ?></span><small><?php echo esc_html(number_format_i18n($omochix_term->count)); ?></small></a></li>
                         <?php endforeach; ?>
                     </ul>
                 <?php else : ?>

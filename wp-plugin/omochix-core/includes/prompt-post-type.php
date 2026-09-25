@@ -59,6 +59,9 @@ function omochix_core_register_prompt_post_type() {
 				'title',
 				'editor',
 				'excerpt',
+				// Featured image is only used by Slim SEO as the og:image; the
+				// prompt templates intentionally do not render it.
+				'thumbnail',
 				'revisions',
 				'custom-fields',
 				'author',

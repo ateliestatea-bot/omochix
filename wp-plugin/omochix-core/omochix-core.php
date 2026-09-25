@@ -2,7 +2,7 @@
 /**
  * Plugin Name: OmochiX Core
  * Description: Provides the AI tool data model and editorial interface for OmochiX.
- * Version: 1.4.2
+ * Version: 1.5.0
  * Requires at least: 6.8
  * Requires PHP: 8.1
  * Author: OmochiX
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OMOCHIX_CORE_VERSION', '1.4.2' );
+define( 'OMOCHIX_CORE_VERSION', '1.5.0' );
 define( 'OMOCHIX_CORE_FILE', __FILE__ );
 define( 'OMOCHIX_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'OMOCHIX_CORE_URL', plugin_dir_url( __FILE__ ) );
@@ -29,6 +29,7 @@ require_once OMOCHIX_CORE_DIR . 'includes/post-content-role.php';
 require_once OMOCHIX_CORE_DIR . 'includes/prompt-post-type.php';
 require_once OMOCHIX_CORE_DIR . 'includes/prompt-taxonomies.php';
 require_once OMOCHIX_CORE_DIR . 'includes/prompt-meta-schema.php';
+require_once OMOCHIX_CORE_DIR . 'includes/prompt-relations.php';
 require_once OMOCHIX_CORE_DIR . 'admin/meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/relations-meta-box.php';
 require_once OMOCHIX_CORE_DIR . 'admin/timeline-meta-box.php';
@@ -37,6 +38,7 @@ require_once OMOCHIX_CORE_DIR . 'admin/list-table.php';
 require_once OMOCHIX_CORE_DIR . 'admin/csv-importer.php';
 require_once OMOCHIX_CORE_DIR . 'admin/prompt-meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/save-prompt-meta.php';
+require_once OMOCHIX_CORE_DIR . 'admin/prompt-csv-importer.php';
 
 /**
  * Register plugin data structures.

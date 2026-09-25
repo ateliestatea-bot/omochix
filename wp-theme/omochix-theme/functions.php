@@ -108,7 +108,7 @@ function omochix_enqueue_assets() {
 add_action('wp_enqueue_scripts', 'omochix_enqueue_assets');
 
 /**
- * Limit public site search to editorial content and AI tools.
+ * Limit public site search to editorial content, AI tools and prompts.
  *
  * @param WP_Query $query Current query.
  * @return void
@@ -120,9 +120,10 @@ function omochix_prepare_site_search($query) {
 
     $type = isset($_GET['content_type']) ? sanitize_key(wp_unslash($_GET['content_type'])) : 'all';
     $allowed_types = [
-        'all'   => ['post', 'ai_tool'],
-        'news'  => ['post'],
-        'tools' => ['ai_tool'],
+        'all'     => ['post', 'ai_tool', 'prompt'],
+        'news'    => ['post'],
+        'tools'   => ['ai_tool'],
+        'prompts' => ['prompt'],
     ];
     if (!isset($allowed_types[$type])) {
         $type = 'all';
@@ -183,14 +184,17 @@ function omochix_extend_site_search_sql($search, $query) {
     $groups = [];
     foreach ($terms as $term) {
         $like = '%' . $wpdb->esc_like($term) . '%';
-        $groups[] = $wpdb->prepare(
+        // Prompt rows additionally match prompt body/usage and prompt terms;
+        // the clause is scoped to post_type = 'prompt', so post and ai_tool
+        // matching is unchanged.
+        $groups[] = '(' . $wpdb->prepare(
             "({$wpdb->posts}.post_title LIKE %s OR {$wpdb->posts}.post_excerpt LIKE %s OR {$wpdb->posts}.post_content LIKE %s OR ({$wpdb->posts}.post_type = 'ai_tool' AND (EXISTS (SELECT 1 FROM {$wpdb->postmeta} omx_search_pm WHERE omx_search_pm.post_id = {$wpdb->posts}.ID AND omx_search_pm.meta_key IN ('company_name', 'short_description') AND omx_search_pm.meta_value LIKE %s) OR EXISTS (SELECT 1 FROM {$wpdb->term_relationships} omx_search_tr INNER JOIN {$wpdb->term_taxonomy} omx_search_tt ON omx_search_tt.term_taxonomy_id = omx_search_tr.term_taxonomy_id INNER JOIN {$wpdb->terms} omx_search_t ON omx_search_t.term_id = omx_search_tt.term_id WHERE omx_search_tr.object_id = {$wpdb->posts}.ID AND omx_search_tt.taxonomy IN ('ai_tool_category', 'ai_tool_feature', 'ai_tool_tag', 'ai_tool_platform') AND omx_search_t.name LIKE %s))))",
             $like,
             $like,
             $like,
             $like,
             $like
-        );
+        ) . ' OR ' . omochix_get_prompt_search_sql($like) . ')';
     }
 
     $search = ' AND (' . implode(' AND ', $groups) . ') ';
@@ -200,6 +204,93 @@ function omochix_extend_site_search_sql($search, $query) {
     return $search;
 }
 add_filter('posts_search', 'omochix_extend_site_search_sql', 10, 2);
+
+/**
+ * Return a prepared SQL condition matching prompt-only searchable fields.
+ *
+ * Only ever true for rows whose post_type is 'prompt', so OR-ing it into a
+ * search group cannot widen results for any other post type.
+ *
+ * @param string $like Already esc_like()'d and %-wrapped LIKE pattern.
+ * @return string
+ */
+function omochix_get_prompt_search_sql($like) {
+    global $wpdb;
+
+    return $wpdb->prepare(
+        "({$wpdb->posts}.post_type = 'prompt' AND (EXISTS (SELECT 1 FROM {$wpdb->postmeta} omx_prompt_pm WHERE omx_prompt_pm.post_id = {$wpdb->posts}.ID AND omx_prompt_pm.meta_key IN ('prompt_body', 'prompt_usage') AND omx_prompt_pm.meta_value LIKE %s) OR EXISTS (SELECT 1 FROM {$wpdb->term_relationships} omx_prompt_tr INNER JOIN {$wpdb->term_taxonomy} omx_prompt_tt ON omx_prompt_tt.term_taxonomy_id = omx_prompt_tr.term_taxonomy_id INNER JOIN {$wpdb->terms} omx_prompt_t ON omx_prompt_t.term_id = omx_prompt_tt.term_id WHERE omx_prompt_tr.object_id = {$wpdb->posts}.ID AND omx_prompt_tt.taxonomy IN ('prompt_category', 'prompt_model') AND omx_prompt_t.name LIKE %s)))",
+        $like,
+        $like
+    );
+}
+
+/**
+ * Extend the Prompt Library archive search (/prompts/?prompt_search=) to
+ * prompt body, usage and prompt term names.
+ *
+ * Applies only to queries that opt in with the `omochix_prompt_search` query
+ * var (set by archive-prompt.php) and query the prompt post type alone, so no
+ * other search is affected. Mirrors the site search's per-word AND matching.
+ *
+ * @param string   $search Existing search SQL.
+ * @param WP_Query $query  Current query.
+ * @return string
+ */
+function omochix_extend_prompt_search_sql($search, $query) {
+    global $wpdb;
+
+    if (is_admin() || !$query->get('omochix_prompt_search') || 'prompt' !== $query->get('post_type')) {
+        return $search;
+    }
+
+    $keyword = sanitize_text_field((string) $query->get('s'));
+    $terms   = preg_split('/\s+/u', $keyword, -1, PREG_SPLIT_NO_EMPTY);
+    $terms   = array_slice(array_unique((array) $terms), 0, 6);
+    if (!$terms) {
+        return $search;
+    }
+
+    $groups = [];
+    foreach ($terms as $term) {
+        $like = '%' . $wpdb->esc_like($term) . '%';
+        $groups[] = '(' . $wpdb->prepare(
+            "{$wpdb->posts}.post_title LIKE %s OR {$wpdb->posts}.post_excerpt LIKE %s OR {$wpdb->posts}.post_content LIKE %s",
+            $like,
+            $like,
+            $like
+        ) . ' OR ' . omochix_get_prompt_search_sql($like) . ')';
+    }
+
+    $search = ' AND (' . implode(' AND ', $groups) . ') ';
+    if (!is_user_logged_in()) {
+        $search .= $wpdb->prepare(" AND {$wpdb->posts}.post_password = %s ", '');
+    }
+    return $search;
+}
+add_filter('posts_search', 'omochix_extend_prompt_search_sql', 10, 2);
+
+/**
+ * Align the Prompt Library main query page size with archive-prompt.php.
+ *
+ * The template renders its own 12-per-page WP_Query; matching the main query
+ * keeps /prompts/page/N/ and term /page/N/ URLs from 404ing when the Reading
+ * setting differs from 12. Scoped to the prompt archive and prompt term
+ * archives only.
+ *
+ * @param WP_Query $query Query instance.
+ * @return void
+ */
+function omochix_prepare_prompt_archive($query) {
+    if (is_admin() || !$query->is_main_query()) {
+        return;
+    }
+    if (!$query->is_post_type_archive('prompt') && !$query->is_tax(['prompt_category', 'prompt_model'])) {
+        return;
+    }
+
+    $query->set('posts_per_page', 12);
+}
+add_action('pre_get_posts', 'omochix_prepare_prompt_archive');
 
 /**
  * Keep internal search results and not-found responses out of indexes.
