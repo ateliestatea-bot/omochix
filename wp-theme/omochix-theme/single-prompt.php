@@ -29,6 +29,9 @@ if (have_posts()) :
         $omochix_models     = get_the_terms($omochix_prompt_id, 'prompt_model');
         $omochix_categories = is_array($omochix_categories) ? $omochix_categories : [];
         $omochix_models     = is_array($omochix_models) ? $omochix_models : [];
+        $omochix_related_tools = function_exists('omochix_core_get_prompt_related_tools')
+            ? omochix_core_get_prompt_related_tools($omochix_prompt_id)
+            : [];
 
         // Related prompts: same category first, then same model, capped at 3.
         $omochix_related_ids = [];
@@ -89,7 +92,7 @@ if (have_posts()) :
                 <div class="prompt-detail__container prompt-detail__layout">
                     <div class="prompt-detail__main">
                         <?php if ($omochix_prompt_body) : ?>
-                            <section class="prompt-body" aria-labelledby="prompt-body-title">
+                            <section class="prompt-body" aria-labelledby="prompt-body-title" data-prompt-copy-scope>
                                 <div class="prompt-body__header">
                                     <h2 id="prompt-body-title"><?php esc_html_e('プロンプト本文', 'omochix'); ?></h2>
                                     <button type="button" class="prompt-body__copy" data-copy-prompt aria-describedby="prompt-copy-status"><?php esc_html_e('プロンプトをコピー', 'omochix'); ?></button>
@@ -125,6 +128,12 @@ if (have_posts()) :
                             <section class="sidebar-panel" aria-labelledby="prompt-same-category-title">
                                 <h2 id="prompt-same-category-title"><?php esc_html_e('同じカテゴリー', 'omochix'); ?></h2>
                                 <ul class="sidebar-links"><?php foreach ($omochix_categories as $omochix_term) : ?><li><a href="<?php echo esc_url(get_term_link($omochix_term)); ?>"><span><?php echo esc_html($omochix_term->name); ?></span><small><?php echo esc_html(number_format_i18n($omochix_term->count)); ?></small></a></li><?php endforeach; ?></ul>
+                            </section>
+                        <?php endif; ?>
+                        <?php if ($omochix_related_tools) : ?>
+                            <section class="sidebar-panel" aria-labelledby="prompt-related-tools-title">
+                                <h2 id="prompt-related-tools-title"><?php esc_html_e('このプロンプトを使えるAIツール', 'omochix'); ?></h2>
+                                <ul class="sidebar-links"><?php foreach ($omochix_related_tools as $omochix_tool) : ?><li><a href="<?php echo esc_url(get_permalink($omochix_tool)); ?>"><span><?php echo esc_html(get_the_title($omochix_tool)); ?></span><small aria-hidden="true">→</small></a></li><?php endforeach; ?></ul>
                             </section>
                         <?php endif; ?>
                     </aside>

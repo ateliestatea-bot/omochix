@@ -3,7 +3,7 @@ Theme Name: OmochiX Theme
 Theme URI: https://omochix.com
 Author: OmochiX
 Description: Official custom WordPress theme for OmochiX.
-Version: 1.12.0
+Version: 1.13.0
 Requires at least: 6.8
 Requires PHP: 8.1
 Text Domain: omochix
@@ -6380,6 +6380,7 @@ a.learn-path__step:hover {
 .prompt-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .prompt-card__tags li { padding: 3px 9px; color: var(--color-muted); background: var(--color-hover); border-radius: var(--radius-pill); font-size: 11px; }
 .prompt-card__more { color: var(--color-primary); font-size: 12px; font-weight: 700; }
+.prompt-sidebar .sidebar-links a[aria-current="page"] span { color: var(--color-primary); font-weight: 700; }
 
 /* --- Prompt detail ("/prompts/{slug}") --- */
 .prompt-detail__container {

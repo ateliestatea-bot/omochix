@@ -72,6 +72,10 @@ if (have_posts()) :
         $omochix_related_compare = function_exists('omochix_core_get_related_content')
             ? omochix_core_get_related_content($omochix_tool_id, 'related_compare_ids', 'post', ['orderby' => 'date', 'order' => 'DESC'])
             : [];
+        // Reverse of each prompt's related_tool_ids; empty until prompts are linked.
+        $omochix_related_prompts = function_exists('omochix_core_get_tool_related_prompts')
+            ? omochix_core_get_tool_related_prompts($omochix_tool_id, 6)
+            : [];
 
         $omochix_categories = get_the_terms($omochix_tool_id, 'ai_tool_category');
         $omochix_features   = get_the_terms($omochix_tool_id, 'ai_tool_feature');
@@ -307,7 +311,7 @@ if (have_posts()) :
                         <?php if (array_filter(wp_list_pluck($omochix_structured_sections, 'items'))) : ?><a href="#tool-features" data-tool-nav-link><?php esc_html_e('特徴', 'omochix'); ?></a><?php endif; ?>
                         <a href="#tool-rating" data-tool-nav-link><?php esc_html_e('評価', 'omochix'); ?></a>
                         <?php if ($omochix_product_updates) : ?><a href="#tool-updates" data-tool-nav-link><?php esc_html_e('アップデート', 'omochix'); ?></a><?php endif; ?>
-                        <?php if ($omochix_related_learn || $omochix_related_news || $omochix_related_lab || $omochix_related_compare) : ?><a href="#tool-hub" data-tool-nav-link><?php esc_html_e('関連コンテンツ', 'omochix'); ?></a><?php endif; ?>
+                        <?php if ($omochix_related_learn || $omochix_related_news || $omochix_related_lab || $omochix_related_compare || $omochix_related_prompts) : ?><a href="#tool-hub" data-tool-nav-link><?php esc_html_e('関連コンテンツ', 'omochix'); ?></a><?php endif; ?>
                         <?php if ($omochix_related_tools && $omochix_related_tools->have_posts()) : ?><a href="#related-tools-title" data-tool-nav-link><?php esc_html_e('関連ツール', 'omochix'); ?></a><?php endif; ?>
                     </div>
                 </nav>
@@ -457,7 +461,7 @@ if (have_posts()) :
                     </aside>
                 </div>
 
-                <?php if ($omochix_related_learn || $omochix_related_news || $omochix_related_lab || $omochix_related_compare) : ?>
+                <?php if ($omochix_related_learn || $omochix_related_news || $omochix_related_lab || $omochix_related_compare || $omochix_related_prompts) : ?>
                     <section class="tool-hub" id="tool-hub" aria-labelledby="tool-hub-title">
                         <div class="tool-detail__container">
                             <header class="tool-detail-section-header"><p><?php esc_html_e('PRODUCT HUB', 'omochix'); ?></p><h2 id="tool-hub-title"><?php echo esc_html(sprintf(__('%sをもっと知る', 'omochix'), $omochix_tool_name)); ?></h2></header>
@@ -513,6 +517,21 @@ if (have_posts()) :
                                         <?php foreach ($omochix_related_compare as $omochix_hub_post) : ?>
                                             <a class="tool-hub-card" href="<?php echo esc_url(get_permalink($omochix_hub_post)); ?>">
                                                 <strong><?php echo esc_html(get_the_title($omochix_hub_post)); ?></strong>
+                                                <span class="tool-hub-card__arrow" aria-hidden="true">→</span>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if ($omochix_related_prompts) : ?>
+                                <div class="tool-hub__group">
+                                    <h3><?php esc_html_e('このツールで使えるプロンプト', 'omochix'); ?></h3>
+                                    <div class="tool-hub__grid">
+                                        <?php foreach ($omochix_related_prompts as $omochix_hub_post) : ?>
+                                            <a class="tool-hub-card" href="<?php echo esc_url(get_permalink($omochix_hub_post)); ?>">
+                                                <strong><?php echo esc_html(get_the_title($omochix_hub_post)); ?></strong>
+                                                <?php if ($omochix_hub_post->post_excerpt) : ?><span><?php echo esc_html(wp_trim_words(wp_strip_all_tags($omochix_hub_post->post_excerpt), 24, '…')); ?></span><?php endif; ?>
                                                 <span class="tool-hub-card__arrow" aria-hidden="true">→</span>
                                             </a>
                                         <?php endforeach; ?>

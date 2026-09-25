@@ -37,6 +37,15 @@ function omochix_core_get_prompt_meta_schema() {
 			'sanitize' => 'enum',
 			'options'  => array( 'beginner', 'intermediate', 'advanced' ),
 		),
+		// Manually curated ai_tool relations. Same storage shape as the
+		// ai_tool related_*_ids fields (plain post ID array), so the shared
+		// omochix_core_get_related_content() reader re-validates existence,
+		// post type and publish status at render time.
+		'related_tool_ids'  => array(
+			'type'     => 'array',
+			'default'  => array(),
+			'sanitize' => 'post_id_array',
+		),
 	);
 }
 
@@ -117,6 +126,12 @@ function omochix_core_sanitize_prompt_meta_value( $value, $key ) {
 		case 'enum':
 			$value = sanitize_text_field( $value );
 			return in_array( $value, $field['options'], true ) ? $value : $field['default'];
+		case 'post_id_array':
+			if ( ! is_array( $value ) ) {
+				return array();
+			}
+			$ids = array_filter( array_map( 'absint', $value ) );
+			return array_values( array_unique( $ids ) );
 		case 'code_text':
 		default:
 			return omochix_core_sanitize_prompt_text( $value );
@@ -154,6 +169,16 @@ function omochix_core_auth_registered_prompt_meta( $allowed, $meta_key, $post_id
  */
 function omochix_core_register_prompt_post_meta() {
 	foreach ( omochix_core_get_prompt_meta_schema() as $key => $field ) {
+		$show_in_rest = true;
+		if ( 'array' === $field['type'] ) {
+			$show_in_rest = array(
+				'schema' => array(
+					'type'  => 'array',
+					'items' => array( 'type' => 'integer' ),
+				),
+			);
+		}
+
 		register_post_meta(
 			'prompt',
 			$key,
@@ -161,7 +186,7 @@ function omochix_core_register_prompt_post_meta() {
 				'type'              => $field['type'],
 				'single'            => true,
 				'default'           => $field['default'],
-				'show_in_rest'      => true,
+				'show_in_rest'      => $show_in_rest,
 				'sanitize_callback' => 'omochix_core_sanitize_registered_prompt_meta',
 				'auth_callback'     => 'omochix_core_auth_registered_prompt_meta',
 			)

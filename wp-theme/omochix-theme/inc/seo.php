@@ -226,6 +226,10 @@ add_filter('slim_seo_schema_breadcrumblist', 'omochix_dedupe_breadcrumb_schema')
  * @return bool
  */
 function omochix_is_noindex_archive_request() {
+    if (omochix_is_noindex_prompt_request()) {
+        return true;
+    }
+
     if (is_author() || is_date() || is_attachment() || is_tax(['ai_tool_feature', 'ai_tool_tag'])) {
         return true;
     }
@@ -249,6 +253,112 @@ function omochix_is_noindex_archive_request() {
 
     return false;
 }
+
+/**
+ * Determine whether a Prompt Library request must not be indexed.
+ *
+ * Applies the existing archive policy to prompts:
+ * - Parameterized filter/search/sort views of /prompts/ and prompt term
+ *   archives are noindex (same as the AI tool and news filters), including
+ *   their /page/N/ variants.
+ * - prompt_category is the primary, curated grouping (like ai_tool_category):
+ *   indexable once it has at least two public prompts.
+ * - prompt_model is a secondary facet (like ai_tool_feature / ai_tool_tag)
+ *   whose starter terms also mix models with media types ("Image", "Video"),
+ *   so its archives stay navigable but noindex and out of the sitemap.
+ *
+ * @return bool
+ */
+function omochix_is_noindex_prompt_request() {
+    if (is_tax('prompt_model')) {
+        return true;
+    }
+
+    $prompt_parameters = ['prompt_search', 'prompt_category', 'prompt_model', 'prompt_difficulty', 'prompt_order', 'prompt_sort'];
+    $request_keys      = array_keys($_GET); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only public filters.
+
+    if ((is_post_type_archive('prompt') || is_tax('prompt_category')) && array_intersect($prompt_parameters, $request_keys)) {
+        return true;
+    }
+
+    if (is_tax('prompt_category')) {
+        $term = get_queried_object();
+        return $term instanceof WP_Term && (int) $term->count < 2;
+    }
+
+    return false;
+}
+
+/**
+ * Give prompts without an excerpt or description body a meta description
+ * from their usage (or prompt body) text.
+ *
+ * Slim SEO's automatic description is built from the excerpt or content,
+ * which prompts often leave empty because the prompt itself lives in meta.
+ * A manual Slim SEO description, an excerpt, or post content always wins, so
+ * this only fills the gap that would otherwise output no description at all.
+ *
+ * @param string $description Current Slim SEO description (may be a template).
+ * @param int    $object_id   Queried object ID.
+ * @return string
+ */
+function omochix_slim_seo_prompt_description($description, $object_id) {
+    if ('prompt' !== get_post_type($object_id)) {
+        return $description;
+    }
+
+    $slim_seo_data = get_post_meta($object_id, 'slim_seo', true);
+    if (is_array($slim_seo_data) && !empty($slim_seo_data['description'])) {
+        return $description;
+    }
+
+    $post = get_post($object_id);
+    if (!$post || '' !== trim($post->post_excerpt) || '' !== trim(wp_strip_all_tags($post->post_content))) {
+        return $description;
+    }
+
+    foreach (['prompt_usage', 'prompt_body'] as $meta_key) {
+        $text = trim(preg_replace('/\s+/u', ' ', wp_strip_all_tags((string) get_post_meta($object_id, $meta_key, true))));
+        // Slim SEO renders {{ }} as template variables; keep prompt text literal.
+        $text = str_replace(['{{', '}}'], ['{ {', '} }'], $text);
+        if ('' !== $text) {
+            return function_exists('mb_strimwidth') ? mb_strimwidth($text, 0, 240, '…', 'UTF-8') : $text;
+        }
+    }
+
+    return $description;
+}
+add_filter('slim_seo_meta_description', 'omochix_slim_seo_prompt_description', 10, 2);
+
+/**
+ * Exclude the noindex prompt_model facet from the Slim SEO sitemap index.
+ *
+ * @param string[] $taxonomies Sitemap taxonomy names.
+ * @return string[]
+ */
+function omochix_filter_prompt_sitemap_taxonomies($taxonomies) {
+    return array_values(array_diff((array) $taxonomies, ['prompt_model']));
+}
+add_filter('slim_seo_sitemap_taxonomies', 'omochix_filter_prompt_sitemap_taxonomies');
+
+/**
+ * Exclude thin prompt_category archives (fewer than two public prompts) from
+ * taxonomy sitemap output, matching the category / ai_tool_category policy.
+ *
+ * @param WP_Term[]|int[] $terms      Retrieved terms.
+ * @param string[]        $taxonomies Requested taxonomies.
+ * @return WP_Term[]|int[]
+ */
+function omochix_filter_thin_prompt_sitemap_terms($terms, $taxonomies) {
+    if (!get_query_var('ss_sitemap') || !in_array('prompt_category', (array) $taxonomies, true)) {
+        return $terms;
+    }
+
+    return array_values(array_filter($terms, static function ($term) {
+        return !($term instanceof WP_Term) || 'prompt_category' !== $term->taxonomy || (int) $term->count >= 2;
+    }));
+}
+add_filter('get_terms', 'omochix_filter_thin_prompt_sitemap_terms', 10, 2);
 
 /**
  * Extend WordPress robots directives when Slim SEO is unavailable.

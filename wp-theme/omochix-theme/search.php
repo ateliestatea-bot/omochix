@@ -15,7 +15,7 @@ global $wp_query;
 
 $omochix_keyword = get_search_query();
 $omochix_type    = isset($_GET['content_type']) ? sanitize_key(wp_unslash($_GET['content_type'])) : 'all';
-if (!in_array($omochix_type, ['all', 'news', 'tools'], true)) {
+if (!in_array($omochix_type, ['all', 'news', 'tools', 'prompts'], true)) {
     $omochix_type = 'all';
 }
 $omochix_found = (int) $wp_query->found_posts;
@@ -24,12 +24,14 @@ $omochix_news_url = get_option('page_for_posts')
     ? get_permalink((int) get_option('page_for_posts'))
     : home_url('/');
 $omochix_tools_url = get_post_type_archive_link('ai_tool') ?: home_url('/ai-tools/');
+$omochix_prompts_url = post_type_exists('prompt') ? get_post_type_archive_link('prompt') : '';
 $omochix_popular_searches = ['ChatGPT', 'Claude', 'Midjourney', 'Gemini', 'Copilot', 'AIエージェント'];
 
 $omochix_type_links = [
-    'all'   => __('すべて', 'omochix'),
-    'news'  => __('AIニュース', 'omochix'),
-    'tools' => __('AIツール', 'omochix'),
+    'all'     => __('すべて', 'omochix'),
+    'news'    => __('AIニュース', 'omochix'),
+    'tools'   => __('AIツール', 'omochix'),
+    'prompts' => __('プロンプト', 'omochix'),
 ];
 ?>
 
@@ -124,6 +126,34 @@ $omochix_type_links = [
                                     <span class="search-card__more"><?php esc_html_e('ツールを見る', 'omochix'); ?><span aria-hidden="true">→</span></span>
                                 </a>
                             </article>
+                        <?php elseif ('prompt' === get_post_type()) :
+                            $omochix_prompt_id = get_the_ID();
+                            $omochix_prompt_difficulty = get_post_meta($omochix_prompt_id, 'prompt_difficulty', true) ?: 'beginner';
+                            $omochix_prompt_models = get_the_terms($omochix_prompt_id, 'prompt_model');
+                            $omochix_prompt_categories = get_the_terms($omochix_prompt_id, 'prompt_category');
+                            $omochix_prompt_models = is_array($omochix_prompt_models) ? $omochix_prompt_models : [];
+                            $omochix_prompt_categories = is_array($omochix_prompt_categories) ? $omochix_prompt_categories : [];
+                            $omochix_prompt_description = get_the_excerpt() ?: get_post_meta($omochix_prompt_id, 'prompt_usage', true);
+                            ?>
+                            <article class="search-card search-card--tool search-card--prompt">
+                                <a class="search-card__link" href="<?php the_permalink(); ?>">
+                                    <div class="search-tool-card__top">
+                                        <span class="prompt-card__badge prompt-card__badge--<?php echo esc_attr($omochix_prompt_difficulty); ?>"><?php echo esc_html(function_exists('omochix_core_get_prompt_difficulty_label') ? omochix_core_get_prompt_difficulty_label($omochix_prompt_difficulty) : ''); ?></span>
+                                        <span class="search-card__type"><?php esc_html_e('プロンプト', 'omochix'); ?></span>
+                                    </div>
+                                    <div class="search-tool-card__identity">
+                                        <p><?php echo esc_html($omochix_prompt_categories ? $omochix_prompt_categories[0]->name : __('プロンプトライブラリ', 'omochix')); ?></p>
+                                        <h3><?php the_title(); ?></h3>
+                                    </div>
+                                    <?php if ($omochix_prompt_description) : ?><p class="search-card__excerpt"><?php echo esc_html(wp_trim_words(wp_strip_all_tags($omochix_prompt_description), 42, '…')); ?></p><?php endif; ?>
+                                    <?php if ($omochix_prompt_models) : ?>
+                                        <ul class="search-tool-card__facts" aria-label="<?php esc_attr_e('対応AI', 'omochix'); ?>">
+                                            <?php foreach (array_slice($omochix_prompt_models, 0, 3) as $omochix_term) : ?><li><?php echo esc_html($omochix_term->name); ?></li><?php endforeach; ?>
+                                        </ul>
+                                    <?php endif; ?>
+                                    <span class="search-card__more"><?php esc_html_e('プロンプトを見る', 'omochix'); ?><span aria-hidden="true">→</span></span>
+                                </a>
+                            </article>
                         <?php else :
                             $omochix_image = get_the_post_thumbnail_url(get_the_ID(), 'large');
                             $omochix_categories = get_the_category();
@@ -163,7 +193,7 @@ $omochix_type_links = [
                     <span aria-hidden="true">O</span>
                     <h2><?php esc_html_e('該当する情報が見つかりませんでした。', 'omochix'); ?></h2>
                     <p><?php esc_html_e('キーワードを短くするか、別の表記でもう一度お試しください。', 'omochix'); ?></p>
-                    <div class="search-empty__links"><a href="<?php echo esc_url($omochix_news_url); ?>"><?php esc_html_e('AIニュース一覧', 'omochix'); ?></a><a href="<?php echo esc_url($omochix_tools_url); ?>"><?php esc_html_e('AIツール一覧', 'omochix'); ?></a></div>
+                    <div class="search-empty__links"><a href="<?php echo esc_url($omochix_news_url); ?>"><?php esc_html_e('AIニュース一覧', 'omochix'); ?></a><a href="<?php echo esc_url($omochix_tools_url); ?>"><?php esc_html_e('AIツール一覧', 'omochix'); ?></a><?php if ($omochix_prompts_url) : ?><a href="<?php echo esc_url($omochix_prompts_url); ?>"><?php esc_html_e('プロンプトライブラリ', 'omochix'); ?></a><?php endif; ?></div>
                     <div class="search-empty__popular"><p><?php esc_html_e('人気の検索ワード', 'omochix'); ?></p><ul><?php foreach ($omochix_popular_searches as $omochix_term) : ?><li><a href="<?php echo esc_url(add_query_arg('s', $omochix_term, home_url('/'))); ?>"><?php echo esc_html($omochix_term); ?></a></li><?php endforeach; ?></ul></div>
                 </div>
             <?php endif; ?>
