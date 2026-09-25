@@ -135,6 +135,24 @@ function omochix_prepare_site_search($query) {
 add_action('pre_get_posts', 'omochix_prepare_site_search');
 
 /**
+ * Match the category archive's main query page size to archive-ai_tool.php.
+ *
+ * The template renders its own 12-per-page WP_Query; aligning the main query
+ * keeps /page/N/ from 404ing when posts_per_page differs from 12.
+ *
+ * @param WP_Query $query Query instance.
+ * @return void
+ */
+function omochix_prepare_ai_tool_category_archive($query) {
+    if (is_admin() || !$query->is_main_query() || !$query->is_tax('ai_tool_category')) {
+        return;
+    }
+
+    $query->set('posts_per_page', 12);
+}
+add_action('pre_get_posts', 'omochix_prepare_ai_tool_category_archive');
+
+/**
  * Extend front-end search with the two MVP tool meta fields and tool terms.
  *
  * EXISTS subqueries avoid duplicate rows and apply only to the main public

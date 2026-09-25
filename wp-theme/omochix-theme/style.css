@@ -3,7 +3,7 @@ Theme Name: OmochiX Theme
 Theme URI: https://omochix.com
 Author: OmochiX
 Description: Official custom WordPress theme for OmochiX.
-Version: 1.12.0
+Version: 1.12.1
 Requires at least: 6.8
 Requires PHP: 8.1
 Text Domain: omochix
@@ -1921,7 +1921,11 @@ body { overflow-x: clip; }
 .tool-detail__hero-facts dt { color: var(--color-muted); font-size: 10px; }
 .tool-detail__hero-facts dd { margin: 6px 0 0; font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
 .tool-detail__taxonomy { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 20px; }
-.tool-detail__taxonomy span { padding: 6px 9px; color: var(--color-muted); background: var(--color-hover); border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 10px; }
+.tool-detail__taxonomy span,
+.tool-detail__taxonomy a { padding: 6px 9px; color: var(--color-muted); background: var(--color-hover); border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 10px; }
+.tool-detail__taxonomy a { text-decoration: none; transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out); }
+.tool-detail__taxonomy a:hover,
+.tool-detail__taxonomy a:focus-visible { color: var(--color-text); border-color: var(--color-primary); }
 .tool-detail__updated { margin: 20px 0 0; color: var(--color-muted); font-size: 10px; overflow-wrap: anywhere; }
 .tool-detail__official,
 .tool-summary__cta {
@@ -5354,7 +5358,8 @@ button:active,
     margin-top: 18px;
 }
 
-.tool-detail__taxonomy span {
+.tool-detail__taxonomy span,
+.tool-detail__taxonomy a {
     padding: 5px 8px;
     border-radius: var(--radius-sm);
     line-height: 1.35;
