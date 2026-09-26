@@ -73,9 +73,11 @@ if (have_posts()) :
             ? omochix_core_get_related_content($omochix_tool_id, 'related_compare_ids', 'post', ['orderby' => 'date', 'order' => 'DESC'])
             : [];
         // Reverse of each prompt's related_tool_ids; empty until prompts are linked.
+        $omochix_related_prompts_has_more = false;
         $omochix_related_prompts = function_exists('omochix_core_get_tool_related_prompts')
-            ? omochix_core_get_tool_related_prompts($omochix_tool_id, 6)
+            ? omochix_core_get_tool_related_prompts($omochix_tool_id, 6, $omochix_related_prompts_has_more)
             : [];
+        $omochix_prompt_archive_url = post_type_exists('prompt') ? (get_post_type_archive_link('prompt') ?: home_url('/prompts/')) : '';
 
         $omochix_categories = get_the_terms($omochix_tool_id, 'ai_tool_category');
         $omochix_features   = get_the_terms($omochix_tool_id, 'ai_tool_feature');
@@ -540,6 +542,9 @@ if (have_posts()) :
                                             </a>
                                         <?php endforeach; ?>
                                     </div>
+                                    <?php if ($omochix_related_prompts_has_more && $omochix_prompt_archive_url) : ?>
+                                        <a class="tool-hub__see-all" href="<?php echo esc_url(add_query_arg('related_tool', get_post_field('post_name', $omochix_tool_id), $omochix_prompt_archive_url)); ?>"><?php esc_html_e('このAIツールのプロンプトをすべて見る', 'omochix'); ?><span aria-hidden="true">→</span></a>
+                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
                         </div>

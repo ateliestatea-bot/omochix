@@ -24,6 +24,7 @@ $omochix_category   = isset($_GET['prompt_category']) ? sanitize_title(wp_unslas
 $omochix_model       = isset($_GET['prompt_model']) ? sanitize_title(wp_unslash($_GET['prompt_model'])) : '';
 $omochix_difficulty = isset($_GET['prompt_difficulty']) ? sanitize_key(wp_unslash($_GET['prompt_difficulty'])) : '';
 $omochix_order       = isset($_GET['prompt_order']) ? sanitize_key(wp_unslash($_GET['prompt_order'])) : 'latest';
+$omochix_related_tool = isset($_GET['related_tool']) ? sanitize_title(wp_unslash($_GET['related_tool'])) : '';
 
 // On /prompts/category/{slug}/ and /prompts/model/{slug}/ the URL itself is the filter.
 $omochix_context_term = is_tax(['prompt_category', 'prompt_model']) ? get_queried_object() : null;
@@ -84,6 +85,22 @@ if ($omochix_difficulty) {
     $omochix_meta_query[] = ['key' => 'prompt_difficulty', 'value' => $omochix_difficulty];
 }
 
+// AI Tool -> Prompts "view all" link (single-ai_tool.php). Resolved against
+// published tools only, so an unpublished or unknown slug degrades to a
+// real, empty result set rather than silently ignoring the filter or (worse)
+// showing the unfiltered archive.
+$omochix_related_tool_post = null;
+if ($omochix_related_tool) {
+    $omochix_related_tool_matches = get_posts([
+        'post_type'      => 'ai_tool',
+        'name'           => $omochix_related_tool,
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+        'no_found_rows'  => true,
+    ]);
+    $omochix_related_tool_post = $omochix_related_tool_matches ? $omochix_related_tool_matches[0] : null;
+}
+
 $omochix_query_args = [
     'post_type'      => 'prompt',
     'post_status'    => 'publish',
@@ -101,6 +118,18 @@ if ($omochix_tax_query) {
 }
 if ($omochix_meta_query) {
     $omochix_query_args['meta_query'] = $omochix_meta_query;
+}
+if ($omochix_related_tool) {
+    // related_tool_ids is a manual meta relation, not a taxonomy, so it is
+    // resolved to an exact, verified ID list first (see
+    // omochix_core_get_tool_related_prompt_ids()) and applied via post__in.
+    // An empty post__in means "no constraint" to WP_Query, so a genuinely
+    // empty match set must use an impossible ID instead of [] — otherwise
+    // this would silently show the entire unfiltered archive.
+    $omochix_related_tool_ids = $omochix_related_tool_post && function_exists('omochix_core_get_tool_related_prompt_ids')
+        ? omochix_core_get_tool_related_prompt_ids($omochix_related_tool_post->ID)
+        : [];
+    $omochix_query_args['post__in'] = $omochix_related_tool_ids ?: [0];
 }
 if ('name' === $omochix_order) {
     $omochix_query_args['orderby'] = 'title';
@@ -142,6 +171,13 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
                         <?php else : ?>
                             <p><?php echo esc_html(sprintf(__('対応AI「%s」のプロンプトを、目的や難易度から探せます。', 'omochix'), $omochix_context_term->name)); ?></p>
                         <?php endif; ?>
+                        <?php if ('prompt_category' === $omochix_fixed_taxonomy && function_exists('omochix_get_mapped_ai_tool_category')) :
+                            $omochix_mapped_ai_tool_category = omochix_get_mapped_ai_tool_category($omochix_context_term->slug);
+                            $omochix_mapped_ai_tool_category_url = $omochix_mapped_ai_tool_category ? get_term_link($omochix_mapped_ai_tool_category) : '';
+                            if ($omochix_mapped_ai_tool_category && !is_wp_error($omochix_mapped_ai_tool_category_url)) : ?>
+                                <a class="prompt-archive__cross-link" href="<?php echo esc_url($omochix_mapped_ai_tool_category_url); ?>"><?php esc_html_e('関連するAIツールを見る', 'omochix'); ?><span aria-hidden="true">→</span></a>
+                            <?php endif;
+                        endif; ?>
                     <?php else : ?>
                         <p class="prompt-archive__eyebrow"><?php esc_html_e('PROMPT LIBRARY', 'omochix'); ?></p>
                         <h1><?php esc_html_e('プロンプトライブラリ', 'omochix'); ?></h1>
@@ -151,6 +187,9 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
                 <form class="prompt-archive__search" role="search" method="get" action="<?php echo esc_url($omochix_archive_url); ?>">
                     <?php if ($omochix_context_term) : ?>
                         <input type="hidden" name="<?php echo esc_attr($omochix_fixed_taxonomy); ?>" value="<?php echo esc_attr($omochix_context_term->slug); ?>">
+                    <?php endif; ?>
+                    <?php if ($omochix_related_tool) : ?>
+                        <input type="hidden" name="related_tool" value="<?php echo esc_attr($omochix_related_tool); ?>">
                     <?php endif; ?>
                     <label for="prompt-hero-search"><?php esc_html_e('プロンプトを検索', 'omochix'); ?></label>
                     <div>
@@ -169,6 +208,17 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
             <h2 class="sr-only" id="prompt-filter-title"><?php esc_html_e('プロンプトを絞り込む', 'omochix'); ?></h2>
             <form class="prompt-filter__form" method="get" action="<?php echo esc_url($omochix_archive_url); ?>">
                 <?php if ($omochix_search) : ?><input type="hidden" name="prompt_search" value="<?php echo esc_attr($omochix_search); ?>"><?php endif; ?>
+                <?php if ($omochix_related_tool) : ?><input type="hidden" name="related_tool" value="<?php echo esc_attr($omochix_related_tool); ?>"><?php endif; ?>
+                <?php if ($omochix_related_tool) : ?>
+                    <p class="prompt-filter__active-tool" role="status">
+                        <?php if ($omochix_related_tool_post) : ?>
+                            <?php echo esc_html(sprintf(__('「%s」で使えるプロンプトのみ表示中', 'omochix'), get_the_title($omochix_related_tool_post))); ?>
+                        <?php else : ?>
+                            <?php esc_html_e('指定されたAIツールが見つかりませんでした。', 'omochix'); ?>
+                        <?php endif; ?>
+                        <a href="<?php echo esc_url(remove_query_arg('related_tool')); ?>"><?php esc_html_e('解除', 'omochix'); ?></a>
+                    </p>
+                <?php endif; ?>
                 <div class="prompt-filter__field">
                     <label for="prompt-category"><?php esc_html_e('カテゴリー', 'omochix'); ?></label>
                     <select id="prompt-category" name="prompt_category">
@@ -207,7 +257,7 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
                 <button class="prompt-filter__submit" type="submit"><?php esc_html_e('絞り込む', 'omochix'); ?></button>
                 <?php
                 // The term fixed by a term archive URL is not a clearable filter there.
-                $omochix_has_filters = $omochix_search || $omochix_difficulty || 'latest' !== $omochix_order
+                $omochix_has_filters = $omochix_search || $omochix_difficulty || 'latest' !== $omochix_order || $omochix_related_tool
                     || ($omochix_category && 'prompt_category' !== $omochix_fixed_taxonomy)
                     || ($omochix_model && 'prompt_model' !== $omochix_fixed_taxonomy);
                 ?>
@@ -263,6 +313,7 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
                     'prompt_model'      => 'prompt_model' === $omochix_fixed_taxonomy ? '' : $omochix_model,
                     'prompt_difficulty' => $omochix_difficulty,
                     'prompt_order'      => 'latest' !== $omochix_order ? $omochix_order : '',
+                    'related_tool'      => $omochix_related_tool,
                 ]);
                 $omochix_pagination = paginate_links([
                     'total'     => $omochix_prompts_query->max_num_pages,

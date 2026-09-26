@@ -30,19 +30,25 @@ if (have_posts()) :
         $omochix_categories = is_array($omochix_categories) ? $omochix_categories : [];
         $omochix_models     = is_array($omochix_models) ? $omochix_models : [];
         $omochix_related_tools = function_exists('omochix_core_get_prompt_related_tools')
-            ? omochix_core_get_prompt_related_tools($omochix_prompt_id)
+            ? omochix_core_get_prompt_related_tools($omochix_prompt_id, 6)
             : [];
 
-        // Related prompts: same category first, then same model, capped at 3.
+        // Related prompts: same prompt_category first (the stronger, curated
+        // signal), and only fall back to prompt_model if that alone doesn't
+        // reach the cap. Always post_status => publish — even when an admin
+        // is previewing this draft, the related list must reflect what a
+        // public visitor would actually be able to click through to, not
+        // other drafts that happen to share a taxonomy term.
+        $omochix_related_cap = 6;
         $omochix_related_ids = [];
         foreach (['prompt_category' => $omochix_categories, 'prompt_model' => $omochix_models] as $omochix_taxonomy => $omochix_terms) {
-            if (!$omochix_terms || count($omochix_related_ids) >= 3) {
+            if (!$omochix_terms || count($omochix_related_ids) >= $omochix_related_cap) {
                 continue;
             }
             $omochix_relation_query = new WP_Query([
                 'post_type'      => 'prompt',
                 'post_status'    => 'publish',
-                'posts_per_page' => 3 - count($omochix_related_ids),
+                'posts_per_page' => $omochix_related_cap - count($omochix_related_ids),
                 'post__not_in'   => array_merge([$omochix_prompt_id], $omochix_related_ids),
                 'fields'         => 'ids',
                 'no_found_rows'  => true,
@@ -55,7 +61,7 @@ if (have_posts()) :
             $omochix_related_ids = array_values(array_unique(array_merge($omochix_related_ids, $omochix_relation_query->posts)));
         }
         $omochix_related_prompts = $omochix_related_ids ? new WP_Query([
-            'post_type' => 'prompt', 'post_status' => 'publish', 'posts_per_page' => 3,
+            'post_type' => 'prompt', 'post_status' => 'publish', 'posts_per_page' => $omochix_related_cap,
             'post__in' => $omochix_related_ids, 'orderby' => 'post__in', 'no_found_rows' => true,
         ]) : null;
         ?>
@@ -127,17 +133,39 @@ if (have_posts()) :
                         <?php if ($omochix_categories) : ?>
                             <section class="sidebar-panel" aria-labelledby="prompt-same-category-title">
                                 <h2 id="prompt-same-category-title"><?php esc_html_e('同じカテゴリー', 'omochix'); ?></h2>
-                                <ul class="sidebar-links"><?php foreach ($omochix_categories as $omochix_term) : ?><li><a href="<?php echo esc_url(get_term_link($omochix_term)); ?>"><span><?php echo esc_html($omochix_term->name); ?></span><small><?php echo esc_html(number_format_i18n($omochix_term->count)); ?></small></a></li><?php endforeach; ?></ul>
-                            </section>
-                        <?php endif; ?>
-                        <?php if ($omochix_related_tools) : ?>
-                            <section class="sidebar-panel" aria-labelledby="prompt-related-tools-title">
-                                <h2 id="prompt-related-tools-title"><?php esc_html_e('このプロンプトを使えるAIツール', 'omochix'); ?></h2>
-                                <ul class="sidebar-links"><?php foreach ($omochix_related_tools as $omochix_tool) : ?><li><a href="<?php echo esc_url(get_permalink($omochix_tool)); ?>"><span><?php echo esc_html(get_the_title($omochix_tool)); ?></span><small aria-hidden="true">→</small></a></li><?php endforeach; ?></ul>
+                                <?php
+                                // A term's count only ever reflects published posts, so while
+                                // every prompt in this category is still a draft it reads 0 —
+                                // true but not useful to show, so the badge is hidden until
+                                // this category has at least one published prompt.
+                                ?>
+                                <ul class="sidebar-links"><?php foreach ($omochix_categories as $omochix_term) : ?><li><a href="<?php echo esc_url(get_term_link($omochix_term)); ?>"><span><?php echo esc_html($omochix_term->name); ?></span><?php if ($omochix_term->count > 0) : ?><small><?php echo esc_html(number_format_i18n($omochix_term->count)); ?></small><?php endif; ?></a></li><?php endforeach; ?></ul>
                             </section>
                         <?php endif; ?>
                     </aside>
                 </div>
+
+                <?php if ($omochix_related_tools) : ?>
+                    <section class="prompt-detail-related-tools" aria-labelledby="related-tools-title">
+                        <div class="prompt-detail__container">
+                            <header class="tool-detail-section-header"><p><?php esc_html_e('USE IT WITH', 'omochix'); ?></p><h2 id="related-tools-title"><?php esc_html_e('このプロンプトを使えるAIツール', 'omochix'); ?></h2></header>
+                            <div class="tool-hub__grid">
+                                <?php foreach ($omochix_related_tools as $omochix_tool) :
+                                    $omochix_tool_description = get_post_meta($omochix_tool->ID, 'short_description', true);
+                                    $omochix_tool_categories  = get_the_terms($omochix_tool->ID, 'ai_tool_category');
+                                    $omochix_tool_category    = is_array($omochix_tool_categories) && $omochix_tool_categories ? $omochix_tool_categories[0] : null;
+                                    ?>
+                                    <a class="tool-hub-card" href="<?php echo esc_url(get_permalink($omochix_tool)); ?>">
+                                        <strong><?php echo esc_html(get_the_title($omochix_tool)); ?></strong>
+                                        <?php if ($omochix_tool_category) : ?><span><?php echo esc_html($omochix_tool_category->name); ?></span><?php endif; ?>
+                                        <?php if ($omochix_tool_description) : ?><span><?php echo esc_html(wp_trim_words(wp_strip_all_tags($omochix_tool_description), 24, '…')); ?></span><?php endif; ?>
+                                        <span class="tool-hub-card__arrow" aria-hidden="true">→</span>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </section>
+                <?php endif; ?>
 
                 <?php if ($omochix_related_prompts && $omochix_related_prompts->have_posts()) : ?>
                     <section class="prompt-detail-related" aria-labelledby="related-prompts-title">
