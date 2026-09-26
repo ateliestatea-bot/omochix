@@ -424,6 +424,51 @@ function omochix_get_category_url($category) {
 }
 
 /**
+ * Return the prompt_category -> ai_tool_category slug mapping used to cross-link
+ * the Prompt Library and AI Tools by topic.
+ *
+ * The two taxonomies were named independently and don't share slugs except by
+ * coincidence (e.g. both happen to use "sales"), so this mapping is a small
+ * curated table rather than something derivable automatically. `documents`
+ * has no ai_tool_category equivalent and is intentionally left unmapped.
+ *
+ * @return array<string, string>
+ */
+function omochix_get_prompt_category_to_ai_tool_category_map() {
+    return [
+        'sales'        => 'sales',
+        'marketing'    => 'marketing',
+        'writing'      => 'writing',
+        'productivity' => 'productivity',
+        'development'  => 'programming',
+        'image'        => 'image-generation',
+        'video'        => 'video-generation',
+    ];
+}
+
+/**
+ * Resolve a prompt_category slug to its mapped, currently-existing
+ * ai_tool_category term.
+ *
+ * Always looks the mapped slug up via the taxonomy API rather than assuming
+ * it exists, so a term renamed or removed on the AI Tools side simply makes
+ * the cross-link disappear instead of pointing at a broken URL.
+ *
+ * @param string $prompt_category_slug A prompt_category term slug.
+ * @return WP_Term|null
+ */
+function omochix_get_mapped_ai_tool_category($prompt_category_slug) {
+    $map = omochix_get_prompt_category_to_ai_tool_category_map();
+    if (!isset($map[$prompt_category_slug]) || !taxonomy_exists('ai_tool_category')) {
+        return null;
+    }
+
+    $term = get_term_by('slug', $map[$prompt_category_slug], 'ai_tool_category');
+
+    return $term instanceof WP_Term ? $term : null;
+}
+
+/**
  * Return hub-page configuration for the category archives that should show
  * curated hero copy, "read first" picks, and topic navigation instead of a
  * plain post list.

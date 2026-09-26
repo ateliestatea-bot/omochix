@@ -274,7 +274,7 @@ function omochix_is_noindex_prompt_request() {
         return true;
     }
 
-    $prompt_parameters = ['prompt_search', 'prompt_category', 'prompt_model', 'prompt_difficulty', 'prompt_order', 'prompt_sort'];
+    $prompt_parameters = ['prompt_search', 'prompt_category', 'prompt_model', 'prompt_difficulty', 'prompt_order', 'prompt_sort', 'related_tool'];
     $request_keys      = array_keys($_GET); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only public filters.
 
     if ((is_post_type_archive('prompt') || is_tax('prompt_category')) && array_intersect($prompt_parameters, $request_keys)) {
