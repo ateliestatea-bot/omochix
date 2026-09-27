@@ -331,6 +331,97 @@ function omochix_slim_seo_prompt_description($description, $object_id) {
 add_filter('slim_seo_meta_description', 'omochix_slim_seo_prompt_description', 10, 2);
 
 /**
+ * Fill in the meta description Slim SEO otherwise leaves empty on the AI
+ * Tool archive, the Prompt Library archive, and Prompt Library category
+ * archives.
+ *
+ * Slim SEO's own CPT-archive description defaults to an empty string, and
+ * its taxonomy-term description falls back to the term's own (here, never
+ * populated) "description" field — so neither ever renders anything unless
+ * an editor configures one by hand. This only ever fills that gap: a real
+ * per-term Slim SEO description, or a manually authored WordPress term
+ * description, always wins here, exactly like the manual per-post override
+ * already respected by omochix_slim_seo_ai_tool_description() and
+ * omochix_slim_seo_prompt_description() above. Paginated and
+ * parameterized/filtered views of these same archives (search, category
+ * chip, related_tool, prompt_model, etc.) still get a description from this
+ * same filter, since a description is harmless on a noindex page and this
+ * function never touches robots/canonical -- those stay governed solely by
+ * omochix_is_noindex_archive_request() and omochix_is_noindex_prompt_request().
+ *
+ * @param string $description Current Slim SEO description (template or manual value).
+ * @param int    $object_id   Queried object ID (unused: context is read from conditionals).
+ * @return string
+ */
+function omochix_slim_seo_archive_description($description, $object_id) {
+    unset($object_id);
+
+    if (is_post_type_archive('ai_tool') || is_post_type_archive('prompt')) {
+        if ('' !== trim((string) $description)) {
+            return $description;
+        }
+
+        return is_post_type_archive('ai_tool')
+            ? __('ChatGPT、Claude、Geminiをはじめ、生成AI・画像生成・動画生成・開発・業務効率化などのAIツールを紹介。特徴や料金、日本語対応、用途を比較し、自分に合ったAIツールを探せます。', 'omochix')
+            : __('ChatGPT、Claude、Geminiなどで使える実践的なAIプロンプトを紹介。仕事、マーケティング、開発、文章作成、画像・動画生成など、目的別にすぐ使えるプロンプトを探せます。', 'omochix');
+    }
+
+    if (is_tax('prompt_category')) {
+        $term = get_queried_object();
+        if (!($term instanceof WP_Term)) {
+            return $description;
+        }
+
+        $slim_seo_term_meta  = get_term_meta($term->term_id, 'slim_seo', true);
+        $has_manual_slim_seo = is_array($slim_seo_term_meta) && !empty($slim_seo_term_meta['description']);
+        $has_term_description = '' !== trim(wp_strip_all_tags((string) $term->description));
+        if ($has_manual_slim_seo || $has_term_description) {
+            return $description;
+        }
+
+        return omochix_get_prompt_category_description($term);
+    }
+
+    return $description;
+}
+add_filter('slim_seo_meta_description', 'omochix_slim_seo_archive_description', 10, 2);
+
+/**
+ * Return a natural, search-intent-matched meta description for a Prompt
+ * Library category.
+ *
+ * The 8 launch categories each get a hand-written description. Any future
+ * category not in this map (added via wp-admin without a matching code
+ * change) falls back to a templated sentence built from the term's own
+ * name, so a new category never ships with an empty description.
+ *
+ * @param WP_Term $term prompt_category term.
+ * @return string
+ */
+function omochix_get_prompt_category_description($term) {
+    $descriptions = [
+        'sales'        => '営業活動で使えるAIプロンプトを紹介。商談準備、提案、メール作成、顧客対応など、ChatGPTやClaudeで使える実践的なプロンプトを探せます。',
+        'marketing'    => 'マーケティングで使えるAIプロンプトを紹介。SNS、広告、企画、分析、コンテンツ制作など、実務ですぐ使えるプロンプトを探せます。',
+        'development'  => '開発・プログラミングで使えるAIプロンプトを紹介。コード生成、レビュー、設計、デバッグなど、AIを開発業務に活用するプロンプトを探せます。',
+        'writing'      => '文章作成で使えるAIプロンプトを紹介。記事、メール、構成、リライトなど、ChatGPTやClaudeを文章制作に活用するプロンプトを探せます。',
+        'productivity' => '仕事効率化に使えるAIプロンプトを紹介。タスク整理、意思決定、計画、情報整理など、日々の業務を効率化するプロンプトを探せます。',
+        'documents'    => '資料・ドキュメント作成で使えるAIプロンプトを紹介。要約、FAQ、ガイドライン、報告書など、業務文書の作成を効率化できます。',
+        'image'        => 'AI画像生成で使えるプロンプトを紹介。商品画像、アイキャッチ、ビジュアル制作など、画像生成AIで使える実践的な指示文を探せます。',
+        'video'        => 'AI動画生成で使えるプロンプトを紹介。動画構成、台本、image-to-video、モーション指示など、AI動画制作に使えるプロンプトを探せます。',
+    ];
+
+    if (isset($descriptions[$term->slug])) {
+        return $descriptions[$term->slug];
+    }
+
+    return sprintf(
+        /* translators: %s: Prompt Library category name. */
+        __('%sで使えるAIプロンプトを紹介。ChatGPTやClaudeなどで活用できる実践的なプロンプトを、目的や難易度から探せます。', 'omochix'),
+        $term->name
+    );
+}
+
+/**
  * Exclude the noindex prompt_model facet from the Slim SEO sitemap index.
  *
  * @param string[] $taxonomies Sitemap taxonomy names.
