@@ -36,6 +36,7 @@ require_once OMOCHIX_CORE_DIR . 'admin/timeline-meta-box.php';
 require_once OMOCHIX_CORE_DIR . 'admin/save-meta.php';
 require_once OMOCHIX_CORE_DIR . 'admin/list-table.php';
 require_once OMOCHIX_CORE_DIR . 'admin/csv-importer.php';
+require_once OMOCHIX_CORE_DIR . 'admin/ai-tool-content-updater.php';
 require_once OMOCHIX_CORE_DIR . 'admin/prompt-meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/save-prompt-meta.php';
 require_once OMOCHIX_CORE_DIR . 'admin/prompt-csv-importer.php';
