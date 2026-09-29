@@ -1958,12 +1958,18 @@ body { overflow-x: clip; }
 .tool-detail__main { min-width: 0; max-width: 760px; }
 .tool-summary { padding: 24px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
 .tool-summary > h2 { margin: 0 0 20px; font-size: 16px; letter-spacing: -0.03em; }
-.tool-summary__list { display: grid; gap: 0; margin: 0; }
-.tool-summary__list > div { display: grid; grid-template-columns: minmax(90px, 0.75fr) minmax(0, 1.25fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--color-line); }
-.tool-summary__list > div:first-child { padding-top: 0; }
-.tool-summary__list > div:last-child { padding-bottom: 0; border-bottom: 0; }
-.tool-summary__list dt { color: var(--color-muted); font-size: 11px; }
-.tool-summary__list dd { margin: 0; font-size: 12px; font-weight: 650; text-align: right; overflow-wrap: anywhere; }
+/* Icon-led "Quick Facts" tiles, 2 columns on mobile and up to 4 as the
+   available width grows (see the 640px/1100px breakpoints below) -- a
+   generic replacement for the old label:value table that reads the exact
+   same $omochix_*_label variables single-ai_tool.php already prepares, so
+   no PHP data change was needed to switch layouts. */
+.tool-summary__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.tool-summary__list > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 14px; background: var(--color-hover); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.tool-summary__list dt { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--color-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.01em; }
+.tool-summary__list dt .omx-icon { width: 14px; height: 14px; color: var(--color-primary); }
+.tool-summary__list dd { margin: 0; font-size: 13px; font-weight: 700; text-align: left; overflow-wrap: anywhere; }
+@media (min-width: 640px) { .tool-summary__list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .tool-summary__list { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .tool-summary__cta { display: flex; width: 100%; margin-top: 24px; }
 .tool-summary--sidebar { display: none; }
 .tool-summary--mobile { margin-bottom: 56px; }
@@ -2031,7 +2037,15 @@ body { overflow-x: clip; }
 
 @media (min-width: 1100px) {
     .tool-detail__layout { grid-template-columns: minmax(0, 760px) 280px; justify-content: space-between; gap: 64px; }
-    .tool-detail__sidebar { position: sticky; top: calc(var(--header-height) + 32px); }
+    /* align-self: start avoids the CSS Grid default of stretching this
+       column to match .tool-detail__main's row height. That default was
+       already latent here (Quick Facts + category + newsletter never fill
+       most tools' main-content height either), but harmless while the
+       sidebar carries no background/border of its own; found via v2.2
+       testing, where a tool with a much longer body than usual made the
+       stretched box's true, empty extent (confirmed via
+       getBoundingClientRect, not just visually) obvious for the first time. */
+    .tool-detail__sidebar { position: sticky; top: calc(var(--header-height) + 32px); align-self: start; }
     /* Quick Summary now renders once (see single-ai_tool.php), always using
        the .tool-summary--mobile markup/CSS, so it must stay visible at this
        width too — it is no longer mobile-only despite the class name, which
@@ -2232,7 +2246,13 @@ body { overflow-x: clip; }
    never collides with other theme classes. Icons are CSS mask-image SVGs
    (currentColor-driven), so no extra HTTP requests or JS are introduced.
    ========================================================================== */
-.article-content {
+/* Promoted from .article-content to :root (a strict superset -- :root still
+   cascades into .article-content exactly as before) so the same icon set is
+   also usable outside post_content: the AI Tool page's own Quick Facts,
+   feature/use-case cards, pricing icon and OmochiX View card all reference
+   these same custom properties from v2.2 onward (see the
+   .tool-detail__article .omx-icon rules further down this file). */
+:root {
     --omx-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12l5 5L20 6'/%3E%3C/svg%3E");
     --omx-icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v6'/%3E%3Ccircle cx='12' cy='7.5' r='1' fill='black' stroke='none'/%3E%3C/svg%3E");
     --omx-icon-warning: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 2 20h20L12 3Z'/%3E%3Cpath d='M12 10v5'/%3E%3Ccircle cx='12' cy='18' r='1' fill='black' stroke='none'/%3E%3C/svg%3E");
@@ -2247,9 +2267,20 @@ body { overflow-x: clip; }
     --omx-icon-chart: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20V10'/%3E%3Cpath d='M12 20V4'/%3E%3Cpath d='M20 20v-7'/%3E%3C/svg%3E");
     --omx-icon-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' stroke='none'%3E%3Cpath d='M12 3l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 18l-6.1 3.6 1.4-6.8-5.1-4.7 6.9-.8L12 3Z'/%3E%3C/svg%3E");
     --omx-icon-dot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4' fill='black'/%3E%3C/svg%3E");
+    /* AI Tools v2.2 rich detail: two additions to the existing icon set
+       above (same 24x24 viewBox, black stroke, round linecap/linejoin
+       convention), for the two Quick Facts rows nothing existing fit well:
+       language support and device/platform availability. */
+    --omx-icon-globe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18'/%3E%3Cpath d='M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9Z'/%3E%3C/svg%3E");
+    --omx-icon-monitor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='13' rx='2'/%3E%3Cpath d='M8 20h8'/%3E%3Cpath d='M12 17v3'/%3E%3C/svg%3E");
 }
 
-.article-content .omx-icon {
+/* .tool-detail__article is added alongside .article-content (untouched) so
+   the same icon set can be used in the AI Tool page's own chrome (Quick
+   Facts, feature/use-case cards, OmochiX View) -- not just inside
+   post_content -- without duplicating this ruleset a second time. */
+.article-content .omx-icon,
+.tool-detail__article .omx-icon {
     display: inline-block;
     flex-shrink: 0;
     width: 22px;
@@ -2262,20 +2293,22 @@ body { overflow-x: clip; }
     -webkit-mask-size: contain;
     mask-size: contain;
 }
-.article-content .omx-icon--check { -webkit-mask-image: var(--omx-icon-check); mask-image: var(--omx-icon-check); }
-.article-content .omx-icon--info { -webkit-mask-image: var(--omx-icon-info); mask-image: var(--omx-icon-info); }
-.article-content .omx-icon--warning { -webkit-mask-image: var(--omx-icon-warning); mask-image: var(--omx-icon-warning); }
-.article-content .omx-icon--arrow { -webkit-mask-image: var(--omx-icon-arrow); mask-image: var(--omx-icon-arrow); }
-.article-content .omx-icon--flask { -webkit-mask-image: var(--omx-icon-flask); mask-image: var(--omx-icon-flask); }
-.article-content .omx-icon--bolt { -webkit-mask-image: var(--omx-icon-bolt); mask-image: var(--omx-icon-bolt); }
-.article-content .omx-icon--shield { -webkit-mask-image: var(--omx-icon-shield); mask-image: var(--omx-icon-shield); }
-.article-content .omx-icon--coin { -webkit-mask-image: var(--omx-icon-coin); mask-image: var(--omx-icon-coin); }
-.article-content .omx-icon--chat { -webkit-mask-image: var(--omx-icon-chat); mask-image: var(--omx-icon-chat); }
-.article-content .omx-icon--plug { -webkit-mask-image: var(--omx-icon-plug); mask-image: var(--omx-icon-plug); }
-.article-content .omx-icon--lock { -webkit-mask-image: var(--omx-icon-lock); mask-image: var(--omx-icon-lock); }
-.article-content .omx-icon--chart { -webkit-mask-image: var(--omx-icon-chart); mask-image: var(--omx-icon-chart); }
-.article-content .omx-icon--star { -webkit-mask-image: var(--omx-icon-star); mask-image: var(--omx-icon-star); }
-.article-content .omx-icon--dot { -webkit-mask-image: var(--omx-icon-dot); mask-image: var(--omx-icon-dot); }
+.article-content .omx-icon--check, .tool-detail__article .omx-icon--check { -webkit-mask-image: var(--omx-icon-check); mask-image: var(--omx-icon-check); }
+.article-content .omx-icon--info, .tool-detail__article .omx-icon--info { -webkit-mask-image: var(--omx-icon-info); mask-image: var(--omx-icon-info); }
+.article-content .omx-icon--warning, .tool-detail__article .omx-icon--warning { -webkit-mask-image: var(--omx-icon-warning); mask-image: var(--omx-icon-warning); }
+.article-content .omx-icon--arrow, .tool-detail__article .omx-icon--arrow { -webkit-mask-image: var(--omx-icon-arrow); mask-image: var(--omx-icon-arrow); }
+.article-content .omx-icon--flask, .tool-detail__article .omx-icon--flask { -webkit-mask-image: var(--omx-icon-flask); mask-image: var(--omx-icon-flask); }
+.article-content .omx-icon--bolt, .tool-detail__article .omx-icon--bolt { -webkit-mask-image: var(--omx-icon-bolt); mask-image: var(--omx-icon-bolt); }
+.article-content .omx-icon--shield, .tool-detail__article .omx-icon--shield { -webkit-mask-image: var(--omx-icon-shield); mask-image: var(--omx-icon-shield); }
+.article-content .omx-icon--coin, .tool-detail__article .omx-icon--coin { -webkit-mask-image: var(--omx-icon-coin); mask-image: var(--omx-icon-coin); }
+.article-content .omx-icon--chat, .tool-detail__article .omx-icon--chat { -webkit-mask-image: var(--omx-icon-chat); mask-image: var(--omx-icon-chat); }
+.article-content .omx-icon--plug, .tool-detail__article .omx-icon--plug { -webkit-mask-image: var(--omx-icon-plug); mask-image: var(--omx-icon-plug); }
+.article-content .omx-icon--lock, .tool-detail__article .omx-icon--lock { -webkit-mask-image: var(--omx-icon-lock); mask-image: var(--omx-icon-lock); }
+.article-content .omx-icon--chart, .tool-detail__article .omx-icon--chart { -webkit-mask-image: var(--omx-icon-chart); mask-image: var(--omx-icon-chart); }
+.article-content .omx-icon--star, .tool-detail__article .omx-icon--star { -webkit-mask-image: var(--omx-icon-star); mask-image: var(--omx-icon-star); }
+.article-content .omx-icon--dot, .tool-detail__article .omx-icon--dot { -webkit-mask-image: var(--omx-icon-dot); mask-image: var(--omx-icon-dot); }
+.tool-detail__article .omx-icon--globe { -webkit-mask-image: var(--omx-icon-globe); mask-image: var(--omx-icon-globe); }
+.tool-detail__article .omx-icon--monitor { -webkit-mask-image: var(--omx-icon-monitor); mask-image: var(--omx-icon-monitor); }
 
 /* 1. Key Point */
 .article-content .omx-keypoint { display: flex; gap: 14px; margin: 40px 0; padding: 20px 24px; background: color-mix(in srgb, var(--omx-purple) 6%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--omx-purple) 24%, var(--color-line)); border-left: 4px solid var(--omx-purple); border-radius: var(--radius-md); }
@@ -3015,7 +3048,9 @@ button:active,
 }
 
 #tool-overview,
+#tool-feature-cards,
 #tool-features,
+#tool-use-cases,
 #tool-details,
 #tool-rating,
 #tool-view,
@@ -5406,14 +5441,19 @@ button:active,
     line-height: 1.4;
 }
 
+.tool-summary__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
 .tool-summary__list > div {
-    gap: 12px;
-    padding-block: 12px;
+    gap: 6px;
+    padding: 12px;
 }
 
 .tool-summary__list dt,
 .tool-summary__list dd {
-    line-height: 1.55;
+    line-height: 1.4;
 }
 
 .tool-summary__cta {
@@ -6627,6 +6667,112 @@ a.learn-path__step:hover {
 .tool-hub-card__arrow { justify-self: end; color: var(--color-primary); font-size: 13px; }
 .tool-hub__see-all { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; color: var(--color-primary); font-size: 12px; font-weight: 700; text-decoration: none; }
 .tool-hub__see-all:hover { text-decoration: underline; }
+
+/* ==========================================================================
+   AI Tools v2.2: rich detail page components.
+   Every rule below reads generic markup single-ai_tool.php renders for any
+   ai_tool post (feature/use-case cards from meta arrays, TOC from
+   post_content h2s, heading/FAQ styling scoped to .tool-content); none of it
+   is specific to any one tool.
+   ========================================================================== */
+
+/* Feature chip (ai_tool_feature terms) in the HERO taxonomy row, styled the
+   same as the existing category/platform chips it sits beside. */
+.tool-detail__taxonomy-feature { padding: 6px 9px; color: var(--color-muted); background: var(--color-hover); border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 10px; }
+
+/* Feature cards ("できること"), from key_features. */
+.tool-feature-cards { margin-top: var(--section-space); padding-top: 48px; border-top: 1px solid var(--color-line); }
+.tool-feature-cards > header > p { margin: 0 0 12px; color: var(--color-primary); font-size: 9px; font-weight: 750; letter-spacing: 0.15em; }
+.tool-feature-cards > header h2 { margin: 0; font-size: clamp(1.75rem, 6vw, 2.5rem); line-height: 1.2; letter-spacing: -0.05em; }
+.tool-feature-cards__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 32px; }
+.tool-feature-card { padding: 24px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.tool-feature-card__icon { width: 26px; height: 26px; margin-bottom: 16px; color: var(--color-primary); }
+.tool-feature-card h3 { margin: 0; font-size: 15px; letter-spacing: -0.02em; }
+.tool-feature-card p { margin: 10px 0 0; color: var(--color-muted); font-size: 13px; line-height: 1.75; }
+
+/* Use case cards ("おすすめの使い方"), from recommended_use_cases. */
+.tool-use-cases { margin-top: var(--section-space); padding-top: 48px; border-top: 1px solid var(--color-line); }
+.tool-use-cases > header > p { margin: 0 0 12px; color: var(--color-primary); font-size: 9px; font-weight: 750; letter-spacing: 0.15em; }
+.tool-use-cases > header h2 { margin: 0; font-size: clamp(1.75rem, 6vw, 2.5rem); line-height: 1.2; letter-spacing: -0.05em; }
+.tool-use-cases__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 32px; }
+.tool-use-case { display: flex; align-items: center; gap: 10px; padding: 16px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); font-size: 13px; font-weight: 650; }
+.tool-use-case__icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--color-primary); }
+
+/* Pricing card: the one .tool-detail-info__block that holds pricing_details
+   gets a slightly stronger visual weight than its siblings (icon + accent
+   border), without a parser -- the field stays the free-text paragraph an
+   editor wrote; see docs note on the pricing_plans schema recommendation. */
+.tool-detail-info__block--pricing { position: relative; border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-line)); }
+.tool-detail-info__block-icon { display: block; width: 22px; height: 22px; margin-bottom: 12px; color: var(--color-primary); }
+
+/* Sticky / collapsible table of contents, built from post_content h2s. */
+.tool-toc--mobile { margin-bottom: 40px; padding: 16px 18px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.tool-toc--mobile summary { cursor: pointer; color: var(--color-text); font-size: 13px; font-weight: 700; list-style: none; }
+.tool-toc--mobile summary::-webkit-details-marker { display: none; }
+.tool-toc--mobile summary::after { display: inline-block; margin-left: 8px; color: var(--color-muted); content: "▾"; transition: transform var(--motion-fast) ease; }
+.tool-toc--mobile[open] summary::after { transform: rotate(180deg); }
+.tool-toc--mobile ol { display: grid; gap: 4px; margin: 14px 0 0; padding: 14px 0 0; border-top: 1px solid var(--color-line); list-style: none; counter-reset: omx-toc; }
+.tool-toc--mobile li { counter-increment: omx-toc; }
+.tool-toc--mobile a { display: block; padding: 6px 0; color: var(--color-muted); font-size: 13px; text-decoration: none; }
+.tool-toc--mobile a:hover, .tool-toc--mobile a:focus-visible { color: var(--color-text); }
+.tool-toc--desktop { display: none; }
+.tool-toc--desktop h2 { margin: 0 0 14px; color: var(--color-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.tool-toc--desktop ol { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.tool-toc--desktop a { display: block; padding: 6px 0 6px 12px; border-left: 2px solid var(--color-line); color: var(--color-muted); font-size: 12px; line-height: 1.5; text-decoration: none; transition: color var(--motion-fast) ease, border-color var(--motion-fast) ease; }
+.tool-toc--desktop a:hover, .tool-toc--desktop a:focus-visible { color: var(--color-text); }
+.tool-toc--desktop a.is-active { border-left-color: var(--color-primary); color: var(--color-text); font-weight: 650; }
+
+/* Heading + body-copy enhancements scoped to the AI Tool page's own content
+   area only (.tool-content), so News/Learn/Prompt article typography via
+   the shared .article-content rules is completely unaffected. */
+.tool-content.article-content { max-width: 100%; }
+.tool-content.article-content h2 { position: relative; margin: 72px 0 22px; padding: 20px 0 0; border-top: 0; }
+.tool-content.article-content h2::before { position: absolute; top: 0; left: 0; width: 40px; height: 3px; background: var(--color-primary); border-radius: var(--radius-pill); content: ""; }
+.tool-content.article-content h3 { margin: 40px 0 16px; padding-left: 14px; border-left: 3px solid var(--color-line); }
+.tool-content.article-content p { max-width: 68ch; }
+.tool-content.article-content ul,
+.tool-content.article-content ol { max-width: 68ch; }
+/* FAQ-style "**Q. ...**" lines (and any other paragraph that is entirely one
+   bold run) get a distinct lead-in treatment -- a generic selector keyed on
+   markup shape, not on matching "Q." text, so it works for any tool's
+   content that uses this same single-strong-paragraph convention. */
+.tool-content.article-content p > strong:only-child { display: block; margin-top: 32px; color: var(--color-text); font-size: 1.05em; }
+.tool-content.article-content p:has(> strong:only-child) { margin-bottom: 10px; }
+/* Numbered "How To" steps: any <ol> in the AI Tool body renders as a
+   step-flow, matching the existing .omx-flow visual language used
+   elsewhere in article content, via CSS counters -- no JS, no dependency on
+   the editor using a special block. */
+.tool-content.article-content ol { display: flex; flex-wrap: wrap; max-width: 100%; margin: 40px 0; padding: 0; list-style: none; gap: 20px; counter-reset: omx-steps; }
+.tool-content.article-content ol li { position: relative; flex: 1 1 150px; margin: 0; padding: 44px 16px 16px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); counter-increment: omx-steps; }
+.tool-content.article-content ol li::before { content: counter(omx-steps, decimal-leading-zero); position: absolute; top: 14px; left: 16px; color: var(--color-primary); font-size: 12px; font-weight: 750; letter-spacing: 0.04em; }
+.tool-content.article-content ol li:not(:last-child)::after { position: absolute; top: 50%; right: -14px; width: 10px; height: 10px; background-color: var(--color-muted); transform: translateY(-50%); -webkit-mask: var(--omx-icon-arrow) center / contain no-repeat; mask: var(--omx-icon-arrow) center / contain no-repeat; content: ""; display: none; }
+
+/* OmochiX VIEW: a distinct editorial card, not a plain text block. Always a
+   dark card regardless of site light/dark mode (same fixed #151515 tone the
+   existing .omx-code-block already uses elsewhere), so it reads as a
+   deliberate "editorial voice" callout in both themes rather than inverting
+   unpredictably against whichever mode the reader is in. The accent border
+   is load-bearing, not decorative: #151515 alone reads fine against a white
+   page but nearly disappears against the site's own dark-mode background
+   (#0d0d0d, close enough in luminance that the card lost its "card" edge
+   entirely when checked in dark mode). */
+.tool-view { position: relative; padding: 32px 28px; background: #151515; border: 1px solid rgba(184, 166, 255, 0.35); border-radius: var(--radius-md); }
+.tool-view__icon { width: 22px; height: 22px; margin-bottom: 14px; color: #b8a6ff; }
+.tool-view__label { color: #b8a6ff; }
+.tool-view__body { color: #eee; }
+.tool-view__disclaimer { color: rgba(255, 255, 255, 0.5); }
+
+@media (min-width: 640px) {
+    .tool-feature-cards__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tool-use-cases__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tool-content.article-content ol li:not(:last-child)::after { display: block; }
+}
+
+@media (min-width: 1100px) {
+    .tool-feature-cards__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tool-toc--mobile { display: none; }
+    .tool-toc--desktop { display: block; }
+}
 
 :root[data-theme="dark"] .tool-updates__status--improved { background: rgba(14, 116, 144, 0.18); }
 :root[data-theme="dark"] .tool-updates__status--fixed { background: rgba(21, 128, 61, 0.18); }

@@ -12,6 +12,7 @@ if (!defined('ABSPATH')) {
 require_once get_theme_file_path('/inc/seo.php');
 require_once get_theme_file_path('/inc/contact-form.php');
 require_once get_theme_file_path('/inc/learn.php');
+require_once get_theme_file_path('/inc/ai-tool-detail.php');
 
 function omochix_setup() {
     add_theme_support('title-tag');
