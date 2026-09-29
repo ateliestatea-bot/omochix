@@ -33,10 +33,17 @@
 
     // Document order === nav order === array order here, since each link is
     // only rendered when its target section renders, in the same order.
+    // getElementById (a plain string lookup), not querySelector (a CSS
+    // selector), on purpose: every one of these targets is presently a
+    // hand-written ASCII id, but resolving by id this way is correct
+    // regardless -- see the TOC scrollspy below, which shares this same
+    // pattern for ids WordPress's sanitize_title() percent-encodes when the
+    // heading itself is Japanese (the overwhelmingly common case on this
+    // site) -- '#a%20b'-style hrefs are not valid CSS selectors at all.
     var sections = links
         .map(function (link) {
             var id = link.getAttribute('href');
-            var section = id ? document.querySelector(id) : null;
+            var section = id ? document.getElementById(id.replace(/^#/, '')) : null;
             return section ? { link: link, section: section } : null;
         })
         .filter(Boolean);
@@ -110,6 +117,92 @@
             // and after it settles, so nothing here is a timed override.
             setActive(link);
         });
+    });
+
+    recomputeActive();
+}());
+
+/**
+ * AI Tools v2.2: sticky table-of-contents active-state tracking.
+ *
+ * Same scrollspy technique as the tab nav above (a virtual line below the
+ * sticky header + tabs bar; whichever tracked heading last scrolled past it
+ * is "active"), applied to the desktop TOC panel's own links
+ * (.tool-toc--desktop [data-toc-link]) against the post_content <h2>
+ * elements they point at. The mobile TOC is a plain <details> element and
+ * needs no script at all for its own open/close behavior; this only adds
+ * the desktop active-link highlight, so removing it changes nothing about
+ * either TOC's basic navigation.
+ */
+(function () {
+    'use strict';
+
+    var toc = document.querySelector('.tool-toc--desktop');
+    if (!toc) return;
+
+    var links = Array.prototype.slice.call(toc.querySelectorAll('[data-toc-link]'));
+    if (!links.length) return;
+
+    var sections = links
+        .map(function (link) {
+            var id = link.getAttribute('href');
+            var section = id ? document.getElementById(id.replace(/^#/, '')) : null;
+            return section ? { link: link, section: section } : null;
+        })
+        .filter(Boolean);
+    if (!sections.length) return;
+
+    var tabsNav = document.querySelector('.tool-detail__tabs');
+    var header = document.querySelector('.site-header');
+
+    function getLineOffset() {
+        var offset = 8;
+        if (header) {
+            offset += header.getBoundingClientRect().height;
+        }
+        if (tabsNav && ['sticky', 'fixed'].indexOf(window.getComputedStyle(tabsNav).position) !== -1) {
+            offset += tabsNav.getBoundingClientRect().height;
+        }
+        return offset;
+    }
+
+    var lineOffset = getLineOffset();
+
+    function setActive(link) {
+        links.forEach(function (item) {
+            item.classList.toggle('is-active', item === link);
+        });
+    }
+
+    function recomputeActive() {
+        var activeItem = null;
+        for (var i = 0; i < sections.length; i++) {
+            if (sections[i].section.getBoundingClientRect().top <= lineOffset) {
+                activeItem = sections[i];
+            }
+        }
+        if (activeItem) {
+            setActive(activeItem.link);
+        }
+    }
+
+    var ticking = false;
+    function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(function () {
+            recomputeActive();
+            ticking = false;
+        });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () {
+        lineOffset = getLineOffset();
+        recomputeActive();
+    });
+    links.forEach(function (link) {
+        link.addEventListener('click', function () { setActive(link); });
     });
 
     recomputeActive();
