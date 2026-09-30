@@ -43,6 +43,50 @@ function omochix_get_active_ai_tool_meta_query() {
 }
 
 /**
+ * Whether an AI Tool is discontinued (tool_status === 'discontinued').
+ *
+ * A tool with no tool_status meta counts as active, the schema default.
+ *
+ * @param int $post_id AI Tool post ID.
+ * @return bool
+ */
+function omochix_is_ai_tool_discontinued($post_id) {
+    return 'discontinued' === get_post_meta($post_id, 'tool_status', true);
+}
+
+/**
+ * Pricing label as shown to readers.
+ *
+ * A discontinued tool keeps its pricing_type as historical data, so the label
+ * is shown in the past tense ("提供時：有料") instead of reading like a price
+ * that can still be paid. Every other status returns the label unchanged.
+ *
+ * @param int    $post_id       AI Tool post ID.
+ * @param string $pricing_label Label from omochix_core_get_pricing_type_label().
+ * @return string
+ */
+function omochix_get_ai_tool_pricing_display_label($post_id, $pricing_label) {
+    if (!omochix_is_ai_tool_discontinued($post_id)) {
+        return $pricing_label;
+    }
+    /* translators: %s: pricing label, e.g. 有料 */
+    return sprintf(__('提供時：%s', 'omochix'), $pricing_label);
+}
+
+/**
+ * "提供終了" badge for AI Tool cards; an empty string for any other status.
+ *
+ * @param int $post_id AI Tool post ID.
+ * @return string Escaped HTML.
+ */
+function omochix_get_ai_tool_status_badge($post_id) {
+    if (!omochix_is_ai_tool_discontinued($post_id)) {
+        return '';
+    }
+    return '<span class="tool-status-badge tool-status-badge--discontinued">' . esc_html__('提供終了', 'omochix') . '</span>';
+}
+
+/**
  * Extract every <h2>...</h2> heading from an AI Tool's post_content, in
  * document order, each paired with the anchor id that
  * omochix_inject_ai_tool_heading_ids() gives the matching rendered heading.

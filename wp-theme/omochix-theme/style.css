@@ -3,7 +3,7 @@ Theme Name: OmochiX Theme
 Theme URI: https://omochix.com
 Author: OmochiX
 Description: Official custom WordPress theme for OmochiX.
-Version: 1.13.0
+Version: 1.13.1
 Requires at least: 6.8
 Requires PHP: 8.1
 Text Domain: omochix
@@ -1830,6 +1830,12 @@ body { overflow-x: clip; }
 .tool-list-card__rating > span { color: var(--color-primary); }
 .tool-list-card__rating strong { color: var(--color-text); font-size: 13px; }
 .tool-list-card__rating small { font-size: 9px; }
+/* Discontinued AI tool badge (archive and search cards). */
+.tool-status-badge { display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; padding: 6px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; line-height: 1.2; letter-spacing: 0.02em; white-space: nowrap; }
+.tool-status-badge::before { content: ""; width: 6px; height: 6px; background: currentColor; border-radius: 50%; }
+.tool-status-badge--discontinued { color: var(--omx-amber); background: rgba(180, 83, 9, 0.08); border: 1px solid rgba(180, 83, 9, 0.24); }
+:root[data-theme="dark"] .tool-status-badge--discontinued { color: #f4b672; background: rgba(244, 182, 114, 0.1); border-color: rgba(244, 182, 114, 0.28); }
+.tool-list-card__top .tool-status-badge, .search-tool-card__top .tool-status-badge { margin-left: auto; }
 .tool-list-card__identity { min-width: 0; margin-top: 20px; }
 .tool-list-card__identity h3 { overflow: hidden; margin: 0; font-size: 19px; line-height: 1.35; letter-spacing: -0.03em; text-overflow: ellipsis; white-space: nowrap; }
 .tool-list-card__identity p { overflow: hidden; margin: 5px 0 0; color: var(--color-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
