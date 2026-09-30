@@ -170,6 +170,8 @@ if (have_posts()) :
             : [];
 
         // Collect related tools in editorial priority order without duplicates.
+        // Discontinued tools are never recommended here (both candidate queries
+        // below); their own detail pages stay reachable.
         $omochix_related_tool_ids = [];
         $omochix_relation_sources = [
             'ai_tool_category' => wp_list_pluck($omochix_categories, 'term_id'),
@@ -189,6 +191,7 @@ if (have_posts()) :
                 'no_found_rows'  => true,
                 'orderby'        => 'date',
                 'order'          => 'DESC',
+                'meta_query'     => omochix_get_active_ai_tool_meta_query(),
                 'tax_query'      => [[
                     'taxonomy' => $omochix_taxonomy,
                     'field'    => 'term_id',
@@ -207,6 +210,7 @@ if (have_posts()) :
                 'no_found_rows'  => true,
                 'orderby'        => 'date',
                 'order'          => 'DESC',
+                'meta_query'     => omochix_get_active_ai_tool_meta_query(),
             ]);
             $omochix_related_tool_ids = array_values(array_unique(array_merge($omochix_related_tool_ids, $omochix_latest_tools->posts)));
         }

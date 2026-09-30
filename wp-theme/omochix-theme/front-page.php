@@ -313,6 +313,7 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
     /**
      * Featured AI tools.
      * Native post meta is used so no custom-field plugin is required.
+     * Discontinued tools are excluded from both the featured and fill queries.
      */
     $omochix_tool_limit = 6;
     $omochix_tools      = [];
@@ -324,11 +325,13 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
             'post_status'         => 'publish',
             'posts_per_page'      => $omochix_tool_limit,
             'meta_query'          => [
+                'relation' => 'AND',
                 [
                     'key'     => 'is_featured',
                     'value'   => ['1', 'true', 'yes'],
                     'compare' => 'IN',
                 ],
+                omochix_get_active_ai_tool_meta_query(),
             ],
             'orderby'             => 'date',
             'order'               => 'DESC',
@@ -355,6 +358,7 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
                 'post_status'         => 'publish',
                 'posts_per_page'      => $omochix_tool_slots,
                 'post__not_in'        => $omochix_tool_ids,
+                'meta_query'          => omochix_get_active_ai_tool_meta_query(),
                 'orderby'             => 'date',
                 'order'               => 'DESC',
                 'ignore_sticky_posts' => true,

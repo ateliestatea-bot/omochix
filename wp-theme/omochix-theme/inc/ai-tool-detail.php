@@ -15,6 +15,34 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * meta_query clause matching every AI Tool that is still offered.
+ *
+ * Only tool_status === 'discontinued' is excluded. A tool with no
+ * tool_status meta at all is treated as active (the schema default), so the
+ * NOT EXISTS branch is required: a bare "!= discontinued" comparison would
+ * silently drop every tool that never had the meta saved.
+ *
+ * Used where the theme recommends tools (related tools, front page); the
+ * discontinued tool's own detail page and the archive are unaffected.
+ *
+ * @return array<string|int, mixed>
+ */
+function omochix_get_active_ai_tool_meta_query() {
+    return [
+        'relation' => 'OR',
+        [
+            'key'     => 'tool_status',
+            'compare' => 'NOT EXISTS',
+        ],
+        [
+            'key'     => 'tool_status',
+            'value'   => 'discontinued',
+            'compare' => '!=',
+        ],
+    ];
+}
+
+/**
  * Extract every <h2>...</h2> heading from an AI Tool's post_content, in
  * document order, each paired with the anchor id that
  * omochix_inject_ai_tool_heading_ids() gives the matching rendered heading.
