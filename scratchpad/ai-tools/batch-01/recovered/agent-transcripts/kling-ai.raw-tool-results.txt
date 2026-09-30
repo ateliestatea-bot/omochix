@@ -1,0 +1,763 @@
+# Raw tool results recovered from agent-a36a01f16d9c7fb89.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "Kling AI official pricing plans klingai.com 2026", "mode": "standard"}
+Web search results for query: "Kling AI official pricing plans klingai.com 2026"
+
+Links: [{"title":"Kling AI pricing (2026): A complete guide to all plans, credits, and real costs","url":"https://eesel.ai/blog/kling-ai-pricing"},{"title":"kling ai pricing","url":"https://www.cloudzero.com/blog/kling-ai-pricing/"},{"title":"kling ai pricing","url":"https://www.aiarty.com/ai-video-generator/kling-ai-pricing.htm"},{"title":"Blog-Kling AI Pricing Explained (2026 Guide): Plans, Credits & Is It Worth It?1018","url":"https://www.photonpay.com/hk/blog/article/kling-ai-pricing"},{"title":"Kling AI Pricing Change — April 2026","url":"https://costbench.com/changelog/kling-price-increase-2026-04/"},{"title":"Kling API Pricing Change — April 2026","url":"https://costbench.com/changelog/kling-api-plan-added-2026-04/"},{"title":"HappyHorse 1.0 Coming SoonLearn More","url":"https://evolink.ai/blog/is-kling-ai-free-pricing-plans-guide"},{"title":"Kling API Pricing Change — May 2026","url":"https://costbench.com/changelog/kling-api-plan-added-2026-05/"},{"title":"Kling API Pricing Change — August 2026","url":"https://costbench.com/changelog/kling-api-plan-added-2026-08/"},{"title":"Kimi K3 is now availableExplore Kimi K3","url":"https://t-web.evolink.ai/blog/is-kling-ai-free-pricing-plans-guide"}]
+
+Based on the search results, here's what I found about Kling AI's official pricing plans for 2026:
+
+## Kling AI Creator Subscription Plans
+
+Kling offers five subscription tiers: Free ($0), Standard ($10/month), Pro ($37/month), Premier ($92/month), and Ultra ($180/month). The Standard through Premier plans offer annual billing options that save 34%, while the Ultra plan has no annual option.
+
+The Free plan provides approximately 1,980 daily credits with 24-hour expiry, Standard provides 660 credits/month, Pro offers 3,000 credits/month, Premier includes 8,000 credits/month, and Ultra provides 26,000 credits/month.
+
+First-billing-period discounts are available at $6.99, $25.99, $64.99, and $127.99, while renewals cost $8.80, $32.56, $80.96, and $159.99 respectively.
+
+## Pricing Changes in 2026
+
+On April 1, 2026, Kling AI raised its top plan from $75/month to $180/month, representing a 140% increase.
+
+## Kling AI Developer API Pricing
+
+Kling API pricing spans from $0.06 to $0.42 per second of video, with 6 different plan options as of August 2026.
+
+Note: Kling also has a separate Chinese domestic site (klingai.com) with CNY pricing and different promotional structures.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Kling AI API developer docs klingai.com", "mode": "standard"}
+Web search results for query: "Kling AI API developer docs klingai.com"
+
+Links: [{"title":"# Kling AI","url":"https://docs.aimlapi.com/api-references/video-models/kling-ai"},{"title":"Last updated 1 month ago","url":"https://docs.aimlapi.com/api-overview/video-models/kling"},{"title":"# Kling AI Skill Pack","url":"https://cdn.jsdelivr.net/npm/@intentsolutionsio/klingai-pack@1.0.3/README.md"},{"title":"Need help with your APIs? I offer API discovery, governance & evangelism services. Explore services →","url":"https://providers.apievangelist.com/providers/kling-ai/"},{"title":"How to Get a Kling API Key: A Step-by-Step Guide","url":"https://developer.puter.com/tutorials/how-to-get-kling-api-key/"},{"title":"developer.puter.com","url":"https://developer.puter.com/ai/kwaivgi/"},{"title":"How AI is applied across API Evangelist and APIs.io. Read my AI disclosure →","url":"https://apis.apievangelist.com/store/kling-v1/"},{"title":"HappyHorse 1.0 Coming SoonLearn More","url":"https://evolink.ai/blog/how-to-access-kling-ai-api-complete-tutorial"},{"title":"Kimi K3 is now availableExplore Kimi K3","url":"https://t-web.evolink.ai/blog/how-to-access-kling-ai-api-complete-tutorial"}]
+
+Based on the search results, here's what I found about Kling AI API developer documentation:
+
+## Official API Information
+
+The Kling AI API base URL is `https://api.klingai.com/v1` and uses JWT authentication from Access Key (AK) + Secret Key (SK) tokens with 30-minute expiry and HS256 signing.
+
+## API Capabilities
+
+The Kling AI Open Platform API supports text-to-video, image-to-video, multi-image-to-video, video extension, lip-sync, video effects, image generation (Kolors), and Kolors virtual try-on through an asynchronous create-a-task then query-the-task workflow.
+
+## API Workflow Pattern
+
+The current public API flow uses POST /v1/videos/generations and then GET /v1/tasks/{task_id}, with video generation being asynchronous where you do not wait for the final MP4 in the initial request.
+
+## Important Notes
+
+Generated video links are valid for 24 hours, so results should be saved promptly. Additionally, creating an API key is free, but the API itself is paid based on the model and length of clip.
+
+The search results show references to Kling AI documentation, but the specific official klingai.com developer docs portal wasn't directly returned in these results. You may want to visit the official Kling AI website directly for their complete documentation.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://klingai.com/pricing", "prompt": "Extract all pricing plan details: plan names, monthly and annual prices, credits included, free plan details, currency, any regional pricing notes, and API pricing if mentioned."}
+I appreciate your request, but the web page content provided appears to be empty or blank. There is no pricing information, plan details, credits, currency information, or any other content between the delimiters you've provided.
+
+To extract pricing plan details as requested, I would need:
+- Plan names
+- Monthly and annual pricing
+- Credit allocations
+- Free tier specifications
+- Currency information
+- Regional pricing notes
+- API pricing information
+
+Could you please share the actual web page content? Once you provide the pricing information, I'll be happy to summarize it concisely while adhering to the 125-character quote limit and other guidelines you've specified.
+
+######## WebFetch {"url": "https://klingai.com", "prompt": "Describe what this page says about the product Kling AI: what it does, what models/versions are mentioned, language support, and any links to pricing, API docs, or developer portal."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://klingai.com
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://kling.ai/
+    Status: 301 Moved Permanently
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://kling.ai/"
+    - prompt: "Describe what this page says about the product Kling AI: what it does, what models/versions are mentioned, language support, and any links to pricing, API docs, or developer portal."
+
+######## WebFetch {"url": "https://kling.ai/", "prompt": "Describe what this page says about the product Kling AI: what it does, what models/versions are mentioned, language support, and any links to pricing, API docs, or developer portal."}
+# Kling AI Product Overview
+
+## Core Functionality
+Kling AI is a next-generation platform for creating videos and images using artificial intelligence. The homepage describes it as enabling users to generate professional-grade content through "stable dynamic motions and an immersive audio-visual experience."
+
+## Available Models/Versions
+The platform highlights several model versions:
+- **Kling 4.0** - The latest iteration featuring audio-visual performance
+- **Video 3.0** and **Video 3.0 Omni** - Video generation models
+- **Image 3.0** and **Image 3.0 Omni** - Image generation with "native 4K ultra-HD generation"
+- **Element Library 3.0** - Asset generation tool
+
+## Key Features
+- Text-to-video and image-to-video conversion
+- Motion control capabilities
+- AI avatar creation
+- Video editing tools
+- An AI agent for collaborative brainstorming and script writing
+- Canvas tool for multi-step creative workflows
+- Batch generation capabilities via MCP/CLI
+
+## Developer Resources
+- **API Platform**: Available at `/dev`
+- **Documentation**: Accessible via `/document-api/quickStart/productIntroduction/overview`
+- **Pricing**: Listed at `/dev/pricing`
+- **User Guide**: Available at `/quickstart`
+
+## Language Support
+The page content provided is entirely in English; no other language support is mentioned.
+
+######## WebFetch {"url": "https://kling.ai/pricing", "prompt": "Extract all pricing plan details: plan names, monthly and annual prices, credits included, free plan details, currency, any regional pricing notes, and API pricing if mentioned."}
+I'm unable to extract pricing plan details because the web page content provided appears to be empty or blank. There is no actual content between the dashes to analyze.
+
+To help you extract pricing information, please provide:
+- The actual webpage content or text
+- A URL if you'd like me to help you understand what to extract
+- Screenshots or documentation of the pricing page
+
+Once you share the content, I'll be happy to identify and summarize all plan names, pricing structures, included credits, free tier details, currency information, regional pricing notes, and any API pricing mentioned.
+
+######## WebSearch {"query": "\"kling.ai\" OR \"klingai.com\" pricing plans subscription official site 2026", "mode": "standard"}
+Web search results for query: ""kling.ai" OR "klingai.com" pricing plans subscription official site 2026"
+
+Links: [{"title":"Kling AI pricing (2026): A complete guide to all plans, credits, and real costs","url":"https://eesel.ai/blog/kling-ai-pricing"},{"title":"The Full Kling AI Pricing Breakdown and Free vs Paid Comparison","url":"https://www.atlascloud.ai/blog/guides/kling-ai-pricing"},{"title":"kling ai pricing","url":"https://www.cloudzero.com/blog/kling-ai-pricing/"},{"title":"Blog-Kling AI Pricing Explained (2026 Guide): Plans, Credits & Is It Worth It? 1018","url":"https://www.photonpay.com/hk/blog/article/kling-ai-pricing?lang=en"},{"title":"Blog-Kling AI Pricing Explained (2026 Guide): Plans, Credits & Is It Worth It?1018","url":"https://www.photonpay.com/hk/blog/article/kling-ai-pricing"},{"title":"kling pricing","url":"https://lumalabs.ai/news/kling-pricing"},{"title":"Quick Answer","url":"https://costbench.com/software/ai-video-generators/kling"},{"title":"Kling AI Pricing Change — April 2026","url":"https://costbench.com/changelog/kling-price-increase-2026-04/"},{"title":"toolradar.com","url":"https://toolradar.com/tools/kling-ai/pricing"}]
+
+Based on the search results, here's the current Kling AI pricing information for 2026:
+
+## Kling AI Subscription Plans (2026)
+
+Kling AI has pricing on its international site (kling.ai) in USD, and a separate Chinese domestic site (klingai.com) with CNY pricing and different promotional structures.
+
+### Pricing Tiers
+
+The main subscription plans are:
+
+- **Free**: $0/month with approximately 1,980 daily credits (24-hour expiry)
+- **Standard**: $10/month ($6.60 effective monthly with annual billing) - 660 credits/month
+- **Pro**: $37/month ($24.42 effective monthly with annual billing) - 3,000 credits/month
+- **Premier**: $92/month ($60.72 effective monthly with annual billing) - 8,000 credits/month
+- **Ultra**: $180/month (monthly only) - 26,000 credits/month
+
+### Key Pricing Details
+
+Annual billing saves a flat 34% on Standard through Premier plans, and annual prices remained stable throughout 2026 while monthly list prices rose roughly 40%. First-billing-period discounts apply to new subscribers, with renewals at higher rates.
+
+Subscription credits expire at the end of each billing month, though add-on credit packs remain valid for up to 2 years from purchase.
+
+In April 2026, Kling AI raised its top plan from $75/month to $180/month, introducing the new Ultra tier.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://kling.ai/dev/pricing", "prompt": "Extract all API pricing details: pricing per video second/generation, per model, currency, billing structure, any free credits."}
+# Kling AI API Pricing Information
+
+Based on the provided web page content, **no pricing details are available**. The excerpt only contains:
+
+- "Kling AI: Next-Generation AI Creative Studio"
+- "Kling AI Developer Platform"
+
+The page does not include information about:
+- Per-second or per-generation pricing
+- Model-specific costs
+- Currency or billing structure
+- Free credit allocations
+
+To access complete pricing details, you would need to visit the full Kling AI Developer Platform documentation or pricing page.
+
+######## WebFetch {"url": "https://kling.ai/document-api/quickStart/productIntroduction/overview", "prompt": "Describe the Kling AI API/developer platform: what models are available via API, authentication method, capabilities (text-to-video, image-to-video etc), any SDK availability, rate limits, commercial use terms."}
+# KlingAI Open Platform Overview
+
+Based on the provided web page content, I cannot provide a comprehensive description of the Kling AI API/developer platform. The page excerpt only contains the header "KlingAI Open Platform" without substantive details about:
+
+- Available models accessible via API
+- Authentication mechanisms
+- Specific capabilities (text-to-video, image-to-video, etc.)
+- SDK availability
+- Rate limiting policies
+- Commercial usage terms
+
+**To obtain this information**, I would recommend:
+1. Visiting the full KlingAI Open Platform documentation
+2. Checking their developer portal or API reference guides
+3. Reviewing their terms of service for commercial usage details
+
+If you can provide more complete documentation or content from the platform, I'd be happy to give you a detailed analysis following the specifications you've outlined.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/dev/pricing", "prompt": "Extract all API pricing details: pricing per video second/generation, per model, currency, billing structure, any free credits, rate limits."}
+# Kling API Pricing Summary
+
+## Currency & Billing Structure
+- **Currency:** USD
+- **Base Unit Value:** $0.14 per unit (video); $0.0035 per unit (image)
+- **Billing:** Per-second for videos; per-image for images
+- **Validity:** 180-day prepaid packages with no rollover
+
+## Video API Pricing
+
+**Kling 3.0 Turbo** (720P/1080P):
+- 720P: 0.8 units ($0.112/second)
+- 1080P: 1.0 unit ($0.14/second)
+
+**Kling 3.0** (varies by audio/resolution):
+- 720P: 0.6–0.9 units ($0.084–$0.126/s)
+- 1080P: 0.8–1.2 units ($0.112–$0.168/s)
+- 4K: 3.0 units ($0.42/s)
+
+**E-commerce Solutions:**
+- "AI Apparel Replicator: 1.7–2.0 units/second (720P–1080P)"
+- Goods Studio: 1.7–2.0 units/second
+
+**Other Models:**
+- Avatar: 0.4–0.8 units/second
+- Motion Control: 0.9–1.2 units/second
+
+## Image API Pricing
+
+**Kling Image 3.0 & Omni:**
+- 1K/2K: 8 units ($0.028/image)
+- 4K: 16 units ($0.056/image)
+
+**Kling Image 2.1:**
+- Text-to-Image: 4 units ($0.014/image)
+- Image-to-Image: 8 units ($0.028/image)
+
+## Prepaid Packages
+Video packages range $700–$7,560 (5,000–60,000 units); image packages $350–$5,670 (100,000–1,800,000 units). Bulk purchases include 10% discounts. No free credits mentioned.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/pricing", "prompt": "Extract all pricing plan details: plan names, monthly and annual prices, credits included, free plan details, currency, any regional pricing notes."}
+# Kling AI Pricing Information
+
+Based on my review of the provided web page content from https://kling.ai/pricing, **I was unable to find any pricing plan details, pricing tables, or cost information**.
+
+The page content focuses on:
+- **Product features**: Kling Image 3.0 capabilities and Canvas tools
+- **Use cases**: Applications across e-commerce, advertising, entertainment, and device ecosystems
+- **Industry applications**: Award-winning projects and client testimonials
+- **Partnership information**: References to collaborators and creators
+
+**Missing elements:**
+- Plan names (Free, Pro, Enterprise, etc.)
+- Monthly or annual pricing
+- Credit allocations
+- Free tier specifications
+- Currency information
+- Regional pricing variations
+
+The URL indicates this is a pricing page, but the markdown content provided appears to be incomplete or focused on showcasing product capabilities rather than displaying the actual pricing structure. You may need to access the full web page directly or request pricing information through other means.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/document-api/quickStart/productIntroduction/overview", "prompt": "Describe the Kling AI API/developer platform overview: capabilities, authentication, SDKs, supported models, commercial use terms, rate limits."}
+# Kling AI API Platform Overview
+
+## Capabilities
+Kling AI offers comprehensive media generation tools:
+- **Video Generation**: Models including Kling 3.0 & 3.0 Omni (with "synchronized audio-video generation, intelligent storyboarding") and Kling 3.0 Turbo (optimized for speed and cost efficiency)
+- **Image Generation**: Kling Image 3.0 & 3.0 Omni with "cinematic narrative quality, series generation & batch optimization"
+- **Motion Control**: Advanced features for "recreating complex movement and accurate facial expression"
+- **Virtual Try-On**: New capability enabling try-on image generation from reference photos
+
+## Authentication & Access
+Developers can access the platform via API after obtaining an API key through the developer console at kling.ai/dev.
+
+## Commercial Terms
+The platform includes:
+- Paid service terms (referenced in documentation)
+- Service Level Agreement (SLA) provisions
+- Privacy policy for API service
+- Usage-based billing with unit deduction tracking
+
+## Resource Management
+The platform provides tools to query account balance, track unit deductions, and monitor consumption across purchased packages.
+
+## Notable Gaps
+The provided content doesn't detail SDKs, specific rate limits, or authentication method specifics—these likely appear in the Quick Start or API reference sections.
+
+######## WebSearch {"query": "Kling AI help center subscription plans official support.klingai.com OR help.kling.ai", "mode": "standard"}
+Web search results for query: "Kling AI help center subscription plans official support.klingai.com OR help.kling.ai"
+
+Links: [{"title":"Kling AI pricing: A complete guide for 2025","url":"https://www.eesel.ai/blog/kling-ai-pricing"},{"title":"The Full Kling AI Pricing Breakdown and Free vs Paid Comparison","url":"https://www.atlascloud.ai/blog/guides/kling-ai-pricing"},{"title":"Kling AI Pricing: Complete Breakdown And Comparison","url":"https://blog.segmind.com/kling-ai-pricing-complete-breakdown-and-comparison/amp"},{"title":"Kling AI Pricing: Complete Breakdown And Comparison","url":"https://blog.segmind.com/kling-ai-pricing-complete-breakdown-and-comparison/"},{"title":"kling ai pricing","url":"https://www.aiarty.com/ai-video-generator/kling-ai-pricing.htm"},{"title":"Blog-Kling AI Pricing Explained (2026 Guide): Plans, Credits & Is It Worth It? 1018","url":"https://www.photonpay.com/hk/blog/article/kling-ai-pricing?lang=en"},{"title":"Kling AI Discount Codes - 80% Off Promo Code 2025","url":"https://app.writesonic.com/chat/canvases/83b38896-677e-4e00-ad11-740cda689f3f"},{"title":"Quick Answer","url":"https://costbench.com/software/ai-video-generators/kling/hidden-costs/"},{"title":"kling ai api pricing","url":"https://www.test.atlascloud.ai/blog/tips/kling-ai-api-pricing"}]
+
+I performed a web search for Kling AI help center subscription plans, but the search results didn't return pages directly from the official Kling AI support domains (support.klingai.com or help.kling.ai). Instead, the results show information from third-party sources that cover Kling AI's subscription plans.
+
+Based on the available information, here's what I found about Kling AI's subscription plans: a free Basic tier and four paid membership plans: Standard, Pro, Premier, and Ultra.
+
+The pricing structure includes:
+- Basic: $0 (free, for testing)
+- Standard: $6.99 first month, then $8.80/month with 660 monthly credits
+- Pro: $25.99 first month, then $32.56/month with 3,000 monthly credits
+- Premier: $64.99 first month, then $80.96/month with 8,000 monthly credits
+- Ultra: $127.99 first month, then $159.99/month with 26,000 monthly credits
+
+Additionally, paid plans include monthly credits and commercial-use rights.
+
+To access the official Kling AI help center directly, you may need to visit their support websites or log into your Kling AI account, as the official help center pages weren't captured in these search results.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Kling AI Standard Pro Premier Ultra credits", "mode": "standard", "allowed_domains": ["kling.ai", "klingai.com"]}
+Web search results for query: "Kling AI Standard Pro Premier Ultra credits"
+
+Links: [{"title":"Kling AI: Membership Plans, Benefits & Account Options","url":"https://kling.ai/app/membership/membership-plan"},{"title":"Kling API Pricing | AI Video & Image Generation Costs","url":"https://kling.ai/dev/pricing"},{"title":"Kling AI Credits Policy","url":"https://kling.ai/docs/point-policy"},{"title":"Kling VIDEO 3.0 Credit Cost: Pricing & Credits Guide","url":"https://kling.ai/blog/kling-video-3-0-credit-cost-guide"},{"title":"Kling AI Terms of Paid Service (Including Automatic ...","url":"https://klingai.com/global/docs/payment-policy"},{"title":"KlingAI Daily Free Credits – Claim Yours","url":"https://kling.ai/explore/kling_ai_daily_free_credits"}]
+
+Based on the search results, here's information about Kling AI's membership plans and their associated credits:
+
+## Kling AI Membership Plans & Credits
+
+Kling AI offers four membership tiers: Standard ($6.99/month, or $10 regular price), Pro ($25.99/month, or $37 regular price), Premier ($64.99/month, or $92 regular price), and Ultra ($127.99/month, or $180 regular price).
+
+### Monthly Credits by Tier
+
+The plans include monthly credits as follows: Standard includes 660 credits, Pro includes 3,000 credits, Premier includes 8,000 credits, and Ultra includes 26,000 credits.
+
+### Cost per Credit
+
+The price per 100 credits varies by tier: Standard at 1.06, Pro at 0.87, Premier at 0.81, and Ultra at 0.49.
+
+### General Credit Information
+
+When you subscribe to Kling AI, you receive monthly credits each billing cycle, with higher subscription tiers providing more credits and a lower cost per credit. Standard pricing for purchasing additional credits is $1 USD = 66 Credits.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/subscribe", "prompt": "Extract all pricing plan details: plan names, monthly and annual prices, credits included, free plan details, currency."}
+# Kling AI Pricing Information
+
+I reviewed the provided webpage content from the Kling AI subscribe page, but **no pricing plan details are actually displayed** in the markdown content you shared.
+
+The page includes:
+- Product demonstrations (Kling Image 3.0 examples)
+- Canvas feature descriptions
+- Industry application examples
+- Partnership information
+- Testimonial from filmmaker Simon Meyer
+
+However, the specific pricing information—including plan names, monthly/annual costs, credit allowances, free tier details, and currency—is **not present** in the extracted content.
+
+To obtain accurate pricing details, you would need to:
+1. Visit https://kling.ai/subscribe directly
+2. Check if pricing tables appear below the content sections shown here
+3. Contact Kling AI's sales team for current rate information
+
+If you have additional content from that page that includes pricing tables or breakdowns, I'd be happy to extract and organize those details for you.
+
+######## WebFetch {"url": "https://r.jina.ai/https://klingai.com/global/docs/payment-policy", "prompt": "Extract details on commercial use rights, refund policy, auto-renewal terms, and any language relevant to whether generated content can be used commercially by paid vs free plans."}
+# Kling AI Commercial Use Rights Analysis
+
+Based on the provided content, I cannot locate specific details regarding:
+
+- **Commercial use rights** for paid vs. free plans
+- **Refund policy**
+- **Auto-renewal terms**
+- **Generated content ownership/licensing**
+
+## What the Page Shows
+
+The webpage highlights Kling AI's "Canvas" feature for professional production workflows and showcases numerous industry applications, including award-winning commercial projects, feature films, and advertising campaigns created with the platform.
+
+However, the actual payment policy document appears incomplete. The URL references a payment policy page, but the markdown content provided contains only product demonstrations and use case examples—not terms governing commercial usage rights or account policies.
+
+## Recommendation
+
+To obtain accurate information about commercial licensing, refund procedures, and auto-renewal conditions, you would need to:
+
+1. Access the full payment policy document at the source URL
+2. Review Kling AI's complete terms of service
+3. Contact Kling AI support directly for clarification on paid plan commercial rights
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/app/membership/membership-plan", "prompt": "Extract all pricing plan details: plan names, monthly and annual prices, credits included, free plan details, currency, what each plan unlocks (resolution, commercial use, watermark, etc)."}
+# Kling AI Pricing Plans Summary
+
+## Free Plan
+- **Basic tier** with no monthly credits
+- Access to generation features at limited capacity
+- Maximum 30 element creation quantity
+- 1 video per generation
+
+## Paid Monthly Plans
+
+**Standard**
+- "$6.99/1st mo, then $8.8/month"
+- 660 monthly credits ($1.06 per 100 credits)
+- 1080p video generation, image upscaling
+- 50 element creations, 4 videos per generation
+- "Brand watermark removal" and commercial use rights
+
+**Pro**
+- "$25.99/1st mo, then $32.56/month"
+- 3,000 monthly credits ($0.87 per 100 credits)
+- Same video/image features as Standard
+- 150 element creations
+- Priority access to new features
+
+**Premier**
+- "$64.99/1st mo, then $80.96/month"
+- 8,000 monthly credits ($0.81 per 100 credits)
+- 150 element creations
+- Priority feature access
+
+**Ultra** (Best Offer)
+- "$127.99/1st mo, then $159.99/month"
+- 26,000 monthly credits ($0.49 per 100 credits)
+- 500 element creations
+- Beta test access, priority features
+
+## Annual Plans
+All plans offer "34% Off" yearly or "12% Off" monthly with 30% first-month discounts. Currency appears to be USD based on pricing structure.
+
+######## WebSearch {"query": "Kling AI 日本語 対応 言語設定", "mode": "standard"}
+Web search results for query: "Kling AI 日本語 対応 言語設定"
+
+Links: [{"title":"kling ai lip sync","url":"https://www.atlascloud.ai/ja/blog/guides/kling-ai-lip-sync"},{"title":"text to speech","url":"https://kling.ai/ja/feature/text-to-speech"},{"title":"what you need to know about kling the ai video generator rival to sora thats wowing creators","url":"https://thebridge.jp/2024/06/what-you-need-to-know-about-kling-the-ai-video-generator-rival-to-sora-thats-wowing-creators"},{"title":"morphic.com","url":"https://morphic.com/jp/ai-glossary/kling"},{"title":"2501 kling ai make movie","url":"https://www.lifehacker.jp/article/2501-kling-ai-make-movie/"},{"title":"morphic.com","url":"https://morphic.com/jp/ai-glossary/Kling"},{"title":"kling lip sync","url":"https://sync.so/blog/kling-lip-sync"},{"title":"Claude Fable 5 is now on CometAPI — state-of-the-art performance in coding, agents, and scientific research. Try it now","url":"https://www.cometapi.com/fr/tag/kling-2-6/"},{"title":"morphic.com","url":"https://morphic.com/ar/ai-glossary/Kling"}]
+
+Based on the search results, here's what I found about Kling AI's Japanese language support and language settings:
+
+## Japanese Language Support
+
+Kling AI supports multiple languages including Japanese for Text to Speech functionality, allowing users to create multilingual video content with dialogue in Chinese, English, Japanese, Korean, and Spanish. The platform can switch between languages within the same video and supports various dialects and accents for more natural character speech.
+
+## Interface Language
+
+Regarding the interface language settings, the Kling platform is displayed in English when accessed via browser. However, for users who want to operate in Japanese, it is recommended to use the browser's translation feature to convert and operate the platform.
+
+## Access and Registration
+
+Good news for Japanese users: Unlike many AI services from China that require Chinese phone number authentication, Kling can be registered in Japan with just an email address.
+
+So in summary, while Kling supports Japanese as a content language (for text-to-speech and dialogue), the platform interface itself is primarily in English and would need browser translation for Japanese interface navigation.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Kling AI commercial use terms license official", "mode": "standard", "allowed_domains": ["kling.ai", "klingai.com"]}
+Web search results for query: "Kling AI commercial use terms license official"
+
+Links: [{"title":"Kling AI Terms of Service","url":"https://kling.ai/docs/user-policy"},{"title":"Terms of API Paid Service | Kling AI API Documentation","url":"https://kling.ai/document-api/guides/protocols/paid-service"},{"title":"Terms of API Paid Service","url":"https://kling.ai/document-api/protocols/paidServiceProtocol"},{"title":"Kling AI Terms of Paid Service (Including Automatic ...","url":"https://klingai.com/global/docs/payment-policy"},{"title":"Commercial AI Video – AI-Generated Content","url":"https://kling.ai/explore/commercial_ai_video"},{"title":"KlingAI Open Platform","url":"https://app.klingai.com/global/dev/document-api/protocols/paidServiceProtocol"},{"title":"Kling AI: Next-Gen AI Video & Image Generator","url":"https://kling.ai/docs/privacy-policy"},{"title":"AI Video Generator from Text and Images | Kling AI","url":"https://kling.ai/feature/ai-video-generator"},{"title":"Kling AI: Membership Plans, Benefits & Account Options","url":"https://kling.ai/app/membership/membership-plan"},{"title":"Kling AI API | Image & Video Generation for Developers","url":"https://klingai.com/global/dev"}]
+
+Based on the search results, here's what I found regarding Kling AI's commercial use terms and licensing:
+
+## Commercial Use Permissions
+
+**For Paid Members/Subscriptions:**
+Kling AI members' use of the Output for commercial purposes is not restricted, and members are permitted to use, reproduce, distribute, and make modifications to the output.
+
+**General Commercial Use:**
+Videos generated with Kling can be used for ads, social media, and other commercial purposes.
+
+## Free/Unpaid Users
+
+For free users without membership, without written permission from Kling, you may not use, reproduce, distribute, and create derivative works of, or make modifications to, the Output for any commercial purposes. Additionally, you may not market, rent or lease the Services for a fee or charge, or use the Services to advertise or perform any commercial solicitation without written consent.
+
+## Attribution Requirements
+
+When Output generated by Kling is not labeled with any brand mark due to objective reasons, you shall prominently indicate that the Output is generated by "Kling AI" in the use scenarios of the generated content.
+
+## Key Takeaway
+
+Commercial use of generated content is **permitted for paid members with no restrictions**, but **restricted for free users** without obtaining written consent from Kling AI.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/docs/user-policy", "prompt": "Summarize the commercial use terms: what free users can/cannot do with generated output commercially, what paid members can do, and any attribution requirements. Quote exact relevant clauses if present."}
+# Commercial Use Terms Summary
+
+## Free vs. Paid Users
+
+The ToS does **not explicitly differentiate** between free and paid users regarding commercial output rights. Both are subject to the same restrictions.
+
+## What Users Cannot Do Commercially
+
+**Prohibited without written consent:**
+- "use the Services...for any political, commercial or unauthorized purpose" (Section 3.1(e))
+- Users cannot "use, reproduce, distribute, and create derivative works of, and make modifications to, the Output for any commercial purposes" (Section 4.6)
+
+The ToS broadly restricts commercial use of generated content regardless of account type.
+
+## Attribution Requirements
+
+Users must label output with Kling AI branding:
+- "label the Output interface with the brand and logo involved (including but not limited to 'Kling AI'...)" or "prominently indicate that the Output is generated by 'Kling AI'" (Section 4.5)
+
+## Key Limitation
+
+Section 4.6 states: "without our written permission, you may not use, reproduce, distribute, and create derivative works of...the Output for any commercial purposes."
+
+**Critical gap:** The ToS provides no clear path for commercial licensing—neither free nor paid tiers are explicitly granted commercial rights.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/ja", "prompt": "Is this page's UI text in Japanese? Quote a sample of the navigation/menu text and any language switcher options you see."}
+# UI Language Analysis
+
+Yes, this page's UI text is in Japanese.
+
+**Navigation/Menu samples:**
+- "クリエイティブ" (Creative)
+- "画像生成" (Image Generation)
+- "動画生成" (Video Generation)
+- "モーコン" (Motion Control)
+
+**Language switcher options visible at footer:**
+The page displays a comprehensive language selection menu including: English, Español, Português, Deutsch, Français, 日本語 (Japanese), 한국어 (Korean), Italiano, Русский (Russian), Bahasa Indonesia, العربية (Arabic), हिन्दी (Hindi), ไทย (Thai), Tiếng Việt (Vietnamese), Türkçe (Turkish), Nederlands, Polski, Українська (Ukrainian), Bahasa Melayu, and Filipino.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/docs/user-policy", "prompt": "Quote the FULL text of section 4 (or whichever section covers \"Output\", \"commercial purposes\", \"members\" and \"non-members\") verbatim, including any distinction between free/non-member users and paid members regarding commercial use rights. Do not summarize, quote directly."}
+# Section 4: Intellectual Property Rights and Content
+
+Here are the key provisions regarding Output and commercial use:
+
+**On Commercial Use of Output:**
+"without our written permission, you may not use, reproduce, distribute, and create derivative works of, and make modifications to, the Output for any commercial purposes." (Section 4.6)
+
+**On Kling AI's Rights to Content:**
+"Kling AI has an non-exclusive, royalty-free right and license during the operational period of its business...to use the Content...for the purposes of promotion, product/function upgrades, and to research on new products/functions." (Section 4.7.1-4.7.2)
+
+**On User Content Sharing:**
+"the content you publish through Kling AI (including but not limited to images, prompts, video clips, etc.) may...be made available to other users for use in creating and publishing related content." (Section 4.8)
+
+**Note on Membership Distinction:**
+The Terms of Service do not explicitly differentiate commercial use rights between free and paid members in Section 4. The commercial use restriction applies generally to all users without distinguishing membership tiers.
+
+######## WebSearch {"query": "app.klingai.com OR \"app.kling.ai\" 日本語 インターフェース 設定", "mode": "standard"}
+Web search results for query: "app.klingai.com OR "app.kling.ai" 日本語 インターフェース 設定"
+
+Links: [{"title":"kling ai lip sync","url":"https://www.atlascloud.ai/ja/blog/guides/kling-ai-lip-sync"},{"title":"kling.ai","url":"https://kling.ai/llms.txt"},{"title":"kling official","url":"https://tessl.io/registry/skills/github/calesthio/OpenMontage/kling-official"},{"title":"kling official","url":"https://skills.cat/skills/calesthio/openmontage/kling-official"},{"title":"morphic.com","url":"https://morphic.com/ar/ai-glossary/kling"},{"title":"morphic.com","url":"https://morphic.com/ar/ai-glossary/Kling"},{"title":"About Kling AI","url":"https://www.tooljunction.io/ai-tools/kling-ai"},{"title":"kling ai mobile app your","url":"https://sophiecress.com/blog/kling-ai-mobile-app-your"},{"title":"kling ai","url":"https://webcatalog.io/apps/kling-ai"}]
+
+I've completed the web search for your query. The search results include information about Kling AI, a text-to-video and image-to-video generation platform. Here's what I found:
+
+**About Kling AI:**
+Kling AI is a next-generation AI creative productivity platform developed by Kuaishou Technology that specializes in text-to-video, image-to-video, and text-to-image generation.
+
+**Platform Access:**
+You can access Kling AI by visiting https://www.klingai.com or downloading the mobile app.
+
+**Language Support:**
+Kling 3.0 supports lip-sync in 5 languages including Japanese (JP), which indicates Japanese language interface support is available.
+
+**Key Features:**
+The platform supports text‑to‑image, image‑to‑image, text‑to‑video and image‑to‑video workflows at up to 1080p quality.
+
+However, the search results don't contain specific detailed information about Japanese interface settings or configuration options on the app.klingai.com or app.kling.ai platforms. For more specific instructions on setting up the Japanese language interface, you may need to visit the platform directly or check their official documentation.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/", "prompt": "Quote exactly what the page says about \"Kling 4.0\" and how it relates to \"Video 3.0\", \"Video 3.0 Omni\", \"Image 3.0\". Is Kling 4.0 a separate model, an umbrella brand name, or a typo/misreading? List every named model version mentioned on this page verbatim."}
+# Kling Model Versions Analysis
+
+Based on my review of the provided web page content, I cannot find any mention of "Kling 4.0" or its relationship to other model versions.
+
+## Named Model Versions Found
+
+The only explicitly named model version mentioned on this page is:
+
+- **Kling Image 3.0** — featured in the section title and used to generate the example images shown
+
+## What's Not Mentioned
+
+The page does not discuss:
+- "Kling 4.0" 
+- "Video 3.0"
+- "Video 3.0 Omni"
+- Relationships between different versioned models
+
+The content focuses on showcasing Kling Image 3.0's capabilities through detailed example prompts and generated imagery, along with industry applications and partnerships, but does not provide information about model versioning structure or hierarchy.
+
+######## WebFetch {"url": "https://kling.ai/llms.txt", "prompt": "List all content verbatim: model names/versions, features, pricing links, API links, language support, company info."}
+# Kling AI — Content Summary
+
+## Company & Product Overview
+
+Kling AI is described as a "next-generation AI creative productivity platform" developed by Kuaishou Technology (HKEX: 1024), headquartered in Beijing. The platform launched publicly in June 2024 and has generated over 600 million videos as of early 2026, serving 30,000+ enterprise customers with approximately 70% revenue from overseas markets.
+
+## Current Model Lineup (February 2026)
+
+**Video Generation:**
+- Kling VIDEO 3.0 (API: `kling-v3`) — text/image-to-video, up to 15 seconds, 4K capable
+- Kling VIDEO 3.0 Omni (API: `kling-v3-omni`) — multimodal with multi-character dialogue and character reference video support
+- Kling VIDEO O1 (API: `kling-video-o1`) — unified multimodal, 10-second max
+- Kling VIDEO 2.6 (API: `kling-v2-6`) — native audio with lip-sync, 10-second max
+
+**Image Generation:**
+- Kling IMAGE 3.0 Omni (API: `kling-v3-omni`) — 4K output, local re-editing, multi-reference support
+- Kling IMAGE O1 (API: `kling-image-o1`) — all aspect ratios supported
+- Kling IMAGE 3.0 (API: `kling-v3`) — 2K max resolution
+- Legacy models: 2.1, 1.5, 1.0
+
+## Developer API Pricing (USD per unit)
+
+**Video (Kling-V3 examples):**
+- Text/Image-to-Video Standard: $0.084–$0.126/second (varies by audio inclusion)
+- Professional mode: $0.112–$0.168/second
+- 4K mode: $0.42/second
+
+**Image (Kling-V3-Omni examples):**
+- 1K/2K: $0.028 per image
+- 4K: $0.056 per image
+
+**Virtual Try-On:** $0.07 per generation
+
+## Consumer Subscription Plans (Monthly)
+
+| Tier | Price (First Month) | Monthly Credits | Best For |
+|------|-------------------|-----------------|----------|
+| Basic | Free | None | Casual use |
+| Standard | $6.99 | 660 | Individual creators |
+| Pro | $25.99 | 3,000 | Professional creators |
+| Premier | $64.99 | 8,000 | Studios/agencies |
+| Ultra | $127.99 | 26,000 | Enterprise (early access) |
+
+Yearly subscriptions offer 34% savings across all tiers.
+
+## Key Technical Features
+
+- **Diffusion Transformer (DiT)** architecture
+- **Multi-modal Visual Language (MVL)** framework
+- **Native audio co-generation** (English, Chinese, Japanese, Korean, Spanish + dialects)
+- **Elements system** for persistent character identity across shots
+- **Multi-shot storyboarding** (up to 6 camera cuts with per-shot control)
+- **Motion Control** for dance/action sequences (3–30 second reference clips)
+- **Mask-based local re-editing** for targeted image changes
+- **Physical engine integration** (collision, gravity, interaction effects)
+- **RESTful API** with JWT authentication (AccessKey + SecretKey)
+
+## Official Resources
+
+| Resource | URL |
+|----------|-----|
+| Main Platform | https://kling.ai |
+| Web App | https://kling.ai/app |
+| API Documentation | https://kling.ai/document-api/guides/get-started/overview |
+| Developer Pricing | https://kling.ai/dev/pricing |
+| API Endpoints | api-singapore.klingai.com / api-beijing.klingai.com |
+| Subscription Plans | https://kling.ai/app/membership/membership-plan |
+
+## Language Support
+
+Native audio generation supports English, Chinese, Japanese, Korean, and Spanish with regional dialect variants. Kling 3.0 Omni enables per-character language selection in multi-character dialogue scenarios.
+
+######## WebSearch {"query": "Kling AI help center support languages \"customer service\" OR \"サポート\" official", "mode": "standard"}
+Web search results for query: "Kling AI help center support languages "customer service" OR "サポート" official"
+
+Links: [{"title":"zoftware analysis","url":"https://zoftwarehub.com/ar-ae/products/klingai/zoftware-analysis"},{"title":"zoftware analysis","url":"https://zoftwarehub.com/ar-sa/products/klingai/zoftware-analysis"},{"title":"zoftware analysis","url":"https://zoftwarehub.com/ar-bh/products/klingai/zoftware-analysis"},{"title":"www.lingpad.com","url":"https://www.lingpad.com/llms.txt"},{"title":"Empower Your Customers with","url":"https://www.customerly.io/help-center/"},{"title":"Help Center demos","url":"https://help.featurebase.app/articles/2653075"},{"title":"🎉 Offer extended! Get 20% OFF on all Lingpad yearly plans—valid until Dec 12, 2024. Use code BFCM2024! 🚀","url":"https://www.lingpad.com/?p=5454"},{"title":"tessl.io","url":"https://tessl.io/registry/skills/github/calesthio/OpenMontage/kling-official/review"},{"title":"omq.ai","url":"https://omq.ai/customers/case-studies/klingel/"}]
+
+Based on the search results, here's what I found about Kling AI's help center and support:
+
+## Help Center and Support Resources
+
+Kling AI has a centralized Help Center introduced with Kling 2.0 that bundles tutorials, onboarding materials, account management help, and a way to submit support tickets in one place.
+
+KlingAI provides a mix of official tutorials, self-serve resources, and direct support channels to help new users ramp up quickly.
+
+## Support Options
+
+Users can access an AI-powered "Kling AI Help" page for quick answers, as well as an online ticketing Support Center where each request receives a unique ticket number for tracking.
+
+Official support emails include support@klingai.com for general product issues and api@klingai.com for API and AWS Marketplace customers.
+
+However, the search results did not provide specific information about which languages the Help Center and customer support are available in, despite your query including the Japanese term "サポート" (support). The search results focus on general support structure rather than language availability details.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/ja/app/membership/membership-plan", "prompt": "Is the membership/pricing page content in Japanese? Quote a sample of Japanese pricing plan text if present (plan names, prices, credits)."}
+# Response
+
+Based on the provided webpage content, **this is not a membership/pricing page in Japanese**. The URL indicates it's a Japanese domain (`kling.ai/ja/`), but the actual content displayed is entirely in English.
+
+The page showcases Kling AI's image generation capabilities through sample prompts and industry applications, but contains **no pricing plans, membership tiers, prices, or credit information** in any language.
+
+To access actual pricing details, you would need to navigate to a different section of the Kling AI website.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/docs/point-policy", "prompt": "Extract exact details on the free/Basic plan credits: how many credits free users get, how often, expiry, and any other free plan credit policy details. Also note credit expiry policy for paid plans."}
+# Kling AI Credits Policy - Free/Basic Plan Analysis
+
+Based on the provided documentation, **no explicit free plan credit allocation is detailed**. The policy does not specify a "Basic" or "Free" tier with automatic credits.
+
+## Available Free Credit Opportunities:
+
+**Login Credits (Event-Based):**
+During promotional events, subscribers can "claim daily credits upon login/refresh" with amounts determined by platform announcements. These credits "reset at 24:00" each day.
+
+**Promotional Credits:**
+Users may acquire credits through "platform promotional activities," though specific free user allocations aren't defined in this document.
+
+## Paid Plan Credit Expiry:
+
+- **Purchase Credits:** Valid for "2 years from the date of distribution"
+- **Membership Subscription Credits (Monthly):** Valid for "1 month from the date of distributed"
+- **7-Day Membership Credits:** Valid for "7 days from the date of distributed"
+
+## Key Limitation:
+
+The policy notes that certain premium features—including "Fast-track generation, 1080p videos, Watermark removal, Master shot & video extension, Image upscaling"—are "premium-only functions" and cannot be accessed via credits alone.
+
+**Note:** The document emphasizes that "validity period and applicable rules of Credits may be changed" per future platform announcements.
+
+######## WebSearch {"query": "Kling AI app iOS Android download official", "mode": "standard", "allowed_domains": ["kling.ai", "klingai.com", "apps.apple.com", "play.google.com"]}
+Web search results for query: "Kling AI app iOS Android download official"
+
+Links: [{"title":"Kling AI: Next-Gen AI Video & Image Generator","url":"https://kling.ai/"},{"title":"Kling AI: Next-Generation AI Creative Studio","url":"https://kling.ai/app/"},{"title":"Kling AI: AI Image&Video Maker - App Store - Apple","url":"https://apps.apple.com/us/app/kling-ai-ai-image-video-maker/id6738049229"},{"title":"Kling AI: AI Image&Video Maker - Apps on Google Play","url":"https://play.google.com/store/apps/details/Kling_AI_AI_Image_Video_Maker?id=kling.ai.video.chat&hl=en_US"},{"title":"Download Kling AI","url":"https://kling.ai/app/Download"},{"title":"Kling AI: AI Image&Video Maker on the App Store - Apple","url":"https://apps.apple.com/ae/app/kling-ai-ai-image-video-maker/id6738049229"},{"title":"Kling AI: Omni AI Video & Image Generator","url":"https://kling.ai/app/omni/new"},{"title":"Kling AI: AI Image&Video Maker App - App Store","url":"https://apps.apple.com/us/app/klingai/id6738049229"},{"title":"Kling AI: Control Character Motion with Reference Video","url":"https://kling.ai/app/video-motion-control/new"},{"title":"Koling - AI Video Generator – Apps on Google Play","url":"https://play.google.com/store/apps/details?id=com.cykj.kling3&hl=en_IN"}]
+
+Based on the search results, here's information about the official Kling AI app for iOS and Android:
+
+## Official Download Links
+
+**iOS:** Download Kling AI: AI Image&Video Maker by KLING AI PTE. LTD. on the App Store. The app requires iOS 14.0 or later.
+
+**Android:** Kling AI is available on Google Play as a next-generation creative platform powered by the Kling foundation model, providing powerful video and image generation and editing tools.
+
+## Key Features
+
+AI Video allows you to turn text and images into stunning videos, generating up to 15 seconds in native 1080p or cinema-grade 4K, with Video Extension to create videos up to 3 minutes long.
+
+AI Image generates images from text or existing images with native 4K ultra-HD output, allowing you to blend multiple reference inputs and create batch variations.
+
+The official website is **kling.ai** where you can scan a QR code to download the app for iOS and Android.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://r.jina.ai/https://kling.ai/docs/privacy-policy", "prompt": "Summarize any concrete security/compliance claims: data encryption, certifications (SOC2/ISO), data retention, data used for training, GDPR compliance, data storage location. Quote specifics if present, otherwise say none found."}
+# Security & Compliance Claims Summary
+
+## Data Encryption
+**Claimed:** The policy states they use "encryption techniques" as part of their protective measures.
+
+## Certifications
+**None found** – No SOC2, ISO, or other third-party security certifications mentioned.
+
+## Data Retention
+**Claimed:** Data retained "as long as necessary" for stated purposes, legal compliance, and legitimate business needs. Specific examples for South Korea include: "Records related to contracts or withdrawal: 5 years" and "computer communications and internet log data: 3 months."
+
+## Data Used for Training
+**None found** – The policy does not explicitly state whether personal data is used to train AI models.
+
+## GDPR Compliance
+**None found** – No direct GDPR reference. The policy provides EU-style rights (access, deletion, portability) but does not cite GDPR specifically or claim compliance.
+
+## Data Storage Location
+**Claimed:** Primary storage in Singapore. Quote: "We store your Data on our servers located in Singapore."
+
+Additional note: Data processing teams are distributed globally, though specifics on third-party processor locations depend on service type and region.
+
+######## WebSearch {"query": "\"Kling\" AI video model latest release September 2026", "mode": "standard"}
+Web search results for query: ""Kling" AI video model latest release September 2026"
+
+Links: [{"title":"kling ai","url":"https://www.atlascloud.ai/hi/blog/guides/kling-ai"},{"title":"Seedance 2.5 is nu live — Als eerste op Atlas Cloud","url":"https://www.atlascloud.ai/nl/blog/tips/kling-ai"},{"title":"Seedance 2.5 już dostępne — Jako pierwsze na Atlas Cloud","url":"https://www.atlascloud.ai/pl/blog/tips/kling-ai"},{"title":"Seedance 2.5 är nu live — Först på Atlas Cloud","url":"https://www.atlascloud.ai/sv/blog/tips/kling-ai"},{"title":"Seedance 2.5 è ora live — In anteprima su Atlas Cloud","url":"https://www.atlascloud.ai/it/blog/tips/kling-ai"},{"title":"Seedance 2.5 अब लाइव है — सबसे पहले Atlas Cloud पर","url":"https://www.atlascloud.ai/hi/blog/tips/kling-ai"},{"title":"Seedance 2.5 đã chính thức ra mắt — Có mặt đầu tiên trên Atlas Cloud","url":"https://www.atlascloud.ai/vi/blog/tips/kling-ai"},{"title":"Seedance 2.5 Şimdi Yayında — İlk Olarak Atlas Cloud'da","url":"https://www.atlascloud.ai/tr/blog/tips/kling-ai"},{"title":"Seedance 2.5 Now Live — First on Atlas Cloud","url":"https://www.atlascloud.ai/blog/guides/kling-ai"},{"title":"AI Video Model News: Latest Updates & Breakthroughs in 2026","url":"https://frameo.ai/blog/ai-video-model-updates/"}]
+
+Based on the search results, here's what I found about Kling AI's latest release:
+
+Kling 3.0 is the newest generation, with Kling 3.0 Turbo and the Omni engine launching on June 17, 2026. This release brought 4K editing, longer clips, and the Omni One engine for cinematic control.
+
+Regarding capabilities, Kling AI generates clips of up to 10 seconds natively and extends them toward roughly 3 minutes through its extend feature. It supports both text-to-video and image-to-video workflows.
+
+The search results indicate that as of this date in September 2026, Kling 3.0 remains the latest generation available, though the most recent major release discussed was from June 2026. There don't appear to be September 2026-specific updates mentioned in these results.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.

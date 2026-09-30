@@ -1,0 +1,506 @@
+# Raw tool results recovered from agent-a4c2d5807a42d037f.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "Cursor changelog 2026 cursor.com/changelog", "mode": "standard"}
+Web search results for query: "Cursor changelog 2026 cursor.com/changelog"
+
+Links: [{"title":"cursor changelog every release update new feature","url":"https://www.rapidevelopers.com/blog/cursor-changelog-every-release-update-new-feature"},{"title":"Cursor CLI (Jan 8, 2026): New commands and performance improvement","url":"https://forum.cursor.com/t/cursor-cli-jan-8-2026-new-commands-and-performance-improvement/148372"},{"title":"cursor.com","url":"https://cursor.com/changelog/page/44"},{"title":"20260901 064503Z 828772ba6d81","url":"https://techdevnotes.com/releases/version-tracker/20260901-064503Z-828772ba6d81"},{"title":"developertoolkit.ai","url":"https://developertoolkit.ai/en/cursor-ide/reference/"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/cursor-ide/20260815-020830Z-f543beac29fc"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/cursor-ide/20260813-080507Z-8196318e0b69"},{"title":"20260821 021344Z 85cae18429de","url":"https://techdevnotes.com/releases/cursor-ide/20260821-021344Z-85cae18429de"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/cursor-ide/20260820-081517Z-0255e7f0e7f7"}]
+
+Based on the search results, here's what I found about the Cursor changelog for 2026:
+
+## Recent Cursor Releases (2026)
+
+The latest version is Cursor 3.6 (released May 29, 2026), which brings Auto-review Run Mode, a smarter way for agents to work for longer with fewer approval prompts.
+
+### Notable 2026 Updates:
+
+**January 2026:** Cursor CLI released new commands and significant performance improvements, including new slash commands like /models, /rules, and /mcp enable/disable for managing MCP servers.
+
+**Mid-Year Releases:** As of July 11, 2026, Cursor reached version 3.11, which introduced side chats, conversation search, and a simplified project and repository picker.
+
+**August 2026:** Multiple minor releases occurred, with stable advancing to version 3.17.8 on August 21, 2026.
+
+**September 2026:** As of September 1, 2026, Cursor desktop latest moved to version 3.18.25.
+
+The search results show that the Cursor team ships point updates almost weekly and feature releases roughly monthly.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Cursor pricing 2026 Hobby Pro Ultra plan site:cursor.com", "mode": "standard"}
+Web search results for query: "Cursor pricing 2026 Hobby Pro Ultra plan site:cursor.com"
+
+Links: [{"title":"Cursor pricing explained: plans, credit system, and real costs in 2026","url":"https://www.jetadmin.io/blog/untitled-31/amp/"},{"title":"Cursor pricing explained: plans, credit system, and real costs in 2026","url":"https://www.jetadmin.io/blog/cursor-pricing-explained-plans-credit-system-and-real-costs-in-2026/amp/"},{"title":"Cursor pricing explained: plans, credit system, and real costs in 2026","url":"https://www.jetadmin.io/blog/untitled-31/"},{"title":"Cursor pricing 2026: Hobby, Pro, and Business plans compared","url":"https://eesel.ai/blog/cursor-pricing"},{"title":"cursor ai pricing","url":"https://lowcode.agency/blog/cursor-ai-pricing"},{"title":"Understanding Cursor Pricing in 2026","url":"https://dev.to/rahulxsingh/cursor-pricing-in-2026-hobby-pro-pro-ultra-teams-and-enterprise-plans-explained-4b89"},{"title":"Cursor Pricing Change — April 2026","url":"https://costbench.com/changelog/cursor-plans-renamed-2026-04/"},{"title":"All Cursor Plans & Pricing","url":"https://www.costbench.com/software/ai-coding-assistants/cursor/"},{"title":"Cursor Pricing in 2026: Hobby, Pro, Pro+, Ultra, Teams, and Enterprise Plans Explained","url":"https://aicodereview.cc/blog/cursor-pricing"}]
+
+Based on the search results, here's the Cursor pricing information for 2026:
+
+## Cursor Pricing Plans (2026)
+
+As of July 2026, the six core tiers are Hobby (free), Pro ($20/month), Pro+ ($60/month), Ultra ($200/month), Teams ($40/user/month), and Enterprise (custom pricing).
+
+### Individual Plans
+
+**Hobby Plan (Free)**
+The Hobby plan is free and aimed at students and tinkerers, with limited tab completions and limited agent requests, making it suitable for evaluation and learning, not sustained professional use.
+
+**Pro Plan ($20/month)**
+The Pro plan costs $20/month and includes a $20 credit pool.
+
+**Pro+ Plan ($60/month)**
+The Pro+ plan costs $60/month and provides 3x the usage credits of Pro, targeting developers who regularly exhaust the base pool.
+
+**Ultra Plan ($200/month)**
+The Ultra plan costs $200/month and offers 20x the usage credits of Pro-designed for power users running many agents, large refactors, or continuous max mode sessions. Ultra also tends to include priority access to new features and models.
+
+### Business Plans
+
+The teams plan is priced at $40/user/month and includes shared features like centralized billing, usage analytics, privacy mode, and saml oidc sso. Enterprise pricing is custom and based on specific organizational needs.
+
+### Credit System
+
+Cursor pricing in 2026 runs on a usage based billing model that ties your subscription directly to how much AI compute you consume. Self serve plans carry no long-term contract by default, though annual billing typically offers a 20% discount on paid tiers for users ready to commit.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch ERROR {"url": "https://cursor.com/features", "prompt": "Extract all information about Cursor's features: Agent mode, Tab/autocomplete, chat, inline edit, models supported, CLI, background agents, any API/SDK mentions."}
+Denied by user
+
+######## WebFetch {"url": "https://cursor.com/pricing", "prompt": "Extract all pricing plan details: plan names, monthly/annual prices, what's included in each (credits, features), free plan details, team/enterprise pricing, any mention of commercial use terms, billing cadence."}
+# Cursor Pricing Plans Summary
+
+## Hobby (Free)
+- **Cost:** No charge
+- **Key features:** "No credit card required," "Limited Agent requests," "Access to Composer"
+- Target audience: Casual experimenters
+
+## Individual ($20/month)
+- **Cost:** $20 monthly (Pro, Pro+, Ultra tiers available)
+- **Includes:** Everything from Hobby, plus "Extended limits on Agent," "Generous limits for Grok," frontier model access, Grok Bot, MCPs/skills/hooks, cloud agents, and usage-based Bugbot billing
+- Target audience: Regular agent users
+
+## Teams ($40 per user/month)
+- **Cost:** $40 per team member monthly (Standard, Premium options)
+- **Includes:** Everything from Individual, plus centralized billing/administration, team marketplace, shared cloud agents/automations, agentic code reviews, usage analytics, team-wide privacy controls, and "SAML/OIDC SSO"
+- Target audience: Collaborative development groups
+
+## Enterprise (Custom pricing)
+- **Cost:** Custom quote required
+- **Includes:** All Teams features plus pooled usage, invoice/PO billing, SCIM seat management, repository/model access controls, audit logs, API tracking, and dedicated support
+- Target audience: Large organizations
+
+## Billing & Usage
+- Plans support monthly/yearly toggle options
+- "Every plan includes a set amount of model usage" with on-demand overage billing
+- Pricing "exclusive of any applicable taxes"
+- Direct sales only; no third-party resellers authorized
+
+######## WebSearch {"query": "Cursor \"supported models\" Claude GPT Gemini docs.cursor.com models 2026", "mode": "standard"}
+Web search results for query: "Cursor "supported models" Claude GPT Gemini docs.cursor.com models 2026"
+
+Links: [{"title":"cursor.com","url":"https://docs.cursor.com/advanced/models"},{"title":"forum.cursor.com","url":"https://forum.cursor.com/tag/gemini/342"},{"title":"forum.cursor.com","url":"https://forum.cursor.com/t/gemini-models-in-cursor-agent/127018"},{"title":"Only the Composer model is available","url":"https://forum.cursor.com/t/only-the-composer-model-is-available/158157"},{"title":"frontendmasters.com","url":"https://frontendmasters.com/blog/wp-json/wp/v2/posts/7083"},{"title":"available models","url":"https://cursor.com/help/models-and-usage/available-models.md"},{"title":"Utilizing Different Models - Step 2: Model Strengths (Cursor)","url":"https://ai-learningpath.nstech.com.br/pages/cursor/cursor_models_strengths.html"},{"title":"Superconductor Docs","url":"https://www.superconductor.com/docs/agents/cursor"},{"title":"Cursor Basics","url":"https://www.learncursor.dev/learn/cursor-basics/cursor-models"},{"title":"lmmarketcap.com","url":"https://lmmarketcap.com/zh/leaderboards/tools/cursor"}]
+
+Based on the search results, here's what I found about Cursor's supported models:
+
+## Default Models (docs.cursor.com)
+
+By default, Cursor has GPT-4o, GPT-4, Claude 3.5 Sonnet, and cursor-small ready to use. You can easily switch between different models using Cursor Chat, Ctrl/⌘ K, and Terminal Ctrl/⌘ K.
+
+## Available Models
+
+Cursor offers its own in-house model (Composer) alongside frontier models from OpenAI, Anthropic, Google, and xAI. More specifically, Cursor's current model list includes Grok 4.6, Grok 4.5, and Composer 2.5, plus Claude, Gemini 3.7 Flash, Gemini 3.1 Pro, and GPT options.
+
+## Adding Custom Models
+
+You can add additional models under Cursor Settings > Models > Model Names.
+
+## Model Availability by Plan
+
+The available models depend on your plan. Hobby users have access to a smaller set, while paid plans unlock all models.
+
+The documentation shows that Cursor supports a diverse range of models from major AI providers (OpenAI, Anthropic, Google, and xAI), with the ability to customize and add additional models as needed.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://cursor.com/pricing", "prompt": "List the exact monthly price in USD for each individual plan tier: Hobby, Pro, Pro+, Ultra. For each tier, what specific usage limits or credit amounts are stated? Also list Teams plan tiers (Standard, Premium) with exact prices."}
+# Cursor Pricing Summary
+
+## Individual Plans
+
+**Hobby:** Free
+- Features: "No credit card required," "Limited Agent requests," "Access to Composer"
+- No specific usage limits stated
+
+**Individual (Pro/Pro+/Ultra):** $20/month
+- The page displays these as tier options under the Individual plan but does not specify distinct pricing for each
+- Features include: "Extended limits on Agent," "Generous limits for Grok," frontier model access, and usage-based billing for Bugbot
+- No exact credit amounts or usage limits are specified
+
+## Teams Plans
+
+**Teams (Standard/Premium):** $40 per user per month
+- Tier options are shown but without separate pricing differentiation
+- Features include centralized billing, team marketplace, cloud agents, shared context, and "Usage analytics to understand team behavior"
+- Specific usage limits are not detailed
+
+## Note
+
+The pricing page does not provide explicit monthly credit amounts or detailed usage limits for any tier. It references usage-based pricing with "on-demand usage" in the FAQ, directing readers to documentation for specifics.
+
+######## WebFetch {"url": "https://cursor.com/help/models-and-usage/available-models.md", "prompt": "List all AI models currently available in Cursor as of the page's content, organized by provider (Anthropic, OpenAI, Google, xAI, Cursor's own models). Note which require which plan tier."}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "Cursor Japanese language support UI localization 日本語 cursor.com", "mode": "standard"}
+Web search results for query: "Cursor Japanese language support UI localization 日本語 cursor.com"
+
+Links: [{"title":"Feature Request: Native Japanese UI Localization","url":"https://forum.cursor.com/t/feature-request-native-japanese-ui-localization/170398"},{"title":"[Bug] Japanese Language Pack only translates the Run menu in Cursor 3.11.13","url":"https://forum.cursor.com/t/bug-japanese-language-pack-only-translates-the-run-menu-in-cursor-3-11-13/165485"},{"title":"Please add the multi-language settings feature","url":"https://forum.cursor.com/t/please-add-the-multi-language-settings-feature/159824"},{"title":"forum.cursor.com","url":"https://forum.cursor.com/t/please-add-the-multi-language-settings-feature/159824/4"},{"title":"Korean Language Pack not applied in Cursor 3.12 Glass mode; --classic ignored (Windows)","url":"https://forum.cursor.com/t/korean-language-pack-not-applied-in-cursor-3-12-glass-mode-classic-ignored-windows/166065"},{"title":"How to set cursor setting language to chinese","url":"https://forum.cursor.com/t/how-to-set-cursor-setting-language-to-chinese/168815"},{"title":"3 Common Pitfalls When Setting Up Cursor in Japanese (And How to Fix Them)","url":"https://devtools.shingoirie.com/blog/en/cursor-japanese-3-pitfalls/"},{"title":"Add Chinese localization for Cursor Settings UI","url":"https://forum.cursor.com/t/add-chinese-localization-for-cursor-settings-ui/163648"},{"title":"cursor japanese 3 pitfalls","url":"https://devtools.shingoirie.com/blog/cursor-japanese-3-pitfalls/"}]
+
+I've completed the web search for your query about Cursor Japanese language support and UI localization. Here's what the search results reveal:
+
+## Current Status of Japanese Localization in Cursor
+
+The official Japanese Language Pack for Visual Studio Code translates the VS Code portion of Cursor, but Cursor's own UI remains in English. This includes Cursor-specific menus and commands, Settings and account UI, Agent/Chat/Composer controls, dialogs, tooltips, and notifications.
+
+## Partial Workaround Available
+
+Cursor inherits VS Code system language packs, and you can install a language pack extension (for example Chinese, Japanese, Spanish) from the Marketplace and then change the display language via Configure Display Language in the Command Palette. However, the base UI will be translated, but Cursor-specific parts (Composer, Agent mode, etc.) will stay in English for now since they aren't covered by those packs.
+
+## Official Response from Cursor Team
+
+UI localization is on Cursor's radar, but they don't have a specific timeline for full multi-language support yet.
+
+## Community Feature Requests
+
+Users have requested that Cursor provide a complete, maintained Japanese localization for all Cursor-added strings—or a supported localization mechanism—selectable from Cursor's language settings.
+
+The search results show this is an ongoing limitation that affects Japanese-speaking users, though the Cursor team acknowledges it as a priority area for future development.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://cursor.com/docs/models", "prompt": "List all AI models currently available in Cursor, organized by provider (Anthropic, OpenAI, Google, xAI, Cursor's own models like Composer)."}
+# AI Models Available in Cursor
+
+## Cursor's First-Party Models
+- **Grok 4.7, 4.6, 4.5** (jointly trained with xAI)
+- **Composer 2.5** (with fast variant)
+
+## Anthropic Models
+Claude family including: 4 Sonnet, 4.5 Haiku, 4.5 Opus, 4.5 Sonnet, 4.6 Opus, 4.6 Sonnet, 4.7 Opus, Fable 5/5.1, Opus 4.8, Opus 5/5.5, Sonnet 5/5.5
+
+## OpenAI Models
+GPT-5 series: GPT-5, GPT-5 Mini, GPT-5 Fast, GPT-5-Codex variants, GPT-5.1 through 5.6 (Luna, Sol, Terra), with various speed and capability options
+
+## Google Models
+Gemini line: 2.5 Flash, 3 Flash, 3 Pro, 3 Pro Image Preview, 3.1 Pro, 3.5 Flash, 3.6 Flash, 3.7 Flash, 3.8 Flash
+
+## Other Providers
+- **xAI/Cursor**: Grok models
+- **Z.ai**: GLM 5.2, 5.3, 5.3 Flash
+- **Moonshot**: Kimi K2.7 Code, K3
+- **Meta**: Muse Spark 1.3
+
+The platform notes: "Cursor supports frontier models from OpenAI, Anthropic, Google, SpaceXAI, and more," with pricing varying significantly by model and usage tier.
+
+######## WebSearch {"query": "\"Cursor CLI\" background agents official docs cursor.com API SDK", "mode": "standard"}
+Web search results for query: ""Cursor CLI" background agents official docs cursor.com API SDK"
+
+Links: [{"title":"· Changelog","url":"https://cursor.com/changelog/sdk-release"},{"title":"· Changelog","url":"https://cursor.com/pt-BR/changelog/sdk-release"},{"title":"cursor sdk","url":"https://cursor.com/marketplace/skills/cursor-sdk"},{"title":"background agents","url":"https://cursor.com/help/ai-features/background-agents.md"},{"title":"· Registro de cambios","url":"https://cursor.com/es/changelog/sdk-release"},{"title":"· Journal des modifications","url":"https://cursor.com/fr/changelog/sdk-release"},{"title":"cursor.com","url":"https://cursor.com/docs/sdk/python.md"},{"title":"Cursor SDK & Cloud Agents API updates","url":"https://forum.cursor.com/t/cursor-sdk-cloud-agents-api-updates/159284"},{"title":"· Changelog","url":"https://cursor.com/de/changelog/sdk-release"},{"title":"typescript sdk","url":"https://cursor.com/blog/typescript-sdk"}]
+
+I found comprehensive information about Cursor CLI, background agents, and the Cursor SDK from official cursor.com documentation. Here's what I found:
+
+## Cursor SDK Overview
+
+The Cursor SDK allows you to build agents with the same runtime, harness, and models that power Cursor. The agents that run in the Cursor desktop app, CLI, and web app are now accessible with a few lines of TypeScript.
+
+## Getting Started
+
+You can get started by running `npm install @cursor/sdk`. Here's a basic example of creating and using an agent with TypeScript.
+
+## Background Agents / Cloud Agents
+
+Background agents are coding agents that typically run for a very long time, moving a task from your local device to the cloud, where the agent takes it from start to finish without interruption and reports back with proof that the work is done.
+
+Each Cloud Agent runs on its own dedicated virtual machine with a full development environment, where it plans the task, edits code, runs commands, and tests its work over minutes or hours.
+
+## API & Python Support
+
+There's an updated Cloud Agents API (v1) reworked around durable agents and per-prompt runs with SSE streaming, reconnect support, explicit lifecycle controls (archive, unarchive, delete), and standardized response/error shapes.
+
+A Python SDK is also available that lets you call Cursor's agent from your own Python code with sync and async clients.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://cursor.com/help/ai-features/background-agents.md", "prompt": "Extract details about Cursor's background agents / cloud agents feature: what they are, how they're accessed (CLI, web, Slack, API), pricing implications."}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://cursor.com/changelog/sdk-release", "prompt": "Extract details about the Cursor SDK release: what it is, what languages are supported (TypeScript, Python), what it enables, pricing/billing implications, and how it relates to Cloud Agents / Background Agents API."}
+# Cursor SDK Release Summary
+
+## What It Is
+The Cursor SDK enables developers to programmatically build agents using TypeScript. According to the announcement, it provides "the same runtime, harness, and models that power Cursor," allowing these agents to run locally or on Cursor's cloud infrastructure.
+
+## Language Support
+**TypeScript is confirmed.** The documentation shows TypeScript code examples and references `npm install @cursor/sdk`. Python support is **not mentioned** in this content.
+
+## Key Capabilities
+The SDK allows developers to:
+- Create agents that can analyze repositories and perform tasks
+- Stream events from agent runs
+- Access frontier models like "composer-2.5"
+- Run agents locally or on dedicated cloud VMs
+
+## Pricing & Billing
+The service operates on "standard, token-based consumption pricing," meaning costs scale with API token usage rather than flat fees.
+
+## Cloud Agents API Updates
+The announcement references significant improvements to the Cloud Agents API:
+- Run-scoped operations for follow-ups, status, and streaming
+- Server-Sent Events (SSE) streaming with reconnection support
+- Agent lifecycle management (archive, unarchive, delete)
+- Standardized v1 API responses with structured error codes
+
+These updates modernize how durable agents and per-prompt runs are managed, suggesting deeper integration between the SDK and backend infrastructure.
+
+######## WebSearch {"query": "Cursor terms of service commercial use business cursor.com/terms", "mode": "standard"}
+Web search results for query: "Cursor terms of service commercial use business cursor.com/terms"
+
+Links: [{"title":"API / SDK - Terms of use - Question","url":"https://forum.cursor.com/t/api-sdk-terms-of-use-question/159741"},{"title":"Private members-only forum","url":"https://terms.law/forum/thread/cursor-ai-code-commercial-use-2026.html"},{"title":"API / SDK - Terms of use - Question","url":"https://forum.cursor.com/t/api-sdk-terms-of-use-question/159741/4"},{"title":"terms of service","url":"https://cursorful.com/terms-of-service"},{"title":"Cursor details AI limitations and forbids some prompts","url":"https://opentermsarchive.org/en/memos/cursor-suggestions-limitations-no-rights-cooperation/"},{"title":"Inquiry regarding official API or commercial license for using Cursor's engine as a backend component","url":"https://forum.cursor.com/t/inquiry-regarding-official-api-or-commercial-license-for-using-cursors-engine-as-a-backend-component/165063"},{"title":"forum.cursor.com","url":"https://forum.cursor.com/t/inquiry-regarding-official-api-or-commercial-license-for-using-cursors-engine-as-a-backend-component/165063/5"},{"title":"Master subscription agreement","url":"https://forum.cursor.com/t/master-subscription-agreement/7066"},{"title":"Cursor — Cursor · Terms of Service","url":"https://tostracker.app/document/cursor"}]
+
+I found information about Cursor's terms of service regarding commercial use and business applications:
+
+## Key Points on Commercial Use
+
+**Code Ownership:**
+According to Cursor's terms, "You retain all rights to code you write using Cursor" and this applies to all plan tiers (Free, Pro, Business) with no revenue restrictions or usage caps on commercial deployment.
+
+**Commercial API/SDK Usage:**
+Using Cursor as a backend AI service inside your product is a supported and intended use of the Cursor SDK. However, there are some restrictions:
+
+You can't resell Cursor itself as a standalone service (meaning you can't give third parties access to Cursor or usage under your account), you can't use Cursor outputs to train a competing model, and regulated data like HIPAA, PCI, etc needs a separate agreement.
+
+**Billing:**
+Billing is usage based under the plan and limits of the account tied to the API key.
+
+If you need specific details about commercial or enterprise licensing, it's best to reach out to sales for more information tailored to your business needs.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Cursor security privacy mode SOC 2 cursor.com/security", "mode": "standard"}
+Web search results for query: "Cursor security privacy mode SOC 2 cursor.com/security"
+
+Links: [{"title":"cursor.com","url":"https://cursor.com/cn/security"},{"title":"cursor.com","url":"https://cursor.com/de/security"},{"title":"cursor.com","url":"https://cursor.com/en-US/security"},{"title":"www.cursor.com","url":"https://www.cursor.com/security"},{"title":"cursor.com","url":"https://cursor.com/en-us/security"},{"title":"www.cursor.com","url":"https://www.cursor.com/en/security"},{"title":"Is Cursor Safe? Are Your Code Data Truly Protected?","url":"https://bb.com.tr/en/blog/software-development/is-cursor-safe-are-your-code-data-truly-protected"},{"title":"prod.cursor.com","url":"https://prod.cursor.com/security"},{"title":"Skillshub cursor-compliance-audit","url":"https://openskillindex.com/skills/comeonoliver-skillshub-cursor-compliance-audit"},{"title":"cursor security practices","url":"https://conductatlas.com/platform/cursor/cursor-security-practices/"}]
+
+Based on the search results, here's what I found regarding Cursor's security, privacy mode, and SOC 2 certification:
+
+## SOC 2 Certification
+
+Cursor holds AIUC-1, ISO/IEC 27001:2022, and ISO/IEC 42001:2023 certifications, along with a SOC 2 Type II attestation. Certificates and reports are available on request at trust.cursor.com.
+
+## Privacy Mode
+
+Privacy Mode can be enabled in settings or by a team or enterprise admin and is available to anyone (free or Pro). When enabled, Cursor will not train on your data and implements technical controls and contractual requirements with model providers to protect your data.
+
+## Additional Security Features
+
+Cursor commits to at-least-annual penetration testing by reputable third parties, with an executive summary of the latest report available on request via their trust portal. Their list of subprocessors is published on their trust portal, with each evaluated under their vendor risk management program and re-reviewed annually.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://cursor.com/security", "prompt": "Extract details about Cursor's security certifications (SOC 2, ISO 27001, ISO 42001, AIUC-1), Privacy Mode, data training policy, and any compliance info relevant to business/commercial customers."}
+# Cursor Security Summary
+
+## Certifications & Compliance
+Cursor maintains **AIUC-1, ISO/IEC 27001:2022, and ISO/IEC 42001:2023 certifications**, plus a **SOC 2 Type II attestation**. The company commits to "at-least-annual penetration testing by reputable third parties," with reports available through their trust portal at trust.cursor.com.
+
+## Privacy Mode & Data Training
+Privacy Mode can be enabled by individual users or administrators and applies to both free and Pro accounts. When activated, "we will not train on your data." The feature also implements technical controls and contractual safeguards with model providers. New team members inherit their team's Privacy Mode settings.
+
+## Infrastructure & Vendor Management
+Cursor does not operate infrastructure in China and avoids subprocessors headquartered there. The company publishes its subprocessor list on its trust portal and conducts annual reviews under a formal vendor risk management program.
+
+## Enterprise Features
+Commercial customers benefit from:
+- SSO and SCIM integration
+- LLM safety controls and compliance logging
+- MDM deployment support
+- Data encryption with CMEK options
+- Security hardening documentation
+
+Vulnerability reports should be submitted to security-reports@cursor.com with acknowledgment within 5 business days.
+
+######## WebFetch {"url": "https://cursor.com/terms-of-service", "prompt": "Extract terms related to: code ownership for users, commercial use rights across plan tiers (free/Hobby vs paid), any restrictions on commercial use."}
+# Cursor Terms of Service: Code Ownership & Commercial Use
+
+## Code Ownership
+
+**User Ownership of Input:**
+"You retain all of your right, title, and interest that you have in Inputs" (Section 5.3). Users maintain ownership of code they submit to the service.
+
+**Anysphere Ownership of Suggestions:**
+"Anysphere hereby assigns to you all of our right, title, and interest if any in and to any Suggestions" (Section 5.3). The service transfers its rights in generated code suggestions to users.
+
+## Commercial Use Rights
+
+**No Tier-Based Restrictions Mentioned:**
+The terms of service do not differentiate commercial use permissions between free and paid plan tiers. Both appear governed by the same usage restrictions outlined in Section 1.5.
+
+**Key Restriction:**
+Users cannot "use the Service or any Suggestions to develop or train a model that is competitive with the Service" (Section 1.5(v)). This applies universally regardless of subscription level.
+
+**General Commercial Prohibition:**
+Users may not use the service "in any manner that infringes, misappropriates, or otherwise violates any third party's intellectual or other rights" (Section 1.5(ix)).
+
+## Summary
+
+Users own their inputs and receive ownership of generated suggestions with no stated commercial restrictions across plan types—except prohibitions against competitive model development and third-party IP violations.
+
+######## WebFetch {"url": "https://cursor.com/pricing", "prompt": "This page likely has a plan switcher/toggle for Individual plans (Pro, Pro+, Ultra) with different prices shown depending on which is selected. List every dollar amount ($) that appears anywhere in the raw page content, along with the text immediately surrounding each dollar amount, so I can determine which price belongs to which plan name (Hobby, Pro, Pro+, Ultra, Teams Standard, Teams Premium)."}
+# Cursor Pricing - Dollar Amounts Found
+
+Based on the page content provided, here are all dollar amounts that appear:
+
+1. **Hobby Plan**: `Free` (no dollar amount listed)
+
+2. **Individual Plan**: `"$20 / mo."` - This is the base price shown for the Individual tier, with mentions of Pro, Pro+, and Ultra variants, but no differentiated pricing amounts are displayed in the raw content for these sub-tiers.
+
+3. **Teams Plan**: `"$40 / user / mo."` - Listed for both Standard and Premium variants, though no separate pricing is shown between these two options.
+
+4. **Enterprise Plan**: `Custom` (no specific dollar amount listed)
+
+**Note**: The page indicates there's a monthly/yearly toggle and individual plan variants (Pro/Pro+/Ultra), but the raw HTML content provided does not include separate dollar amounts for each variant. Differentiated pricing likely requires interactive selection on the live page.
+
+######## WebSearch {"query": "Cursor download macOS Windows Linux system requirements cursor.com/downloads", "mode": "standard"}
+Web search results for query: "Cursor download macOS Windows Linux system requirements cursor.com/downloads"
+
+Links: [{"title":"Cursor AI Downloads","url":"https://docsearch.algolia.com/mcp/docs/repo/oslook/cursor-ai-downloads"},{"title":"cursor.com","url":"https://cursor.com/ja/download"},{"title":"cursor.com","url":"https://cursor.com/help/getting-started/install"},{"title":"cursor.com","url":"https://cursor.com/help/getting-started/install.md"},{"title":"Pular para o conteúdo","url":"https://cursor.com/pt-BR/download"},{"title":"cursor.com","url":"https://cursor.com/zh-Hant/download"},{"title":"Saltar al contenido","url":"https://cursor.com/es/download"},{"title":"prod.cursor.com","url":"https://prod.cursor.com/help/getting-started/install"},{"title":"Free Computer Cursors: A Comprehensive Guide to Customization and Download","url":"https://test.theparentcue.org/?p=46244"}]
+
+Based on the search results, here's information about Cursor downloads for macOS, Windows, and Linux:
+
+## Download Options
+
+Cursor is available for macOS, Windows, and Linux.
+
+### macOS
+Mac options include ARM64, x64, and Universal versions.
+
+### Windows
+Windows downloads are available in x64 and ARM64 formats, with both System and User setup options.
+
+### Linux
+Linux offers multiple installation formats including .deb (ARM64 and x64), RPM (ARM64 and x64), and AppImage (ARM64 and x64) versions.
+
+## Installation Instructions
+
+To install, go to cursor.com/download and click the download button for your operating system. For Mac, drag Cursor into your Applications folder; for Windows, run the installer and follow the prompts; for Linux, install via your package manager (apt or dnf) if available, or extract the AppImage/archive and run it.
+
+The search results focused on the download portal rather than detailed system requirements specifications. For complete system requirements, you may want to check the official documentation or release notes on cursor.com.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://cursor.com/help/account/pricing.md", "prompt": "List exact monthly and annual USD prices for each Cursor plan: Hobby, Pro, Pro+, Ultra, Teams (Standard/Premium), Enterprise. Include any credit/usage pool amounts stated per plan."}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "\"Pro+\" cursor.com \"$60\" OR \"Ultra\" cursor.com \"$200\" pricing official", "mode": "standard"}
+Web search results for query: ""Pro+" cursor.com "$60" OR "Ultra" cursor.com "$200" pricing official"
+
+Links: [{"title":"cursor new pricing structure explained","url":"https://tessl.io/blog/cursor-new-pricing-structure-explained"},{"title":"Pricing Overview for Cursor","url":"https://trustradius.com/products/cursor/pricing"},{"title":"cursor ai pricing","url":"https://cloudzero.com/blog/cursor-ai-pricing"},{"title":"cursor pricing","url":"https://www.nocode.mba/articles/cursor-pricing"},{"title":"how much does cursor pro subscription cost","url":"https://zilliz.com/ai-faq/how-much-does-cursor-pro-subscription-cost"},{"title":"Ultra plan v.s. $200 pay as you go","url":"https://forum.cursor.com/t/ultra-plan-v-s-200-pay-as-you-go/144918"},{"title":"cursor ai pricing 2025 complete guide analysis","url":"https://www.cometapi.com/cursor-ai-pricing-2025-complete-guide-analysis/"},{"title":"toolradar.com","url":"https://toolradar.com/tools/cursor/pricing"},{"title":"Cursor Pricing in 2026: Hobby, Pro, Pro+, Ultra, Teams, and Enterprise Plans Explained","url":"https://aicodereview.cc/blog/cursor-pricing"}]
+
+Based on the search results, here is the official pricing information for Cursor's Pro+ and Ultra plans:
+
+The Pro Plus tier costs $60/month, and the Ultra plan costs $200 per month, and includes $400 of API agent usage (plus additional bonus usage), as well as priority access to new features.
+
+The Pro Plus plan includes $70 worth of API agent usage (plus additional bonus usage), compared to the Pro plan which includes $20 in credits.
+
+Annual billing saves ~20% on all paid plans.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Cursor Bugbot Slack GitHub integration MCP official cursor.com features", "mode": "standard"}
+Web search results for query: "Cursor Bugbot Slack GitHub integration MCP official cursor.com features"
+
+Links: [{"title":"Cursor Automations, MCP, and API Integrations: How AI-Powered Workflows Are Reshaping Modern Development","url":"https://tutorialsdojo.com/?p=40642"},{"title":"cursor automations mcp and api integrations how ai powered workflows are reshaping modern development","url":"https://tutorialsdojo.com/cursor-automations-mcp-and-api-integrations-how-ai-powered-workflows-are-reshaping-modern-development/"},{"title":"Catch up with DevCon Fall conference talks in our YouTube Playlist","url":"https://tessl.io/blog/cursor-1-0"},{"title":"cursor levels up with 10 release adding mcp support and persistent memory","url":"https://hackernoon.com/cursor-levels-up-with-10-release-adding-mcp-support-and-persistent-memory"},{"title":"Cursor home pagelight logodark logo","url":"https://docs.cursor.com/bugbot/faq"},{"title":"Cursor Automations, MCP, and API Integrations: How AI-Powered Workflows Are Reshaping Modern Development","url":"https://tutorialsdojo.com/category/cursor/"},{"title":"How to connect Slack MCP with Cursor","url":"https://composio.dev/toolkits/slack/framework/cursor"},{"title":"How to connect Slackbot MCP with Cursor","url":"https://composio.dev/toolkits/slackbot/framework/cursor"},{"title":"slack mcp bot integration seratch","url":"https://www.getdrio.com/mcp/slack-mcp-bot-integration-seratch"}]
+
+Based on the web search results, here's what I found about Cursor's Bugbot, Slack, GitHub integration, and MCP features:
+
+## BugBot
+
+BugBot lives outside of the Cursor IDE and is a GitHub app that can code review changes in your Pull Requests, determining whether there are any quality issues with the code changes and leaving a comment on it.
+
+## Cursor Automations
+
+Cursor Automations, launched on March 5, 2026, are always-on AI agents that trigger automatically in response to external events without waiting for you to open the IDE or type a prompt. When a trigger fires, Cursor spins up an isolated cloud sandbox, clones your repository, follows the instructions you defined, uses whatever MCP integrations you connected, and can verify its own output before posting results.
+
+## Integration Support
+
+Cursor supports multiple trigger types:
+
+- **GitHub Triggers**: GitHub triggers fire on events like pull request opened, pull request merged, push to a specific branch, issue comment created, PR review submitted, or workflow run completed.
+
+- **Slack Triggers**: Slack triggers respond to new messages in a channel, emoji reactions on a message, or new channel creation. A team can set up an automation where reacting to a Slack bug report with a specific emoji kicks off an agent that investigates the issue, checks relevant logs, and opens a draft PR with a proposed fix.
+
+## MCP Support
+
+With the introduction of Cursor Automations, Background Agents, BugBot Autofix, and deep support for the Model Context Protocol (MCP), Cursor has effectively redrawn the line between "AI helps you code" and "AI runs workflows you define." By mid-2026, over 5,000 community-built MCP servers exist, and every major AI coding tool supports the protocol: Cursor, Claude Desktop, Claude Code, Windsurf, Zed, and others.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://cursor.com/docs/sdk/python.md", "prompt": "Does an official Cursor Python SDK exist? What can it do (sync/async clients, agent running)? Include install instructions if shown."}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "Cursor SDK Python pip install cursor-agent official docs", "mode": "standard"}
+Web search results for query: "Cursor SDK Python pip install cursor-agent official docs"
+
+Links: [{"title":"cursor.com","url":"https://cursor.com/docs/sdk/python.md"},{"title":"cursor.com","url":"https://cursor.com/docs/sdk/python"},{"title":"cursor sdk","url":"https://docs.endorlabs.com/secure-ai-coding/agent-kit/cursor-sdk"},{"title":"> ## Documentation Index","url":"https://docs.endorlabs.com/secure-ai-coding/agent-kit/cursor-sdk.md"},{"title":"Introducing the Cursor Python SDK","url":"https://forum.cursor.com/t/introducing-the-cursor-python-sdk/161367"},{"title":"> ## Documentation Index","url":"https://kumo.ai/docs/rfm/setup/cursor.md"},{"title":"cursor acp","url":"https://pypi.org/project/cursor-acp"},{"title":"kumo.ai","url":"https://kumo.ai/docs/rfm/setup/cursor"},{"title":"> ## Documentation Index","url":"https://ai-proxy-5k9q3mg0z.preview.braintrust.dev/docs/integrations/agent-frameworks/cursor-sdk.md"},{"title":"> ## Documentation Index","url":"https://ai-proxy-r2ebfk6pd.preview.braintrust.dev/docs/integrations/agent-frameworks/cursor-sdk.md"}]
+
+Based on the search results, here's the information about the Cursor SDK Python installation and official documentation:
+
+## Installation
+
+To install the Cursor SDK, use: `pip install cursor-sdk` and it requires Python 3.10 or later.
+
+## Official Documentation
+
+The `cursor-sdk` package lets you call Cursor's agent from your own Python code. The same agent that runs in the Cursor IDE, CLI, and web app is scriptable from Python with sync and async clients, typed dataclasses, and ordinary iteration for streams and pages.
+
+## Quick Start Example
+
+Here's a basic example to get started:
+
+```python
+import os
+from cursor_sdk import Agent, LocalAgentOptions
+
+with Agent.create(
+    model="composer-2.5",
+    api_key="crsr_key",
+    local=LocalAgentOptions(cwd=os.getcwd()),
+) as agent:
+    print(agent.send("Summarize what this repository does").text())
+```
+
+The official documentation is available at **cursor.com/docs/sdk/python** with comprehensive details on features, stream events, and various use cases.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## Bash {"command": "python3 -c \"\ns = 'VS Codeをベースに、コードベース全体を理解するAIチャット・自動補完・複数ファイル編集（Agentモード）を一つのエディターで行える開発者向けAIコーディングツール。'\nprint(len(s))\ns2 = 'CursorはVS Codeをベースにしたエディター型AIコーディングツールで、GitHub Copilotのような補完特化でもClaude Codeのようなエージェント特化でもなく、両者の中間に位置する。最大の強みは、既存のVS Code資産をほぼそのまま引き継げる移行のしやすさと、Claude・GPT・Geminiなど複数モデルを1つのエディター内で使い分けられる柔軟性にある。Background AgentやAutomationsによる自律実行機能も充実してきており、日常的な開発タスクの自動化を試したい層と相性が良い。一方で日本語UIは未整備で、本格運用には月額20〜200ドル台の有料プランが前提になりやすい点は考慮が必要である。'\nprint(len(s2))\ns3 = 'Cursorとは？料金・機能・使い方・日本語対応を解説｜OmochiX'\nprint(len(s3))\ns4='Cursorの料金プラン（Hobby/Pro/Pro+/Ultra）、Agentモードなどの主要機能、日
+86
+322
+35
+105

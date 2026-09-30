@@ -1,0 +1,795 @@
+# Raw tool results recovered from agent-aec374ddbbece5b80.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "NotebookLM Audio Overview Japanese language support", "mode": "standard"}
+Web search results for query: "NotebookLM Audio Overview Japanese language support"
+
+Links: [{"title":"ai gemini google notebooklm 4","url":"https://timewell.jp/en/columns/ai-gemini-google-notebooklm-4"},{"title":"Generate Audio Overview in NotebookLM","url":"https://support.google.com/notebooklm/answer/16212820?hl=en"},{"title":"Generate Audio Overview in NotebookLM","url":"https://support.google.com/notebooklm/answer/16212820"},{"title":"New on Yahoo","url":"https://tech.yahoo.com/audio/articles/notebooklms-ai-podcasts-multilingual-googles-180740523.html"},{"title":"20250826 google notebooklm video overviews","url":"https://www.gigazine.net/gsc_news/en/20250826-google-notebooklm-video-overviews"},{"title":"20250826 google notebooklm video overviews","url":"https://wbgsv0a.gigazine.net/gsc_news/en/20250826-google-notebooklm-video-overviews"},{"title":"20250826 google notebooklm video overviews","url":"https://wbgsv0b.gigazine.net/gsc_news/en/20250826-google-notebooklm-video-overviews"},{"title":"notebooklm japanese audio overviews with software engineering at google","url":"https://dev.classmethod.jp/articles/notebooklm-japanese-audio-overviews-with-software-engineering-at-google/"},{"title":"NotebookLMのAudio Overviewsが日本語に対応しました","url":"https://dev.classmethod.jp/articles/notebooklm-audio-overviews-ja/"}]
+
+Based on the search results, here's what I found about NotebookLM Audio Overview's Japanese language support:
+
+## Japanese Language Support
+
+NotebookLM's Audio Overview feature has launched in Japanese. As of April 30, 2025 (Japan time), NotebookLM's Audio Overviews (音声概要) became available in Japanese.
+
+## Feature Details
+
+AI-generated output is no longer limited to text; it can now be delivered as audio, making it easier for users to absorb information intuitively and improving both work efficiency and learning outcomes.
+
+Audio Overviews is a feature where two AI hosts create podcast-style explanatory audio from provided sources, with natural Japanese audio generation now available.
+
+## Broader Language Support
+
+You can generate Audio Overviews in 80+ languages. NotebookLM now supports 80 languages, including Japanese, for its 'Video Summary' feature, which compiles the contents of notebooks into videos.
+
+The feature is designed to be user-friendly and allows for interactive audio-based learning experiences, particularly useful for commuting and on-the-go learning scenarios.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "NotebookLM pricing 2026 official", "mode": "standard"}
+Web search results for query: "NotebookLM pricing 2026 official"
+
+Links: [{"title":"NOTEBOOKLM PRICING intelligence overview","url":"https://lists.norml.org/notebooklm-pricing.html"},{"title":"Cloud Service >> Knowledgebase >> Artificial Intelligence >> What Is NotebookLM? Features and How to Use It in 2026","url":"https://cyfuture.cloud/kb/ai/what-is-notebooklm-features-and-how-to-use-it-in-2026"},{"title":"<h1>NotebookLM Price 2026 Google NotebookLM Cost: Complete 2026 Guide</h1>","url":"https://superlore.ai/blog/notebooklm-price-2026-google-notebooklm-cost"},{"title":"aiagentrank.io","url":"https://aiagentrank.io/agent/notebooklm/pricing"},{"title":"aipicks.jp","url":"https://aipicks.jp/tool/notebooklm/pricing"},{"title":"<h1>NotebookLM Pricing Tiers in 2026: A Complete Guide to Features and Costs</h1>","url":"https://superlore.ai/blog/notebooklm-pricing-tiers-2026-complete-guide"},{"title":"NotebookLM Pricing in 2026","url":"https://www.googally.com/blog/notebooklm-pricing"},{"title":"NotebookLM Pricing 2026","url":"https://aiproductivity.ai/pricing/notebooklm/"},{"title":"Current In-App Purchases (5)","url":"https://apppricinglab.com/iap/apple/6737527615"}]
+
+Based on the search results, here's what I found about NotebookLM pricing in 2026:
+
+## NotebookLM 2026 Pricing Structure
+
+NotebookLM is free to start with the Standard tier, which gives you 100 notebooks, 50 sources per notebook, and 50 chats per day with no trial period and no credit card required.
+
+Paid consumer tiers run $7.99 to $200/month, bundled into Google AI Plus, Pro, and Ultra subscriptions — never sold standalone.
+
+### Specific Pricing Tiers:
+
+NotebookLM pricing plans include: Standard (Free), Plus (Google AI Plus) at $7.99/mo, Pro (Google AI Pro) at $19.99/mo, and Ultra (Google AI Ultra) at $99.99/mo.
+
+### Important Notes:
+
+Every paid tier arrives bundled inside something else, either a Google AI subscription, a qualifying Google Workspace plan, or a Google Cloud Enterprise license. Google Workspace Business Standard and above include NotebookLM Plus as a core service at no additional cost, which is the single most commonly missed money-saver.
+
+Key 2026 features include Audio/Video Overviews, Notebook Guide with summaries and study guides, Deep Research Mode, Slide Decks/Infographics, mind maps, flashcards, and Google Classroom integration.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "NotebookLM API developers", "mode": "standard"}
+Web search results for query: "NotebookLM API developers"
+
+Links: [{"title":"how to use notebooklm for developers","url":"https://clickup.com/vi/blog/259370/how-to-use-notebooklm-for-developers"},{"title":"How to Access NotebookLM Via API?","url":"https://discuss.ai.google.dev/t/how-to-access-notebooklm-via-api/5084?page=2"},{"title":"discuss.ai.google.dev","url":"https://discuss.ai.google.dev/t/notebooklm-api/55950"},{"title":"How to Access NotebookLM Via API?","url":"https://discuss.ai.google.dev/t/how-to-access-notebooklm-via-api/5084/42"},{"title":"nblm-cli 0.2.3","url":"https://docs.rs/nblm-cli"},{"title":"NotebookLM tem API? O que dá para automatizar hoje","url":"https://horadecodar.com.br/notebooklm-api/"},{"title":"nblm-cli 0.2.1","url":"https://docs.rs/nblm-cli/0.2.1/nblm"},{"title":"nblm-cli 0.1.5","url":"https://docs.rs/nblm-cli/0.1.5/nblm"},{"title":"notebooklm py","url":"https://gittrend.io/repo/win4r/notebooklm-py"}]
+
+Based on the search results, here's what I found about NotebookLM API for developers:
+
+## Official API
+
+Google has released an API for NotebookLM. However, the official NotebookLM API currently exists only in the Enterprise edition within Google Cloud, while the consumer product (free and Pro versions) does not have a public API.
+
+The NotebookLM API requires Google Cloud's NotebookLM Enterprise product, which requires identity/auth setup and a subscription with at least 15 licenses.
+
+## Enterprise API Capabilities
+
+Developers and organizations can leverage NotebookLM's features—such as content summarization, synthesis, and deep Q&A on source documents—directly within their own applications, workflows, and business processes.
+
+With the Enterprise version, developers can create, retrieve, share and delete notebooks and manage sources including Google Docs, Slides, text, web and YouTube.
+
+## Community Tools
+
+For developers looking for alternatives, there's an unofficial Python API for Google NotebookLM that provides full programmatic access to NotebookLM's features via Python, CLI, and AI agents. Additionally, there's an unofficial Rust CLI and Python SDK for the NotebookLM Enterprise API.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "NotebookLM Plus Google One AI Premium Gemini plans", "mode": "standard"}
+Web search results for query: "NotebookLM Plus Google One AI Premium Gemini plans"
+
+Links: [{"title":"New on Yahoo","url":"https://tech.yahoo.com/ai/articles/google-one-ai-premium-subscription-162820631.html"},{"title":"Google’s upgraded NotebookLM is now included in its One AI Premium plan","url":"https://rss.boorghani.com/?p=280734"},{"title":"post 2061006","url":"https://forums.tomsguide.com/threads/notebooklm-plus-now-available-with-the-google-one-ai-premium-subscription-plan.552830/post-2061006"},{"title":"Google NotebookLM Plus now available in Google One AI Premium subscription","url":"https://itdaily.com/news/software/google-notebooklm-plus-individual-users"},{"title":"freedom251.com","url":"https://freedom251.com/?p=842451"},{"title":"www.techbloat.com","url":"https://www.techbloat.com/?p=1904773"},{"title":"google one ai premium plan just got better with free notebooklm plus","url":"https://www.neowin.net/news/google-one-ai-premium-plan-just-got-better-with-free-notebooklm-plus/"},{"title":"Enhanced Google One AI Premium Plan Now Includes Free NotebookLM Plus","url":"https://thefilibusterblog.com/enhanced-google-one-ai-premium-plan-now-includes-free-notebooklm-plus/"},{"title":"blog.kowatek.com","url":"https://blog.kowatek.com/?p=97040"}]
+
+Based on the search results, here's what I found about NotebookLM Plus, Google One AI Premium, and Gemini plans:
+
+## NotebookLM Plus and Google One AI Premium
+
+NotebookLM Plus is now available on Google's One AI Premium subscription, which already gave you access to Gemini's better Advanced tier and more AI integration across Google apps and services. Subscribers will now gain access to NotebookLM Plus at no added cost, which offers higher usage limits and premium features, like the ability to customize NotebookLM's responses.
+
+## Plan Pricing and Features
+
+Google currently offers its One AI Premium plan for $19.99 per month with 2TB of storage and access to the company's Gemini Advanced models, along with Gemini in Workspace apps like Gmail and Docs. Students over the age of 18 in the US can also get the One AI Premium plan for $9.99 per month for one year.
+
+## NotebookLM Plus Features
+
+NotebookLM Plus offers five times more Audio Overviews, notebooks, queries, and sources per notebook, and also lets you customize how you share your notebooks and see how many people have viewed them per day.
+
+## Recent Name Changes
+
+Google One AI Premium is now Google AI Plus, while NotebookLM is now Gemini Notebook. The February 2025 announcement is historical. Google now calls the former AI Premium plan Google AI Plus and has renamed NotebookLM to Gemini Notebook.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "site:one.google.com OR site:gemini.google.com NotebookLM Plus plans pricing", "mode": "standard"}
+Web search results for query: "site:one.google.com OR site:gemini.google.com NotebookLM Plus plans pricing"
+
+Links: [{"title":"NotebookLM Plus now available to all Google One AI Premium subscribers","url":"https://getcoai.com/news/notebooklm-plus-now-available-to-all-google-one-ai-premium-subscribers"},{"title":"New on Yahoo","url":"https://tech.yahoo.com/general/articles/googles-paid-gemini-tier-lures-210047895.html"},{"title":"Google expands NotebookLM Plus to individual users","url":"https://blog.kowatek.com/?p=96924"},{"title":"Google One AI Premium ora include NotebookLM Plus senza costi aggiuntivi e sconti per studenti","url":"https://global.techradar.com/it-it/computing/artificial-intelligence/google-one-ai-premium-ora-include-notebooklm-plus-senza-costi-aggiuntivi-e-sconti-per-studenti"},{"title":"Google’s NotebookLM Plus: Is the AI tool worth the cost?","url":"https://m.getcoai.com/news/googles-notebooklm-plus-is-the-ai-tool-worth-the-cost"},{"title":"about.getcoai.com","url":"https://about.getcoai.com/?p=53455"},{"title":"# Is NotebookLM Plus Worth It in 2026? (Now Gemini Notebook)","url":"https://elephas.app/blog/notebooklm-plus-worth-it.md"},{"title":"notebooklm plus worth it","url":"https://elephas.app/blog/notebooklm-plus-worth-it"},{"title":"notebooklm google one","url":"https://blog.google/feed/notebooklm-google-one/"}]
+
+Based on the search results, here's the pricing information for NotebookLM Plus plans:
+
+## Current NotebookLM Plus Pricing (2026)
+
+As of June 2026, the paid tiers are Plus at $4.99/mo, Pro at $19.99/mo, and Ultra from $99.99/mo, bundled into Google AI plans.
+
+### Main Plan Tiers:
+
+- **Plus**: $4.99 per month
+- **Pro**: $19.99 per month, giving 500 notebooks, 300 sources per notebook, and 500 chats a day
+- **Ultra**: Starting from $99.99/mo
+
+### Student Discount:
+
+U.S. students 18 and older can get an AI Premium plan for $9.99/month for 12 months, which represents a 50% discount.
+
+### Additional Context:
+
+The plan includes Gemini Advanced, Gemini in Gmail, Docs and more, plus 2 TB of storage, and users can start a one-month trial before committing to a subscription.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://notebooklm.google.com/", "prompt": "What does this page say about NotebookLM's pricing, plans (free vs Plus), features (Audio Overview, mind maps, video overview), supported languages, and company info? Extract any pricing tier details, plan names, and links to pricing pages mentioned."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://notebooklm.google.com/
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://notebook.google.com/
+    Status: 301 Moved Permanently
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://notebook.google.com/"
+    - prompt: "What does this page say about NotebookLM's pricing, plans (free vs Plus), features (Audio Overview, mind maps, video overview), supported languages, and company info? Extract any pricing tier details, plan names, and links to pricing pages mentioned."
+
+######## WebFetch {"url": "https://support.google.com/notebooklm/answer/16212820?hl=ja", "prompt": "What does this official Google support page say about Audio Overview generation and language support, specifically Japanese? Does it say Audio Overview output can be generated in Japanese, and are there any limitations noted?"}
+# Japanese Language Support for Audio Overviews
+
+According to this Google support page, yes, Audio Overviews can be generated in Japanese. The documentation lists "日本語" (Japanese) among the 80+ supported languages for audio overview generation.
+
+However, the page does not specify any limitations unique to Japanese output. The general limitations mentioned apply universally: generated audio may contain inaccuracies or audio disturbances, and generation can take several minutes. Additionally, interactive mode is currently "英語でのみご利用いただけます" ("available only in English"), which effectively excludes Japanese speakers from that feature.
+
+######## WebFetch {"url": "https://notebook.google.com/", "prompt": "What does this page say about NotebookLM's pricing, plans (free vs Plus), features (Audio Overview, mind maps, video overview), supported languages, and company/product name? Extract any pricing tier details, plan names, and links to pricing pages mentioned. Also note if the product has been renamed."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://notebook.google.com/login?continue=https://notebook.google.com/
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://accounts.google.com/ServiceLogin?passive=1209600&osid=1&continue=https://notebook.google.com/login?continue%3Dhttps://notebook.google.com/&followup=https://notebook.google.com/login?continue%3Dhttps://notebook.google.com/
+    Status: 302 Found
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://accounts.google.com/ServiceLogin?passive=1209600&osid=1&continue=https://notebook.google.com/login?continue%3Dhttps://notebook.google.com/&followup=https://notebook.google.com/login?continue%3Dhttps://notebook.google.com/"
+    - prompt: "What does this page say about NotebookLM's pricing, plans (free vs Plus), features (Audio Overview, mind maps, video overview), supported languages, and company/product name? Extract any pricing tier details, plan names, and links to pricing pages mentioned. Also note if the product has been renamed."
+
+######## WebFetch {"url": "https://blog.google/feed/notebooklm-google-one/", "prompt": "What does this official Google blog post say about NotebookLM Plus and Google One AI Premium? Extract exact plan names, pricing, features, and publish date."}
+# NotebookLM Plus and Google One AI Premium: Key Details
+
+**Publication Date:** February 10, 2025
+
+**Plan Names & Pricing:**
+- Google One AI Premium plan (existing)
+- NotebookLM Plus (newly added to AI Premium)
+- Student discount: "$9.99/month" for 12 months (50% off for eligible U.S. students 18+)
+
+**Key Features:**
+NotebookLM is described as "a research and thinking companion designed to help you make the most of your information." Users can "upload material, summarize it, ask questions and transform it into something engaging, like a podcast-style audio discussion."
+
+NotebookLM Plus includes "higher usage limits and premium features for even more customized research."
+
+**Google One AI Premium Plan Benefits:**
+The plan includes "Gemini Advanced, Gemini in Gmail, Docs and more, plus 2 TB of storage" with the addition of NotebookLM Plus at no extra cost.
+
+**Student Benefit:**
+The new 50% discount aims to help students "work with more course materials, create custom study experts using Gemini Advanced, save time crafting emails and more."
+
+######## WebFetch {"url": "https://support.google.com/notebooklm", "prompt": "List the help topics and any info about NotebookLM plans (free vs Plus), pricing, supported languages, API availability, and commercial/terms of use."}
+# Gemini Notebook Help Topics
+
+Based on the help page content provided, here are the available topics:
+
+## Getting Started
+- Learn about Gemini Notebook
+- Create a notebook
+- Use chat features
+- Add or discover sources
+- Create and add notes
+
+## Features
+- Mind Maps
+- Audio Overviews
+- Video Overviews
+- Flashcards or Quizzes
+- Infographics
+- Slide Decks
+- Reports
+- Public and featured notebooks
+
+## Account & Settings
+- Manage usage limits
+- Change mode
+- Change output language
+- Use with work/school accounts
+- Mobile app access
+
+## Support
+- Report problems
+- Access FAQs
+- Join the community
+- Privacy and terms information
+
+---
+
+## Information NOT Available
+
+The provided content **does not include** details about:
+- NotebookLM plans (free vs Plus)
+- Pricing information
+- Supported languages list
+- API availability
+- Commercial use terms or restrictions
+
+These details would require accessing the actual help articles linked on this page, which are not included in the provided excerpt.
+
+######## WebFetch {"url": "https://support.google.com/notebooklm/answer/16135589", "prompt": "What does this page say about NotebookLM usage limits for free vs Plus/paid plans (number of notebooks, sources per notebook, chat queries per day, Audio Overviews)? List exact numbers per tier if present."}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "\"Gemini Notebook\" NotebookLM rename official Google announcement", "mode": "standard"}
+Web search results for query: ""Gemini Notebook" NotebookLM rename official Google announcement"
+
+Links: [{"title":"Google Rebrands NotebookLM As Gemini Notebook: Here's Why","url":"https://www.freepressjournal.in/amp/tech/google-rebrands-notebooklm-as-gemini-notebook-heres-why"},{"title":"Google Renames NotebookLM As Gemini Notebook And Adds Native Code Execution","url":"https://pulse2.com/google-gemini-notebook/"},{"title":"Google NotebookLM officially rebrands to Gemini Notebook","url":"https://www.arynews.tv/notebooklm-officially-rebrands-to-gemini-notebook"},{"title":"Google Renames NotebookLM to Gemini Notebook, Adds Code Execution","url":"https://aiweekly.co/alerts/google-renames-notebooklm-to-gemini-notebook-adds-code-execution"},{"title":"google rebrands notebooklm as gemini notebook heres why","url":"https://www.freepressjournal.in/tech/google-rebrands-notebooklm-as-gemini-notebook-heres-why"},{"title":"Google is renaming NotebookLM to Gemini Notebook","url":"https://news.ainauten.com/en/story/google-macht-aus-notebooklm-jetzt-gemini-notebook"},{"title":"Google renames NotebookLM to Gemini Notebook and expands code execution to Pro users","url":"https://thenextweb.com/news/google-notebooklm-gemini-notebook-rebrand"},{"title":"Gemini Notebook: NotebookLM's Rebrand and New Code Engine","url":"https://pasqualepillitteri.it/en/news/8195/gemini-notebook-notebooklm-rebrand-code"},{"title":"google kills notebooklm name moving 30 million users to gemini notebook","url":"https://ppc.land/google-kills-notebooklm-name-moving-30-million-users-to-gemini-notebook/"}]
+
+Based on the search results, here's the official information about Google's announcement regarding the NotebookLM to Gemini Notebook rename:
+
+## Official Announcement
+
+On July 16, 2026, Google announced that NotebookLM is now called Gemini Notebook, with the announcement coming from a post on Google's official blog signed by Josh Woodward, vice president of Google Labs.
+
+## Key Details About the Rebrand
+
+Google renamed its AI research tool NotebookLM as Gemini Notebook, bringing it closer to the company's broader Gemini ecosystem. The product remains the same, with the same notebooks, the same uploaded sources and the same shared links, but it drops the "LM" suffix and adopts the blue-to-purple gradient logo of the Gemini family.
+
+## New Capabilities
+
+Along with the rebrand, the tool will gain native code execution, deeper integration with the Gemini app and future Google Search syncing. Every notebook now receives an isolated cloud computer capable of writing and running code on the sources the user has uploaded.
+
+## User Base Impact
+
+Since its launch, NotebookLM has grown to more than 30 million users and over 600,000 organizations. The new Gemini Notebook branding will appear on both mobile and web versions in the coming weeks.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "blog.google NotebookLM Gemini Notebook Josh Woodward announcement July 2026", "mode": "standard"}
+Web search results for query: "blog.google NotebookLM Gemini Notebook Josh Woodward announcement July 2026"
+
+Links: [{"title":"google kills notebooklm name moving 30 million users to gemini notebook","url":"https://ppc.land/google-kills-notebooklm-name-moving-30-million-users-to-gemini-notebook/"},{"title":"Gemini Notebook: NotebookLM's Rebrand and New Code Engine","url":"https://pasqualepillitteri.it/en/news/8195/gemini-notebook-notebooklm-rebrand-code"},{"title":"NotebookLM is now Gemini Notebook","url":"https://blog.google/innovation-and-ai/products/gemini-notebook/notebooklm-gemini-notebook/"},{"title":"google rebrands notebooklm as gemini notebook heres why","url":"https://www.freepressjournal.in/tech/google-rebrands-notebooklm-as-gemini-notebook-heres-why"},{"title":"Google Rebrands NotebookLM As Gemini Notebook: Here's Why","url":"https://www.freepressjournal.in/amp/tech/google-rebrands-notebooklm-as-gemini-notebook-heres-why"},{"title":"NotebookLM heißt jetzt Gemini Notebook","url":"https://blog.google/intl/de-de/produkte/suchen-entdecken/notebooklm-wird-gemini-notebook/"},{"title":"Gemini Notebook: NotebookLM ya ejecuta código real","url":"https://pasqualepillitteri.it/es/news/8197/gemini-notebook-ejecuta-codigo-real"},{"title":"Gemini Notebook: NotebookLM Cambia Nome e Ora Esegue Codice","url":"https://pasqualepillitteri.it/news/8194/gemini-notebook-notebooklm-cambia-nome"},{"title":"Gemini Notebook: NotebookLM führt jetzt echten Code aus","url":"https://pasqualepillitteri.it/de/news/8198/gemini-notebook-notebooklm-neuer-name"},{"title":"notebooklm now gemini notebook","url":"https://workspaceupdates.googleblog.com/2026/07/notebooklm-now-gemini-notebook.html"}]
+
+Based on the search results, here's what I found about the announcement:
+
+Google renamed NotebookLM to Gemini Notebook on July 16, 2026, retiring a brand it had carried since 2023 and beginning to fold the standalone research tool into the wider Gemini ecosystem, including the Gemini app and Google Search.
+
+The announcement was published by Josh Woodward, VP at Google Labs, the Gemini app, and AI Studio.
+
+The change arrived alongside a technical upgrade that gives each notebook a secure cloud computer capable of writing and running code.
+
+More than 30 million people and over 600,000 organizations are using it to transform how they work, from business owners creating interactive onboarding materials to students converting notes into audio and video summaries.
+
+The product remains a standalone product focused on being your premier research tool, but it will now do more across the Google ecosystem, including inside the Gemini app and Google Search.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "support.google.com notebooklm usage limits free Plus notebooks sources per day", "mode": "standard"}
+Web search results for query: "support.google.com notebooklm usage limits free Plus notebooks sources per day"
+
+Links: [{"title":"NotebookLM Limits Explained: Free vs Plus vs Ultra (And What to Do When You Hit Them)","url":"https://elephas.app/blog/notebooklm-source-limits"},{"title":"# NotebookLM Upload Limits: Add More Files in Gemini Notebook (2026)","url":"https://elephas.app/blog/how-to-upload-more-files-notebooklm.md"},{"title":"How to Upload More Files to NotebookLM? Quick Fixes and Better Alternatives (2026)","url":"https://elephas.app/blog/how-to-upload-more-files-notebooklm"},{"title":"notebooklm plus worth it","url":"https://elephas.app/blog/notebooklm-plus-worth-it"},{"title":"What You Get with NotebookLM's Free Plan in 2026","url":"https://elephas.app/blog/notebooklm-free-vs-plus"},{"title":"# Is NotebookLM Plus Worth It in 2026? (Now Gemini Notebook)","url":"https://elephas.app/blog/notebooklm-plus-worth-it.md"},{"title":"# NotebookLM Daily Limits 2026: Caps, Reset Times and Workarounds","url":"https://elephas.app/blog/notebooklm-daily-limit.md"},{"title":"NotebookLM Daily Limits and How to Work Around Them","url":"https://elephas.app/blog/notebooklm-daily-limit"},{"title":"# NotebookLM Limits Explained (2026): Sources & Notebooks by Plan","url":"https://elephas.app/blog/notebooklm-source-limits.md"}]
+
+Based on the search results, here are the NotebookLM usage limits for the Free and Plus plans:
+
+## NotebookLM Free Plan
+
+**Sources per notebook:** 50 sources per notebook
+
+**Daily usage limits:**
+- 50 chat queries per day and 3 audio overviews per day
+
+## NotebookLM Plus Plan
+
+**Sources per notebook:** 300 sources per notebook (6x free)
+
+**Daily usage limits:**
+- 500 chat queries per day (10x free) and 20 audio overviews per day
+
+**Additional details:**
+- 500 notebooks total (5x free) and 500,000 words per source (same as free)
+- NotebookLM Plus comes bundled with Google One AI Premium at $19.99 per month and cannot be purchased separately but is included in Gemini Advanced, AI features in Gmail and Docs, and 2TB of cloud storage
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"support.google.com/notebooklm\" usage limits official help article", "mode": "standard"}
+Web search results for query: ""support.google.com/notebooklm" usage limits official help article"
+
+Links: [{"title":"Turn NotebookLM on or off for users","url":"https://support.google.com/a/answer/15239506"},{"title":"Turn NotebookLM on or off for users","url":"https://support.google.com/a/answer/15239506?hl=en"},{"title":"Upgrade NotebookLM","url":"https://support.google.com/notebooklm/answer/16213268?hl=en"},{"title":"Use NotebookLM with a work or school Google account","url":"https://support.google.com/notebooklm/answer/16337734"},{"title":"Upgrade NotebookLM","url":"https://support.google.com/notebooklm/answer/16213268"},{"title":"Generative AI","url":"https://aiweekly.co/learning-ai/generative-ai/how-to-use-notebooklm"},{"title":"Use NotebookLM with a work or school Google account","url":"https://support.google.com/notebooklm/answer/16337734?hl=en"},{"title":"support.google.com","url":"https://support.google.com/notebooklm/answer/14276468"},{"title":"# Google NotebookLM File Size Limit: Source Caps and Large-Corpus Storage","url":"https://fast.io/resources/notebooklm-file-size-limit.md"}]
+
+I found official Google support articles about NotebookLM (now called Gemini Notebook) usage limits. Here are the key findings:
+
+## Official Usage Limits
+
+NotebookLM offers different usage limits based on your access tier:
+- **Standard (Free)**: 100 notebooks/user, 50 sources/notebook, 50 chats/day
+- **Plus**: 200 notebooks/user, 100 sources/notebook, 200 chats/day
+- **Pro**: 500 notebooks/user, 300 sources/notebook, 500 chats/day
+- **Ultra**: 500 notebooks/user, 600 sources/notebook, 5,000 chats/day
+
+## Source File Limits
+
+Each source can contain up to 200,000 words, and individual files are limited to 200MB maximum with 500,000 words per document.
+
+## Product Name Update
+
+Google renamed NotebookLM to Gemini Notebook in July 2026, though the core functionality remains the same.
+
+These limits are subject to change according to Google's official documentation. For the most current information, you can visit the official support pages at support.google.com/notebooklm or support.google.com/gemininotebook.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://blog.google/innovation-and-ai/products/gemini-notebook/notebooklm-gemini-notebook/", "prompt": "Extract all details: publish date, author, what changed (name, branding, features like code execution), whether NotebookLM brand is fully retired or still used, free vs paid plan mentions, and any pricing info."}
+# NotebookLM Rebranding to Gemini Notebook - Key Details
+
+**Publish Date:** July 16, 2026
+
+**Author:** Josh Woodward, VP of Google Labs, Gemini app & AI Studio
+
+## What Changed
+
+**Branding & Name:**
+The product was officially renamed from NotebookLM to Gemini Notebook to reflect "it's part of their bigger AI family."
+
+**New Features:**
+- Native code execution within notebooks for data analysis
+- Secure cloud computer infrastructure for each notebook
+- Cross-app syncing between Gemini app, standalone Gemini Notebook, and Google Search integration
+
+**Expanded Ecosystem Integration:**
+Notebooks now sync across multiple Google services, including the Gemini app and Search's AI Mode.
+
+## Brand Status
+
+The NotebookLM name appears **fully retired** in favor of Gemini Notebook branding throughout the announcement.
+
+## Pricing Information
+
+The article mentions deployment tiers:
+- Google AI Ultra users (current access)
+- Workspace business customers with AI Ultra/Expanded Access (current access)
+- Pro users (rolling out "over the coming weeks")
+
+**No specific pricing details** are disclosed in this announcement.
+
+## User Adoption
+
+The product has reached "more than 30 million people and over 600,000 organizations" since its 2023 launch as Project Tailwind.
+
+######## WebFetch {"url": "https://workspaceupdates.googleblog.com/2026/07/notebooklm-now-gemini-notebook.html", "prompt": "Extract all details about this Workspace update: what changed for Google Workspace admins/users, NotebookLM Enterprise status, rollout timeline, and any plan/edition requirements."}
+# NotebookLM Renamed to Gemini Notebook - Update Summary
+
+## What Changed
+NotebookLM has been rebranded as **Gemini Notebook**. According to the announcement, "the new name reflects how it will evolve to do more across the Google ecosystem" while remaining a standalone research tool.
+
+## Admin Actions Required
+**Minimal impact for administrators:** "There is no action required from admins. Automatic redirects will ensure existing shared notebooks and user links continue to work."
+
+## User Experience Changes
+End users will observe the updated branding gradually rolled out. Mobile users may need to update their application to see the new name and logo.
+
+## Rollout Timeline
+The change begins July 16, 2026, with an extended rollout potentially lasting longer than 15 days across different interfaces. This extended timeline applies to both Rapid Release and Scheduled Release domains.
+
+## Affected Audiences
+The update impacts:
+- All Google Workspace customers
+- Workspace Individual subscribers
+- Personal Google account users with NotebookLM access
+
+## Plan/Edition Requirements
+The announcement does not specify any new plan requirements or edition-specific limitations. The product remains accessible to existing users across all subscription levels.
+
+######## WebFetch {"url": "https://support.google.com/a/answer/15239506?hl=en", "prompt": "Extract details about NotebookLM for Google Workspace admins: which Workspace editions include NotebookLM/NotebookLM Plus, and how admins turn it on/off."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://support.google.com/a/answer/15239506?hl=en
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://knowledge.workspace.google.com/admin/users/access/turn-notebooklm-on-or-off-for-users?hl=en&visit_id=639263577071343681-2290329859&rd=1
+    Status: 301 Moved Permanently
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://knowledge.workspace.google.com/admin/users/access/turn-notebooklm-on-or-off-for-users?hl=en&visit_id=639263577071343681-2290329859&rd=1"
+    - prompt: "Extract details about NotebookLM for Google Workspace admins: which Workspace editions include NotebookLM/NotebookLM Plus, and how admins turn it on/off."
+
+######## WebFetch {"url": "https://support.google.com/notebooklm/answer/16213268?hl=ja", "prompt": "Extract exact pricing tier names, what plans exist (free, Plus, Pro, Ultra), what each costs, how to upgrade, and what's included in each tier. Also note any mention of Google Workspace or Enterprise editions."}
+# Gemini Notebook Pricing Tiers
+
+## Plan Names
+The document identifies four main subscription levels:
+- **Gemini Notebook Standard** (free)
+- **Gemini Notebook in Plus**
+- **Gemini Notebook in Pro**
+- **Gemini Notebook in Ultra** (20 TB and 30 TB variants)
+
+## Pricing Information
+The page does not specify actual costs. It references upgrading through "Google AI Plus" and "Google AI Pro" plans but omits monetary details.
+
+## How to Upgrade
+According to the guidance provided, users can upgrade by:
+- Registering for "Google AI Plus プランに登録する" (Google AI Plus plan)
+- Enrolling in Google AI Pro or Ultra plans via the same method
+- Using eligible Google Workspace or Workspace for Education licenses
+
+## What's Included (Usage Limits)
+
+**Key differentiators across tiers:**
+
+| Feature | Standard | Plus | Pro | Ultra |
+|---------|----------|------|-----|-------|
+| Daily chats | 50 | 200 | 500 | 2,500–5,000 |
+| Audio explanations/day | 3 | 6 | 20 | 100–200 |
+| Monthly Deep Research | 10 | N/A | 20 | 75–200 |
+| Watermark removal | ✗ | ✗ | ✓ | ✓ |
+
+## Workspace & Enterprise Options
+The document mentions "対象となる Workspace または Workspace for Education" (eligible Workspace or Workspace for Education licenses) allow access without separate subscription, though specific tier details are referenced separately.
+
+######## WebSearch {"query": "NotebookLM terms of service commercial use official Google", "mode": "standard"}
+Web search results for query: "NotebookLM terms of service commercial use official Google"
+
+Links: [{"title":"NotebookLM and NotebookLM Plus now available as a Google Workspace core service with enterprise-grade data protection","url":"https://blog.suitebriar.com/http/workspaceupdates.googleblog.com/feeds/404290496261323637/comments/default"},{"title":"• Skip to main content","url":"https://wiki.metropolia.fi/display/itservices/Google+Notebook+LM"},{"title":"notebooklm commercial use","url":"https://googleworkspace.tscloud.co.jp/gemini/notebooklm-commercial-use"},{"title":"Upgrade NotebookLM","url":"https://support.google.com/notebooklm/answer/16213268"},{"title":"Use NotebookLM with a work or school Google account","url":"https://support.google.com/notebooklm/answer/16337734"},{"title":"Turn NotebookLM on or off for users","url":"https://knowledge.workspace.google.com/admin/generative-ai/notebooklm?authuser=4"},{"title":"google generative ai terms","url":"https://conductatlas.com/platform/notebooklm/google-generative-ai-terms/"},{"title":"NotebookLM · Google Generative AI Terms · View original document ↗","url":"https://conductatlas.com/platform/notebooklm/google-generative-ai-terms/incorporation-of-google-terms-of-service/"},{"title":"NotebookLM · Google Generative AI Terms · View original document ↗","url":"https://conductatlas.com/platform/notebooklm/google-generative-ai-terms/user-content-license/"}]
+
+Based on the search results, here's what I found about NotebookLM's terms of service regarding commercial use:
+
+## Commercial Use and Terms of Service
+
+NotebookLM and NotebookLM Plus are now included as core services for Workspace Business and Enterprise customers, covered under your Google Workspace terms of service, offering enterprise-grade data protections.
+
+Businesses of all sizes use NotebookLM to supercharge their productivity and collaboration, with sales teams able to add their product roadmaps and feature specs, competitor analysis, and market research to NotebookLM.
+
+## Data Handling for Commercial Use
+
+For Google Workspace users (commercial use), uploads, queries and the model's responses in NotebookLM will not be reviewed by human reviewers and will not be used to train AI models.
+
+## Important Legal Considerations
+
+Google's Generative AI Additional Terms of Service for NotebookLM authorize Google to use submitted content to operate and improve its AI services, though you retain ownership of content you submit.
+
+For more detailed information on the official terms, you can visit Google's official support documentation or the Google Workspace help center for the most current terms of service applicable to your specific plan.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://support.google.com/notebooklm/answer/16337734?hl=en", "prompt": "Extract details about using NotebookLM/Gemini Notebook with a work or school Google account vs personal account: differences in data handling, human review, training use, and commercial use permissions."}
+# Gemini Notebook: Work/School vs Personal Account Differences
+
+Based on the provided documentation, here are the key distinctions:
+
+## Data Handling & Human Review
+
+**Work/School Accounts with Enterprise Plans:**
+The documentation states that "Your uploaded files, chats and model outputs won't be reviewed by human reviewers or used to improve generative AI models" for enterprise-grade security plans.
+
+**Standard Work/School Access:**
+Data protections exist, but the document notes: "Your data is protected, and is not used to train Gemini Notebook unless you provide feedback." When you submit feedback, Google may "review the full context of that interaction, including your queries, uploads, and the model's responses."
+
+**Personal Accounts:**
+The provided content focuses exclusively on work/school accounts and doesn't address personal Google account usage.
+
+## Training & Model Improvement
+
+For standard work/school tiers, opting into feedback reviews could result in your interactions being used to enhance the product. Enterprise editions provide stronger protections against this practice.
+
+## Commercial Use Permissions
+
+The document doesn't explicitly address commercial use rights or restrictions for either account type.
+
+**Important Note:** Consult Google's actual Terms of Service and Privacy Policy for your specific account tier, as policies vary by Workspace edition and region (particularly regarding watermark policies in India, South Korea, and Vietnam).
+
+######## WebFetch {"url": "https://policies.google.com/terms/generative-ai", "prompt": "Extract what this page says about NotebookLM specifically: content ownership, human review, use of content for training AI models, and commercial use permissions for consumer (non-Workspace) accounts vs Workspace accounts."}
+# NotebookLM Information
+
+The provided web page content **does not mention NotebookLM specifically**. 
+
+This page contains Google's "Generative AI Additional Terms of Service" (last modified August 9, 2023), which applies to unspecified Google services that reference these terms. The document includes general provisions about:
+
+- Age requirements
+- Prohibitions against using services "to develop machine learning models or related technology"
+- Compliance with a Prohibited Use Policy
+- Disclaimers about potential inaccuracies in AI-generated content
+
+However, there is **no information on this page** addressing:
+- Content ownership policies
+- Human review processes
+- Use of content for training AI models
+- Commercial use permissions for consumer vs. Workspace accounts
+- Any service-specific details that would apply to NotebookLM
+
+To find information specific to NotebookLM's terms, you would need to consult NotebookLM's own terms of service or product documentation.
+
+######## WebFetch {"url": "https://notebooklm.google/", "prompt": "What does this official product page say about NotebookLM's/Gemini Notebook's pricing, plans (free vs paid), key features, supported platforms (web, iOS, Android), and languages supported?"}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://notebooklm.google/
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://notebook.google/
+    Status: 301 Moved Permanently
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://notebook.google/"
+    - prompt: "What does this official product page say about NotebookLM's/Gemini Notebook's pricing, plans (free vs paid), key features, supported platforms (web, iOS, Android), and languages supported?"
+
+######## WebSearch {"query": "NotebookLM iOS Android app official Google Play App Store", "mode": "standard"}
+Web search results for query: "NotebookLM iOS Android app official Google Play App Store"
+
+Links: [{"title":"An exclusive look at Google's NotebookLM app on Android and iOS","url":"https://www.laptopmag.com/ai/notebooklm-mobile-app-launch"},{"title":"An exclusive look at Google's NotebookLM app on Android and iOS","url":"https://www.laptopmag.com/ai/notebooklm-mobile-app-launch?rand=25963"},{"title":"google is bringing notebooklm to android and ios this month","url":"https://www.neowin.net/news/google-is-bringing-notebooklm-to-android-and-ios-this-month/"},{"title":"Google reveals powerful NotebookLM app for Android and iOS with release date – here's what it looks like","url":"https://www.techradar.com/computing/artificial-intelligence/google-reveals-powerful-notebooklm-app-for-android-and-ios-with-release-date-heres-what-it-looks-like"},{"title":"Google lance une application NotebookLM sur iOS","url":"https://iphonesoft.fr/2025/05/20/google-application-notebooklm-ios"},{"title":"Google releases new NotebookLM app for iOS and Android","url":"https://www.elevenforum.com/t/google-releases-new-notebooklm-app-for-ios-and-android.36286/latest"},{"title":"New on Yahoo","url":"https://tech.yahoo.com/apps/articles/exclusive-look-googles-notebooklm-app-195300044.html"},{"title":"Tech and Telecom","url":"https://propakistani.pk/2025/05/21/googles-handy-notebooklm-app-is-finally-available-on-phones/amp/"},{"title":"you can already download google notebooklm on android hours before its official launch","url":"https://www.neowin.net/news/you-can-already-download-google-notebooklm-on-android-hours-before-its-official-launch/"},{"title":"google launches ai powered notebooklm app for android and ios 5039","url":"https://tech.az/en/posts/google-launches-ai-powered-notebooklm-app-for-android-and-ios-5039"}]
+
+Based on the search results, here's what I found about NotebookLM's iOS and Android app:
+
+## Official Release
+
+Google began rolling out the stand-alone NotebookLM app on the App Store and Google Play on Monday. Google has officially launched the Android and iOS versions of NotebookLM, its AI-powered note-taking and research assistant first introduced in 2023.
+
+## Availability
+
+NotebookLM's mobile app is now available for download on the Apple App Store and Google Play Store and can be installed on mobile and tablet devices. More specifically, Android users can download it from the Google Play Store, while iPhone and iPad users can access it via the App Store.
+
+## App Features
+
+NotebookLM's app is optimized for phones and tablets. This first version of the app includes many of the core features of NotebookLM — with more refinements and features to come in the months ahead — and is designed to help you understand anything, anywhere. 
+
+The mobile version introduces several new capabilities, including AI-generated Audio Overviews — podcast-style summaries created by NotebookLM. Users can listen to these overviews offline and with background playback enabled.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "NotebookLM privacy notice human review consumer personal account data used training", "mode": "standard"}
+Web search results for query: "NotebookLM privacy notice human review consumer personal account data used training"
+
+Links: [{"title":"written by","url":"https://greg-doig.storychief.io/notebooklm-privacy-what-happens-to-your-pdfs-and-notes"},{"title":"it.umn.edu","url":"https://it.umn.edu/services-technologies/notebooklm"},{"title":"it.umn.edu","url":"https://it.umn.edu/node/157981"},{"title":"Google NotebookLM - Additional Information","url":"https://support.gmhec.org/TDClient/47/middlebury/KB/ArticleDet?ID=852"},{"title":"Outliner Software","url":"https://www.outlinersoftware.com/topics/viewt/12441/45"},{"title":"support.google.com","url":"https://support.google.com/notebooklm/answer/16179536"},{"title":"NotebookLM Data Governance Standard Template (Word)","url":"https://www.securityscientist.net/blog/notebooklm-data-governance-standard-template/"},{"title":"NotebookLM, plainly","url":"https://claw.aguidetocloud.com/google/notebooklm/overview/"},{"title":"troubleshooting google notebooklm issues","url":"https://book.st-hakky.com/en/data-science/troubleshooting-google-notebooklm-issues"},{"title":"AI & Privacy","url":"https://memx.app/blog/is-notebooklm-private/"}]
+
+Based on the search results, here's what I found regarding NotebookLM's privacy notice on human review and consumer personal account data:
+
+## Privacy Policy Summary
+
+Google states that "the content in NotebookLM will not be used to directly train our foundational AI models, unless you choose to provide feedback."
+
+## Key Distinction Between Account Types
+
+For **personal (consumer) accounts**, content is not used to directly train foundation models by default, but submitting thumbs up or down feedback sends the prompts, sources and outputs for human review, with retention of up to three years. More specifically, when you share feedback to help improve the service, reviewers may review the full context of that interaction, including your queries, uploads, and the model's responses.
+
+For **Workspace and Education accounts**, the protection is stronger: uploads, queries and the model's responses in NotebookLM will not be reviewed by human reviewers even when you provide thumbs up or down feedback, and will not be used to train AI models.
+
+## Important Details on Feedback
+
+On a personal account, if you choose to submit feedback, human reviewers may see the related content to improve the product. Google disconnects your feedback from your account before reviewers see it.
+
+The key takeaway is that on personal accounts, the main privacy risk occurs when you actively provide feedback—not from simply uploading documents or using the service itself.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://notebook.google/", "prompt": "What does this official product page say about Gemini Notebook's (formerly NotebookLM) pricing, plans (free vs paid), key features (Audio Overview, mind maps, video overview), supported platforms (web, iOS, Android app), and languages supported?"}
+I appreciate your detailed instructions, but I need to be transparent: the web page content you've provided only contains a brief header/title:
+
+**"Gemini Notebook | AI Research Tool & Thinking Partner"**
+
+This snippet doesn't include any information about:
+- Pricing or plan tiers (free vs. paid)
+- Specific features like Audio Overview, mind maps, or video overview
+- Supported platforms (web, iOS, Android)
+- Supported languages
+
+To provide accurate answers to your questions, I would need access to the full product page content, including sections covering pricing, features, platform availability, and language support. The title alone cannot substantiate claims about these details.
+
+If you can share the complete page content, I'd be happy to extract and summarize that information while following all your specified guidelines.
+
+######## WebFetch {"url": "https://cloud.google.com/agentspace/notebooklm-enterprise/docs/overview", "prompt": "What does this official Google Cloud documentation say about NotebookLM Enterprise: API availability, target customers, licensing requirements, and how it differs from consumer NotebookLM/Gemini Notebook?"}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "NotebookLM add sources Google Drive Docs Slides PDF website YouTube supported source types official", "mode": "standard"}
+Web search results for query: "NotebookLM add sources Google Drive Docs Slides PDF website YouTube supported source types official"
+
+Links: [{"title":"Add or Discover New Sources in NotebookLM","url":"https://services.newschool.edu/TDClient/32/Portal/KB/PrintArticle?ID=1371"},{"title":"Add or Discover New Sources in NotebookLM","url":"https://services.newschool.edu/TDClient/32/Portal/KB/ArticleDet?ID=1371"},{"title":"libguides.willamette.edu","url":"https://libguides.willamette.edu/google-ed-ai-tools/notebooklm"},{"title":"what is notebooklm","url":"https://www.webtures.com/insights/what-is-notebooklm/"},{"title":"NotebookLM Full Tutorial:","url":"https://imprasit.substack.com/p/notebooklm-full-tutorial"},{"title":"google ai notebook notebooklm","url":"https://www.zapier.com/blog/google-ai-notebook-notebooklm"},{"title":"notebooklm review","url":"https://zapier.com/blog/notebooklm-review/"},{"title":"UTF 8NotebookLM Seminar Handout","url":"https://www.missoulapubliclibrary.org/wp-content/uploads/2025/04/UTF-8NotebookLM-Seminar-Handout-.pdf"},{"title":"NotebookLM adds audio and YouTube support, plus easier sharing of Audio Overviews","url":"https://blog.google/technology/ai/notebooklm-audio-video-sources/"},{"title":"Sources Intermediate","url":"https://aischool.lillytechsystems.com/notebooklm/sources.html"}]
+
+Based on the search results, here's what NotebookLM supports for source types:
+
+## Supported Source Types
+
+NotebookLM supports these source types: Audio files, Copy and pasted text, Google Docs, Google Slides, Text, Markdown and PDF files, Web URLs, and YouTube URLs of public videos.
+
+## How to Add Sources
+
+You can add sources to a notebook by uploading from your computer (PDF, TXT, Markdown, and Audio files), from Google Drive (Google Docs and Google Slides), adding links (Website and YouTube), or pasting text.
+
+## Source Limitations
+
+Each source can contain up to 500,000 words or up to 200MB for uploaded files. You can include up to 50 sources.
+
+## Important Notes About Google Drive Sources
+
+When you import Google Docs or Google Slides, the app makes a copy of the original file. NotebookLM doesn't keep track of changes to the original doc automatically. You have to manually re-sync the imported Google Docs and Slides in the source viewer.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "one.google.com AI plans pricing Japan 円 Google AI Pro Ultra", "mode": "standard"}
+Web search results for query: "one.google.com AI plans pricing Japan 円 Google AI Pro Ultra"
+
+Links: [{"title":"2505 google new ai plan","url":"https://www.businessinsider.jp/article/2505-google-new-ai-plan/"},{"title":"news google ai ultra new tier 86382","url":"https://helentech.jp/news-google-ai-ultra-new-tier-86382/"},{"title":"helentech.jp","url":"https://helentech.jp/?p=86382"},{"title":"pc.watch.impress.co.jp","url":"https://pc.watch.impress.co.jp/docs/news/2110129.html"},{"title":"Google launches 'Google AI Plus' in Japan for 1,200 yen per month","url":"https://gigazine.net/gsc_news/en/20260128-google-ai-plus"},{"title":"forest.watch.impress.co.jp","url":"https://forest.watch.impress.co.jp/docs/news/2015765.html"},{"title":"google ai plans comparison","url":"https://helentech.jp/google-ai-plans-comparison/"},{"title":"Google、月額1,200円のAIプラン「AI Plus」を日本展開。従来プランの半額以下に","url":"https://gori.me/?p=163347"},{"title":"Google announces 'Google AI Ultra' AI subscription plan for approximately 36,000 yen per month","url":"https://wbgsv0a.gigazine.net/gsc_news/en/20250521-google-ai-ultra"}]
+
+Based on the search results, here's what I found about Google's AI plans and pricing in Japan:
+
+## Google AI Plans in Japan (Pricing in 円)
+
+Google offers four AI subscription plans in Japan: Google AI Plus (月額 1,200 円), Google AI Pro (月額 2,900 円), Google AI Ultra 5x (月額 14,500 円), and Google AI Ultra 20x (月額 32,000 円).
+
+### Plan Details:
+
+**Google AI Pro (2,900 yen/month)**
+Google AI Pro includes Gemini 2.5 Pro, Deep Research, video generation with Veo2, image generation tools like Whisk, relaxed NotebookLM limits, Gemini features in Gmail and Google Docs, and 2TB of cloud storage.
+
+**Google AI Ultra Plans**
+Google AI Ultra is a higher-tier plan that offers Deep Think functionality, latest video generation model Veo3, and full access to premium features, with pricing at 36,400 yen per month (or 18,000 yen per month for the first 3 months). However, newer tiered Ultra plans include AI Ultra 5x at 14,500 yen and AI Ultra 20x at 32,000 yen.
+
+**Storage and Additional Benefits**
+Plans include varying cloud storage: Google AI Plus includes 200GB, Google AI Pro includes 5TB, Google AI Ultra 5x includes 20TB, and Google AI Ultra 20x includes 30TB.
+
+These plans are available through one.google.com and provide access to Google's latest AI models and features.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "NotebookLM can I use for commercial business official terms allowed", "mode": "standard"}
+Web search results for query: "NotebookLM can I use for commercial business official terms allowed"
+
+Links: [{"title":"notebooklm commercial use","url":"https://googleworkspace.tscloud.co.jp/gemini/notebooklm-commercial-use"},{"title":"Come utilizzare NotebookLM per le attività commerciali","url":"https://clickup.com/it/blog/252853/come-usare-il-notebooklm-per-le-vendite"},{"title":"Comment utiliser NotebookLM pour l'équipe commerciale","url":"https://clickup.com/fr-FR/blog/252853/comment-utiliser-notebooklm-pour-lequipe-commerciale"},{"title":"Ativar ou desativar o NotebookLM para os usuários","url":"https://knowledge.workspace.google.com/admin/generative-ai/notebooklm?hl=pt-br"},{"title":"www.nobleprog.cn","url":"https://www.nobleprog.cn/en/cc/notebooklmbiz"},{"title":"We Tried Google's Notebooklm and It's Really Impressive. It's Your Friend for This Exam Session","url":"https://searchengineworld.com/energy/We_tried_Googles_NotebookLM_and_its_really_impressive._Its_your_friend_for_this_exam_session"},{"title":"www.nobleprog.ca","url":"https://www.nobleprog.ca/cc/notebooklmbiz"},{"title":"Last Updated :","url":"https://prezent.ai/blog/notebooklm-review"},{"title":"notebooklm for business","url":"https://www.itgenius.com/blog/notebooklm-for-business/"}]
+
+Based on the search results, here's what I found about NotebookLM's commercial use:
+
+**Commercial Use is Allowed:**
+NotebookLM's capabilities can be applied in professional settings like business, marketing, and sales.
+
+**Free Version for Business:**
+NotebookLM is free for anyone with a Google account. The core functionality – uploading sources, asking questions, getting cited answers, and generating Audio Overviews – is available on the free tier.
+
+**Google Workspace Option:**
+If your business uses Google Workspace (Business Standard or higher), you get NotebookLM Plus which includes additional features like more notebooks, more sources per notebook, and team sharing capabilities.
+
+**Data Security for Business:**
+The "walled garden" design uses only your uploaded files—no internet access, no external data sharing.
+
+However, for the specific official terms and conditions, I recommend checking Google's official NotebookLM Terms of Service directly, as the search results reference that such terms exist but don't provide the complete official terms document.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"NotebookLM Enterprise\" API cloud.google.com official documentation", "mode": "standard"}
+Web search results for query: ""NotebookLM Enterprise" API cloud.google.com official documentation"
+
+Links: [{"title":"建立及管理筆記本 (API)","url":"https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks?hl=zh-tw"},{"title":"O que é o NotebookLM Enterprise?","url":"https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/overview?hl=pt-br"},{"title":"建立及管理筆記本 (API)","url":"https://cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks?hl=zh-tw"},{"title":"O que é o NotebookLM Enterprise?","url":"https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/overview?hl=pt"},{"title":"创建和管理笔记本 (API)","url":"https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks?hl=zh-cn"},{"title":"创建和管理笔记本 (API)","url":"https://cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks?hl=zh-cn"},{"title":"Créer et gérer des notebooks (API)","url":"https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks?hl=fr"},{"title":"What is NotebookLM Enterprise?","url":"https://docs.cloud.google.com/agentspace/notebooklm-enterprise/docs"},{"title":"glama.ai","url":"https://glama.ai/mcp/servers/gc8e8gc1dc"}]
+
+Based on the search results, I found the official NotebookLM Enterprise API documentation from Google Cloud. Here's what I found:
+
+## Official Documentation
+
+NotebookLM Enterprise is a powerful tool that generates insights and summaries from documents, with APIs available for programmatically executing notebook management tasks.
+
+## API Endpoint and Authentication
+
+To create a notebook, use the notebooks.create method with a REST API endpoint following the pattern: `https://ENDPOINT_LOCATION-discoveryengine.googleapis.com/v1alpha/projects/PROJECT_NUMBER/locations/LOCATION/notebooks`
+
+The endpoint location can be:
+- us for the US multi-region, eu for the EU multi-region, or global for the Global location
+
+## Key Features
+
+NotebookLM Enterprise is a highly compliant, enterprise-ready product fortified with enterprise-grade security and compliance. Your data is always within your Google Cloud project and can't be shared externally.
+
+## Official Documentation Links
+
+The official Google Cloud documentation is available at:
+- https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks
+- https://docs.cloud.google.com/agentspace/notebooklm-enterprise/docs
+
+These pages contain detailed information on creating, managing, and working with NotebookLM Enterprise notebooks through the REST API.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "NotebookLM Gemini Notebook powered by Gemini 3 model 2026 official", "mode": "standard"}
+Web search results for query: "NotebookLM Gemini Notebook powered by Gemini 3 model 2026 official"
+
+Links: [{"title":"Qual modelo de IA roda por trás do Gemini Notebook (o antigo NotebookLM)?","url":"https://horadecodar.com.br/?p=41460"},{"title":"NotebookLM is now powered by Gemini 3 for better reasoning and multimodal understanding","url":"https://www.androidcentral.com/apps-software/ai/notebooklm-is-now-powered-by-gemini-3"},{"title":"• About Us","url":"https://en.kocpc.com.tw/?p=14795"},{"title":"• About Us","url":"https://en.kocpc.com.tw/?p=13987"},{"title":"DXを推進するAIポータルメディア「AIsmiley」| AI製品・サービスの比較・検索サイト","url":"https://aismiley.co.jp/ai_news/notebooklm-gemini-difference/"},{"title":"• About Us","url":"https://en.kocpc.com.tw/?p=14677"},{"title":"ai gemini google notebooklm 4","url":"https://timewell.jp/columns/ai-gemini-google-notebooklm-4"},{"title":"DXを推進するAIポータルメディア「AIsmiley」| AI製品・サービスの比較・検索サイト","url":"https://aismiley.co.jp/?p=214469"},{"title":"Google Integrates NotebookLM Into Gemini: Notebooks Arrive in the App and Change How You Work With AI","url":"https://pasqualepillitteri.it/en/news/784/google-integrates-notebooklm-gemini-notebooks"}]
+
+Based on the search results, here's what I found about NotebookLM/Gemini Notebook and the Gemini 3 model in 2026:
+
+## Official Model Update
+
+NotebookLM is now powered by Gemini 3, replacing the Gemini 2.5 Flash model. Google calls Gemini 3 its "most intelligent model," adding that the change "brings significant improvements to NotebookLM's reasoning and multimodal understanding."
+
+## Product Rebranding
+
+Gemini 3.5 began rollout on June 8, 2026 (starting with AI Ultra subscribers and extended to Google AI Pro users on web on July 16, 2026). The name changed from NotebookLM to Gemini Notebook on July 16, 2026, with automatic redirects maintained.
+
+## Integration with Gemini
+
+The rollout of the latest model included a transition where NotebookLM evolved to Gemini 3.5. Gemini 3 now powers the AI features within the NotebookLM app, including the chatbot, making it easier to access straight from user projects.
+
+The search results confirm that these are official updates from Google, with announcements made through their official channels and social media accounts.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://docs.cloud.google.com/agentspace/notebooklm-enterprise/docs/overview", "prompt": "What does this page say about NotebookLM Enterprise: target audience, licensing requirements (minimum seats), API availability, and how it relates to consumer Gemini Notebook/NotebookLM?"}
+# Gemini Notebook Enterprise Overview
+
+**Target Audience:**
+The product targets enterprises. It's described as "a highly compliant, enterprise-ready version of Gemini Notebook" designed for organizations requiring "enterprise-grade security and compliance" features that the consumer product lacks.
+
+**Licensing Requirements:**
+The documentation does not specify minimum seat requirements or detail licensing models. It only notes the product "can be purchased as a standalone product or as part of Gemini Enterprise" but provides no seat minimums.
+
+**API Availability:**
+The page confirms API availability through multiple references to API-based operations, including "Create and manage notebooks (API)" and "Add and manage data sources in a notebook (API)." A "Standalone API" section mentions "Generate podcasts (API method)."
+
+**Relationship to Consumer NotebookLM:**
+Gemini Notebook Enterprise shares core functionality with the personal Gemini Notebook product—both allow adding sources like PDFs, Google Docs, and URLs. The enterprise version adds compliance features like VPC-SC and CMEK. Key differences include: enterprise version keeps data within Google Cloud projects with specified data residency, supports additional file types (DOCX, PPTX, XLSX), uses organizational identity providers rather than personal Google Accounts, and restricts sharing to project members only.
+
+######## WebSearch {"query": "blog.google NotebookLM Gemini 3 reasoning multimodal official announcement", "mode": "standard"}
+Web search results for query: "blog.google NotebookLM Gemini 3 reasoning multimodal official announcement"
+
+Links: [{"title":"NotebookLM is now powered by Gemini 3 for better reasoning and multimodal understanding","url":"https://www.androidcentral.com/apps-software/ai/notebooklm-is-now-powered-by-gemini-3"},{"title":"• About Us","url":"https://en.kocpc.com.tw/?p=14795"},{"title":"google gemini 3","url":"https://www.infoq.com/news/2025/11/google-gemini-3/"},{"title":"Gemini 3: A New Era of Intelligence from Google","url":"https://rits.shanghai.nyu.edu/ai/gemini-3-a-new-era-of-intelligence-from-google/"},{"title":"Google is Rolling Out a Major Update to NotebookLM","url":"https://www.thurrott.com/?p=337116"},{"title":"Google Blog:","url":"https://www.elevenforum.com/t/google-introduces-gemini-3.42140/latest"},{"title":"Google Integrates NotebookLM Into Gemini: Notebooks Arrive in the App and Change How You Work With AI","url":"https://pasqualepillitteri.it/en/news/784/google-integrates-notebooklm-gemini-notebooks"},{"title":"A new era of intelligence with Gemini 3","url":"https://blog.google/intl/en-africa/company-news/outreach-and-initiatives/a-new-era-of-intelligence-with-gemini-3/"},{"title":"A new era of intelligence with Gemini 3","url":"https://blog.google/intl/en-mena/product-updates/explore-get-answers/gemini-3-launches-in-mena/"},{"title":"texxr.com","url":"https://texxr.com/1170505"}]
+
+Based on the search results, here's what I found regarding NotebookLM, Gemini 3, reasoning, and multimodal capabilities:
+
+## Official Announcements
+
+The NotebookLM account announced on X that "NotebookLM is officially built on Gemini 3." Google calls Gemini 3 its "most intelligent model," adding that the change "brings significant improvements to NotebookLM's reasoning and multimodal understanding."
+
+## Gemini 3 Overview
+
+On November 18, 2025, Google introduced Gemini 3, its new flagship family of large multimodal models positioned as its most capable system so far and deployed from day one across Search, the Gemini app, AI Studio, Vertex AI, the Gemini CLI, and the Antigravity IDE.
+
+Gemini 3 Pro is described as its primary model for multimodal understanding and agentic coding, targeting tasks that combine text, code, and rich media. Deep Think is presented as an offline-style mode for the hardest reasoning workloads, including demanding benchmarks and long-horizon planning.
+
+## Multimodal Capabilities
+
+Gemini 3 Pro accepts text, images, video, audio, and PDFs within a context window of up to 1,048,576 tokens.
+
+The search results show references to blog.google posts about Gemini 3's official announcement and its integration with NotebookLM, though the full blog posts aren't fully reproduced in these search results.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://one.google.com/about/google-ai-plans/", "prompt": "List the Google AI subscription plans (Plus, Pro, Ultra tiers), their monthly prices, storage included, and whether NotebookLM/Gemini Notebook is mentioned as included in each plan."}
+# Google AI Subscription Plans
+
+Based on the Japanese webpage content, here are the three Google AI tiers:
+
+## **Google AI Plus**
+- **Monthly Price:** ¥400
+- **Storage:** 400 GB (shared across Gmail, Google Drive, Google Photos)
+- **Gemini Notebook:** Mentioned as available with "expanded capabilities"
+
+## **Google AI Pro**
+- **Monthly Price:** Not explicitly stated in pricing section
+- **Storage:** 5 TB (shared across Gmail, Google Drive, Google Photos)
+- **Gemini Notebook:** "機能とモデルへのアクセスの拡大" (expanded access to features and models)
+
+## **Google AI Ultra**
+- **Monthly Price:** Stated as "月額 ～" (starting monthly price, specific amount not shown)
+- **Storage:** 20 TB and above
+- **Gemini Notebook:** "機能とモデルへの上位レベル アクセス" (premium-level access to features)
+
+All three plans explicitly reference **Gemini Notebook** with progressively expanded capabilities, confirming its inclusion across the entire tier structure.

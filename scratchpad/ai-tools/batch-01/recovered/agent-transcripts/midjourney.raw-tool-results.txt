@@ -1,0 +1,574 @@
+# Raw tool results recovered from agent-a539f695a3fa17cb7.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "Midjourney pricing 2026 official", "mode": "standard"}
+Web search results for query: "Midjourney pricing 2026 official"
+
+Links: [{"title":"Midjourney pricing in 2026: Plans, GPU hours, and what it actually costs","url":"https://eesel.ai/blog/midjourney-pricing"},{"title":"NewMeet Ruth, Vendr's AI negotiator","url":"https://www.vendr.com/marketplace/Midjourney"},{"title":"Midjourney Pricing in 2026: Is It Worth the Cost?","url":"https://www.myarchitectai.com/blog/midjourney-pricing"},{"title":"HappyHorse 1.0 Coming SoonLearn More","url":"https://evolink.ai/blog/midjourney-api-pricing-2026"},{"title":"Kimi K3 is now availableExplore Kimi K3","url":"https://t-web.evolink.ai/blog/midjourney-api-pricing-2026"},{"title":"All Midjourney Plans & Pricing","url":"https://www.costbench.com/software/ai-image-generators/midjourney/"},{"title":"Midjourney — Overview & Pricing","url":"https://subger.com/en/service/midjourney"},{"title":"Midjourney vs Stable Diffusion Pricing (2026)","url":"https://www.costbench.com/compare/midjourney-vs-stable-diffusion/"},{"title":"Midjourney Price History","url":"https://costbench.com/software/ai-image-generators/midjourney/price-history/"}]
+
+Based on the search results, here's the official Midjourney pricing for 2026:
+
+## Midjourney 2026 Pricing Plans
+
+Midjourney pricing is structured around monthly or annual subscriptions with four primary tiers: Basic, Standard, Pro, and Mega.
+
+**Pricing breakdown:**
+
+Midjourney's official subscriptions start at $10, $30, $60, and $120 per month, with the following details:
+
+- **Basic**: $10/month ($96/year) with 3.3 hours (200 minutes) of fast GPU hours per month
+- **Standard**: $30/month ($288/year) with 15 hours of fast GPU hours per month and unlimited Relax mode for images
+- **Pro**: $60/month ($576/year) with 30 hours of fast GPU hours per month
+- **Mega**: $120/month ($1,152/year) with 60 hours of fast GPU hours per month
+
+**Annual savings**: Annual subscriptions offer approximately 20% savings compared to monthly billing.
+
+Midjourney's business model is pure subscription - no advertising, no freemium layer.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Midjourney API official access 2026", "mode": "standard"}
+Web search results for query: "Midjourney API official access 2026"
+
+Links: [{"title":"apiframe.ai","url":"https://apiframe.ai/models/midjourney"},{"title":"is midjourney free what to know now a 2026 update","url":"https://www.cometapi.com/is-midjourney-free-what-to-know-now-a-2026-update/"},{"title":"midjourney api","url":"https://unifically.com/blogs/midjourney-api"},{"title":"www.cometapi.com","url":"https://www.cometapi.com/?p=24903"},{"title":"Claude Opus 5 is now live on CometAPI โ†’","url":"https://www.cometapi.com/does-midjourney-provide-an-api/"},{"title":"Back to Blog","url":"https://apiframe.ai/blog/best-midjourney-apis"},{"title":"10 Best Midjourney APIs & Their Cost (Working in 2026)","url":"https://www.myarchitectai.com/blog/midjourney-apis"},{"title":"Midjourney API Alternatives","url":"https://pricepertoken.com/midjourney-api-alternatives"},{"title":"How to Use Midjourney on Discord in 2026","url":"https://www.cometapi.com/how-to-use-midjourney-on-discord-in-2026/"}]
+
+Based on the search results, here's what you need to know about Midjourney API access in 2026:
+
+## Official API Status
+
+Midjourney has no official API as of August 2026, and this has been true since the service launched in 2022. There is no official endpoint, no API key, and no per-image price list.
+
+## Official Access Methods
+
+The supported ways to generate images are the midjourney.com web app and the Discord bot, both behind a subscription that starts at $10 per month.
+
+## Important Terms of Service Note
+
+Midjourney's Terms of Service (effective May 27, 2026) state that users "may not use automated tools to access, interact with, or generate Assets" through the service. This means programmatic access is explicitly prohibited.
+
+## Unofficial Alternatives
+
+While no official API exists, various unofficial APIs and alternatives have emerged, each with unique features, pricing, and integration options. However, every "Midjourney API" you'll find is a third-party wrapper that drives those interfaces unofficially, and they put your Midjourney account at risk.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Midjourney commercial use terms of service 2026", "mode": "standard"}
+Web search results for query: "Midjourney commercial use terms of service 2026"
+
+Links: [{"title":"Midjourney Commercial Use Rights: Complete 2026 Guide to Licensing & Ownership","url":"https://terms.law/2026/01/15/midjourney-commercial-use-rights-complete-2026-guide/"},{"title":"Midjourney Commercial Use Rights: Complete 2026 Guide to Licensing & Ownership","url":"https://www.terms.law/2026/01/15/midjourney-commercial-use-rights-complete-2026-guide/index.html"},{"title":"commercial use midjourney","url":"https://www.ai-souken.com/article/commercial-use-midjourney"},{"title":"is midjourney free pricing video and free alternatives in 2026","url":"https://www.krea.ai/blog/is-midjourney-free-pricing-video-and-free-alternatives-in-2026"},{"title":"AI Content Commercial Use FAQ: Can You Sell AI Art, Music & Video? (2026)","url":"https://terms.law/FAQ/ai-tools/ai-commercial-use-faq.html"},{"title":"Midjourney · Midjourney Terms of Service · View original document ↗","url":"https://conductatlas.com/platform/midjourney/midjourney-terms-of-service/revenue-based-asset-ownership-threshold/"},{"title":"Midjourney · Midjourney Terms of Service","url":"https://conductatlas.com/platform/midjourney/midjourney-terms-of-service/mandatory-binding-arbitration-jury-waiver"},{"title":"Midjourney · Midjourney Terms of Service","url":"https://conductatlas.com/platform/midjourney/midjourney-terms-of-service/perpetual-royalty-free-content-license-to-midjourney"},{"title":"Midjourney · Midjourney Terms of Service","url":"https://conductatlas.com/platform/midjourney/midjourney-terms-of-service/one-year-contractual-statute-of-limitations"}]
+
+Based on the search results, here are the key points about Midjourney's commercial use terms of service as of 2026:
+
+## Commercial Use Rights
+
+Paid subscribers have commercial rights across Basic, Standard, Pro, and Mega plans, while free trial users are restricted to non-commercial use under CC BY-NC 4.0 license.
+
+## Ownership and Revenue Thresholds
+
+Midjourney's terms state: "You own all Assets You create with the Services to the fullest extent possible under applicable law." However, if you are a company or employee of a company with more than $1,000,000 USD a year in revenue, you must be subscribed to a 'Pro' or 'Mega' plan to own your Assets.
+
+## Key Restrictions
+
+Important restrictions include: you cannot claim copyright ownership of Midjourney outputs themselves, you grant Midjourney a perpetual license to use your prompts and outputs, and upscaled images are published publicly by default unless you have a Pro plan with Stealth Mode.
+
+## Copyright Concerns
+
+Purely AI-generated images may not be copyrightable under U.S. law, and unlike Claude or Microsoft Copilot, Midjourney doesn't protect users from copyright claims. Users should add substantial human modification to AI outputs before commercial use, with more editing in Photoshop/Illustrator strengthening copyright position.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Midjourney version V7 V8 2026 release", "mode": "standard"}
+Web search results for query: "Midjourney version V7 V8 2026 release"
+
+Links: [{"title":"docs.midjourney.com","url":"https://docs.midjourney.com/docs/models"},{"title":"Midjourney actualización mayo 2026: V8.1, precios y video","url":"https://pixverse.ai/es/blog/midjourney-ai-image-generator-review"},{"title":"Midjourney 2026 完整指南:V8 即將登場、Niji 7 動漫革命、定價方案全解析","url":"https://rar.design/posts/midjourney-2026-complete-guide"},{"title":"Mar 19, 2026","url":"https://www.cometapi.com/kk/tag/chatgpt-4o"},{"title":"GPT-5.6 Series is now live on CometAPI →","url":"https://www.cometapi.com/ko/what-is-midjourney-v8-when-will-it-be-released/"},{"title":"GPT-5.6 Luna price down 80%, Terra down 20% →","url":"https://www.cometapi.com/what-is-midjourney-v8-when-will-it-be-released/"},{"title":"what is midjourney v8 when will it be released","url":"https://www.cometapi.com/zh-TW/what-is-midjourney-v8-when-will-it-be-released/"},{"title":"midjourney v8 review","url":"https://framia.converge.ai/blog/midjourney-v8-review/"},{"title":"midjourney v8 review","url":"https://framia.converge.ai/tr/blog/midjourney-v8-review/"}]
+
+Based on the search results, here's what I found about Midjourney's V7, V8, and 2026 releases:
+
+## V8 Release Timeline
+
+V8.0 Alpha was launched on March 17, 2026 on alpha.midjourney.com, marking Midjourney's entry into public testing of this next-generation model.
+
+## V8.1 Release
+
+V8.1 was released on midjourney.com on April 30, 2026, and is the fastest model so far. Standard jobs render about 4–5 times faster than earlier versions.
+
+## Key V8 Features
+
+V8 is described as a faster, more coherent, more prompt-aware system that improves text rendering when text is specified in quotes, about 4–5 times faster than earlier versions, and introduces a native HD path, updated web interfaces, and compatibility with V7 personalization profiles, moodboards, and style references.
+
+V8.1 features HD images, allowing users to generate higher resolution 2K images without upscaling.
+
+## Current Default Version
+
+The current default version of Midjourney in 2026 is V7, though V8.1 requires unlocking a Global V7/V8 Personalization Profile to use.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Midjourney video generation official", "mode": "standard"}
+Web search results for query: "Midjourney video generation official"
+
+Links: [{"title":"its official midjourney has video","url":"https://theailab.substack.com/p/its-official-midjourney-has-video"},{"title":"midjourney joins the ai video race with its first ever video generation model","url":"https://www.techloy.com/midjourney-joins-the-ai-video-race-with-its-first-ever-video-generation-model/"},{"title":"midjourney launches v1 video model with social media optimization","url":"https://ppc.land/midjourney-launches-v1-video-model-with-social-media-optimization/"},{"title":"Website icon Xpert.Digital","url":"https://xpert.digital/en/midjourney-video/?amp=1"},{"title":"Midjourney launches its first AI Video Generation Model, V1","url":"https://alternativeto.net/news/2025/6/midjourney-launches-its-first-ai-video-generation-model-v1"},{"title":"Midjourney video generation is here — but there's a problem holding it back","url":"https://www.tomsguide.com/ai/midjourney-video-generation-is-here-but-theres-a-problem-holding-it-back"},{"title":"Midjourney AI video generation model","url":"https://techcrunch.com/2025/06/18/midjourney-launches-its-first-ai-video-generation-model-V1"},{"title":"www.cometapi.com","url":"https://www.cometapi.com/?p=26473"},{"title":"Midjourney launches an AI video generator","url":"https://rss.boorghani.com/?p=321011"}]
+
+Based on the search results, here's what you need to know about Midjourney's official video generation:
+
+## Official Launch
+
+Midjourney unveiled its V1 Video Model on June 18, 2025, marking the company's formal entry into AI-powered video generation. CEO David Holz announced "Introducing our V1 Video Model" and stated it's "Available at $10/month, it's the first video model for *everyone* and it's available now."
+
+## How It Works
+
+V1 is an image-to-video tool that takes a single image and turns it into four short, five-second clips. The workflow is called "Image-to-Video," meaning you create images in Midjourney and then press "Animate" to make them move.
+
+## Key Features
+
+- Users can let the model animate automatically or provide specific animation descriptions using text prompts, with motion intensity tuned using 'low' and 'high' options, and videos can be extended in 4-second increments.
+- It's available only through Discord and limited to web use at launch.
+
+## Pricing
+
+Video generation is included in Midjourney's existing subscription tiers, starting at $10/month for the Basic plan, with Pro ($60) and Mega ($120) plans offering unlimited access.
+
+## Future Goals
+
+CEO David Holz says the company's AI video model is its next step toward creating AI models "capable of real-time open-world simulations."
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://www.midjourney.com/pricing", "prompt": "Extract all pricing plan details: plan names, monthly price, annual price, fast GPU hours included, relax mode availability, stealth mode, number of concurrent jobs, and any other plan differences. Also note currency and billing cadence exactly as stated."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://docs.midjourney.com/docs/models", "prompt": "What is the current default model version, what versions are available (V7, V8, V8.1, Niji), what are the differences, and what date was each released?"}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://docs.midjourney.com", "prompt": "List the main documentation sections/topics available - especially anything about video generation, API, getting started, quick start, commercial terms."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "docs.midjourney.com models V7 V8 default version", "mode": "standard"}
+Web search results for query: "docs.midjourney.com models V7 V8 default version"
+
+Links: [{"title":"docs.midjourney.com","url":"https://docs.midjourney.com/docs/models"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/pt-BR/blog/midjourney-v8-vs-v7-prompt-anatomy"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/blog/midjourney-v8-vs-v7-prompt-anatomy"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/de/blog/midjourney-v8-vs-v7-prompt-anatomy"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/ja/blog/midjourney-v8-vs-v7-prompt-anatomy"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/ko/blog/midjourney-v8-vs-v7-prompt-anatomy"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/pl/blog/midjourney-v8-vs-v7-prompt-anatomy"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/zh-Hant/blog/midjourney-v8-vs-v7-prompt-anatomy"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/fr/blog/midjourney-v8-vs-v7-prompt-anatomy"},{"title":"Midjourney V8 vs V7: The Prompt Anatomy That Actually Changed","url":"https://blakecrosley.com/es/blog/midjourney-v8-vs-v7-prompt-anatomy"}]
+
+Based on the search results from the official Midjourney documentation, here are the key findings:
+
+## Current Default Version
+
+The current default Midjourney version is V7.
+
+## Version Models
+
+The search results reference several versions:
+
+- **V7**: In V7, text and image prompts are handled (information appears to be cut off in the documentation excerpt)
+
+- **V8.1**: V8.1 released on midjourney.com on April 30, 2026, and is our fastest model so far. Standard jobs render about 4–5 times faster than earlier versions. V8.1 features HD images, allowing you to generate higher resolution 2K images, without upscaling.
+
+- **V8.2**: According to the secondary sources referencing the official documentation, Version 8.2 was released July 24, 2026 as a default release focused on aesthetics, image quality, and Personalization.
+
+## How to Set Versions
+
+Add --v # to the end of your prompt in the Imagine bar. You can also choose a default version for all your images in the settings panel by clicking the settings button in the Imagine bar.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://www.midjourney.com", "prompt": "Extract any information about what Midjourney is, pricing, video generation, model versions, commercial use."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://www.midjourney.com/legal/tos", "prompt": "Extract terms about commercial use rights, ownership of generated assets, automated/API access restrictions, and any revenue-based thresholds for Pro/Mega plan requirements."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "\"docs.midjourney.com\" pricing plans basic standard pro mega fast hours", "mode": "standard"}
+Web search results for query: ""docs.midjourney.com" pricing plans basic standard pro mega fast hours"
+
+Links: [{"title":"Blog-2025 MidJourney Pricing Guide: Choose the Right Plan959","url":"https://www.photonpay.com/hk/blog/article/midJourney-pricing"},{"title":"morningdough.com","url":"https://www.morningdough.com/?p=37811"},{"title":"is midjourney free plans pricing 3324558","url":"https://androidauthority.com/is-midjourney-free-plans-pricing-3324558"},{"title":"Is Midjourney Free? Pricing, Plans, & Free Alternatives","url":"https://www.aiarty.com/midjourney-guide/is-midjourney-free.htm"},{"title":"www.temperstack.com","url":"https://www.temperstack.com/plans/midjourney/"},{"title":"Once Free, But Now Midjourney Pricing is Complicated","url":"https://www.banani.co/blog/midjourney-pricing"},{"title":"Midjourney Pricing","url":"https://pricepertoken.com/midjourney-pricing"},{"title":"All Midjourney Plans & Pricing","url":"https://costbench.com/software/ai-image-generators/midjourney/"},{"title":"toolradar.com","url":"https://toolradar.com/tools/midjourney/pricing"}]
+
+Based on the search results, here's the information about Midjourney's pricing plans and fast GPU hours:
+
+## Midjourney Pricing Plans
+
+Midjourney offers 4 subscription plans with the following pricing and fast GPU time:
+
+- **Basic Plan**: $10/month (or $96/year) with 3.3 hours fast GPU time per month
+- **Standard Plan**: $30/month (or $288/year) with 15 hours fast GPU time per month
+- **Pro Plan**: $60/month (or $576/year) with 30 hours fast GPU time per month
+- **Mega Plan**: $120/month (or $1,152/year) with 60 hours fast GPU time per month
+
+## Key Features
+
+The Standard plan is the most popular, as it introduces unlimited Relax Mode—even if you use all your fast GPU hours, you can continue generating images in Relax Mode (at slower speed) for free.
+
+The Pro plan includes Stealth Mode (keeping images hidden from the public gallery) and higher concurrent job limits, allowing you to run more prompts simultaneously.
+
+Annual billing is approximately 20% cheaper than monthly pricing.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://docs.midjourney.com/docs/plans", "prompt": "Extract all pricing plan details: plan names, monthly price, annual price, fast GPU hours included, relax mode, stealth mode, commercial use terms, and any other plan differences."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://docs.midjourney.com/docs/video", "prompt": "Extract details about Midjourney's video generation feature: how it works, pricing/cost, availability (web/Discord), whether it's text-to-video or image-to-video, clip length, any limitations."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch ERROR {"url": "https://web.archive.org/web/2026*/https://docs.midjourney.com/docs/plans", "prompt": "List available archived snapshots and dates"}
+Claude Code is unable to fetch from web.archive.org
+
+######## WebFetch {"url": "http://archive.org/wayback/available?url=docs.midjourney.com/docs/plans&timestamp=20260930", "prompt": "Return the closest snapshot URL and timestamp"}
+# Closest Snapshot Details
+
+**URL:** http://web.archive.org/web/20250131203723/https://docs.midjourney.com/docs/plans
+
+**Timestamp:** 20250131203723
+
+This archived snapshot was captured on January 31, 2025, and has a "200" status indicating the page was successfully archived and remains available.
+
+######## WebFetch {"url": "http://archive.org/wayback/available?url=midjourney.com/pricing&timestamp=20260930", "prompt": "Return the closest snapshot URL and timestamp"}
+Based on the provided data:
+
+**Closest Snapshot URL:** `http://web.archive.org/web/20260914111249/https://www.midjourney.com/pricing`
+
+**Timestamp:** `20260914111249` (September 14, 2026 at 11:12:49 UTC)
+
+This archived version of the Midjourney pricing page returned a successful 200 status and is available for access.
+
+######## WebFetch {"url": "http://archive.org/wayback/available?url=docs.midjourney.com/docs/models&timestamp=20260930", "prompt": "Return the closest snapshot URL and timestamp"}
+Based on the web page content provided:
+
+**Closest Snapshot URL:** `http://web.archive.org/web/20250211032219/https://docs.midjourney.com/docs/models`
+
+**Timestamp:** `20250211032219` (February 11, 2025 at 03:22:19 UTC)
+
+######## WebFetch {"url": "http://archive.org/wayback/available?url=midjourney.com/legal/tos&timestamp=20260930", "prompt": "Return the closest snapshot URL and timestamp"}
+I cannot provide a snapshot URL and timestamp because the provided data shows that `"archived_snapshots": {}` is empty—there are no archived snapshots available for this page.
+
+The only information available is:
+- **URL**: midjourney.com/legal/tos
+- **Timestamp**: 20260930 (September 30, 2026)
+
+To access an archived version of this Terms of Service page, you would need to check if snapshots exist through the Wayback Machine or similar web archiving services directly.
+
+######## WebFetch ERROR {"url": "http://web.archive.org/web/20260914111249/https://www.midjourney.com/pricing", "prompt": "Extract all pricing plan details: plan names, monthly price, annual price, fast GPU hours/minutes included per month, relax mode availability, stealth mode, concurrent jobs, video generation inclusion, and any other plan differences. Quote exact numbers and currency."}
+Claude Code is unable to fetch from web.archive.org
+
+######## WebFetch {"url": "http://archive.org/wayback/available?url=midjourney.com/terms-of-service&timestamp=20260930", "prompt": "Return the closest snapshot URL and timestamp"}
+Based on the provided content, there is **no snapshot available** for this URL. The `archived_snapshots` field is empty, indicating that Midjourney's terms of service page has not been archived.
+
+**URL:** midjourney.com/terms-of-service  
+**Latest timestamp:** 20260930  
+**Snapshot status:** None recorded
+
+To access an archived version, you would need to check other web archive services or attempt a direct visit to the current page.
+
+######## WebFetch {"url": "http://archive.org/wayback/available?url=docs.midjourney.com&timestamp=20260930", "prompt": "Return the closest snapshot URL and timestamp"}
+Based on the provided content, I cannot return a closest snapshot URL because the "archived_snapshots" field is empty. The data shows:
+
+- **URL:** docs.midjourney.com
+- **Timestamp:** 20260930 (September 30, 2026)
+- **Available snapshots:** None
+
+To retrieve an archived snapshot, you would need to access a web archive service like the Wayback Machine directly, as no snapshot data is present in this record.
+
+######## WebFetch {"url": "https://r.jina.ai/https://www.midjourney.com/pricing", "prompt": "Extract all pricing plan details: plan names, monthly price, annual price, fast GPU hours included per month, relax mode, stealth mode, concurrent jobs, video generation inclusion."}
+# Midjourney Pricing Information
+
+The requested pricing page is currently unavailable. The URL returned a 404 error with the message: "This page has not been /imagine'd yet."
+
+**No pricing plan details could be extracted** from the provided content, as the page contains only an error message and a return link rather than actual pricing information.
+
+To access current Midjourney pricing details (plan names, costs, GPU hours, and feature inclusions), you would need to visit the homepage or explore other available pages on their website.
+
+######## WebFetch ERROR {"url": "https://timetravel.mementoweb.org/api/json/20260930/https://www.midjourney.com/pricing", "prompt": "Return the memento URLs found in this JSON response"}
+getaddrinfo ENOTFOUND timetravel.mementoweb.org
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/plans", "prompt": "Extract all pricing plan details: plan names, monthly price, annual price, fast GPU hours included per month, relax mode, stealth mode, concurrent jobs, video generation inclusion, commercial use terms."}
+# Midjourney Pricing Plan Details
+
+## Plan Names & Pricing
+Four subscription tiers are offered: **Basic** ($10/month or $96/year), **Standard** ($30/month or $288/year), **Pro** ($60/month or $576/year), and **Mega** ($120/month or $1,152/year). An annual commitment provides a 20% discount.
+
+## GPU Time Allocation
+- **Basic**: 3.3 hours/month fast GPU time
+- **Standard**: 15 hours/month fast GPU time
+- **Pro**: 30 hours/month fast GPU time
+- **Mega**: 60 hours/month fast GPU time
+
+## Relax Mode Availability
+"For unlimited image generations with Relax Mode, subscribe to the Standard, Pro, or Mega Plan." Video generation with Relax Mode requires Pro or Mega subscriptions.
+
+## Stealth Mode
+Privacy features are restricted: "Stealth Mode, which keeps your images and videos private, is only available on the Pro and Mega Plans."
+
+## Concurrent Job Capacity
+Maximum concurrent prompts range from 3 fast jobs (Basic) to 12 fast or 3 relax jobs (Pro/Mega). Video concurrency reaches 12 fast or 3 relax on Mega.
+
+## Commercial Use
+All plans include commercial rights under General Commercial Terms, though companies exceeding $1,000,000 USD annual revenue must subscribe to Pro or Mega plans.
+
+######## WebFetch {"url": "https://r.jina.ai/https://www.midjourney.com", "prompt": "Extract any information about what Midjourney is, pricing, video generation, model versions, commercial use, navigation links to docs/pricing/terms pages."}
+# Midjourney Information
+
+**What Midjourney Is:**
+Midjourney describes itself as "a lab of 60 people known for building the most beautiful AI models in the world." The company focuses on imagination, coordination, reflection, beauty, and human flourishing through AI projects.
+
+**Pricing:**
+No pricing information is available on this webpage.
+
+**Video Generation:**
+Not mentioned on this page.
+
+**Model Versions:**
+Not discussed in the provided content.
+
+**Commercial Use:**
+Not addressed in this excerpt.
+
+**Navigation Links Found:**
+- Terms of Service: https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service
+- Privacy Policy: https://docs.midjourney.com/hc/en-us/articles/32083472637453-Privacy-Policy
+- Careers page link: https://www.midjourney.com/careers
+
+**Additional Note:**
+The homepage emphasizes that the company is "lean, self-funded, distributed" and currently hiring for roles focused on building new infrastructure and exploring AI capabilities.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/models", "prompt": "What is the current default model version, what versions are available (V7, V8, V8.1, V8.2, Niji), what are the differences, and what date was each released?"}
+# Midjourney Version Overview
+
+**Current Default Version:** V8.2 (released July 24, 2026)
+
+## Available Versions & Release Dates
+
+| Version | Release Date | Default Until |
+|---------|--------------|----------------|
+| **V8.2** | July 24, 2026 | Current |
+| **V8.1** | April 14, 2026 | July 23, 2026 |
+| **V7** | April 3, 2025 | June 9, 2026 |
+| **Niji 7** | January 9, 2026 | — |
+
+## Key Differences
+
+**V8.2** emphasizes aesthetics with "more creative, bold, sophisticated, and edgy" outputs. It features an improved Edit Model and enhanced Personalization capabilities.
+
+**V8.1** prioritizes speed—"standard jobs rendering about 4–5 times faster than earlier versions"—and introduces HD image generation at 2K resolution without upscaling.
+
+**V7** excels at precision, handling "text and image prompts with stunning precision" and featuring richer textures, plus introduced Draft Mode and Omni Reference.
+
+**Niji 7** focuses on anime aesthetics with improved coherency in fine details like eyes and reflections, following prompts more literally than previous iterations.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/hc/en-us/articles/32083055291277-Terms-of-Service", "prompt": "Extract terms about: commercial use rights and any revenue threshold requiring Pro/Mega plans, ownership of generated assets, restrictions on automated/API/bot access, any mention of an official API, license granted to Midjourney over user content, effective date of these terms."}
+# Midjourney Terms of Service - Key Extraction
+
+**Effective Date:**
+"May 27, 2026"
+
+**Asset Ownership:**
+Users own all generated assets to the fullest extent under applicable law, with exceptions: (1) ownership subject to agreement obligations and third-party rights, and (2) commercial entities exceeding $1M annual revenue must maintain Pro or Mega subscription to retain ownership. Ownership persists even after downgrading membership.
+
+**Commercial Use Threshold:**
+"If you are a company or any employee of a company with more than $1,000,000 USD a year in revenue, you must be subscribed to a 'Pro' or 'Mega' plan to own Your Assets."
+
+**Automated Access Restrictions:**
+Users cannot employ automated tools to access, interact with, or create assets through the platform. Additionally, reverse engineering the service or assets is prohibited, as is reselling service access.
+
+**Official API:**
+No mention of an official API exists within these terms.
+
+**License to Midjourney:**
+"You grant to Midjourney, its affiliates, successors, and assigns a perpetual, worldwide, non-exclusive, sublicensable no-charge, royalty-free, irrevocable copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute the Content You input into the Services."
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/quick-start", "prompt": "Extract an overview of how to get started using Midjourney: web app vs Discord, supported platforms/devices, and any language/localization notes (is the interface available in Japanese?)."}
+# Midjourney Getting Started Overview
+
+## Web App vs Discord
+The documentation focuses exclusively on the **web app** approach. Users access the Create page at midjourney.com to generate images. There is no mention of Discord integration or alternative platforms for image generation in this guide.
+
+## Supported Platforms/Devices
+The guide indicates **web browser support** with mobile capability. It references "the send button if you're using a mobile device," suggesting responsive web design. However, specific device types, operating systems, or platform requirements are not detailed.
+
+## Language & Localization
+The documentation contains **no information about language availability or localization**, including Japanese support. The interface is presented entirely in English with no mention of multi-language options.
+
+## Quick Start Path
+Users must: subscribe to a plan, log into midjourney.com, visit the Create page, and enter text prompts in the "Imagine bar" to generate images. The process emphasizes that "Midjourney creates a set of four images" after submission.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/video", "prompt": "Extract details about Midjourney's video generation feature: how it works, whether text-to-video or image-to-video, clip length, extension options, pricing/plan requirements, availability (web/Discord), and any limitations."}
+# Midjourney Video Generation Overview
+
+## How It Works
+Midjourney converts static images into dynamic videos rather than generating videos from text alone. The service is **image-to-video**, not text-to-video. Users provide an image as the first frame, optionally add a text prompt, and the system creates motion-based content.
+
+## Video Length & Extension
+Videos start at 5 seconds and can be extended up to four times, reaching a maximum of 21 seconds total. Each extension adds approximately 4 seconds and costs the same GPU time as an initial generation.
+
+## Plan Requirements & Availability
+
+**Plan Tiers:**
+- All plans support Fast Mode video generation
+- Only Pro and Mega plans enable Relax Mode (SD resolution only)
+- Standard, Pro, and Mega plans can generate HD resolution (720p) in Fast Mode
+- Default resolution is 480p (SD)
+
+**Platforms:** Available on both the web interface (midjourney.com) and Discord.
+
+## Key Features & Parameters
+
+Motion control offers two settings: "Low Motion" produces subtle movements and still scenes (default), while "High Motion" creates larger camera and character movements. The `--raw` parameter reduces creative embellishment for more prompt-driven results.
+
+Users can set ending frames using `--loop` for looping videos or `--end` with a different image URL. Video batch sizes range from 1-4 (default: 4), with costs scaling accordingly.
+
+## Limitations
+
+"Video generations are only compatible with video-specific parameters: `--motion low`, `--motion high`, `--raw`, `--loop`, `--end`, and `--bs #`." General image parameters don't carry over to video creation. External image references like Style Reference and Image Prompt aren't compatible with video generation.
+
+######## WebSearch {"query": "Midjourney 日本語 UI 公式 言語設定", "mode": "standard"}
+Web search results for query: "Midjourney 日本語 UI 公式 言語設定"
+
+Links: [{"title":"midjourney japanese","url":"https://weel.co.jp/media/innovator/midjourney-japanese/"},{"title":"weel.co.jp","url":"https://weel.co.jp/?p=86409"},{"title":"www.onamae.com","url":"https://www.onamae.com/business/article/92424/"},{"title":"how to use midjourney","url":"https://www.cometapi.com/ja/how-to-use-midjourney/"},{"title":"notes.dsebastien.net","url":"https://notes.dsebastien.net/30+Areas/33+Permanent+notes/33.02+Content/Midjourney"},{"title":"aipicks.jp","url":"https://aipicks.jp/tool/midjourney-v6-1/japanese"},{"title":"aipicks.jp","url":"https://aipicks.jp/tool/midjourney/japanese"},{"title":"> ## Documentation Index","url":"https://apidoc.cometapi.com/ja/api/image/midjourney/midjourney-api-quick-start.md"},{"title":"Stable signalUnknownMedium-risk permissions","url":"https://extscope.org/extension/glpgkdknnaphdfhgngoffnnkdggnlope"}]
+
+Based on the search results, here's what I found about Midjourney's Japanese language support:
+
+## Midjourney Japanese Language Support Status
+
+Midjourney's UI and menus are not officially available in Japanese - only in English, though browser translation tools can provide auxiliary support.
+
+### Official Language Support
+
+Midjourney's official website is English-only and does not support Japanese language input for prompts. Additionally, Midjourney's official support is English-only, requiring users to submit inquiries in English.
+
+### Workarounds for Japanese Users
+
+Since Midjourney doesn't have official Japanese UI support, Japanese users typically need to:
+- Use ChatGPT or prompt generators to convert prompts to English, or use "Niji Journey" which supports Japanese input
+- While it's possible to display Japanese text within generated images, character precision and placement require adjustment and care
+
+There is no official Japanese language setting in Midjourney - the service remains English-only with no official plans for Japanese UI localization mentioned in the available sources.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/api", "prompt": "Does Midjourney offer an official public API? What does this page say?"}
+# Midjourney API Information
+
+Based on the page content provided, **this URL does not contain information about Midjourney's API offerings**. The page returned a 404 error with the message: "The page you were looking for doesn't exist."
+
+The content shows only a standard error page with navigation elements and template code, offering no substantive details about whether Midjourney provides an official public API or its features.
+
+To find accurate information about Midjourney's API, you would need to access a working documentation page or visit their official website directly.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/pricing-faq", "prompt": "Extract any FAQ content about pricing, free trial availability, and how billing works."}
+# Midjourney Pricing Information - Unavailable
+
+Unfortunately, I cannot provide the requested FAQ content about pricing, free trial availability, and billing information for Midjourney.
+
+**Reason:** The URL (https://docs.midjourney.com/docs/pricing-faq) returned a **404 error**, indicating the page no longer exists or has been moved. The page displays only an error message stating "The page you were looking for doesn't exist."
+
+**Recommendations:**
+- Visit the [Midjourney Help Center home page](https://docs.midjourney.com/hc) directly
+- Check the [Midjourney Website](https://www.midjourney.com/) for current pricing details
+- Join the [Midjourney Discord Server](https://discord.gg/midjourney) to ask about billing directly
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/prompts", "prompt": "Does this page say anything about what languages prompts can be written in? Is English required or recommended? Any mention of non-English language support?"}
+# Response
+
+Based on the provided content, the page does **not** address language requirements or support for prompts. There is no mention of whether English is required, recommended, or whether non-English languages are supported by Midjourney.
+
+The documentation focuses entirely on prompting techniques and best practices without discussing language preferences or multilingual capabilities.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/hc", "prompt": "List the help center categories/sections available. Look for anything about language support, billing/refunds, getting started, community guidelines."}
+# Midjourney Help Center Categories
+
+Based on the help center content, here are the available sections:
+
+## Main Categories:
+- **Getting Started** – Begin your journey with Midjourney
+- **Documentation** – Make the most of Midjourney
+- **Billing Support** – Get account help
+
+## Policies & Guidelines Section:
+- Terms of Service
+- Privacy Policy
+- Data Deletion & Privacy FAQ
+- Community Guidelines
+
+## Notable Features:
+The help center highlights that "V8.2 is Live!" with updates focused on aesthetics, image quality, and personalization features. Users can access resources via the Midjourney website and Discord server.
+
+The documentation includes a Version article with a full list of compatible features for different model versions.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/editor", "prompt": "What does Midjourney's Editor feature do? Summarize its capabilities (inpainting, retexturing, region editing, etc.)"}
+# Unable to Provide Information
+
+I cannot summarize Midjourney's Editor feature capabilities based on the provided content. The webpage returned a **404 error**, indicating the page no longer exists or has been moved.
+
+The content shown is merely a generic error page with the message: "The page you were looking for doesn't exist. You may have mistyped the address or the page may have moved."
+
+To learn about Midjourney's Editor features (inpainting, retexturing, region editing, etc.), you would need to:
+- Visit the main Midjourney website or documentation homepage
+- Check the Midjourney Discord server for current information
+- Search for updated documentation links
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/niji-journey", "prompt": "What is Niji / Niji Journey? Is it a separate model specialized for anime/illustration style? Summarize briefly."}
+I cannot provide information about Niji/Niji Journey based on the content above. The webpage returned a 404 error, meaning the documentation page does not exist or has been moved. The only content available is an error message stating "The page you were looking for doesn't exist," with no actual information about Niji or its features.
+
+To learn about Niji Journey, you would need to access a working documentation page or visit the Midjourney website directly.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/personalization", "prompt": "What does Midjourney's Personalization feature do? Summarize briefly."}
+# Midjourney's Personalization Feature
+
+Midjourney's Personalization feature learns your aesthetic preferences through your selections and generates images tailored to your style. As described in the documentation, it "acts like a style assistant for your image creations. By liking or selecting images, Midjourney gets to know what kind of aesthetics you love."
+
+**Key capabilities include:**
+
+- Creating multiple custom style profiles by selecting preferred images from a grid
+- Applying your default style using the `--p` parameter in prompts
+- Using specific profile IDs for targeted aesthetic control
+- Adjusting the stylize parameter (0-1000) to control how strongly your personalization influences generated images
+
+The feature works across Midjourney versions 6 and later, with your Global V7 Profile remaining compatible with newer versions like V8.2.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/getting-started", "prompt": "Does this page mention a free trial, free plan, or requirement to subscribe before generating images? Also note any info about supported devices/platforms."}
+# Summary
+
+This page does not contain the requested information. The URL returns a **404 error** ("The page you were looking for doesn't exist"), and the actual content displayed is only an error message stating: "You may have mistyped the address or the page may have moved."
+
+No details about free trials, pricing plans, subscription requirements, or supported devices/platforms are present on this page.
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/faq", "prompt": "Is there a free trial or free plan currently available for Midjourney? What does the FAQ say about pricing, refunds, and trial access?"}
+I cannot provide information about Midjourney's pricing, trial availability, or refund policy based on the content provided.
+
+The page returned a **404 error** ("The page you were looking for doesn't exist"), meaning the FAQ documentation is not currently accessible. While the page displays a navigation menu structure, it contains no actual FAQ content addressing your questions about free trials, pricing tiers, or refund policies.
+
+To find this information, I'd recommend:
+- Visiting the [Midjourney home page](https://www.midjourney.com/)
+- Checking the [Midjourney Discord Server](https://discord.gg/midjourney)
+- Trying the [main help center](https://docs.midjourney.com/hc)
+
+######## WebFetch {"url": "https://r.jina.ai/https://docs.midjourney.com/docs/discord", "prompt": "Does Midjourney still support Discord as an official access method for generating images/videos in 2026? Summarize what this page says."}
+# Summary
+
+This page cannot be summarized for your question because it's a **404 error page** - the requested content doesn't exist. The page displays: "The page you were looking for doesn't exist. You may have mistyped the address or the page may have moved."
+
+The URL (https://docs.midjourney.com/docs/discord) appears to be broken or outdated. While the footer includes links to the "Midjourney Discord Server," this 404 error page provides no actual information about current Discord support status for image/video generation in 2026.
+
+**To find this information, you would need to access a working documentation page or the official Midjourney website directly.**
+
+######## Bash {"command": "python3 -c \"\ns = '短いプロンプトから高品質で独創的な画像を生成できるほか、静止画から短編動画も作成可能。デザインや企画のビジュアル制作に強いAIツール。'\nprint(len(s))\n\"", "description": "Count Japanese characters in draft short description"}
+67

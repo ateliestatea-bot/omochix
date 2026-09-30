@@ -1,0 +1,87 @@
+{
+  "slug": "gemini",
+  "short_description": "Googleが提供するAIアシスタント。文章作成や調査、画像・動画の生成、Deep Researchに対応し、GmailやGoogleドキュメントなどGoogleサービスと連携できる。",
+  "post_content": "<h2>Geminiとは？</h2>\n<p>Geminiは、Googleが提供するAIアシスタントです。Web（gemini.google.com）やAndroid・iOSアプリから利用でき、文章作成、調査、画像の生成・編集、音声での会話などに対応します。GmailやGoogleドキュメントといったGoogleサービスの中でも使えるため、普段からGoogleのサービスを利用している人ほど導入しやすいのが特徴です。無料でも利用でき、より多く使いたい場合はGoogle AI Plus・Pro・Ultraの有料プランが用意されています。</p>\n<h2>Geminiでできること</h2>\n<p>テキストでの対話に加え、画像やファイルを使った分析、画像の生成・編集、複数の情報源を調べてレポートにまとめるDeep Research、音声で自然に会話できるGemini Live、文書やコードを対話しながら編集するCanvasを利用できます。有料プランでは動画生成やエージェント機能も使えます。</p>\n<h3>主要モデル</h3>\n<p>公式のプランページ（2026年10月1日確認）では、無料プランで「3.6 Flash」へのアクセスと「3.1 Pro」への限定的なアクセスが案内されています。Google AI Proでは「Gemini 3.1 Pro」やDeep Research、エージェント機能に幅広くアクセスでき、Google AI Ultraでは高度な推論モードの「Deep Think」や「Gemini Spark」が加わります。動画生成・編集向けには「Gemini Omni Flash」も提供されています。</p>\n<h3>Googleサービスとの連携</h3>\n<p>有料プランでは、GmailやGoogleドキュメントの中でGeminiを利用できます（Gemini in Gmail、Gemini in Google ドキュメント）。メールの下書きや文書の要約など、日常業務の中でAIを使える点が他のAIアシスタントとの違いです。</p>\n<h2>日本語で使える？</h2>\n<p>Geminiは画面表示・入力・回答のいずれも日本語で利用できます。公式のプランページやヘルプセンターも日本語で提供されており、料金は円建てで表示されます。回答には誤りが含まれる場合があるため、重要な内容は一次情報で確認する必要があります。</p>\n<h2>Geminiの料金</h2>\n<p>（2026年10月1日、Google公式の日本向けプランページで確認した表示価格）</p>\n<h3>無料</h3>\n<p>0円。3.6 Flashへのアクセス、3.1 Proへの限定的なアクセス、画像の生成・編集、Deep Research、Gemini Live、Canvasを利用でき、15GBのストレージが含まれます。</p>\n<h3>Google AI Plus</h3>\n<p>月額725円。無料プランの2倍の利用上限に加え、動画生成、Google Flowのクレジット200、Gemini in Gmail・Gemini in Google ドキュメント、400GBのストレージが含まれます。</p>\n<h3>Google AI Pro</h3>\n<p>月額2,900円。無料プランの4倍の利用上限で、Gemini 3.1 Pro、Deep Research、エージェント機能に幅広くアクセスできます。Google Flowのクレジット1,000、Gemini Omni Flash、YouTube Premium Lite、5TBのストレージが含まれます。</p>\n<h3>Google AI Ultra</h3>\n<p>月額14,500円（Proの5倍の利用上限）または月額32,000円（Proの20倍の利用上限）。Deep ThinkやGemini Sparkなどの高度な機能、Google Flowのクレジット10,000〜25,000、Project Genie、YouTube Premium、20TB以上のストレージが含まれます。</p>\n<p>開発者向けのGemini APIは、これらのサブスクリプションとは別の料金体系（無料枠と従量課金）です。</p>\n<h2>Geminiの使い方</h2>\n<ol>\n<li><strong>アクセス</strong> — Googleアカウントでgemini.google.comまたはGeminiアプリを開きます。</li>\n<li><strong>質問・依頼を入力</strong> — やりたいことを日本語で入力します。画像やファイルを添付することもできます。</li>\n<li><strong>機能を選ぶ</strong> — Deep Research、画像生成、Canvas、Gemini Liveなどを必要に応じて使います。</li>\n<li><strong>対話で仕上げる</strong> — 回答に追加の指示を出し、内容を調整します。</li>\n<li><strong>Googleサービスで活用</strong> — 有料プランでは、GmailやGoogleドキュメントの中でもGeminiを使います。</li>\n</ol>\n<h2>Geminiの活用例</h2>\n<ul>\n<li><strong>調査</strong> — Deep Researchで複数の情報源を調べ、レポートにまとめる</li>\n<li><strong>文章作成</strong> — メールや文書の下書き、要約、翻訳</li>\n<li><strong>資料分析</strong> — PDFや画像を読み込ませて内容を整理する</li>\n<li><strong>クリエイティブ</strong> — 画像の生成・編集、有料プランでの動画生成</li>\n<li><strong>音声での相談</strong> — Gemini Liveで話しながらアイデアを整理する</li>\n<li><strong>開発</strong> — Gemini APIを使って自社のアプリやサービスにAIを組み込む</li>\n</ul>\n<h2>Geminiのメリット</h2>\n<ul>\n<li>GmailやGoogleドキュメントなど、Googleサービスとの連携に強い</li>\n<li>無料プランでもDeep Researchや画像生成、Gemini Liveを試せる</li>\n<li>日本語で利用でき、料金も円建てで分かりやすい</li>\n<li>有料プランにクラウドストレージなどが含まれる</li>\n<li>開発者向けのGemini APIに無料枠がある</li>\n</ul>\n<h2>Geminiの注意点</h2>\n<ul>\n<li>回答内容が常に正しいとは限らず、重要な情報は一次情報での確認が必要</li>\n<li>モデル・機能・利用上限はプランや時期によって変わりやすい</li>\n<li>個人のGoogleアカウントで利用する場合、チャットが人によるレビューやサービス改善に使われることがある</li>\n<li>動画生成やGmail・ドキュメント内でのGeminiは有料プランが前提</li>\n<li>GeminiアプリとGemini APIは料金体系と利用条件が異なる</li>\n</ul>\n<h2>どんな人におすすめ？</h2>\n<ul>\n<li>GmailやGoogleドライブなど、Googleサービスを日常的に使っている人</li>\n<li>調査や資料の整理を効率化したい人</li>\n<li>文章・画像・音声を1つのAIで扱いたい人</li>\n<li>Gemini APIで自社サービスにAIを組み込みたい開発者</li>\n</ul>\n<p>逆に、Googleアカウントを利用したくない人や、機密情報を組織のルール確認なしで入力したい人には不向きです。</p>\n<h2>FAQ</h2>\n<p><strong>Q. Geminiは無料で使えますか？</strong></p>\n<p>A. はい。無料プランで3.6 Flashへのアクセス、3.1 Proへの限定的なアクセス、画像の生成・編集、Deep Research、Gemini Live、Canvasを利用できます。利用上限を増やしたい場合や動画生成を使いたい場合は、Google AI Plus（月額725円）以上が必要です。</p>\n<p><strong>Q. Google AI PlusとProはどう違いますか？</strong></p>\n<p>A. Plus（月額725円）は無料プランの2倍、Pro（月額2,900円）は4倍の利用上限です。ProではGemini 3.1 Proやエージェント機能に幅広くアクセスでき、Google Flowのクレジットやストレージも増えます。</p>\n<p><strong>Q. 商用利用はできますか？</strong></p>\n<p>A. Googleの利用規約（2026年7月30日発効）では、サービスで生成したオリジナルコンテンツについてGoogleは所有権を主張しないとされています。一方、生成コンテンツを機械学習モデルの開発に使うことなどは禁止されています。業務で使う場合は、データの取り扱いが異なるGoogle Workspace向けの提供も検討してください。</p>\n<p><strong>Q. 入力した内容は学習に使われますか？</strong></p>\n<p>A. 個人のGoogleアカウントでは、チャットが人によるレビューの対象となり、サービスの改善に使われることがあります。対象のGoogle Workspaceエディションで利用する場合は、許可なく人によるレビューや学習に使用されないとされています。</p>\n<p><strong>Q. Gemini APIとの違いは何ですか？</strong></p>\n<p>A. Geminiアプリは個人やチームが対話で使うアシスタントで、月額プランで利用します。Gemini APIは開発者が自社のアプリに組み込むためのもので、無料枠と従量課金の料金体系です。</p>",
+  "key_features": [
+    "対話型アシスタント：文章作成・要約・翻訳・アイデア出しを対話で進められる",
+    "Deep Research：複数の情報源を調べてレポートにまとめる",
+    "画像生成・編集：テキストの指示から画像を作成・修正できる",
+    "Gemini Live：音声で自然に会話しながら相談できる",
+    "Canvas：文書やコードを対話しながら編集できる",
+    "Googleサービス連携：GmailやGoogleドキュメントの中でGeminiを利用できる（有料プラン）",
+    "動画生成：有料プランで動画生成とGoogle Flowのクレジットを利用できる",
+    "Gemini API：開発者が自社アプリにGeminiのモデルを組み込める"
+  ],
+  "pros": [
+    "Googleサービスとの連携に強い",
+    "無料プランでもDeep Researchや画像生成を試せる",
+    "文章・画像・音声など幅広く扱える",
+    "日本語で利用でき、料金も円建てで表示される",
+    "有料プランにクラウドストレージなどが含まれる"
+  ],
+  "cons": [
+    "回答内容が常に正しいとは限らない",
+    "モデル・機能・利用上限が頻繁に変更される",
+    "動画生成やGmail・ドキュメント内での利用は有料プランが必要",
+    "個人アカウントではチャットが人によるレビューや改善に使われることがある"
+  ],
+  "strengths": [
+    "Gmail・ドキュメントなど日常的に使うGoogleサービスとAIがつながっている",
+    "Deep Researchによる複雑な調査",
+    "画像・動画・音声を含むマルチモーダルな生成と理解",
+    "月額725円から始められる段階的なプラン設計"
+  ],
+  "weaknesses": [
+    "回答には誤りや古い情報が含まれる場合がある",
+    "利用できるモデルや機能がプランによって異なり、把握しにくい",
+    "Googleアカウントの種類によってデータの取り扱いが異なる"
+  ],
+  "recommended_for": [
+    "Googleサービスを日常的に利用する人",
+    "GmailやGoogleドライブを仕事で使う人",
+    "調査や資料の整理を効率化したい人",
+    "画像・動画・音声もAIで扱いたい人",
+    "Gemini APIでAIを組み込みたい開発者"
+  ],
+  "recommended_use_cases": [
+    "Web検索・情報収集",
+    "Deep Research",
+    "文章作成・要約・翻訳",
+    "PDF・資料分析",
+    "画像生成・画像編集",
+    "Google Workspaceを使った業務",
+    "アイデア出し・企画",
+    "音声AIアシスタント"
+  ],
+  "not_recommended_for": [
+    "AIの回答だけで100％の正確性を保証したい人",
+    "一次情報を確認せず重要な判断を完結させたい人",
+    "Googleアカウントを利用したくない人",
+    "機密情報を組織のルール確認なしで入力したい人"
+  ],
+  "pricing_details": "無料プラン（0円）は3.6 Flashへのアクセス、3.1 Proへの限定的なアクセス、画像の生成・編集、Deep Research、Gemini Live、Canvas、15GBのストレージを含む。Google AI Plus（月額725円）は無料プランの2倍の利用上限、動画生成、Google Flowのクレジット200、Gemini in Gmail・Gemini in Google ドキュメント、400GBのストレージ。Google AI Pro（月額2,900円）は無料プランの4倍の利用上限で、Gemini 3.1 Pro・Deep Research・エージェント機能への幅広いアクセス、Flowのクレジット1,000、Gemini Omni Flash、YouTube Premium Lite、5TBのストレージ。Google AI Ultraは月額14,500円（Proの5倍の利用上限）または月額32,000円（Proの20倍）で、Deep ThinkやGemini Spark、Flowのクレジット10,000〜25,000、Project Genie、YouTube Premium、20TB以上のストレージを含む。開発者向けのGemini APIは別料金で、無料枠と従量課金がある。（2026年10月1日、gemini.google/subscriptionsの日本向け表示を確認）",
+  "api_sdk_info": "Gemini APIを通じて、GoogleのAIモデルをWebサービス、アプリ、社内システムへ組み込める。Google AI Studioでプロンプトやモデルを試しながら開発でき、APIキーもここで取得する。SDKはPython、JavaScript、Java、Goに対応し、RESTでも呼び出せる。公式のモデル一覧では、Gemini 3.8 Flash、Gemini 3.8 Live、Gemini 3.6 Flash、Gemini 3.5 Flash-Liteなどが安定版、Gemini 3.1 ProやGemini Omni Flashがプレビュー版として掲載されている。料金は無料枠と従量課金で、Gemini 3.8 Flashは100万トークンあたり入力0.75ドル・出力3.75ドル（2026年12月31日まで。2027年1月1日以降は1.50ドル・7.50ドル）、Gemini 3.5 Flash-Liteは入力0.30ドル・出力2.50ドル。Batch APIでは50%割引になる。（2026年9月30日〜10月1日、ai.google.devで確認）",
+  "security_info": "データの取り扱いは、Geminiアプリ（個人アカウント）、Google Workspace、Gemini APIのどれを使うかによって異なる。個人のGoogleアカウントでは、Googleの利用規約とGemini アプリのプライバシー ノーティスが適用され、チャットが人によるレビューの対象となり、サービスの改善に使われることがある。対象のGoogle Workspaceエディションでは、Geminiアプリがエンタープライズ向けのデータ保護付きで提供され、コンテンツは許可なく人によるレビューや生成AIモデルの学習に使用されないとされている。機密情報や個人情報を扱う場合は、利用するサービスのデータ利用条件と所属組織のポリシーを確認すること。",
+  "notes": "Geminiが生成する回答には誤りが含まれる可能性がある。重要な事実、数値、引用、法律、医療、金融などの情報は、一次情報や専門家による確認が必要。利用できるモデル、機能、利用上限はプラン・地域・アカウント・時期によって異なり、変更されることがある。GeminiアプリとGemini APIは料金体系や利用条件が異なる。Google AIプランの価格や内容は改定されることがあるため（Google AI Plusは2026年1月の提供開始時は月額1,200円）、契約前に公式ページで最新の表示を確認することを推奨する。",
+  "supported_devices": [
+    "Web",
+    "iOS",
+    "Android",
+    "macOS"
+  ],
+  "supported_models": [
+    "Gemini 3.6 Flash",
+    "Gemini 3.1 Pro",
+    "Gemini Omni Flash",
+    "Gemini 3.8 Flash（API）",
+    "Gemini 3.8 Live（API）"
+  ],
+  "has_free_plan": true,
+  "api_available": "yes",
+  "commercial_use": "yes",
+  "japanese_support": "full",
+  "info_checked_date": "2026-10-01",
+  "omochix_view": "Geminiの最大の強みは、単独のAIチャットとしての性能よりも、Gmailやドキュメント、検索といったGoogleのサービス群とAIがつながっている点にあると言える。ChatGPTが1つの画面に機能を集約する方向で総合力を高めているのに対し、Geminiは普段使っているGoogleサービスの中にAIを溶け込ませる方向で広がっている。月額725円のGoogle AI Plusから段階的に選べる料金設計も、まず試してみたい個人には入りやすい。一方で、モデル名やプラン内容の入れ替わりが速く、個人アカウントと組織向けでデータの取り扱いが異なる点は分かりにくい。業務で使う場合は、Workspace側の提供条件を確認したうえで導入を検討したい。",
+  "seo_title": "Geminiとは？料金・機能・使い方・日本語対応を解説｜OmochiX",
+  "meta_description": "GoogleのAIアシスタント「Gemini」の料金プラン（無料・Google AI Plus／Pro／Ultra）、対応モデル、Deep Researchなどの機能、使い方、日本語対応、商用利用、Gemini APIをOmochiXが解説します。"
+}

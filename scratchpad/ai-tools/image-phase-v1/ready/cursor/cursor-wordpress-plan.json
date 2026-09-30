@@ -1,0 +1,66 @@
+{
+  "slug": "cursor",
+  "post_id": 65,
+  "audited_at": "2026-10-01",
+  "current_tool_logo_attachment_id": 0,
+  "current_featured_image_attachment_id": 0,
+  "new_logo_filename": "omochix-ai-tool-cursor-logo.webp",
+  "new_hero_filename": "omochix-ai-tool-cursor-hero.webp",
+  "new_logo_attachment_id": null,
+  "new_hero_attachment_id": null,
+  "asset_status": {
+    "logo": "ready (QA PASS 2026-10-01)",
+    "hero": "ready (QA PASS with notes 2026-10-01)"
+  },
+  "alt_text": {
+    "logo": "Cursor ロゴ",
+    "hero": "光るカーソルを中心にコードブロックが補完されていく、Cursor の AI コードエディタをイメージした OmochiX オリジナルビジュアル"
+  },
+  "expected_usage": {
+    "logo": [
+      "single-ai_tool.php .tool-detail__logo (thumbnail 150x150, shown 62-96px, object-fit: contain)",
+      "archive-ai_tool.php / related tools .tool-list-card__logo (thumbnail, 60-64px)",
+      "search.php .search-tool-card__logo (thumbnail, 64px)",
+      "front-page.php tool logo (thumbnail) if cursor is listed"
+    ],
+    "hero": [
+      "single-ai_tool.php .tool-detail__media (large 1024w, aspect-ratio 16/9, object-fit: cover)",
+      "Slim SEO og:image / twitter:image (full size)",
+      "SoftwareApplication.image (#thumbnail reference, set automatically by featured image)"
+    ]
+  },
+  "updater_json_template": {
+    "note": "Fill IDs only after manual upload in wp-admin. Do not include 'title'. Omit a key (do not use 0) if that asset is not uploaded.",
+    "tools": [
+      {
+        "slug": "cursor",
+        "tool_logo_attachment_id": "<LOGO_ATTACHMENT_ID after upload>",
+        "featured_image_attachment_id": "<HERO_ATTACHMENT_ID after upload>"
+      }
+    ]
+  },
+  "rollback": "Both current values are 0 (unset). The Updater cannot set 0, so rollback = wp-admin: remove featured image and clear tool_logo on post 65. Keep the Updater before-snapshot JSON.",
+  "canary_audit_checks": [
+    "REST ai-tools?slug=cursor featured_media / meta.tool_logo equal new IDs",
+    "detail page logo light/dark",
+    "detail page hero 16:9 no crop",
+    "archive card logo",
+    "og:image switches from site default to hero",
+    "SoftwareApplication has image"
+  ],
+  "files": {
+    "omochix-ai-tool-cursor-logo.webp": {
+      "dimensions": "512x512",
+      "format": "webp lossless",
+      "bytes": 8032,
+      "sha256": "745ff7f08fa195453b08f86b87628433d21a05cde303422dc87a087a730f08ed"
+    },
+    "omochix-ai-tool-cursor-hero.webp": {
+      "dimensions": "1280x720",
+      "format": "webp lossy (VP8), no alpha, no EXIF/XMP/ICC",
+      "bytes": 67858,
+      "sha256": "fcf59c3bcf3c3faa55ee1e407878b5f1d4b15c227405be3ef14b393630bd1f1b"
+    }
+  },
+  "qa_report": "CURSOR-CANARY-QA.md"
+}

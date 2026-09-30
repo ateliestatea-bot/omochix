@@ -1,0 +1,657 @@
+# Raw tool results recovered from agent-aa0baa29624ec679a.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "Gemini app official site gemini.google.com features 2026", "mode": "standard"}
+Web search results for query: "Gemini app official site gemini.google.com features 2026"
+
+Links: [{"title":"What's new in Google Gemini 1.0.662093464","url":"https://www.apkmirror.com/?p=6857836"},{"title":"What's new in Google Gemini 1.0.668480831","url":"https://www.apkmirror.com/?p=7250795"},{"title":"gemini 1","url":"https://www.getapp.com/all-software/a/gemini-1"},{"title":"What's new in Google Gemini 1.0.795460806","url":"https://www.apkmirror.com/?p=10420847"},{"title":"gemini 1","url":"https://www.getapp.com/sales-software/a/gemini-1/"},{"title":"února 3, 2026","url":"https://workspaceupdates.googleblog.com/2026/01/gemini-in-chrome-coming-to-chromebook-plus.html?hl=cs"},{"title":"febrero 3, 2026","url":"https://workspaceupdates.googleblog.com/2026/01/gemini-in-chrome-coming-to-chromebook-plus.html?hl=es_PR"},{"title":"Now livetag icon","url":"https://similarweb.com/zh/app/apple/6477489729"},{"title":"app.lazyweb.com","url":"https://app.lazyweb.com/company/gemini"},{"title":"experiments.lazyweb.com","url":"https://experiments.lazyweb.com/company/gemini"}]
+
+Based on the search results, here's what I found about Gemini app features in 2026:
+
+## Key Features
+
+Gemini gives you direct access to Google's best family of AI models on your phone so you can get help with writing, brainstorming, learning, and more; summarize and find quick info from Gmail or Google Drive; generate images on the fly; use text, voice, photos and your camera to get help in new ways; say "Hey Google" to ask Gemini for help with what's on your phone screen; and make plans with Google Maps and Google Flights.
+
+## Enhanced 2026 Features
+
+More recent updates include additional capabilities: Gemini Live to brainstorm ideas, simplify complex topics, and rehearse for important moments; connection with favorite Google apps like Search, YouTube, Google Maps, Gmail, and more; interactive visuals and real-world examples for studying; the ability to turn any file into a podcast that you can listen to anytime, anywhere; and the ability to create stunning images from just a few words.
+
+## Premium Plans
+
+The Google AI Pro plan is available to qualifying Google Workspace business and education plans and includes access to Google's most powerful model 3 Pro, features like video generation with Veo 3.1, Deep Research on 3 Pro, and Gemini 3 Deep Think, plus early access to try newest AI innovations including Agent Mode.
+
+The official app is free, though premium subscription tiers are available for advanced features.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"Gemini 3\" model app 2026 announcement blog.google", "mode": "standard"}
+Web search results for query: ""Gemini 3" model app 2026 announcement blog.google"
+
+Links: [{"title":"Everything Google Announced in AI at I/O 2026: Gemini, Agents, Search, YouTube, and More","url":"https://medium.com/@codebykrishna/everything-google-announced-in-ai-at-i-o-2026-gemini-agents-search-youtube-and-more-a8c2aac5c29a"},{"title":"google i o 2026 anuncios gemini","url":"https://culturageek.com.ar/google-i-o-2026-anuncios-gemini/"},{"title":"everything announced at the google i o 2026","url":"https://techcabal.com/es/2026/05/19/everything-announced-at-the-google-i-o-2026/"},{"title":"gemini 3 2 flash release 2026","url":"https://www.buildfastwithai.com/blogs/gemini-3-2-flash-release-2026"},{"title":"google gemini2","url":"https://timewell.jp/en/columns/google-gemini2"},{"title":"Google Making AI Search and Coding Smarter with Gemini 3","url":"https://www.etcentric.org/tag/google-antigravity"},{"title":"Gemini Daily Horoscope Cafe Secrets Revealed - Away State Journal","url":"https://away.ourstate.com/gemini-daily-horoscope-cafe-secrets-ak9p.html"},{"title":"Table of contents","url":"https://techcabal.com/?p=188410"},{"title":"Google I/O 2026: Gemini 3.5, AI Search features, and Project Aura smart glasses lead announcements","url":"https://feedbagel.com/post/the-13-biggest-announcements-at-google-io-2026"}]
+
+Based on the search results, here's what was announced regarding Gemini 3 and related models in 2026:
+
+## Google I/O 2026 Announcements
+
+Gemini 3.5 Flash became the new default model across the Gemini app, Search's AI Mode, and the Gemini API as of May 19, 2026. It surpasses Gemini 3.1 Pro on coding, agentic, and multimodal benchmarks, runs roughly four times faster than other frontier models on output tokens per second, and costs less than half the price of comparable frontier models.
+
+Gemini 3.5 Pro is in testing and ships next month (June 2026).
+
+## Gemini Omni
+
+Gemini Omni is the new world-model family. Gemini Omni Flash accepts image, audio, video, and text input and currently outputs video grounded in real-world knowledge that can be easily edited.
+
+The search results indicate these announcements were made at Google I/O 2026 in May, though I did not find results directly from blog.google with these specific announcements.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Gemini app pricing 2026 Google AI Plus Pro Ultra plan", "mode": "standard"}
+Web search results for query: "Gemini app pricing 2026 Google AI Plus Pro Ultra plan"
+
+Links: [{"title":"gemini pricing plans 2026","url":"https://www.ai-toolbox.co/gemini-models/gemini-pricing-plans-2026"},{"title":"Gemini Pricing Guide — Free, Plus, Pro, and Ultra Compared","url":"https://ai.zenken.co.jp/en/post/gemini-pricing-guide/"},{"title":"# Gemini Pricing in 2026: Plans, API Costs, and Is It Free?","url":"https://geotoolbox.ai/blog/gemini-pricing.md"},{"title":"Gemini Pricing & Plans (2026)","url":"https://pricepertoken.com/subscriptions/gemini"},{"title":"gemini pricing","url":"https://geotoolbox.ai/blog/gemini-pricing"},{"title":"suprmind.ai","url":"https://suprmind.ai/hub/?p=5206"},{"title":"suprmind.ai","url":"https://suprmind.ai/hub/gemini/pricing/"},{"title":"www.temperstack.com","url":"https://www.temperstack.com/plans/gemini/"},{"title":"Quick Answer","url":"https://www.costbench.com/software/ai-chatbots/gemini/hidden-costs/"}]
+
+Based on the search results, here's the current Gemini app pricing for 2026:
+
+## Gemini Consumer Plans (2026)
+
+Google offers five consumer Gemini tiers: Free at $0, AI Plus at $4.99, AI Pro at $19.99, and two AI Ultra plans at $99.99 and $199.99.
+
+Here's a breakdown of each plan:
+
+**Free Plan** - $0/month
+- Everyday access to Gemini with daily limits
+
+**Google AI Plus** - $4.99/month
+- Google cut AI Plus from $7.99 to $4.99 on June 8, 2026 and doubled its storage to 400 GB
+- Includes enhanced Gemini 3.1 Pro access, more Audio Overviews, NotebookLM, and 200 GB storage
+
+**Google AI Pro** - $19.99/month
+- Raises limits and unlocks Gemini 3.1 Pro, Deep Research, and Veo video generation
+
+**Google AI Ultra** - $99.99-$199.99/month
+- The old $249.99 Ultra plan split into 5x and 20x tiers
+- Adds the highest usage caps and the most compute-intensive models
+
+**Note:** Google reshuffled and repriced these plans more than once in 2026, so pricing may have changed. For the most current pricing, check Google's official Gemini subscription page.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "support.google.com Gemini apps FAQ commercial use terms", "mode": "standard"}
+Web search results for query: "support.google.com Gemini apps FAQ commercial use terms"
+
+Links: [{"title":"Gemini for Google Workspace FAQ","url":"https://proxy-dev.blitzz.co/proxy/123456/support.google.com/a/answer/14130944"},{"title":"Clarification regarding Commercial Use: Can I sell a Web App built on top of Gemini API (Free Tier)?w","url":"https://discuss.ai.google.dev/t/clarification-regarding-commercial-use-can-i-sell-a-web-app-built-on-top-of-gemini-api-free-tier-w/120164"},{"title":"Clarification regarding Commercial Use: Can I sell a Web App built on top of Gemini API (Free Tier)?","url":"https://discuss.ai.google.dev/t/clarification-regarding-commercial-use-can-i-sell-a-web-app-built-on-top-of-gemini-api-free-tier/120123"},{"title":"Google Workspace with Gemini FAQ","url":"https://knowledge.workspace.google.com/admin/gemini/gemini-for-google-workspace-faq"},{"title":"www.support.google.com","url":"https://www.support.google.com/gemini/answer/14579026"},{"title":"Turn access to gemini.google.com on or off","url":"https://support.google.com/a/answer/14571493?hl=en"},{"title":"Private members-only forum","url":"https://terms.law/forum/thread/google-gemini-output-commercial-use.html"},{"title":"Turn the Gemini app on or off","url":"https://proxy-dev.blitzz.co/proxy/123456/support.google.com/a/answer/14587583"},{"title":"Turn access to gemini.google.com on or off","url":"https://c.oro.n.a.akfx@support.google.com/a/answer/14571493"}]
+
+I found relevant information from Google support pages about Gemini apps and their terms. Here are the key findings:
+
+## Gemini Apps FAQ - Commercial Use Terms
+
+**For Google Workspace Users (Commercial/Business Use):**
+
+The Gemini app as a core service with enterprise-grade data protections is available with most Google Workspace editions including Business Starter, Business Standard, Business Plus, Enterprise editions, and others. Users who access the Gemini app through these editions are subject to the Google Workspace Terms of Service or your offline Workspace agreement.
+
+Their content is not human reviewed or used for Generative AI model training outside their domain without permission.
+
+**For Personal Google Account Users:**
+
+Users without a qualifying Google Workspace edition are subject to the Google Terms of Service and the Gemini Apps Privacy Notice when they use the Gemini app. Their chats may be reviewed by human reviewers and used to improve Google's products and services.
+
+**Data Handling:**
+
+If you have a work or school Google Account, your use of Gemini Apps may be subject to different data handling terms.
+
+The search results show that Google distinguishes between commercial use through Google Workspace editions (which have stronger protections) and personal use through standard Google accounts (which have less stringent privacy protections).
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Gemini app Japanese support 日本語 支援", "mode": "standard"}
+Web search results for query: "Gemini app Japanese support 日本語 支援"
+
+Links: [{"title":"gemini app japanese korean","url":"https://9to5google.com/2024/02/14/gemini-app-japanese-korean/"},{"title":"DXを推進するAIポータルメディア「AIsmiley」| AI製品・サービスの比較・検索サイト","url":"https://aismiley.co.jp/ai_news/googleapplication-gemini-japanese-release/"},{"title":"9to5google.com","url":"https://9to5google.com/?p=606335"},{"title":"www.watch.impress.co.jp","url":"https://www.watch.impress.co.jp/docs/news/1588887.html"},{"title":"DXを推進するAIポータルメディア「AIsmiley」| AI製品・サービスの比較・検索サイト","url":"https://aismiley.co.jp/?p=133877"},{"title":"www.watch.impress.co.jp","url":"https://www.watch.impress.co.jp/docs/news/1632129.html"},{"title":"helentech.jp","url":"https://helentech.jp/?p=62133"},{"title":"news 62133","url":"https://helentech.jp/news-62133/"},{"title":"gori.me","url":"https://gori.me/google/google-news/151896"}]
+
+Based on the search results, here's what I found about Gemini app Japanese support:
+
+## Gemini App Japanese Language Support
+
+The Gemini app on Android and iOS is rolling out Japanese and Korean support. More specifically:
+
+**Availability Timeline:**
+Google started providing the Gemini mobile app in Japan and many other countries and languages beginning May 2, 2024.
+
+**Platforms:**
+- On Android, the Gemini app is directly available; on iOS, it can be accessed through the Google app
+- On Android, Gemini's support for Japanese is rolling out through an opt-in prompt
+
+**Features:**
+Gemini is a multimodal AI assistant that allows users to input and add text and images to perform tasks like creating thank you messages or searching for tire replacement methods by photographing a flat tire.
+
+**Access Methods:**
+On Android, users can download the Gemini app, opt-in through Google Assistant, long-press the power button, swipe from the screen edge, or say "OK Google"; on iOS, users can access Gemini directly from the Google app.
+
+**Google Workspace Integration:**
+Additionally, Google Workspace's Gemini in the side panel of Google Docs, Sheets, Gmail, and Drive now supports Japanese along with 6 other languages.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch ERROR {"url": "https://gemini.google.com/", "prompt": "What does this page say about Gemini app features, pricing, supported platforms/devices, model version, Japanese language support? Extract all visible text relevant to product description."}
+Parse Error: Header overflow
+
+######## WebFetch {"url": "https://one.google.com/about/google-ai-plans/", "prompt": "List all Google AI subscription plans (Free, AI Plus, AI Pro, AI Ultra etc.), their exact prices in USD or local currency, billing cadence, and what's included in each (Gemini model access, storage, features)."}
+# Google AI Subscription Plans Overview
+
+Based on the Japanese Google One page, here are the available plans:
+
+## **Google AI Plus**
+- **Price:** ¥900/month (Japanese pricing; USD equivalent not specified)
+- **Storage:** 400 GB (Gmail, Drive, Photos combined)
+- **Gemini Access:** 2x usage limits vs. free tier
+- **Key Features:** Gemini 3.1 Pro, Deep Research, Gemini Notebook, integrated Gemini in Gmail/Docs/Sheets, family sharing (up to 5 users)
+
+## **Google AI Pro**
+- **Price:** ¥2,900/month (Japanese pricing; USD not listed)
+- **Storage:** 5 TB
+- **Gemini Access:** 4x usage limits
+- **Key Features:** Gemini 3.1 Pro, Deep Research, Gemini Spark, YouTube Premium Lite, Google Home Premium Standard ($10 value), Google Health Premium, $10/month Google Cloud credits, AI integration across Google apps
+
+## **Google AI Ultra**
+- **Price:** Starting "月額 ~" (monthly, exact amount listed with currency symbol)
+- **Storage:** 20 TB minimum
+- **Gemini Access:** Up to 20x usage limits vs. free tier
+- **Key Features:** Priority access to Gemini 3.1 Pro, Deep Think, Project Genie, YouTube Premium full plan, Google Home Premium Advanced ($20 value), $40/month Google Cloud credits, expanded coding tools
+
+**Note:** The page indicates all plans include "解約はいつでも可能です" (cancellation anytime), and pricing varies significantly by region.
+
+######## WebFetch {"url": "https://support.google.com/gemini/answer/13594961", "prompt": "What does this Gemini Apps help page say about supported languages, countries, devices (Android, iOS, web), and general app description?"}
+# Gemini Apps: Languages, Countries, Devices, and Description
+
+## Supported Devices
+
+The page identifies Gemini Apps across multiple platforms:
+
+- **Web**: "The Gemini web app available through gemini.google.com and browser sidebars"
+- **Android**: The Gemini mobile app, "hosted by the Google app"
+- **iOS**: "The Gemini app on iOS"
+- **macOS**: Gemini app available
+- **Other platforms**: Android Auto, Google Messages (specific locations), Maps, Chrome, Android XR, and Google Built-in
+
+## Supported Languages
+
+The page footer displays an extensive language menu listing approximately 70+ languages, including English variants, European languages, Asian languages (Chinese, Japanese, Korean, Thai, etc.), and Middle Eastern languages.
+
+## Geographic Availability
+
+While the document mentions "specific locations" for Google Messages and references Korea-based consumers with special terms, it doesn't provide a comprehensive list of supported countries. It notes Gemini Apps are "provided by Google Ireland Limited in the European Economic Area and Switzerland and by Google LLC everywhere else."
+
+## General Description
+
+Gemini is described as "your personal AI assistant from Google," capable of handling tasks like generating content, analyzing images, making calls, managing schedules, and integrating with various Google services and third-party applications.
+
+######## WebFetch {"url": "https://one.google.com/about/google-ai-plans/?hl=en&gl=us", "prompt": "List all Google AI subscription plans (Free, AI Plus, AI Pro, AI Ultra), their EXACT prices in USD, billing cadence, storage amounts, and which Gemini model version each includes. Quote exact text about model names (e.g. Gemini 3.1 Pro, Gemini 3 Pro, Deep Think, etc)."}
+# Google AI Subscription Plans
+
+## Free Plan
+- **Price:** No cost
+- **Storage:** 15 GB (shared across Gmail, Google Drive, Google Photos)
+- **Gemini Access:** Basic access to Gemini app
+- **Billing:** N/A
+
+## Google AI Plus
+- **Price:** Approximately ¥1,500/month (exact USD price not specified in Japanese page)
+- **Billing:** Monthly
+- **Storage:** "400 GB のクラウド ストレージ" (400 GB cloud storage shared across services)
+- **Model:** "Gemini 3.1 Pro と Gemini の Deep Research へのアクセスの拡大" (expanded access to Gemini 3.1 Pro and Deep Research)
+
+## Google AI Pro
+- **Price:** Approximately ¥4,500/month (exact USD price not specified in Japanese page)
+- **Billing:** Monthly
+- **Storage:** "5 TB のクラウド ストレージ" (5 TB cloud storage)
+- **Model:** "Gemini 3.1 Pro" with "利用枠が 4 倍" (usage limits 4x expanded); includes "Gemini 3 Pro へのアクセスの拡大" in Google Search; access to "Deep Think" inference mode
+
+## Google AI Ultra
+- **Price:** "月額 ～" (monthly starting price, exact amount not displayed on Japanese version)
+- **Billing:** Monthly
+- **Storage:** "20 TB～のストレージ" (20 TB or more storage)
+- **Model:** "Gemini 3.1 Pro" with maximum usage expansion; "Deep Think 推論モード" (Deep Think reasoning mode) access; "Gemini 3 Pro" in Google Search
+
+######## WebSearch {"query": "Gemini app \"Gemini 3\" OR \"Gemini 3.1\" model version currently powers app site:blog.google OR site:support.google.com", "mode": "standard"}
+Web search results for query: "Gemini app "Gemini 3" OR "Gemini 3.1" model version currently powers app site:blog.google OR site:support.google.com"
+
+Links: [{"title":"1office.vn","url":"https://1office.vn/?p=59601"},{"title":"Google Gemini AI: Gemini 3.5 Flash, Nano Banana, Live, best features, linked apps, and more","url":"https://www.androidcentral.com/apps-software/google-gemini"},{"title":"how to use gemini 3 3616918","url":"https://www.androidauthority.com/how-to-use-gemini-3-3616918/"},{"title":"Google Gemini Cheat Sheet: A Complete Guide | eWeek","url":"https://www.eweek.com/de/news/google-gemini-cheat-sheet/"},{"title":"Taegen Burns: The Feud That Rocked Hollywood – Details Inside! Burns Luke Islam D23","url":"https://community.surrealcms.com/master101/taegen-burns-the-feud-that-rocked-hollywood-details-inside.html"},{"title":"Gemini And Pisces Compatibility: Love, Sex, And More","url":"https://gsdms.csir.co.za/blog/gemini-and-pisces-compatibility-love"},{"title":"Gemini Daily Cafe Secrets Revealed: What Everyone’s Missing - Away State Journal","url":"https://away.ourstate.com/gemini-daily-cafe-secrets-revealed-bleq.html"},{"title":"国内如何使用Gemini 3.0?Gemini 入口汇总","url":"https://www.bilibili.com/read/cv43914641"},{"title":"dolan terry - Roya Kabuki","url":"https://next.royakabuki.org/release/dolan-terry-6704111"}]
+
+Based on the search results, I found information about which Gemini model versions power the Gemini app, though the exact results from Google's official blog or support pages were limited. Here's what the search revealed:
+
+Gemini 3 Flash, a speed-optimized variant, became the default model in the Gemini app in December 2025. Additionally, in February 2026, Google released a major upgrade to Gemini 3, with Gemini 3.1 Pro becoming available in February 2026.
+
+The Gemini app currently offers two model options: "Fast" (using Gemini 2.5) and "Thinking" (using Gemini 3 Pro), though the default Fast option uses the older model for quicker responses.
+
+It's worth noting that the search results were primarily from third-party sources rather than the official Google blog or support pages specified in your query, as those pages didn't appear prominently in the results.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "site:blog.google Gemini 3 launch", "mode": "standard"}
+Web search results for query: "site:blog.google Gemini 3 launch"
+
+Links: [{"title":"Gemini 3: A New Era of Intelligence from Google","url":"https://rits.shanghai.nyu.edu/ai/gemini-3-a-new-era-of-intelligence-from-google/"},{"title":"Gemini 3 launch marks Google’s latest step in AI development","url":"https://yourstory.com/ai-story/gemini-3-launch-marks-google-ai-development"},{"title":"Google launches Gemini 3, embeds AI model into search immediately","url":"https://www.adaderana.lk/technology/114841/google-launches-gemini-3-embeds-ai-model-into-search-immediately"},{"title":"Gemini 3 launch comes as Google balances AI advances with concerns over an industry bubble","url":"https://t2online.in/tech/tech-news/gemini-3-launch-comes-as-google-balances-ai-advances-with-concerns-over-an-industry-bubble/2002227"},{"title":"google gemini 3 expanding agentic ai capabilities","url":"https://techbuild.africa/google-gemini-3-expanding-agentic-ai-capabilities/"},{"title":"Google Announces Advanced AI Model Gemini 3","url":"https://pulse2.com/google-gemini-3/"},{"title":"Google launches Gemini 3, Google Antigravity, generative UI features","url":"https://www.constellationr.com/insights/news/google-launches-gemini-3-google-antigravity-generative-ui-features"},{"title":"Exploring Gemini 3: Google’s New Era of Intelligence","url":"https://avenuez.com/blog/exploring-gemini-3-googles-new-era-of-intelligence/"},{"title":"A new era of intelligence with Gemini 3","url":"https://blog.google/intl/en-mena/product-updates/explore-get-answers/gemini-3-launches-in-mena/"}]
+
+Based on the search results, here's what I found about the Gemini 3 launch:
+
+## Gemini 3 Launch Overview
+
+On November 18, 2025, Gemini 3 was officially introduced by Google DeepMind and Google LLC. This marks what they call "a new era of intelligence" — with Gemini 3 being described as their most advanced model yet.
+
+## Key Capabilities
+
+Gemini 3 is the latest large-language/multimodal model from Google, designed to handle text, images, video, audio and code — combining deeper reasoning and broader context understanding. Some headline capabilities include:
+
+- Significant performance improvements in reasoning benchmarks: for example, on one major benchmark it hits a score of 1501 Elo
+- Advanced multimodal understanding: Gemini 3 supports things like translating handwritten recipes from different languages, analyzing videos, generating visualizations, and more
+- Agentic and "vibe coding" capabilities are significantly improved. It can build interactive Web UI, games, voxel art, etc.
+
+## Availability
+
+Pichai said the Gemini 3 launch marked the first time that Google had incorporated its new model into its search engine from day one. In the past, new versions of Gemini took weeks or months to embed into Google's most highly used products.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://one.google.com/about/google-ai-plans/", "prompt": "This is the official Google One AI plans page. List EVERY plan name mentioned (Free, Google AI Plus, Google AI Pro, Google AI Ultra) with their exact price and currency symbol as shown on the page, storage amount, and any model names mentioned (e.g. Gemini 3.1 Pro, Gemini 3 Pro, Deep Think, Deep Research, Veo, NotebookLM, Project Mariner/Genie). Quote exact price text verbatim including currency symbol."}
+# Google One AI Plans - Japan
+
+Based on the official page content, here are the Google AI plans available:
+
+## Plans & Pricing
+
+**Google AI Plus**
+- Price: "月額" (monthly) - specific amount not clearly displayed
+- Storage: 400 GB
+- Key model: Gemini 3.1 Pro
+
+**Google AI Pro**
+- Price: "月額" (monthly) - specific amount not clearly displayed
+- Storage: 5 TB
+- Key models: Gemini 3.1 Pro, includes "Deep Research"
+
+**Google AI Ultra** (Two tiers listed)
+- Price: "月額 ～" (monthly, starting from) - specific amounts not clearly displayed
+- Storage: 20 TB～ or 30 TB
+- Key features: Up to 20x usage limits compared to Pro, includes "Deep Think" mode, access to "Project Genie"
+
+## Additional Models & Features Mentioned
+- Gemini Omni Flash
+- Veo 3.1 (video generation)
+- Nano Banana Pro (image generation)
+- Gemini Notebook
+- Lyria 3.5 (music generation)
+- Google Flow
+- Jules (coding agent)
+- Google Antigravity
+
+The page emphasizes that "解約はいつでも可能です" (cancellation is possible anytime).
+
+######## WebSearch {"query": "Google AI Ultra plan price \"$249.99\" OR \"$124.99\" OR \"$99.99\" official 2026", "mode": "standard"}
+Web search results for query: "Google AI Ultra plan price "$249.99" OR "$124.99" OR "$99.99" official 2026"
+
+Links: [{"title":"Google AI Ultra explained: Features, pricing, and who it's for in 2026","url":"https://www.eesel.ai/blog/google-ai-ultra"},{"title":"Google Slashes AI Ultra Subscription Price by 60% to $100 per Month","url":"https://framia.converge.ai/page/en-US/news/google-ai-ultra-price-cut"},{"title":"Google Slashes AI Ultra Subscription From $250 to $100 Monthly","url":"https://framia.converge.ai/page/en-US/news/google-ai-ultra-price-cut-100-dollars"},{"title":"Google halved the price of AI Ultra — and now it costs less than ChatGPT Pro","url":"https://razomua.media/en/news/tekhnolohiyi/google-vdvichi-zdeshevyla-ai-ultra-i-teper-stoyit-deshevshe-za-chatgpt-pro"},{"title":"Google senkt AI-Ultra-Abo-Preis um 60 % auf 100 $ pro Monat","url":"https://framia.converge.ai/page/de-DE/news/google-ai-ultra-preissenkung"},{"title":"Google reduce un 60 % el precio de la suscripción AI Ultra a $100 al mes","url":"https://framia.converge.ai/page/es-ES/news/google-ai-ultra-rebaja-precio"},{"title":"Google senkt AI Ultra-Abonnement von 250 $ auf 100 $ monatlich","url":"https://framia.converge.ai/page/de-DE/news/google-ai-ultra-preissenkung-100-dollar"},{"title":"Google réduit de 60 % le prix de l'abonnement AI Ultra à 100 $ par mois","url":"https://framia.converge.ai/page/fr-FR/news/google-ai-ultra-baisse-prix"},{"title":"Google снижает цену подписки AI Ultra на 60% до $100 в месяц","url":"https://framia.converge.ai/page/ru-RU/news/google-ai-ultra-snizhenie-ceny"}]
+
+Based on the search results, here's what I found regarding Google AI Ultra pricing in 2026:
+
+Google cut the price of its AI Ultra subscription plan by 60%, dropping the monthly fee from $249.99 to $100, the company confirmed during Google I/O 2026 on May 19.
+
+The pricing structure now includes:
+
+1. **$100/month (AI Ultra)**: AI Ultra at $100 per month unlocks Gemini Ultra, priority throughput, and 2 million token context windows. The new $100 AI Ultra plan includes 5x higher usage limits in the Gemini app than the existing $20 AI Pro tier, 20 terabytes of cloud storage, YouTube Premium, and beta access to the newly announced Gemini Spark personal AI agent for US subscribers.
+
+2. **$200/month (AI Ultra+)**: Google also introduced a $200-per-month tier that includes access to Project Genie, its world-model research tool.
+
+The previous $249.99 price point is no longer offered as the primary tier. The new pricing aligns Google's top consumer AI tier with OpenAI's Pro plan, which also costs $100 per month.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## Bash {"command": "curl -s -A \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36\" -H \"Accept-Language: en-US,en;q=0.9\" \"https://one.google.com/about/google-ai-plans/\" -L -o /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html --max-time 20; wc -l /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html", "description": "Fetch Google One AI plans page HTML directly"}
+    3273 /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html
+
+######## Bash {"command": "grep -oE '\\$[0-9]+\\.[0-9]{2}|¥[0-9,]+|USD [0-9]+\\.[0-9]{2}|[0-9]+\\.[0-9]{2} */ *(mo|month)' /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html | sort | uniq -c | sort -rn | head -50", "description": "Extract price patterns from fetched HTML"}
+(Bash completed with no output)
+
+######## Bash {"command": "grep -o 'price[^<>]\\{0,80\\}' /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html | head -20; echo \"---\"; grep -oc '<script' /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html; echo \"---title---\"; grep -o '<title>[^<]*</title>' /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html", "description": "Inspect fetched HTML for price data or confirm JS-rendered shell"}
+priceText_iIhJ7 text_0wG_C size:headline-5_Bj_8n markdown_rDRZP"
+price variant="PRICE_GEN_AI_PLUS_MONTHLY" country="JP"
+price
+priceText_iIhJ7 text_0wG_C size:headline-5_Bj_8n markdown_rDRZP"
+price variant="PRICE_GEN_AI_PRO_MONTHLY" country="JP"
+price
+price variant="PRICE_HOME_PREMIUM_ADVANCED_UPGRADE" country="JP"
+price
+priceText_iIhJ7 text_0wG_C size:headline-5_Bj_8n markdown_rDRZP"
+price variant="PRICE_GEN_AI_ULTRA_100_MONTHLY" country="JP"
+price
+price variant="PRICE_HOME_PREMIUM_ADVANCED_UPGRADE" country="JP"
+price
+price variant="PRICE_HOME_PREMIUM_ADVANCED_UPGRADE" country="JP"
+price
+priceText_iIhJ7 text_0wG_C size:comparison-chart_mZikU markdown_rDRZP"
+price variant="PRICE_GEN_AI_PLUS_MONTHLY" country="JP"
+price
+priceText_iIhJ7 text_0wG_C size:comparison-chart_mZikU markdown_rDRZP"
+price variant="PRICE_GEN_AI_PRO_MONTHLY" country="JP"
+---
+26
+---title---
+<title>Google AI のプラン（クラウド ストレージ付き） - Google One</title>
+
+######## Bash {"command": "grep -oE 'PRICE_[A-Z_0-9]+' /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html | sort -u; echo \"---storage---\"; grep -oE '[0-9]+ ?(GB|TB)' /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html | sort -u", "description": "List all price variant tiers and storage figures"}
+PRICE_GEN_AI_PLUS_MONTHLY
+PRICE_GEN_AI_PRO_MONTHLY
+PRICE_GEN_AI_ULTRA_100_MONTHLY
+PRICE_GEN_AI_ULTRA_200_MONTHLY
+PRICE_HOME_PREMIUM_ADVANCED_UPGRADE
+---storage---
+15 GB
+19GB
+20 TB
+30 TB
+400 GB
+5 TB
+
+######## Bash {"command": "grep -oE 'Gemini[a-zA-Z0-9 ._-]{0,30}' /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_plans.html | sort -u | head -60", "description": "Extract Gemini model name mentions from official pricing page HTML"}
+Gemini
+Gemini 
+Gemini 3
+Gemini 3 Pro 
+Gemini 3.1
+Gemini 3.1 Pro
+Gemini 3.1 Pro 
+Gemini Agent
+Gemini AI sidebar assisting with dat
+Gemini API 
+Gemini Deep Research
+Gemini Enterprise app 
+Gemini features
+Gemini in Chrome 
+Gemini in Gmail
+Gemini in Gmail 
+Gemini in Google 
+Gemini in Google Meet
+Gemini in Google Vids 
+Gemini in your Google apps
+Gemini Live
+Gemini models for agentic AI-assista
+Gemini Notebook
+Gemini Notebook 
+Gemini offering writing suggestions.
+Gemini Omni
+Gemini Omni Flash
+Gemini Omni Flash 
+Gemini prompt bar with example image
+Gemini Spark
+Gemini Spark 
+Gemini Spark icon
+Gemini Ultra
+
+######## Bash {"command": "curl -s -A \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36\" -H \"Accept-Language: en-US,en;q=0.9\" \"https://gemini.google.com/\" -L -o /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_home.html --max-time 20 -w \"HTTP %{http_code}\\n\"; wc -l /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_home.html", "description": "Fetch Gemini app homepage HTML directly"}
+HTTP 200
+     187 /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_home.html
+
+######## WebFetch {"url": "https://ai.google.dev/gemini-api/docs", "prompt": "Describe the Gemini API and Google AI Studio: what they are, how they differ from the consumer Gemini app (gemini.google.com), pricing model (free tier / pay-as-you-go), and how developers access it (SDK languages, API key, Vertex AI relationship)."}
+# Gemini API and Google AI Studio: Overview
+
+## What They Are
+
+The Gemini API is Google's developer platform for integrating generative AI into applications. It provides programmatic access to multiple models including Gemini (text/multimodal), Veo (video generation), and Nano Banana (image generation). Google AI Studio is the companion web interface for testing, prototyping, and managing API usage.
+
+## Key Differences from Consumer Gemini
+
+Unlike the consumer Gemini app (gemini.google.com), these developer tools are designed for production integration. The API enables direct model access through code, while AI Studio provides a no-code testing environment. Both target software development workflows rather than casual user interactions.
+
+## Access Methods
+
+Developers can interact with the API through multiple SDK languages including Python, JavaScript, Java, and Go, or via REST endpoints. Access requires an API key obtainable through AI Studio. The documentation references an "Interactions API" as the current default interface, described as managing "conversation state, messages, and output formats."
+
+## Pricing
+
+The page mentions both a free tier and pay-as-you-go options, though specific pricing details aren't provided in this content. Billing information appears available in dedicated documentation.
+
+## Vertex AI Relationship
+
+The documentation mentions migration paths to "Gemini Enterprise Agent Platform" on Google Cloud Platform, suggesting Vertex AI integration for enterprise deployments, though details remain limited in this excerpt.
+
+######## WebSearch {"query": "support.google.com/gemini Gemini Apps Privacy Notice data used training human review", "mode": "standard"}
+Web search results for query: "support.google.com/gemini Gemini Apps Privacy Notice data used training human review"
+
+Links: [{"title":"Last updated: July 15, 2026","url":"https://support.google.com/gemini/answer/13594961?hl=mt"},{"title":"Last updated: May 19, 2026","url":"https://support.google.com/gemini/answer/13594961?hl=en"},{"title":"Last updated: July 15, 2026","url":"https://support.google.com/gemini/answer/13594961?hl=ml"},{"title":"Last updated: May 5, 2026","url":"https://support.google.com/gemini/answer/13594961?authuser=1"},{"title":"Last updated: August 10, 2026","url":"https://support.google.com/gemini/answer/13594961"},{"title":"Last updated: 5 May 2026","url":"https://support.google.com/gemini/answer/13594961?hl=en-GB"},{"title":"Last updated: September 2, 2025","url":"https://proxy-dev.blitzz.co/proxy/123456/support.google.com/gemini/answer/13594961"},{"title":"Last updated: March 24, 2025","url":"https://support.google.com/gemini/answer/13594961?hl=am"},{"title":"Google Gemini · Gemini Apps Privacy Notice","url":"https://conductatlas.com/platform/google-gemini/gemini-apps-privacy-notice/ai-model-training-data-use"},{"title":"Google Gemini · Gemini Apps Privacy Notice","url":"https://conductatlas.com/platform/google-gemini/gemini-apps-privacy-notice/human-review-of-conversations"}]
+
+I found search results related to the Gemini Apps Privacy Notice. Here are the key findings:
+
+## Data Used for Training and Human Review
+
+Google uses Gemini Apps data to provide services, maintain and improve services, develop new services, personalize and customize services, communicate with users, measure performance, and protect Google, users, and the public, with these uses extending to generative AI models and machine-learning technologies.
+
+Human reviewers (including trained reviewers from Google's service providers) review some of the data collected for these purposes.
+
+## Important Data Privacy Points
+
+Every conversation you have with Google Gemini is stored by Google for up to 18 months by default and may be read by human reviewers for safety and quality purposes, meaning sensitive personal information shared in chats could be accessed by Google employees.
+
+Gemini settings don't control processing of chats to create anonymized data to improve Google services. Even if the Keep Activity setting is off, Google still uses chats to respond to users and help protect Google, users, and the public, including with help from human reviewers.
+
+The search results point to the official Google Support page for Gemini Apps Privacy Notice (last updated August 10, 2026) which contains detailed information about data collection, usage, and human review practices.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## Bash {"command": "grep -oE '\"[^\"]{15,100}\"' /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/gemini_home.html | grep -iE 'gemini|model|version' | sort -u | head -30", "description": "Search homepage HTML for gemini model references"}
+"boq_gemini-web-uiserver_20260929.01_p0"
+"capse-gemini\\\"
+"gemini-2.0-flash\\\"
+"gemini-2.5-flash-image-preview\\\"
+"gemini-2.5-flash-image\\\"
+"gemini-2.5-flash-preview-04-17\\\"
+"gemini-2.5-flash-preview-05-20\\\"
+"gemini-2.5-flash-preview-09-2025\\\"
+"gemini-2.5-flash\\\"
+"gemini-3-pro-image-preview-11-2025\\\"
+"gemini-3.1-flash-image-preview\\\"
+"gemini-web-uiserver"
+"https://gemini.google.com"
+"https://gemini.google.com/signin\\\"
+"https://gemini.gstatic.com"
+"https://gemini.gstatic.com/_/boq-gemini-web-uiserver/_/r/"
+"https://geminiweb-pa.clients6.google.com"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_featured_study_materials_DT3x.png\\\"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_std_deepzoom_DT_v2_3x.png\\\"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_std_deepzoom_LT_v2_3x.png\\\"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_std_flashcards_DT3x.png\\\"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_std_guided_DT_v2_3x.png\\\"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_std_guided_LT3x.png\\\"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_std_quiz_yourself_DT3x.png\\\"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_std_student_plan_DT3x.png\\\"
+"https://www.gstatic.com/bard-robin-zs/learning/gemini_card_std_student_plan_LT3x.png\\\"
+"https://www.gstatic.com/lamda/images/gemini_aurora_thumbnail_4g_e74822ff0ca4259beb718.png"
+"https://www.gstatic.com/lamda/images/gemini_sparkle_4g_512_lt_f94943af3be039176192d.png"
+"https://www.gstatic.com/lamda/images/gemini_sparkle_aurora_33f86dc0c0257da337c63.svg"
+"utm_campaign\\\\u003dgemini_students_banner\\\"
+
+######## WebFetch {"url": "https://ai.google.dev/gemini-api/docs/pricing", "prompt": "List the Gemini API pricing tiers (Free tier and Paid tier) for the main Gemini models, with exact prices per million tokens if shown, and confirm this is developer/API pricing separate from the consumer Gemini app subscriptions."}
+# Gemini API Pricing Tiers
+
+This document outlines **developer/API pricing**, distinct from consumer Gemini app subscriptions.
+
+## Main Pricing Tiers
+
+**Free Tier:** "Limited access to certain models" with "Free input & output tokens" and "Google AI Studio access."
+
+**Paid Tier:** Offers "Higher rate limits for production deployments," "Access to Context caching," and "Batch API (50% cost reduction)."
+
+## Key Model Pricing (Per 1M Tokens)
+
+**Gemini 3.8 Flash (Standard):**
+- Input: $0.75 (through Dec 31, 2026); $1.50 (from Jan 1, 2027)
+- Output: $3.75 (through Dec 31, 2026); $7.50 (from Jan 1, 2027)
+
+**Gemini 3.7 Flash (Standard):**
+- Input: $0.75 (through Dec 31, 2026); $1.50 (from Jan 1, 2027)
+- Output: $3.75 (through Dec 31, 2026); $7.50 (from Jan 1, 2027)
+
+**Gemini 3.5 Flash-Lite (Standard):**
+- Input: $0.30
+- Output: $2.50
+
+**Batch pricing typically provides 50% discounts** on standard rates.
+
+The document confirms these are API developer prices separate from consumer offerings.
+
+######## WebSearch {"query": "\"Gemini app\" supported devices Android iOS web Wear OS Android Auto official list", "mode": "standard"}
+Web search results for query: ""Gemini app" supported devices Android iOS web Wear OS Android Auto official list"
+
+Links: [{"title":"google confirms gemini watches android auto 3548054","url":"https://www.androidauthority.com/google-confirms-gemini-watches-android-auto-3548054"},{"title":"Gemini now available in Wear OS, TVs and cars","url":"https://jang.com.pk/en/38145-gemini-now-available-in-wear-os-tvs-and-cars-news"},{"title":"Google is rolling out Gemini to more Wear OS smartwatches — here's what it brings and whether your device is eligible","url":"https://www.tomsguide.com/wellness/smartwatches/google-is-rolling-out-gemini-to-more-wear-os-smartwatches-heres-what-it-brings-and-whether-your-device-is-eligible"},{"title":"Google is bringing Gemini to Wear OS, Android Auto and more","url":"https://engadget.com/ai/google-is-bringing-gemini-to-wear-os-android-auto-and-more-170028033.html?src=rss"},{"title":"Gemini prepara la più grande offensiva di sempre, invadendo qualsiasi dispositivo con Android","url":"https://www.smartworld.it/news/gemini-su-wear-os-android-auto-google-tv-e-android-xr.html"},{"title":"google gemini coming to android auto wearos google tv and more","url":"https://www.techadvisor.com/article/2779547/google-gemini-coming-to-android-auto-wearos-google-tv-and-more.html"},{"title":"Gemini Debuted on Android Phones. It’s Now Ready to Conquer Your TV, Smartwatch, and Car","url":"https://www.xatakaon.com/robotics-and-ai/gemini-started-on-android-phones-its-now-ready-to-conquer-your-tv-smartwatch-and-car/amp"},{"title":"Gemini smarts are coming to more Android devices","url":"https://blog.google/products/android/gemini-watches-cars-tvs-xr"},{"title":"Gemini smarts are coming to more Android devices","url":"https://blog.google/products-and-platforms/platforms/android/gemini-watches-cars-tvs-xr/"}]
+
+Based on the search results, here's information about Gemini app's supported devices across various platforms:
+
+## Current and Upcoming Gemini Availability
+
+**Android Phones:**
+Gemini is currently available on Android phones and on the web.
+
+**Wear OS Smartwatches:**
+In the coming months, Gemini is being brought to Wear OS smartwatches. A smartwatch needs to be running at least Wear OS 4 to upgrade to Gemini, and devices from OnePlus, Mobvoi and OPPO are starting to see Gemini become available.
+
+**Android Auto:**
+Gemini will be available on Android Auto in the coming months, followed by cars with Google Built-in.
+
+**Google TV:**
+Later in 2025, Gemini capabilities are coming to Google TV.
+
+**Android XR (Mixed Reality):**
+Google is bringing together Gemini with Android XR, a new platform being built in collaboration with Samsung, for headsets and glasses.
+
+**Web:**
+Gemini is already accessible through the web platform as mentioned above.
+
+The search results do not show Gemini as currently available for iOS devices, though they focus primarily on Android ecosystem expansion.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "blog.google \"Google AI Plus\" \"$4.99\" OR \"€\" price 2026", "mode": "standard"}
+Web search results for query: "blog.google "Google AI Plus" "$4.99" OR "€" price 2026"
+
+Links: [{"title":"Google AI Plus Price Drops to $4.99 as Storage Doubles to 400GB","url":"https://www.techrepublic.com/article/news-google-ai-plus-price-drops/"},{"title":"google ai plus price 3675680","url":"https://www.androidauthority.com/google-ai-plus-price-3675680/"},{"title":"Google AI Plus Price Drops to $4.99 as Storage Doubles to 400GB","url":"https://www.techrepublic.com/de/article/news-google-ai-plus-price-drops/"},{"title":"Google AI Plus Price Drops to $4.99 as Storage Doubles to 400GB","url":"https://www.techrepublic.com/fr/article/news-google-ai-plus-price-drops/"},{"title":"Google expands AI Plus to 35 new countries and territories","url":"https://yourstory.com/ai-story/google-ai-plus-availability-27-january-2026"},{"title":"google ai plus plan drops to 4 99 month storage space doubles to 400gb","url":"https://www.thurrott.com/a-i/337156/google-ai-plus-plan-drops-to-4-99-month-storage-space-doubles-to-400gb"},{"title":"google ai plus price drop","url":"https://9to5google.com/2026/06/08/google-ai-plus-price-drop/"},{"title":"Sun, 30 Aug 2026|Tech • Business • Economy Portal","url":"https://techeconomy.ng/google-ai-plus-price-cut-4-99-us-storage-upgrade"},{"title":"google launches ai plus subscription us","url":"https://aibusiness.com/generative-ai/google-launches-ai-plus-subscription-us"}]
+
+Based on the search results, I found information about Google AI Plus pricing in 2026:
+
+Google AI Plus now costs $4.99 per month, down from its reported $7.99 launch price, and includes 400GB of cloud storage instead of 200GB. Google AI Plus now costs $4.99 per month, or the local equivalent in supported markets.
+
+The search results mention that pricing varies by country and that the $4.99 USD price is applied as the local equivalent in supported markets, but the specific Euro (€) pricing was not detailed in the search results returned.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "blog.google Google AI Ultra price $99.99 $199.99 OR \"$100\" 2026", "mode": "standard"}
+Web search results for query: "blog.google Google AI Ultra price $99.99 $199.99 OR "$100" 2026"
+
+Links: [{"title":"The Google AI Ultra plan now starts at $100 a month","url":"https://engadget.com/2176060/the-google-ai-ultra-plan-now-starts-at-100-a-month"},{"title":"Google Introduces $100 AI Ultra Subscription Tier","url":"https://letsdatascience.com/news/google-introduces-100-ai-ultra-subscription-tier-b75e3c51"},{"title":"tech insider","url":"https://tech-insider.org/?p=17716"},{"title":"Google Slashes AI Ultra Subscription Price by 60% to $100 per Month","url":"https://framia.converge.ai/page/en-US/news/google-ai-ultra-price-cut"},{"title":"Google réduit de 60 % le prix de l'abonnement AI Ultra à 100 $ par mois","url":"https://framia.converge.ai/page/fr-FR/news/google-ai-ultra-baisse-prix"},{"title":"Google halved the price of AI Ultra — and now it costs less than ChatGPT Pro","url":"https://razomua.media/en/news/tekhnolohiyi/google-vdvichi-zdeshevyla-ai-ultra-i-teper-stoyit-deshevshe-za-chatgpt-pro"},{"title":"Google Slashes AI Ultra Subscription From $250 to $100 Monthly","url":"https://framia.converge.ai/page/en-US/news/google-ai-ultra-price-cut-100-dollars"},{"title":"Google senkt AI-Ultra-Abo-Preis um 60 % auf 100 $ pro Monat","url":"https://framia.converge.ai/page/de-DE/news/google-ai-ultra-preissenkung"},{"title":"Google réduit l'abonnement AI Ultra de 250 $ à 100 $ par mois","url":"https://framia.converge.ai/page/fr-FR/news/google-ai-ultra-prix-baisse-100-dollars"}]
+
+Based on the search results, here's what I found about Google AI Ultra pricing in 2026:
+
+Google cut the price of its AI Ultra subscription plan by 60%, dropping the monthly fee from $249.99 to $100, during Google I/O 2026 on May 19. 
+
+At its May 2026 I/O event, the company split Ultra into two price points: a $99.99 entry tier with 5x the usage limits of AI Pro, and a $199.99 tier with 20x the limits, Deep Think reasoning mode, and the largest storage allocation in the lineup.
+
+Google also introduced a $200-per-month tier that includes access to Project Genie, its world-model research tool.
+
+The new $100 AI Ultra plan includes 5x higher usage limits in the Gemini app than the existing $20 AI Pro tier, 20 terabytes of cloud storage, YouTube Premium, and beta access to the newly announced Gemini Spark personal AI agent for US subscribers.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"Google AI Pro\" 月額 2900円 OR 2600円 OR 2200円", "mode": "standard"}
+Web search results for query: ""Google AI Pro" 月額 2900円 OR 2600円 OR 2200円"
+
+Links: [{"title":"k-tai.watch.impress.co.jp","url":"https://k-tai.watch.impress.co.jp/docs/news/2098500.html"},{"title":"Google AI Pro","url":"https://scrapbox.io/miruyomukaku/Google_AI_Pro"},{"title":"www.watch.impress.co.jp","url":"https://www.watch.impress.co.jp/docs/news/2074312.html"},{"title":"helentech.jp","url":"https://helentech.jp/?p=68831"},{"title":"news 68831","url":"https://helentech.jp/news-68831/"},{"title":"k-tai.watch.impress.co.jp","url":"https://k-tai.watch.impress.co.jp/docs/news/2081430.html"},{"title":"Google has doubled its storage allowance for its AI Pro plan, and it’s just one-upped ChatGPT — here’s how they compare","url":"https://www.techradar.com/ai-platforms-assistants/google-has-doubled-its-storage-allowance-for-its-ai-pro-plan-and-its-just-one-upped-chatgpt-heres-how-they-compare"},{"title":"Google AI Plusが大幅値下げでストレージ倍増、月725円で400GBとGemini Pro追加機能が利用可能に","url":"https://www.techno-edge.net/article/2026/06/10/5166.html"},{"title":"202605 google ai ultra 100 dollar plan launch","url":"https://smhn.info/202605-google-ai-ultra-100-dollar-plan-launch"}]
+
+検索結果から、Google AI Proに関する料金情報が見つかりました：
+
+Google AI Proは月額2900円で利用できます。
+
+検索クエリに含まれていた他の料金（2600円と2200円）については、検索結果には記載されていません。Google AI Proの標準的な月額料金は**2900円**です。
+
+また、関連情報として：
+- Google AI Proの年間プランは29,000円で、月額プランを12ヶ月利用するよりも約16%割安です
+- より手軽に最新のGoogle AIを利用できる「Google AI Plus」というプランが月額1200円で提供されています
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Google AI Plus 月額 円 日本 価格 2026", "mode": "standard"}
+Web search results for query: "Google AI Plus 月額 円 日本 価格 2026"
+
+Links: [{"title":"helentech.jp","url":"https://helentech.jp/?p=81370"},{"title":"news 81370","url":"https://helentech.jp/news-81370/"},{"title":"news google ai plus price drop 87268","url":"https://helentech.jp/news-google-ai-plus-price-drop-87268/"},{"title":"helentech.jp","url":"https://helentech.jp/?p=87268"},{"title":"forest.watch.impress.co.jp","url":"https://forest.watch.impress.co.jp/docs/news/2115471.html"},{"title":"www.watch.impress.co.jp","url":"https://www.watch.impress.co.jp/docs/news/2081463.html"},{"title":"pc.watch.impress.co.jp","url":"https://pc.watch.impress.co.jp/docs/news/2081363.html"},{"title":"• 2026/01/28 21:18 掲載","url":"https://www.sbbit.jp/article/cont1/179565"},{"title":"Google AI Plus を提供開始","url":"https://blog.google/intl/ja-jp/company-news/technology/google-ai-plus/"}]
+
+Based on the search results, here's the information about Google AI Plus pricing in Japan for 2026:
+
+## Current Pricing (as of September 2026)
+
+Google AI Plus is currently priced at 725 yen per month in Japan, with storage increased from 200GB to 400GB.
+
+## Pricing History in 2026
+
+- **January 2026**: Google AI Plus was launched in Japan at 1,200 yen per month, with an introductory offer of 600 yen for the first 2 months.
+
+- **June 2026**: The price was reduced from 1,200 yen to 725 yen (approximately a 40% price cut).
+
+## Additional Features
+
+The Google AI Plus plan includes Gemini access with 2x the usage limit of the free version, a 128,000 token context window, Daily Brief, Omni Flash for video generation, NotebookLM extended limits, and family sharing for up to 5 people.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://blog.google/intl/ja-jp/company-news/technology/google-ai-plus/", "prompt": "この公式Googleブログ記事について、Google AI Plusプランの月額料金（円）、ストレージ容量、含まれる機能、Google AI Proとの違いを教えてください。正確な金額と日付を引用してください。"}
+# Google AI Plus プランの詳細
+
+**月額料金：** "月額1,200円です。また現在、特典として、新規登録の方は最初の2ヶ月間、50%オフでご利用いただけます。"
+
+**ストレージ容量：** このプランには200GBのストレージが含まれています。
+
+**提供開始日：** "2026年 1月 28日"に日本での提供が開始されました。
+
+**主な機能：**
+Gemini 3 Pro、Nano Banana Pro、Flow での映像制作、NotebookLM でのリサーチ支援などが利用できます。また、Gmail やスプレッドシートなどの Google アプリに統合されています。
+
+**家族共有：** 最大5人の家族メンバーとすべての特典を共有可能です。
+
+**注釈：** 記事には Google AI Pro との明確な比較表は記載されていないため、その違いについては本文から特定できません。
+
+######## WebSearch {"query": "Google AI Ultra 日本 月額 円 2026 プラン Gemini", "mode": "standard"}
+Web search results for query: "Google AI Ultra 日本 月額 円 2026 プラン Gemini"
+
+Links: [{"title":"news google ai ultra new tier 86382","url":"https://helentech.jp/news-google-ai-ultra-new-tier-86382/"},{"title":"helentech.jp","url":"https://helentech.jp/?p=86382"},{"title":"【2026年6月最新】Gemini の料金プラン一覧|無料・Google AI Pro・Ultra を日本円で比較","url":"https://ai.zenken.co.jp/post/gemini-pricing-guide/"},{"title":"forest.watch.impress.co.jp","url":"https://forest.watch.impress.co.jp/docs/news/2110047.html"},{"title":"pc.watch.impress.co.jp","url":"https://pc.watch.impress.co.jp/docs/news/2081363.html"},{"title":"gemini 36400","url":"https://www.gizmodo.jp/article/gemini_36400/"},{"title":"gemini 36400","url":"https://www.gizmodo.jp/2025/10/gemini_36400.html"},{"title":"2509 google has finally set usage limits for gemini ai","url":"https://www.lifehacker.jp/article/2509-google-has-finally-set-usage-limits-for-gemini-ai/"},{"title":"Google、AI Ultraサブスクリプションを月額250ドルから100ドルに大幅値下げ","url":"https://framia.converge.ai/page/ja-JP/news/google-ai-ultra-kakaku-100-doru"}]
+
+Web search results found information about Google's Gemini AI pricing plans in Japan. Here are the key findings:
+
+## Gemini Pricing Plans in Japan (2026)
+
+Gemini has three main pricing plans: Free, Google AI Pro (approximately ¥3,000/$19.99 per month), and Google AI Ultra (approximately ¥37,500/$249.99 per month).
+
+According to more recent information, the pricing in Japan is broken down as: Free plan, Google AI Pro at ¥2,900 per month, and Google AI Ultra at ¥36,400 per month.
+
+Additionally, there's also a Google AI Plus plan available in Japan at ¥1,200 per month, which provides access to Gemini 3 Pro and other advanced AI models, plus 200GB of online storage.
+
+## Features by Plan
+
+The Google AI Ultra plan (¥36,400/month) allows up to 500 prompts per day using the 2.5 Pro model, supports Deep Think (up to 10 times daily), and allows video generation (up to 5 videos daily with the higher quality Veo 3 model).
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## Bash {"command": "cat << 'PYEOF' > /private/tmp/claude-501/-Users-omochi-Documents-omochix/a22c3fbb-4f97-582e-8677-0114fe4a91fa/scratchpad/lens.py\ntexts = {\n\"short_description\": \"文章作成・検索やリサーチ・画像や音声でのやり取り・Googleサービス連携に強みを持つ、Google製の生成AIアシスタント。\",\n\"seo_title\": \"Geminiとは？料金・機能・使い方・日本語対応を解説｜OmochiX\",\n\"meta_description\": \"GoogleのAIアシスタント「Gemini」の料金プラン、主要機能、日本語対応状況、商用利用の可否、使い方を公式情報にもとづき解説します。\",\n\"omochix_view\": \"GeminiはChatGPTやPerplexityと同様に汎用AIアシスタントとして competes しつつ、最大の強みはGmail・ドライブ・ドキュメントなど普段使いのGoogleサービスとの連携にある。検索やGoogleカレンダー、マップとの接続は日常業務との親和性が高く、すでにGoogleサービスを使っているユーザーほど導入コストが低い。一方で
+short_description 63
+seo_title 35
+meta_description 70
+omochix_view 288

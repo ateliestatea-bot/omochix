@@ -1,0 +1,480 @@
+# Raw tool results recovered from agent-aa7d297aba9cd845a.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "ChatGPT pricing plans Free Plus Pro Business 2026 site:openai.com", "mode": "standard"}
+Web search results for query: "ChatGPT pricing plans Free Plus Pro Business 2026 site:openai.com"
+
+Links: [{"title":"ChatGPT Pricing 2026: Free vs Go vs Plus vs Pro – Detailed Comparison, Limits, Features, and Which Plan Is Worth It","url":"https://www.cometapi.com/chatgpt-pricing-2026-free-vs-go-vs-plus-vs-pro/"},{"title":"ChatGPT pricing 2026: Free, Plus, Pro plans compared","url":"https://eesel.ai/blog/chatgpt-pricing"},{"title":"chatgpt plans compared free vs plus 20 vs pro 200 vs business vs enterprise 2026","url":"https://intuitionlabs.ai/pdfs/chatgpt-plans-compared-free-vs-plus-20-vs-pro-200-vs-business-vs-enterprise-2026.pdf"},{"title":"ChatGPT Plans Compared: Free vs Plus ($20) vs Pro ($200) vs Business vs Enterprise (2026)","url":"https://intuitionlabs.ai/articles/chatgpt-plans-comparison"},{"title":"suprmind.ai","url":"https://suprmind.ai/hub/chatgpt/pricing/"},{"title":"suprmind.ai","url":"https://suprmind.ai/hub/?p=5125"},{"title":"chatgpt pricing","url":"https://geotoolbox.ai/blog/chatgpt-pricing"},{"title":"ChatGPT Plus vs Pro: Differences, Prices and Which to Choose in 2026","url":"https://gurusup.com/blog/chatgpt-plus-vs-pro"},{"title":"OpenAI Pricing 2026","url":"https://costbench.com/software/ai-productivity/openai/"}]
+
+Based on the search results, here's a comprehensive overview of ChatGPT pricing plans in 2026:
+
+## ChatGPT Pricing Tiers (2026)
+
+OpenAI offers 8 pricing tiers: Free, Go, Plus, Pro $100, Pro $200, Business (annual), Business (monthly), and Enterprise.
+
+### Individual Plans:
+
+- **Free**: $0 with ads. The Free edition provides access to the latest AI models (currently GPT-5) at no cost but with limited usage, slower performance, and basic features.
+
+- **Go**: $8/user/month
+
+- **Plus**: $20/user/month. The most popular plan, Plus, is $20/user/month and includes advanced reasoning models, deep research, agent mode, and expanded usage limits.
+
+- **Pro**: Two separate Pro tiers at $100 and $200. Pro subscribers receive unlimited access to all advanced models (including the "o1" reasoning model and GPT-5.2), "Pro" mode that uses extra computation for harder problems, and the fastest possible performance.
+
+### Team Plans:
+
+- **Business**: $25/user/month on a monthly basis, and includes a secure workspace with admin controls, SAML SSO, and over 60 app integrations.
+
+- **Enterprise**: Enterprise pricing is custom and available through OpenAI's sales team.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT model version GPT-5 2026 openai.com/chatgpt", "mode": "standard"}
+Web search results for query: "ChatGPT model version GPT-5 2026 openai.com/chatgpt"
+
+Links: [{"title":"GPT-5","url":"https://en.wikipedia.org/wiki/GPT-5"},{"title":"suprmind.ai","url":"https://suprmind.ai/hub/?p=5124"},{"title":"gpt 5 6","url":"https://openai.com/es-419/index/gpt-5-6/"},{"title":"GPT 5.5: What It Is, Key Features, Benchmarks, How to Use It","url":"https://www.cometapi.com/tag/gpt-5/"},{"title":"wikidocs.net","url":"https://wikidocs.net/blog/@history/21148/"},{"title":"whats new chatgpt 2026","url":"https://beginnersinai.org/whats-new-chatgpt-2026/"},{"title":"beginnersinai.org","url":"https://beginnersinai.org/?p=27797"},{"title":"Startseite Hub Funktionen Anwendungsfälle Anleitungen Plattform Preise Anmelden","url":"https://suprmind.ai/hub/de/?p=5191"},{"title":"Seedance 2.5 is coming soonLearn more","url":"https://evolink.ai/gpt-5-6"}]
+
+Based on the search results, here's what I found about ChatGPT and GPT model versions in 2026:
+
+## GPT-5 Release
+
+GPT-5 is a multimodal large language model developed by OpenAI and was launched on August 7, 2025.
+
+## Current Model Versions in 2026
+
+As of May 2026, the flagship model behind ChatGPT is GPT-5.5, released April 23, 2026. GPT-5.5 is the most capable ChatGPT model to date, with 52.5% fewer hallucinations than GPT-5.3 Instant on high-stakes prompts (medicine, law, finance).
+
+Earlier in 2026 came GPT-5.1, 5.2, 5.3-Codex, and 5.4, each refining reasoning, agentic coding, and computer-use.
+
+## Latest Model: GPT-5.6
+
+OpenAI's next-generation family — Sol, Terra, and Luna — was previewed on June 26, 2026. GPT-5.6 Sol achieves the best results to date in programming, professional tasks, cybersecurity, and science.
+
+OpenAI's release pace in 2026 has been the fastest of any major AI lab, with roughly every six weeks a new model variant or feature launching.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://openai.com/chatgpt/pricing/", "prompt": "List all ChatGPT pricing plans (Free, Go, Plus, Pro, Business, Enterprise, etc), their exact prices, currency, billing cadence, and key features/limits included in each plan as currently listed on this official page."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://openai.com/chatgpt/", "prompt": "Describe what this official ChatGPT product page says about: what ChatGPT is, current features (web search, deep research, image generation, voice, memory, projects, connectors/integrations), supported platforms/devices (web, iOS, Android, desktop apps for Mac/Windows), and any mention of the underlying model version powering ChatGPT."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "ChatGPT plans pricing", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT plans pricing"
+
+Links: [{"title":"Business Pricing | OpenAI","url":"https://openai.com/business/pricing/"},{"title":"ChatGPT Business - Overview | OpenAI Help Center","url":"https://help.openai.com/en/articles/8792828-chatgpt-business-overview"},{"title":"Pricing | ChatGPT","url":"https://openai.com/chatgpt/pricing/"},{"title":"ChatGPT Rate Card (Enterprise token-based pricing) | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001415-chatgpt-rate-card-enterprise-token-based-pricing"},{"title":"About ChatGPT Pro tiers | OpenAI Help Center","url":"https://help.openai.com/en/articles/9793128-about-chatgpt-pro-tiers"},{"title":"Introducing ChatGPT Plus | OpenAI","url":"https://openai.com/index/chatgpt-plus/"},{"title":"What is ChatGPT Plus? | OpenAI Help Center","url":"https://help.openai.com/en/articles/6950777-what-is-chatgpt-plus"},{"title":"Pricing | ChatGPT Learn","url":"https://developers.openai.com/codex/pricing"},{"title":"ChatGPT Rate Card (Business, Enterprise/Edu credit-based pricing) | OpenAI Help Center","url":"https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing"},{"title":"Introducing ChatGPT Go, now available worldwide | OpenAI","url":"https://openai.com/index/introducing-chatgpt-go/"}]
+
+Based on the search results, here's an overview of ChatGPT's pricing plans:
+
+## Individual Plans
+
+ChatGPT offers a free version available to everyone. For paid subscriptions, OpenAI offers several tiers:
+
+- **ChatGPT Go**: In the US, Go is available for $8 per month.
+- **ChatGPT Plus**: ChatGPT Plus is a subscription plan that provides enhanced access to the ChatGPT web app for $20/month.
+- **ChatGPT Pro**: The monthly price remains $200. The Pro tier includes multiple usage tiers (Pro 100, Pro 200, and Pro 500).
+
+## Business Plans
+
+Paid plans (Go, Plus, Business, and Enterprise) are priced per user per month. For most countries, pricing (USD) is $25 per user per month if billed monthly and $20 per user per month if billed annually. Business plans are available starting at 2 users.
+
+## Enterprise Plans
+
+For ChatGPT Enterprise, please contact sales to learn more about the plan.
+
+ChatGPT Plus, Pro, Business and Enterprise will remain ad-free.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://help.openai.com/en/articles/6825453-chatgpt-release-notes", "prompt": "List the most recent ChatGPT release notes entries (dates and summaries), especially anything about model updates, new features (voice, memory, projects, connectors, deep research, image generation), and plan changes in 2026."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "ChatGPT model GPT-5 release notes 2026", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT model GPT-5 release notes 2026"
+
+Links: [{"title":"ChatGPT — Release Notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/6825453-chatgpt-release-notes"},{"title":"Model Release Notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/9624314-model-release-notes"},{"title":"GPT-5.5 Instant: smarter, clearer, and more personalized | OpenAI","url":"https://openai.com/index/gpt-5-5-instant/"},{"title":"Release Notes | OpenAI | OpenAI","url":"https://openai.com/products/release-notes/"},{"title":"Introducing GPT-5.5 | OpenAI","url":"https://openai.com/index/introducing-gpt-5-5/"},{"title":"ChatGPT Enterprise and Edu release notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/10128477-chatgpt-enterprise-and-edu-release-notes"},{"title":"GPT-5.6 Preview System Card - OpenAI Deployment Safety Hub","url":"https://deploymentsafety.openai.com/gpt-5-6-preview"},{"title":"GPT-5.6 System Card - Deployment Safety Hub - OpenAI","url":"https://deploymentsafety.openai.com/gpt-5-6"},{"title":"GPT-5.6: Frontier intelligence that scales with your ambition | OpenAI","url":"https://openai.com/index/gpt-5-6/"},{"title":"GPT-5.6 and GPT-6 Pro in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/11909943-gpt-5-in-chatgpt"}]
+
+Based on the search results, here are the key ChatGPT model releases and updates related to GPT-5 in 2026:
+
+## GPT-5 Series Releases and Updates in 2026
+
+**GPT-5.5 Release:**
+GPT-5.5 is OpenAI's smartest and most intuitive model, released to Plus, Pro, Business, and Enterprise users in ChatGPT and Codex. As of April 24, 2026, GPT-5.5 and GPT-5.5 Pro became available in the API.
+
+**GPT-5.4 Release:**
+GPT-5.4 brings together the best of recent advances in reasoning, coding, and agentic workflows into a single frontier model, incorporating industry-leading coding capabilities while improving how the model works across tools and professional tasks.
+
+**GPT-5.3 Updates:**
+GPT-5.3-Codex is the most capable agentic coding model, combining the Codex and GPT-5 training stacks for best-in-class code generation, reasoning, and general-purpose intelligence.
+
+**GPT-5.1 Retirement:**
+As of March 11, 2026, GPT-5.1 models are no longer available in ChatGPT, with existing conversations automatically continuing on the corresponding current model.
+
+**GPT-5.2 Retirement:**
+As of June 12, 2026, GPT-5.2 models are no longer available in ChatGPT, and existing conversations automatically continue on the corresponding GPT-5.5 model.
+
+**GPT-5.6 Release:**
+OpenAI launched the GPT-5.6 family of models with Sol as the new flagship, Terra as a balanced model, and Luna as the most cost-efficient model, with Sol achieving state-of-the-art results across coding, knowledge work, cybersecurity, and science.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://help.openai.com/en/articles/9793128-about-chatgpt-pro-tiers", "prompt": "Describe the ChatGPT Pro tiers (Pro 100, Pro 200, Pro 500 or similar), their prices, and what's included."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://help.openai.com/en/articles/6950777-what-is-chatgpt-plus", "prompt": "Describe what ChatGPT Plus is, its price, and included features."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://openai.com/index/gpt-5-6/", "prompt": "What is GPT-5.6? What are Sol, Terra, Luna? When was it released? Is it powering ChatGPT by default? What does this say about model versions in ChatGPT."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://help.openai.com/en/articles/11909943-gpt-5-in-chatgpt", "prompt": "What does this article say about which GPT-5 family models are available in ChatGPT, for which plans, and any mention of GPT-5.6 or GPT-6 Pro?"}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "\"ChatGPT\" pricing page Free Go Plus Pro Business Enterprise USD per month", "mode": "standard", "allowed_domains": ["openai.com"]}
+Web search results for query: ""ChatGPT" pricing page Free Go Plus Pro Business Enterprise USD per month"
+
+Links: [{"title":"Business Pricing | OpenAI","url":"https://openai.com/business/pricing/"},{"title":"Pricing | ChatGPT Learn","url":"https://developers.openai.com/codex/pricing"},{"title":"ChatGPT Rate Card (Business, Enterprise/Edu credit-based pricing) | OpenAI Help Center","url":"https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing"},{"title":"Introducing ChatGPT Go, now available worldwide | OpenAI","url":"https://openai.com/index/introducing-chatgpt-go/"},{"title":"Pricing | ChatGPT","url":"https://openai.com/chatgpt/pricing"},{"title":"ChatGPT Rate Card (Enterprise token-based pricing) | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001415-chatgpt-rate-card-enterprise-token-based-pricing"},{"title":"OpenAI Help Center","url":"https://help.openai.com/en/?q=Paid+Memberships+Pro+Plus+plan+features+and+pricing"},{"title":"ChatGPT Business - Overview | OpenAI Help Center","url":"https://help.openai.com/en/articles/8792828-what-is-chatgpt-business"},{"title":"About ChatGPT Pro tiers | OpenAI Help Center","url":"https://help.openai.com/en/articles/9793128-about-chatgpt-pro-tiers"},{"title":"What is ChatGPT Plus? | OpenAI Help Center","url":"https://help.openai.com/en/articles/6950777-what-is-chatgpt-plus"}]
+
+Based on the search results, here's the ChatGPT pricing information for USD per month:
+
+**Individual Plans:**
+- Free: Available to everyone
+- Go: $8 per month
+- Plus: $20/month (billed monthly)
+- Pro: $200/month (with multiple tiers available)
+
+**Business Plans:**
+- Business: $25 per user per month if billed monthly and $20 per user per month if billed annually
+
+**Enterprise Plan:**
+- Enterprise: Contact sales to learn more (custom pricing)
+
+Paid plans (Go, Plus, Business, and Enterprise) are priced per user per month, with monthly plans offered for Go, Plus and Business and annual plans for Business and Enterprise.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT desktop app Mac Windows iOS Android web features", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT desktop app Mac Windows iOS Android web features"
+
+Links: [{"title":"Download ChatGPT | OpenAI","url":"https://openai.com/chatgpt/download/"},{"title":"ChatGPT macOS app release notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/9703738-chatgpt-macos-app-release-notes"},{"title":"Downloading the ChatGPT macOS app | OpenAI Help Center","url":"https://help.openai.com/en/articles/9275200-downloading-the-chatgpt-macos-app"},{"title":"Moving to the new ChatGPT desktop app | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001276-moving-to-the-new-chatgpt-desktop-app"},{"title":"Download ChatGPT","url":"https://openai.com/chatgpt/mac/"},{"title":"Using the built-in browser in the ChatGPT desktop app | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001277-using-the-built-in-browser-in-the-chatgpt-desktop-app"},{"title":"ChatGPT on your desktop | OpenAI","url":"https://openai.com/chatgpt/desktop/"},{"title":"Chat GPT Desktop App for Mac - ChatGPT - OpenAI Developer Community","url":"https://community.openai.com/t/chat-gpt-desktop-app-for-mac/744613"},{"title":"Downloading the ChatGPT macOS app | OpenAI Help Center","url":"https://help-lb.openai.com/en/articles/9275200-downloading-the-chatgpt-macos-app"},{"title":"ChatGPT Work and Codex | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001275-chatgpt-work-and-codex"}]
+
+Based on the search results, here's an overview of ChatGPT across different platforms and their features:
+
+## Desktop Apps (macOS & Windows)
+
+The new ChatGPT desktop app combines Chat, Work, and Codex and is available for macOS and Windows. The macOS desktop app is only available for macOS 14+ with Apple Silicon (M1 or better).
+
+Key desktop features include:
+- Chat for asking questions, searching, and having conversations; Work for researching, analyzing information, and creating documents, spreadsheets, presentations, reports, and Sites; and Codex for developing software with local files, repositories, terminals, and developer tools.
+- ChatGPT can now edit code directly in your IDE.
+- A companion window gives you side-by-side access to ChatGPT that stays in front of all other windows.
+- A built-in browser is available on macOS and Windows that supports richer sign-in, autofill, password management, extensions, downloads, and navigation.
+- You can use slash commands to quickly search with ChatGPT, initiate reasoning with o1-preview, and generate images using DALL·E.
+
+## Mobile Apps (iOS & Android)
+
+iOS and Android apps allow you to chat about email, screenshots, files, and anything on your screen. Features include voice conversations, detailed photo creation, and ChatGPT Work for delegated tasks.
+
+## Web
+
+Eligible accounts can use Live in Work on web, iOS, and Android, and Voice in Work or Codex in the ChatGPT desktop app on macOS and Windows.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT terms of use commercial use business content ownership", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT terms of use commercial use business content ownership"
+
+Links: [{"title":"Terms of Use | OpenAI","url":"https://openai.com/policies/row-terms-of-use/"},{"title":"OpenAI Services Agreement | OpenAI","url":"https://openai.com/policies/services-agreement/"},{"title":"ChatGPT Sites Terms | OpenAI","url":"https://openai.com/policies/chatgpt-sites-terms/"},{"title":"Service terms | OpenAI","url":"https://openai.com/policies/service-terms/"},{"title":"Terms & policies | OpenAI","url":"https://openai.com/policies/"},{"title":"Is it permissible to use ChatGPT for Commercial Use? - ChatGPT - OpenAI Developer Community","url":"https://community.openai.com/t/is-it-permissible-to-use-chatgpt-for-commercial-use/128005"},{"title":"Europe Terms of Use | OpenAI","url":"https://openai.com/policies/eu-terms-of-use/"},{"title":"Business terms - May 2025 | OpenAI","url":"https://openai.com/policies/may-2025-business-terms/"},{"title":"EU terms of use | OpenAI","url":"https://openai.com/policies/oct-2024-eu-terms/"},{"title":"EU terms of use - December 11, 2024 | OpenAI","url":"https://openai.com/policies/dec-2024-eu-terms/"}]
+
+I've performed the web search for ChatGPT terms of use regarding commercial use, business content ownership. Here are the key findings:
+
+## Content Ownership
+
+For individual users, you retain your ownership rights in Input and own the Output, with OpenAI assigning all its right, title, and interest in Output to you.
+
+For business customers using ChatGPT Enterprise, Business, or APIs, the customer retains all ownership rights in Input and owns all Output, with OpenAI assigning all its rights to the Output to the customer.
+
+## Commercial and Business Use
+
+Business Terms govern use of ChatGPT Enterprise, OpenAI's APIs, and other services for businesses and developers. If you use the Services for commercial or business use, specific business use terms apply.
+
+## Content Use Restrictions
+
+For individual users: OpenAI can use your Content worldwide to provide, maintain, develop, and improve the Services, comply with applicable law, enforce terms and policies, and keep the Services safe.
+
+For business customers: OpenAI will only use Customer Content as necessary to provide the Services, comply with applicable law, enforce policies, and prevent abuse, and will not use Customer Content to develop or improve the Services unless the customer explicitly agrees.
+
+## Voice Content Exception
+
+ChatGPT Voice Output is for non-commercial use only and may not be distributed or repackaged as a standalone audio recording.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT connectors Gmail Google Drive Slack integrations apps", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT connectors Gmail Google Drive Slack integrations apps"
+
+Links: [{"title":"Connected apps in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/11487775-connected-apps-in-chatgpt"},{"title":"ChatGPT Business release notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/11391654-chatgpt-business-release-notes"},{"title":"ChatGPT — Release Notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/6825453-chatgpt-release-notes"},{"title":"More ways to work with your team and tools in ChatGPT | OpenAI","url":"https://openai.com/index/more-ways-to-work-with-your-team/"},{"title":"ChatGPT apps with sync | OpenAI Help Center","url":"https://help.openai.com/en/articles/10847137-chatgpt-apps-with-sync"},{"title":"Administrator-managed apps with sync in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/10847137-chatgpt-synced-connectors"},{"title":"Google Drive app with sync - Self-Service Setup | OpenAI Help Center","url":"https://help.openai.com/en/articles/10948259-google-drive-synced-connectors-self-service-setup"},{"title":"[DISCONTINUED] ChatGPT for your Google Drive - Community - OpenAI Developer Community","url":"https://community.openai.com/t/discontinued-chatgpt-for-your-google-drive/115433"},{"title":"Connected apps | OpenAI Help Center","url":"https://help.openai.com/en/collections/12923329-connected-apps"},{"title":"App use cases and prompts | OpenAI Help Center","url":"https://help.openai.com/en/articles/12084614-connector-use-cases-and-prompts"}]
+
+Based on the search results, here's comprehensive information about ChatGPT connectors and integrations:
+
+## Overview
+
+Apps connect ChatGPT to services you already use, such as Google Drive or Slack, so you can work with their information in a conversation.
+
+## Available Connectors
+
+ChatGPT can pull information from Gmail, Google Calendar, Microsoft Outlook, Microsoft Teams, SharePoint, GitHub, Dropbox, and Box for more relevant answers based on your work. Additionally, supported connectors include Slack, SharePoint, Google Drive, GitHub, HubSpot, Asana, and more.
+
+## Key Capabilities
+
+Depending on the app, you can ask ChatGPT to find a file, summarize a document, or look up a message. Some apps also provide interactive experiences, such as maps or cards, or let ChatGPT take supported actions in the connected service.
+
+## Slack Integration
+
+Two new ways to bring Slack and ChatGPT together include a connector that brings your Slack context into ChatGPT, and a ChatGPT app for Slack – an integration that enables you to chat with ChatGPT from inside Slack. With the ChatGPT app for Slack, you can chat one-on-one with ChatGPT in a dedicated Slack sidebar.
+
+## Event-Triggered Tasks
+
+Supported events include new Gmail messages, new Slack channel messages, and GitHub pull request activity in authorized github.com repositories.
+
+## Setup
+
+To get started, choose an available app, connect an account if prompted, and tell ChatGPT what you want to do.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT security privacy SOC 2 data encryption enterprise", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com", "trust.openai.com"]}
+Web search results for query: "ChatGPT security privacy SOC 2 data encryption enterprise"
+
+Links: [{"title":"Enterprise privacy at OpenAI | OpenAI","url":"https://openai.com/enterprise-privacy/"},{"title":"Security and privacy at OpenAI | OpenAI","url":"https://openai.com/security-and-privacy/"},{"title":"Business data privacy, security, and compliance | OpenAI","url":"https://openai.com/business-data/"},{"title":"Data Security and Compliance: ChatGPT Team vs. Enterprise - ChatGPT - OpenAI Developer Community","url":"https://community.openai.com/t/data-security-and-compliance-chatgpt-team-vs-enterprise/649025"},{"title":"Expanding data residency access to business customers worldwide | OpenAI","url":"https://openai.com/index/expanding-data-residency-access-to-business-customers-worldwide/"},{"title":"Introducing ChatGPT Enterprise | OpenAI","url":"https://openai.com/index/introducing-chatgpt-enterprise/"},{"title":"New compliance and administrative tools for ChatGPT Enterprise | OpenAI","url":"https://openai.com/index/new-tools-for-chatgpt-enterprise/"},{"title":"OpenAI Trust Portal | Powered by SafeBase","url":"https://trust.openai.com/"},{"title":"Is OpenAI platform SOC2 compliant if I have subscribed ChatGPT enterprise? - ChatGPT - OpenAI Developer Community","url":"https://community.openai.com/t/is-openai-platform-soc2-compliant-if-i-have-subscribed-chatgpt-enterprise/1098341"},{"title":"Introducing ChatGPT Enterprise - ChatGPT - OpenAI Developer Community","url":"https://community.openai.com/t/introducing-chatgpt-enterprise/335827"}]
+
+Based on the search results, here's what I found regarding ChatGPT's security, privacy, and enterprise compliance:
+
+## SOC 2 Compliance
+
+OpenAI has undergone an independent SOC 2 Type 2 examination of controls relevant to Security, Availability, Confidentiality, and Privacy for its API and ChatGPT business product services. OpenAI's most recent SOC2 Report covers the period of July 1, 2025 to June 30, 2026 and is now available to authenticated users on the OpenAI Trust Portal, with controls relevant to the Security, Availability, Confidentiality, and Privacy Trust Services Criteria.
+
+## Data Encryption
+
+OpenAI uses AES-256 encryption at rest and TLS 1.2 or higher in transit. Additionally, with Enterprise Key Management (EKM), customers can control their own encryption keys, adding another layer of security and compliance.
+
+## Enterprise Data Protection
+
+By default, OpenAI does not use business data for training models. OpenAI maintains ISO/IEC 27001:2022 and ISO/IEC 27701:2019 certifications for the information security and privacy management systems supporting the OpenAI API, ChatGPT Enterprise, and ChatGPT Edu services.
+
+## Data Residency
+
+Eligible ChatGPT Enterprise, ChatGPT Edu, ChatGPT for Healthcare, and API platform customers can store sensitive customer content at rest in the U.S., Europe, UK, Japan, Canada, South Korea, Singapore, Australia, India, and the UAE to help support compliance with local data sovereignty requirements.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT 日本語 対応 料金プラン 公式", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT 日本語 対応 料金プラン 公式"
+
+Links: [{"title":"ChatGPT Rate Card (Enterprise token-based pricing) | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001415-chatgpt-rate-card-enterprise-token-based-pricing"},{"title":"ChatGPT 料金設定","url":"https://openai.com/business/pricing/"},{"title":"ChatGPT Business での請求とシートの管理 | OpenAI Help Center","url":"https://help.openai.com/ja-jp/articles/8792536-manage-billing-on-the-chatgpt-business-subscription-plan"},{"title":"ChatGPT 料金表（Enterprise のトークン制料金） | OpenAI Help Center","url":"https://help.openai.com/ja-jp/articles/20001415-chatgpt-%E6%96%99%E9%87%91%E8%A1%A8enterprise-%E3%81%AE%E3%83%88%E3%83%BC%E3%82%AF%E3%83%B3%E5%88%B6%E6%96%99%E9%87%91"},{"title":"About ChatGPT Pro tiers | OpenAI Help Center","url":"https://help.openai.com/en/articles/9793128-about-chatgpt-pro-tiers"},{"title":"ChatGPT Rate Card (Business, Enterprise/Edu credit-based pricing) | OpenAI Help Center","url":"https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing"},{"title":"What is ChatGPT Plus? | OpenAI Help Center","url":"https://help.openai.com/en/articles/6950777-what-is-chatgpt-plus"},{"title":"ChatGPT | OpenAI Help Center","url":"https://help.openai.com/ja-jp/collections/3742473-chatgpt"},{"title":"ChatGPT レート表（Business、Enterprise/Edu のクレジットベースの料金体系） | OpenAI Help Center","url":"https://help.openai.com/ja-jp/articles/11481834"},{"title":"ChatGPT Pro プランの概要 | OpenAI Help Center","url":"https://help.openai.com/ja-jp/articles/9793128-what-is-chatgpt-pro"}]
+
+検索結果から、ChatGPTの日本語対応と料金プランについての情報が得られました。以下が主な内容です：
+
+## ChatGPTの料金プラン（日本語対応）
+
+無料版のChatGPTは全員が利用可能で、有料プラン（Go、Plus、Business、Enterprise）はユーザーあたり月単位で料金設定されています。
+
+### 個人向けプラン
+- **Plus**：$20/月の月額サブスクリプション
+- **Pro**：Pro（$100）ではPlusの5倍の利用量、Pro（$200）ではPlusの20倍の利用量が利用可能
+
+### ビジネス向けプラン
+Go、Free、Plusプランは個人向け、BusinessとEnterpriseはビジネス向けで、Businessプランは2ユーザーから利用可能です。
+
+## 日本語サポート
+
+検索結果には日本語版のOpenAI Help Centerが含まれており、ChatGPT BusinessおよびEnterpriseのトークン制料金やその他の機能について日本語で説明されています。ChatGPTは日本語に対応しており、公式サイトでも日本語情報が提供されています。
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT Free plan model limits GPT-5 what included", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT Free plan model limits GPT-5 what included"
+
+Links: [{"title":"GPT-5.6 and GPT-6 Pro in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/11909943-gpt-5-in-chatgpt"},{"title":"ChatGPT Free Tier FAQ | OpenAI Help Center","url":"https://help.openai.com/en/articles/9275245-chatgpt-free-tier-faq"},{"title":"ChatGPT Business models and limits | OpenAI Help Center","url":"https://help.openai.com/en/articles/12003714-chatgpt-business-models-limits"},{"title":"ChatGPT Enterprise and Edu - Models & Limits | OpenAI Help Center","url":"https://help.openai.com/en/articles/11165333-chatgpt-enterprise-and-edu-models-limits"},{"title":"About ChatGPT Pro tiers | OpenAI Help Center","url":"https://help.openai.com/en/articles/9793128-about-chatgpt-pro-tiers"},{"title":"ChatGPT — Release Notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/6825453-chatgpt-release-notes"},{"title":"Model Release Notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/9624314-model-release-notes"},{"title":"ChatGPT Business - Models & Limits | OpenAI Help Center","url":"https://help.openai.com/en/articles/12003714-chatgpt-team-models-limits.zst"},{"title":"Introducing GPT-5 | OpenAI","url":"https://openai.com/index/introducing-gpt-5/"},{"title":"Introducing GPT-4o and more tools to ChatGPT free users | OpenAI","url":"https://openai.com/index/gpt-4o-and-more-tools-to-chatgpt-free/"}]
+
+Based on the search results, here's what's included in the ChatGPT Free plan regarding models and limits:
+
+## Models Included:
+
+Free users have access to GPT-5.6 Luna. Free and Go plans do not include GPT-5.6 Sol. These plans receive GPT-5.6 Luna.
+
+## Usage Limits:
+
+Free and Go users have unlimited everyday text chats, subject to abuse-prevention safeguards. However, advanced functionality, including data analysis, file uploads, and image creation, can have stricter limits than paid plans.
+
+Think is available in the ChatGPT mobile app and is rolling out on the web. When free users reach their usage limits, GPT usage follows your current Free tier model limit. When you reach that limit, GPT access pauses until the limit resets; ChatGPT shows the reset timing in-product.
+
+## Note About GPT-5:
+
+Regarding GPT-5 specifically, as of February 13, 2026, models GPT-4o, GPT-4.1, GPT-4.1 mini, OpenAI o4-mini, and GPT-5 (Instant and Thinking) have been retired from ChatGPT and are no longer available. The current main model for free users is GPT-5.6 Luna, which has replaced earlier versions.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "OpenAI API Agents SDK Responses API platform.openai.com/docs overview", "mode": "standard", "allowed_domains": ["openai.com", "platform.openai.com", "developers.openai.com"]}
+Web search results for query: "OpenAI API Agents SDK Responses API platform.openai.com/docs overview"
+
+Links: [{"title":"OpenAI API Platform Documentation","url":"https://developers.openai.com/api/docs"},{"title":"API Platform | OpenAI","url":"https://openai.com/api/"},{"title":"Agents | OpenAI API","url":"https://developers.openai.com/api/docs/guides/agents"},{"title":"Developer quickstart | OpenAI API","url":"https://developers.openai.com/api/docs/quickstart"},{"title":"Migrate to the Responses API | OpenAI API","url":"https://platform.openai.com/docs/guides/migrate-to-responses"},{"title":"New tools for building agents | OpenAI","url":"https://openai.com/index/new-tools-for-building-agents/"},{"title":"SDKs and CLI | OpenAI API","url":"https://developers.openai.com/api/docs/libraries"},{"title":"API Overview | OpenAI API Reference","url":"https://platform.openai.com/docs/api-reference/agents"},{"title":"New tools for building agents: Responses API, web search, file search, computer use, and Agents SDK - Announcements - OpenAI Developer Community","url":"https://community.openai.com/t/new-tools-for-building-agents-responses-api-web-search-file-search-computer-use-and-agents-sdk/1140896"}]
+
+Based on the search results, here's an overview of OpenAI's API Agents SDK and Responses API from platform.openai.com/docs:
+
+## Responses API Overview
+
+The Responses API is OpenAI's new API primitive, an evolution of Chat Completions which brings added simplicity and powerful agentic primitives to your integrations. While Chat Completions remains supported, Responses is recommended for all new projects.
+
+### Key Features
+
+The Responses API is a unified interface for building powerful, agent-like applications. It contains built-in tools like web search, file search, computer use, code interpreter, and remote MCPs. Seamless multi-turn interactions allow you to pass previous responses for higher accuracy reasoning results, and it includes native multimodal support for text and images.
+
+### Benefits
+
+The model can call multiple tools, like web_search, image_generation, file_search, code_interpreter, remote MCP servers, as well as custom functions, within the span of one API request. Additional advantages include lower costs due to improved cache utilization (40% to 80% improvement when compared to Chat Completions in internal tests) and stateful context using store: true to maintain state from turn to turn.
+
+## Agents SDK Overview
+
+OpenAI's open-source Agents SDK simplifies orchestrating multi-agent workflows with significant improvements over Swarm, an experimental SDK released previously. The Agents SDK works with the Responses API and Chat Completions API.
+
+The Agents SDK provides core features including easily configurable LLMs with clear instructions and built-in tools, and intelligent transfer of control between agents through handoffs.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"GPT-5.6\" Sol Terra Plus Pro Business Enterprise ChatGPT which plan", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: ""GPT-5.6" Sol Terra Plus Pro Business Enterprise ChatGPT which plan"
+
+Links: [{"title":"GPT-5.6 and GPT-6 Pro in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001354-gpt-56-and-gpt-6-pro-in-chatgpt"},{"title":"GPT-5.6: Frontier intelligence that scales with your ambition | OpenAI","url":"https://openai.com/index/gpt-5-6/"},{"title":"ChatGPT Business models and limits | OpenAI Help Center","url":"https://help.openai.com/en/articles/12003714-chatgpt-business-models-and-limits"},{"title":"Advancing the price-performance frontier with GPT-5.6 | OpenAI","url":"https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/"},{"title":"Introducing GPT-6 Sol and Luna | OpenAI","url":"https://openai.com/index/introducing-gpt-6-sol-and-luna/"},{"title":"GPT-5.6 in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001354-gpt-5-6-in-chatgpt"},{"title":"ChatGPT Rate Card (Business, Enterprise/Edu credit-based pricing) | OpenAI Help Center","url":"https://help-lb.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing"},{"title":"ChatGPT Rate Card (Enterprise token-based pricing) | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001415-chatgpt-rate-card-enterprise-token-based-pricing"},{"title":"Previewing GPT-5.6 Sol: a next-generation model | OpenAI","url":"https://openai.com/index/previewing-gpt-5-6-sol/"},{"title":"Business Pricing | OpenAI","url":"https://openai.com/business/pricing/"}]
+
+Based on the search results, here's what I found about GPT-5.6 across different ChatGPT plans:
+
+## GPT-5.6 Availability by Plan
+
+Plus, Pro, Business, and Enterprise users access GPT-5.6 Sol through medium and higher effort settings, and Pro and Enterprise users can also select GPT-5.6 Sol Pro for the highest-quality results on complex tasks.
+
+More specifically:
+
+**Standard Chats:**
+- Free and Go users receive GPT-5.6 Luna.
+- Plus, Pro, Business, and Enterprise users access GPT-5.6 Sol through medium and higher effort settings, and Pro and Enterprise users can also select GPT-5.6 Sol Pro for the highest-quality results on complex tasks.
+
+**ChatGPT Work and Codex:**
+- Free and Go users access GPT-5.6 Terra, while Plus, Pro, Business, and Enterprise users can choose among GPT-5.6 Sol, Terra, and Luna and set an effort level for each.
+
+## The Three Tiers
+
+GPT-5.6 spans three model tiers: Sol, the flagship; Terra, a lower-cost model with performance competitive with GPT-5.5; and Luna, the fastest and most affordable model.
+
+So the key distinction is: **Sol** is available to paid users (Plus, Pro, Business, Enterprise), **Terra** is for lower-cost work, and **Luna** is the most affordable option.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"GPT-6 Pro\" ChatGPT Pro plan", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: ""GPT-6 Pro" ChatGPT Pro plan"
+
+Links: [{"title":"GPT-5.6 and GPT-6 Pro in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001354-gpt-56-and-gpt-6-pro-in-chatgpt"},{"title":"About ChatGPT Pro tiers | OpenAI Help Center","url":"https://help.openai.com/en/articles/9793128-about-chatgpt-pro-tiers"},{"title":"ChatGPT Business models and limits | OpenAI Help Center","url":"https://help.openai.com/en/articles/12003714-chatgpt-business-models-and-limits"},{"title":"Managing usage with GPT-6 Astra in Work and Codex | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001516-managing-usage-with-gpt-6-astra-in-work-and-codex"},{"title":"DevDay 2026 Recap | OpenAI","url":"https://openai.com/index/devday-2026-recap/"},{"title":"Looking to upgrade to the $500 plan, but want to know GPT 6 Pro / 5.6 Sol Pro message caps before doing such - ChatGPT - OpenAI Developer Community","url":"https://community.openai.com/t/looking-to-upgrade-to-the-500-plan-but-want-to-know-gpt-6-pro-5-6-sol-pro-message-caps-before-doing-such/1402048"},{"title":"ChatGPT Enterprise and Edu - Models & Limits | OpenAI Help Center","url":"https://help.openai.com/en/articles/11165333-chatgpt-enterprise-and-edu-models-limits"},{"title":"ChatGPT Work and Codex | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001275-chatgpt-work-and-codex"},{"title":"ChatGPT Rate Card (Business, Enterprise/Edu credit-based pricing) | OpenAI Help Center","url":"https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing"},{"title":"Pricing | ChatGPT","url":"https://openai.com/chatgpt/pricing/"}]
+
+Based on the search results, here's what I found about GPT-6 Pro and ChatGPT Pro plans:
+
+## GPT-6 Pro Availability
+
+GPT-6 Pro, powered by GPT-6 Astra, is available in ChatGPT for Pro $100, Pro $200, Business and Enterprise plans.
+
+## ChatGPT Pro Plan Tiers
+
+ChatGPT Pro now offers Pro 500, a new $500/month plan that includes Astra Ultrafast. Pro 200 is also available for new subscriptions again.
+
+The three Pro tier options include:
+- **Pro 100** ($100/month)
+- **Pro 200** ($200/month)  
+- **Pro 500** ($500/month)
+
+## Features Included
+
+ChatGPT Pro includes Pro models, Codex, deep research, image creation, memory and file uploads.
+
+## Usage Allowances
+
+Pro 200 includes more usage than Pro 100. Pro 500 offers the highest included usage of the three plans. Among Pro plans, Ultrafast is available only on Pro 500.
+
+The search results indicate that model allowances vary by tier and there are usage limits that reset on specific schedules, though the exact message limits for each tier were not fully detailed in these results.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT Go plan Japan price yen available", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT Go plan Japan price yen available"
+
+Links: [{"title":"Introducing ChatGPT Go, now available worldwide | OpenAI","url":"https://openai.com/index/introducing-chatgpt-go/"},{"title":"Multi‑currency billing | OpenAI Help Center","url":"https://help.openai.com/en/articles/10421635-multi-currency-billing"},{"title":"What is ChatGPT Go? | OpenAI Help Center","url":"https://help.openai.com/en/articles/11989085-what-is-chatgpt-go"},{"title":"Business Pricing | OpenAI","url":"https://openai.com/business/pricing/"},{"title":"Search results for: Too expensive","url":"https://help.openai.com/en/?q=Too+expensive+"},{"title":"Pricing | ChatGPT","url":"https://openai.com/chatgpt/pricing/"},{"title":"LY Corporation: Driving growth and ‘WOW’ moments with OpenAI | OpenAI","url":"https://openai.com/index/ly-corporation/"},{"title":"GPT-5.1: A smarter, more conversational ChatGPT | OpenAI","url":"https://openai.com/index/gpt-5-1/"},{"title":"Introducing ChatGPT Plus | OpenAI","url":"https://openai.com/index/chatgpt-plus/"},{"title":"Pricing | OpenAI API","url":"https://developers.openai.com/api/docs/pricing"}]
+
+Based on the search results, here's what I found about ChatGPT Go in Japan:
+
+## Availability
+
+ChatGPT Go is available in all countries ChatGPT is supported in, which includes Japan.
+
+## Pricing
+
+Regarding pricing in Japan specifically, all purchases are in USD - OpenAI offers local currency billing in a limited set of countries. The search results indicate that Japan is listed among the countries supporting local currency billing in JPY (¥), which suggests yen pricing should be available.
+
+However, the search results don't provide the specific yen price for ChatGPT Go in Japan. For reference, in the US, Go is available for $8 per month.
+
+For the exact yen price in Japan, you would need to visit the ChatGPT pricing page directly or log into your ChatGPT account, as OpenAI adjusts pricing by region and the specific yen amount may differ from the USD rate.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "ChatGPT memory Projects Deep Research image generation voice features overview official", "mode": "standard", "allowed_domains": ["openai.com", "help.openai.com"]}
+Web search results for query: "ChatGPT memory Projects Deep Research image generation voice features overview official"
+
+Links: [{"title":"ChatGPT Capabilities Overview | OpenAI Help Center","url":"https://help.openai.com/en/articles/9260256-chatgpt-capabilities-overview"},{"title":"Projects in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/10169521-projects-in-chatgpt"},{"title":"ChatGPT Business release notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/11391654-chatgpt-business-release-notes"},{"title":"ChatGPT — Release Notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/6825453-chatgpt-release-notes"},{"title":"Models | OpenAI API","url":"https://developers.openai.com/api/docs/models"},{"title":"Deep research in ChatGPT | OpenAI Help Center","url":"https://help.openai.com/en/articles/10500283-deep-research-in-chatgpt"},{"title":"ChatGPT Voice | OpenAI Help Center","url":"https://help.openai.com/en/articles/20001274-chatgpt-voice"},{"title":"ChatGPT Enterprise and Edu release notes | OpenAI Help Center","url":"https://help.openai.com/en/articles/10128477-chatgpt-enterprise-and-edu-release-notes"},{"title":"What's new | ChatGPT Learn","url":"https://developers.openai.com/codex/whats-new"},{"title":"ChatGPT Enterprise and Edu - Models & Limits | OpenAI Help Center","url":"https://help.openai.com/en/articles/11165333-chatgpt-enterprise-and-edu-models-limits"}]
+
+Based on the official OpenAI help documentation, here's an overview of ChatGPT's key features:
+
+## Memory
+When memory is turned on, ChatGPT can remember useful facts you've shared (like your name, preferences, or goals) to personalize future responses. You can view, edit, or delete memories at any time.
+
+## Projects
+Projects let you organize chats, files, and context under a shared objective. This is ideal for multi-session workflows, collaborative efforts, or long-running research topics. You can share a project with your team and others to move faster together and create a live context hub for ongoing work, with ChatGPT drawing from anything in the shared project – including chats, uploaded files and custom instructions.
+
+## Deep Research
+Designed for multi-step research tasks, ChatGPT reads and synthesizes content across multiple online sources and produces cited, structured outputs, useful for strategy, reports, and literature reviews.
+
+## Image Generation
+You can ask ChatGPT to generate illustrations, mockups, or creative visuals from simple text prompts. You can also modify images using natural language, such as "add a sunset in the background."
+
+## Voice Features
+Speak naturally with ChatGPT using the mobile app or supported desktop/web platforms, having a hands-free conversation, choosing your preferred voice, and receiving spoken responses. ChatGPT Voice is now powered by GPT-Live-1 for paid users and GPT-Live-1 mini for Free users, with both models able to listen and speak at the same time.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.

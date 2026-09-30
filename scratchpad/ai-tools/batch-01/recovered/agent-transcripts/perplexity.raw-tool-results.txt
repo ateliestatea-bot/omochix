@@ -1,0 +1,543 @@
+# Raw tool results recovered from agent-a75e585ea5c573ebd.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "Perplexity pricing 2026 official pricing page", "mode": "standard"}
+Web search results for query: "Perplexity pricing 2026 official pricing page"
+
+Links: [{"title":"perplexity pricing","url":"https://www.cloudzero.com/blog/perplexity-pricing"},{"title":"Perplexity Pricing in 2026 for Individuals, Orgs & Developers","url":"https://www.finout.io/blog/perplexity-pricing-in-2026"},{"title":"Perplexity Pricing & Plans (2026)","url":"https://pricepertoken.com/subscriptions/perplexity"},{"title":"DEV Community","url":"https://dev.to/khushi_dubey/perplexity-ai-pricing-2026-2cpk"},{"title":"suprmind.ai","url":"https://suprmind.ai/hub/?p=5210"},{"title":"Perplexity AI Pricing Change — July 2026","url":"https://costbench.com/changelog/perplexity-plan-removed-2026-07/"},{"title":"Perplexity AI Price History","url":"https://costbench.com/software/ai-chatbots/perplexity/price-history/"},{"title":"Quick Answer","url":"https://costbench.com/software/ai-chatbots/perplexity"},{"title":"How to Negotiate Perplexity AI Pricing in 2026","url":"https://costbench.com/software/ai-chatbots/perplexity/negotiation/"}]
+
+Based on the search results, here's the current Perplexity pricing for 2026:
+
+## Consumer Plans
+
+The Free plan is $0, Pro is $20 a month, and Max is $200 a month. Additionally, students pay $10.
+
+### Plan Details:
+
+- **Free**: Unlimited basic searches but limits Pro Search queries to approximately 5 per day, with no access to advanced AI models, image generation, or premium support.
+
+- **Pro ($20/month)**: It costs $20 per month or $200 per year (approximately $16.67/month billed annually — a ~17% saving).
+
+- **Max ($200/month)**: The premium tier for power users with the highest limits across features.
+
+## Enterprise Plans
+
+Enterprise Pro is listed at $40/user/month for teams, and Enterprise Max is listed at $325/user/month for organizations.
+
+## Important Note
+
+Perplexity plans changed shape more than once in 2026, with a lineup trim in early July. For the most current and official pricing details, you can visit the official Perplexity pricing page directly at perplexity.ai.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Perplexity API pricing Sonar docs.perplexity.ai", "mode": "standard"}
+Web search results for query: "Perplexity API pricing Sonar docs.perplexity.ai"
+
+Links: [{"title":"docs.perplexity.ai","url":"https://docs.perplexity.ai/guides/pricing"},{"title":"docs.perplexity.ai","url":"https://docs.perplexity.ai/guides/pricing?country=20"},{"title":"> ## Documentation Index","url":"https://docs.perplexity.ai/guides/pricing.md"},{"title":"dist / docs / perplexity.js","url":"https://www.lmstudio.ai/alex-garbar/api-docs/files/dist/docs/perplexity.js"},{"title":"src / docs / perplexity.ts","url":"https://www.lmstudio.ai/alex-garbar/api-docs/files/src/docs/perplexity.ts"},{"title":"API Pricing- Sonar","url":"https://community.perplexity.ai/t/api-pricing-sonar/2158"},{"title":"Perplexity API Pricing: Full Breakdown of Costs (Jun 2026)","url":"https://developer.puter.com/tutorials/perplexity-api-pricing/"},{"title":"Table Of Contents","url":"https://www.cloudzero.com/blog/perplexity-api-pricing/"},{"title":"perplexity search api and sonar","url":"https://metronome.com/pricing-index/perplexity-search-api-and-sonar"},{"title":"Perplexity Sonar API Pricing 2026","url":"https://costbench.com/software/ai-search-apis/perplexity-sonar-api/"}]
+
+I found the official Perplexity API pricing documentation from docs.perplexity.ai. Here's the key information about Sonar API pricing:
+
+## Sonar API Pricing
+
+Total cost per query = Token costs + Request fee (varies by search context size, applies to Sonar, Sonar Pro, and Sonar Reasoning Pro models only)
+
+### Token Pricing
+
+Token pricing is based on the number of tokens in your request and response, with Sonar at $1 per 1M input and output tokens, Sonar Pro at $3 per 1M input and $15 per 1M output tokens, Sonar Reasoning Pro at $2 per 1M input and $8 per 1M output tokens, and Sonar Deep Research at $2 per 1M input and $8 per 1M output tokens
+
+### Additional Services
+
+Search API pricing is $5.00 per 1K requests with no token costs, and fetch_url costs $0.0005 per invocation.
+
+### Embeddings API
+
+For embeddings, pplx-embed-v1-0.6b costs $0.004 per 1M tokens and pplx-embed-v1-4b costs $0.03 per 1M tokens.
+
+You can view the complete pricing documentation directly at https://docs.perplexity.ai/guides/pricing
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://www.perplexity.ai/pricing", "prompt": "Extract all pricing plans, prices, billing cadence, and features for each plan (Free, Pro, Max, Enterprise, etc). Also note any mention of commercial use / business terms."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://docs.perplexity.ai/guides/pricing", "prompt": "Extract all API pricing details: Sonar models, token pricing, request fees, search API pricing, embeddings pricing."}
+# Perplexity API Pricing Summary
+
+## Sonar Models
+
+The platform offers four Sonar variants with distinct pricing structures:
+
+1. **Sonar** - Standard model with input/output token pricing plus tiered request fees based on search context (low: $5, medium: $8, high: $12 per 1K requests)
+
+2. **Sonar Pro** - Enhanced version charging $3 input/$15 output per million tokens, plus request fees ($6-14 per 1K depending on context)
+
+3. **Sonar Reasoning Pro** - Specialized reasoning model at $2 input/$8 output per million tokens with identical request fee structure
+
+4. **Sonar Deep Research** - Comprehensive research tool billing citation tokens ($2/1M), reasoning tokens ($3/1M), and search queries ($5 per 1K) in addition to base input/output costs
+
+## Token Pricing Structure
+
+The calculator reveals that "Input tokens: [amount] × [rate]/1M" follows a consistent metering approach across all models.
+
+## Request-Based Fees
+
+Search context size determines per-request charges: low-cost queries differ significantly from high-complexity requests that retrieve more comprehensive web information.
+
+## Search API Pricing
+
+The Search API charges $5.00 per 1,000 requests for standard searches and $1.00 per 1,000 for fast-mode variants, with no separate token costs.
+
+## Embeddings Pricing
+
+Four embedding models range from $0.004 to $0.05 per million tokens, with dimensions varying from 1,024 to 2,560.
+
+######## WebSearch {"query": "Perplexity AI Terms of Service commercial use business", "mode": "standard"}
+Web search results for query: "Perplexity AI Terms of Service commercial use business"
+
+Links: [{"title":"Perplexity Legal Hub","url":"https://hub-prod.perplexity.ai/hub/legal/enterprise-terms-of-service"},{"title":"perplexity enterprise terms","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-enterprise-terms/"},{"title":"perplexity api terms of service","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-api-terms-of-service/"},{"title":"perplexity terms of service","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-terms-of-service/"},{"title":"Perplexity AI · Perplexity Enterprise Terms · View original document ↗","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-enterprise-terms/acceptable-use-policy-and-termination-for-breach/"},{"title":"Provision record","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-ai-terms-of-service/provision/CA-P-023912/prohibition-on-commercial-exploitation-of-services/"},{"title":"Perplexity AI · Perplexity AI Terms of Service · View original document ↗","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-ai-terms-of-service/provision/CA-P-023900/services-licensed-for-personal-non-commercial-use-only/"},{"title":"Provision record","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-terms-of-service/provision/CA-P-049597/prohibition-on-commercial-exploitation-of-services/"},{"title":"Perplexity — Terms of Service","url":"https://tostracker.app/document/perplexity"}]
+
+Based on the search results, here's what Perplexity AI's Terms of Service say about commercial use and business:
+
+## Standard Terms of Service (Free/Consumer)
+
+Perplexity's standard Terms of Service permit users to use the Services only for personal, non-commercial purposes. More specifically, the terms prohibit users from exploiting the Services for any commercial purpose, including communicating or facilitating any commercial advertisement or solicitation.
+
+## Enterprise/Business Options
+
+Perplexity offers separate agreements for legitimate business use:
+
+1. **Enterprise Terms**: Under the Enterprise Terms, customers may use the Services for their business purposes on a non-exclusive, non-sublicensable and non-transferable basis. The agreement states that Perplexity can use aggregated, de-identified data from enterprise interactions to improve its AI models, and the business customer is responsible for ensuring their employees and end users follow the acceptable use policy.
+
+2. **API Terms**: The Perplexity AI API Terms of Service govern developer and business use of Perplexity's API to build applications powered by its AI search and answer capabilities.
+
+## Key Takeaway
+
+The standard Terms do not govern use of Perplexity's APIs or Perplexity Pro for Enterprise, which are governed by separate terms. So commercial or business use requires either an enterprise agreement or API license rather than the standard consumer terms.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Perplexity Comet browser official", "mode": "standard"}
+Web search results for query: "Perplexity Comet browser official"
+
+Links: [{"title":"Perplexity’s Comet Browser Now Available to All","url":"https://www.mitsloanme.com/?p=9049"},{"title":"www.digitalgravity.ae","url":"https://www.digitalgravity.ae/blog/wp-json/wp/v2/posts/8863"},{"title":"Perplexity launches \"Comet\" AI web browser to take on Chrome and Edge — and you can use it today for $200 a month","url":"https://windowscentral.com/artificial-intelligence/perplexity-launches-comet-ai-web-browser-to-take-on-chrome-and-edge-and-you-can-use-it-today-for-usd200-a-month"},{"title":"Perplexity Comet Browser Launched In India: Who Is Eligible, How To Download","url":"https://www.etvbharat.com/en/!technology/perplexity-comet-browser-launched-in-india-who-is-eliglible-how-to-download-enn25092302547"},{"title":"Perplexity's AI browser Comet is now free for everyone — here's how to download it","url":"https://www.tomsguide.com/ai/perplexity/perplexitys-ai-browser-comet-is-now-free-for-everyone-heres-how-to-download-it"},{"title":"Perplexity makes Comet AI browser free worldwide","url":"https://yourstory.com/ai-story/perplexity-ai-comet-browser-free-worldwide"},{"title":"Perplexity Throws Open the Doors to Its Comet AI Browser, Now Free for Everyone","url":"https://www.techrepublic.com/fr/article/news-perplexity-comet-ai-browser-free/"},{"title":"perplexity opens comet ai browser access worldwide","url":"https://www.createwith.com/tool/perplexity/updates/perplexity-opens-comet-ai-browser-access-worldwide"},{"title":"Chipp.in Tech News and Reviews","url":"https://chipp.in/news/you-can-now-try-perplexitys-comet-ai-browser-for-free"}]
+
+Based on the search results, here's what I found about Perplexity's Comet browser:
+
+## Overview
+
+Perplexity has officially released its Comet browser to the world, free for everyone. The company declared "The internet is better on Comet," emphasizing that the browser was designed to restore curiosity in an internet ecosystem dominated by ads, click funnels, and transactional content.
+
+## Key Features
+
+At the heart of Comet is its AI-powered Comet Assistant, a tool that accompanies users across browsing sessions to answer questions, streamline tasks, and minimize distractions. Each new tab opens with a fresh assistant, enabling seamless research, scheduling, shopping, coding, and more.
+
+The browser has placed an "on-page" sidecar assistant alongside its AI search, allowing users to ask questions, summarise what is on screen and navigate web pages in context.
+
+## Availability & Rollout
+
+The Comet browser was launched in July 2025 and is built on Perplexity's AI search engine. Comet has moved from an invite-only tool for subscribers of Perplexity's $200‑per‑month Max plan in July 2025 to a free download for all as of 2 October 2025.
+
+Comet has been made available on Windows, macOS and iOS, with Android marked "coming soon."
+
+## Technical Specifications
+
+Comet is a Chromium-based browser. That is good on the one hand, as it offers similar performance and compatibility as Google Chrome.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Perplexity pricing plans \"Free\" \"Pro\" \"Max\" site:perplexity.ai", "mode": "standard"}
+Web search results for query: "Perplexity pricing plans "Free" "Pro" "Max" site:perplexity.ai"
+
+Links: [{"title":"perplexity pricing","url":"https://www.cloudzero.com/blog/perplexity-pricing"},{"title":"Perplexity pricing in 2025: Free vs. Pro, features, and costs","url":"https://withorb.com/blog/perplexity-pricing"},{"title":"# Perplexity Pricing 2026: Plans, Pro, Max, and Is It Worth It?","url":"https://geotoolbox.ai/blog/perplexity-pricing.md"},{"title":"Perplexity pricing 2026: Is the $20/mo Pro plan worth it?","url":"https://www.eesel.ai/blog/perplexity-pricing"},{"title":"Blog-Perplexity AI Pricing: A Comprehensive Guide for 2025 807","url":"https://www.photonpay.com/hk/blog/article/perplexity-ai-pricing"},{"title":"www.temperstack.com","url":"https://www.temperstack.com/plans/perplexity/"},{"title":"Perplexity Pricing & Plans (2026)","url":"https://pricepertoken.com/subscriptions/perplexity"},{"title":"Quick Answer","url":"https://costbench.com/software/ai-chatbots/perplexity"},{"title":"Perplexity AI Free Plan 2026: What's Included & What's Not","url":"https://costbench.com/software/ai-chatbots/perplexity/free-plan/"}]
+
+Based on the search results, here's an overview of Perplexity's pricing plans:
+
+## Individual Plans
+
+**Free Plan**: The Free plan gives you Perplexity's core product at $0: cited answers to real questions, with limits on how hard you can push it. You get unlimited "Quick Searches," but you're capped at three "Pro Searches" a day.
+
+**Pro Plan** ($20/month): This is the main paid plan for people who use it a lot. For $20 a month, you get over 300 Pro searches a day, access to top-tier AI models like GPT-4 and Claude 3, unlimited file uploads (you can drop in a PDF and ask questions about it), and even AI image generation.
+
+**Max Plan** ($200/month): This one's for what Perplexity calls "the most ambitious people." It gives you unlimited access to the absolute latest AI models, a first look at new features like their AI email assistant, and priority support.
+
+## Enterprise Plans
+
+**Enterprise Pro** ($40/user/month): This plan gives each user everything in the Pro tier but adds the essential business tools. You get one bill for everyone, a dashboard to manage your team, and better data security and privacy (including SOC 2 compliance).
+
+**Enterprise Max** ($325/user/month): Designed for Orgs running Perplexity as infrastructure with highest limits plus enterprise security.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://www.perplexity.ai/hub/legal/terms-of-service", "prompt": "Find any language about personal use, non-commercial use, or prohibition on commercial exploitation of the services. Quote relevant clauses."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "\"perplexity.ai/help\" pricing plans Pro Max free searches per day", "mode": "standard"}
+Web search results for query: ""perplexity.ai/help" pricing plans Pro Max free searches per day"
+
+Links: [{"title":"Perplexity pricing in 2025: Free vs. Pro, features, and costs","url":"https://withorb.com/blog/perplexity-pricing"},{"title":"perplexity pricing","url":"https://team-gpt.com/blog/perplexity-pricing"},{"title":"# Perplexity Pricing 2026: Plans, Pro, Max, and Is It Worth It?","url":"https://geotoolbox.ai/blog/perplexity-pricing.md"},{"title":"Generative AI","url":"https://aiweekly.co/learning-ai/generative-ai/how-to-use-perplexity"},{"title":"www.temperstack.com","url":"https://www.temperstack.com/plans/perplexity/"},{"title":"Perplexity Pricing & Plans (2026)","url":"https://pricepertoken.com/subscriptions/perplexity"},{"title":"suprmind.ai","url":"https://suprmind.ai/hub/?p=5210"},{"title":"Quick Answer","url":"https://costbench.com/software/ai-chatbots/perplexity"},{"title":"perplexity pricing","url":"https://juma.ai/blog/perplexity-pricing"}]
+
+Based on the search results, here's a summary of Perplexity's pricing plans:
+
+## Free Plan
+Perplexity's free plan includes unlimited quick searches and 5 Pro searches per day. However, Perplexity's help center lists three Pro searches a day, indicating there may be some variation in current limits.
+
+## Pro Plan
+The Pro plan costs $20/month (or $200/year). This plan adds unlimited Pro Search, higher Deep Research volume, file uploads, and persistent Spaces workspaces.
+
+## Max Plan
+Perplexity Max costs $200/month (or $2,000/year). The Max plan includes no fixed limits on searches per day, access to the latest advanced AI models, enhanced Copilot features, and priority API with faster in-app response times.
+
+## Summary
+The platform offers tiered pricing starting with a free option that includes limited daily advanced searches, a Pro tier at $20/month with generous search allowances, and a Max tier at $200/month for power users with unlimited search capabilities.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Perplexity Comet browser 2026 changelog updates September", "mode": "standard"}
+Web search results for query: "Perplexity Comet browser 2026 changelog updates September"
+
+Links: [{"title":"Perplexity rolls out Comet: The AI-powered browser","url":"https://datanorth.ai/news/perplexity-unveils-comet-the-ai-powered-browser"},{"title":"perplexitys comet ai browser is coming to iphone soon","url":"https://appleinsider.com/articles/26/02/19/perplexitys-comet-ai-browser-is-coming-to-iphone-soon"},{"title":"perplexity releases comet browser globally at no cost after three month limited rollout","url":"https://ppc.land/perplexity-releases-comet-browser-globally-at-no-cost-after-three-month-limited-rollout/"},{"title":"Let’s Get Started","url":"https://www.digitalgravity.ae/blog/?p=8863"},{"title":"whats new perplexity 2026","url":"https://beginnersinai.org/whats-new-perplexity-2026/"},{"title":"Perplexity makes Comet AI browser free worldwide","url":"https://yourstory.com/ai-story/perplexity-ai-comet-browser-free-worldwide"},{"title":"perplexity ai news","url":"https://s10500.lovable.app/insights/perplexity-ai-news"},{"title":"perplexity adds privacy snapshot and assistant controls to comet","url":"https://www.createwith.com/tool/perplexity/updates/perplexity-adds-privacy-snapshot-and-assistant-controls-to-comet"},{"title":"Українська правда","url":"https://mezha.ua/en/news/perplexity-makes-comet-free-305299/amp/"}]
+
+Based on the search results, here's what I found about Perplexity Comet browser updates:
+
+## Recent 2026 Developments
+
+Perplexity made 2026 its "browser year," with the flagship release being the Comet browser, which launched globally to all iOS users alongside Android, Mac, and Windows versions.
+
+## September-October 2025 Updates (Most Recent Release Period)
+
+While there aren't specific September 2026 changelog entries in the search results, here are the significant updates from the 2025-2026 period:
+
+**October 2, 2025 Release:**
+- Perplexity released its Comet browser to the public at no cost, marking the end of a limited release that began on July 9
+- The announcement introduced Background Assistants, which operate simultaneously and asynchronously to complete tasks independently of active browser sessions, joining the previously announced Email Assistant and Comet Assistant
+
+**2026 Updates:**
+- Perplexity upgraded Deep Research to state-of-the-art performance, now running on Claude Opus 4.5 for Max and Pro users, with the ability to generate presentations, spreadsheets, dashboards, and websites directly
+- Voice Mode now uses OpenAI's GPT Realtime 1.5 (25%+ more reliable)
+- Recent privacy updates include a new Privacy Snapshot widget on the Comet homepage, new assistant settings that let users decide which actions the assistant can take, and options to block the assistant from interacting with websites
+
+The search results don't contain a specific September 2026 changelog, but these represent the major updates to the Comet browser throughout 2025-2026.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Perplexity AI models available \"GPT\" \"Claude\" \"Gemini\" model picker 2026", "mode": "standard"}
+Web search results for query: "Perplexity AI models available "GPT" "Claude" "Gemini" model picker 2026"
+
+Links: [{"title":"DEV Community","url":"https://dev.to/dr_hernani_costa/perplexity-ai-models-2025-which-model-fits-your-workflow-3808"},{"title":"# Perplexity AI Models: Choose GPT-4, Claude & More","url":"https://radar.firstaimovers.com/perplexity-ai-models-choose-gpt4-claude.md"},{"title":"perplexity ai models choose gpt4 claude","url":"https://radar.firstaimovers.com/perplexity-ai-models-choose-gpt4-claude"},{"title":"perplexity pro tip pick the right model","url":"https://www.firstaimovers.com/p/perplexity-pro-tip-pick-the-right-model"},{"title":"# Perplexity AI Models 2025: Complete Guide for Researchers","url":"https://radar.firstaimovers.com/perplexity-ai-models-2025-complete-guide.md"},{"title":"perplexity vs chatgpt vs claude vs gemini 2026","url":"https://toolhalla.ai/blog/perplexity-vs-chatgpt-vs-claude-vs-gemini-2026"},{"title":"# Perplexity Pro Models: GPT-4 vs Claude vs Gemini Guide","url":"https://radar.firstaimovers.com/perplexity-pro-models-gpt4-claude-gemini-guide.md"},{"title":"Perplexity Pro Models: GPT-4 vs Claude vs Gemini Guide","url":"https://radar.firstaimovers.com/perplexity-pro-models-gpt4-claude-gemini-guide"},{"title":"Choosing the Right AI Model in Perplexity","url":"https://articles.firstaimovers.com/articles/perplexity-choose-ai-model/"}]
+
+Based on the search results, here's what's available for Perplexity AI models in 2026:
+
+## Available Models
+
+Perplexity offers eight AI models as of December 2025: Best (default), Sonar, GPT-5.1, Claude Opus 4.5, Claude Sonnet 4.5, Gemini 3 Pro, Grok 4.1, and Kimi K2 Thinking.
+
+## Model Picker Access
+
+Free users access the "Best" mode, which automatically selects an optimized model for quick, accurate answers. Pro subscribers unlock manual model selection, allowing them to choose from cutting-edge options like OpenAI's GPT-5.1 for complex reasoning, Anthropic's Claude Opus 4.5 for detailed analysis, or Google's Gemini 3 Pro for multimodal tasks.
+
+## Model Strengths by Task
+
+The models have different strengths depending on your needs:
+- GPT-4.1 handles long context and nuanced reasoning with top citation accuracy for deep research
+- Claude 4 Sonnet is faster with a friendlier tone and lower token cost for conversational Q&A
+- Gemini 2.5 generates many diverse ideas and images quickly for rapid brainstorming
+- O3 is tuned for step-by-step reasoning and structured output for code review or bug fixes
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://www.perplexity.ai/changelog", "prompt": "List recent changelog entries, especially about pricing changes, Comet browser, available AI models, Deep Research, and new features in 2026."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://www.perplexity.ai/help/faq", "prompt": "Find information about pricing plans, free plan limits, Pro plan features, Max plan, AI models available, commercial use, and Japanese language support."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "site:perplexity.ai models Pro Search choose", "mode": "standard"}
+Web search results for query: "site:perplexity.ai models Pro Search choose"
+
+Links: [{"title":"DEV Community","url":"https://dev.to/dr_hernani_costa/ai-model-selection-in-perplexity-gpt-4-claude-beyond-2a4l"},{"title":"perplexity choose ai model","url":"https://www.firstaimovers.com/p/perplexity-choose-ai-model"},{"title":"What AI models are available in Perplexity?","url":"https://www.firstaimovers.com/p/perplexity-ai-models-2025-guide"},{"title":"# Perplexity AI Models: Choose GPT-4, Claude & More","url":"https://radar.firstaimovers.com/perplexity-ai-models-choose-gpt4-claude.md"},{"title":"perplexity ai models choose gpt4 claude","url":"https://radar.firstaimovers.com/perplexity-ai-models-choose-gpt4-claude"},{"title":"Choosing the Right AI Model in Perplexity","url":"https://articles.firstaimovers.com/articles/perplexity-choose-ai-model/"},{"title":"# Perplexity AI Models 2025: Complete Guide for Researchers","url":"https://radar.firstaimovers.com/perplexity-ai-models-2025-complete-guide.md"},{"title":"Perplexity AI Models 2025: Complete Guide for Researchers","url":"https://radar.firstaimovers.com/perplexity-ai-models-2025-complete-guide"},{"title":"r/perplexity_ai Mar 04 '25","url":"https://redlib.hbubli.cc/r/perplexity_ai/comments/1j3girp/ai_models_how_to"}]
+
+Based on the search results, here's what I found about Perplexity models and Pro Search:
+
+## Model Selection in Perplexity
+
+Perplexity AI offers multiple AI models to power its answers, and on the free plan, Perplexity automatically uses a default model optimized for quick, accurate answers ("Best" mode).
+
+Free users get a limited number of Pro Searches with advanced models per day but cannot manually select specific models, while upgrading to Perplexity Pro unlocks advanced model selection, allowing Pro users to choose from cutting-edge models like GPT-4.1, o3, Claude 4.0 (Sonnet), Google Gemini 2.5, and more via a dropdown at the top of the chat interface.
+
+## How to Choose a Model
+
+To select a different AI model, click the model selector icon in the search input box to choose your preferred AI model from the dropdown menu, which appears directly in the search bar alongside other tools like file attachments and voice input, showing the complete list of available models.
+
+## Available Models
+
+Perplexity offers eight AI models as of December 2025: Best (default), Sonar, Claude Opus 4.5, Claude Sonnet 4.5, Grok 4.1, and Kimi K2 Thinking.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Perplexity 日本語 対応 公式 ヘルプ", "mode": "standard"}
+Web search results for query: "Perplexity 日本語 対応 公式 ヘルプ"
+
+Links: [{"title":"- 作成日 : 2026年7月31日","url":"https://biz.moneyforward.com/ai/basic/?p=6823"},{"title":"- 作成日 : 2026年7月31日","url":"https://biz.moneyforward.com/ai/basic/6823/"},{"title":"how to use perplexity pro","url":"https://www.gizmodo.jp/2024/06/how-to-use-perplexity-pro.html"},{"title":"PERPLEXとは? わかりやすく解説","url":"https://www.weblio.jp/content/PERPLEX"},{"title":"perplexityとは? わかりやすく解説","url":"https://www.weblio.jp/content/perplexity"},{"title":"perplexとは? わかりやすく解説","url":"https://www.weblio.jp/content/perplex"},{"title":"Perplexity Assistantでできること","url":"https://www.lifehacker.jp/article/2502-new-perplexity-ai-assistant-for-android/?page=2"},{"title":"RubyGems Navigation menu","url":"https://rubygems.org/gems/perplexity_api/versions/0.1.1?locale=ja"},{"title":"aipicks.jp","url":"https://aipicks.jp/tool/perplexity/japanese"}]
+
+検索結果が返ってきました。以下のような情報が見つかりました：
+
+## Perplexity 日本語対応について
+
+Perplexity AIは、日本語に対応したAI検索エンジンで、日本語で質問を入力するとそのまま日本語で回答が返されます。
+
+### 主な特徴
+
+- リアルタイム検索で最新情報を取得でき、多くの回答に出典URLが自動付与されます。
+
+- 2026年6月時点では、日本語で質問するとそのまま日本語で回答が返されますが、専門的な用語や固有名詞が混在する長文の質問では、回答がやや翻訳調になるケースもあります。
+
+### 日本語対応の詳細
+
+Perplexityは日本語業務に概ね使えますが、UIは部分対応（主要部分は英語、一部のみ日本語化）、入出力品質は対応（日本語の入出力をネイティブ品質で扱える）、サポート・ヘルプは部分対応（ヘルプドキュメントは一部日本語、直接問い合わせは英語想定）という状況です。
+
+公式の最新情報については、Perplexityの公式サイト（www.perplexity.ai）でご確認ください。
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://help.perplexity.ai", "prompt": "Find links and information about pricing plans, subscription tiers, Comet browser, AI models, and Japanese language support."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://help.perplexity.ai
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://www.perplexity.ai/help-center
+    Status: 301 Moved Permanently
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://www.perplexity.ai/help-center"
+    - prompt: "Find links and information about pricing plans, subscription tiers, Comet browser, AI models, and Japanese language support."
+
+######## WebFetch {"url": "https://www.perplexity.ai/help-center", "prompt": "Find links and information about pricing plans, subscription tiers, Comet browser, AI models available, language support, and any mention of Japanese."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "Perplexity 日本語 UI 設定 言語 変更 公式", "mode": "standard"}
+Web search results for query: "Perplexity 日本語 UI 設定 言語 変更 公式"
+
+Links: [{"title":"how to change the interface language in perplexity","url":"https://www.guideflow.com/et-ee/tutorial/how-to-change-the-interface-language-in-perplexity"},{"title":"how to change the interface language in perplexity","url":"https://www.guideflow.com/tutorial/how-to-change-the-interface-language-in-perplexity"},{"title":"- 作成日 : 2026年7月31日","url":"https://biz.moneyforward.com/ai/basic/?p=6823"},{"title":"- 作成日 : 2026年7月31日","url":"https://biz.moneyforward.com/ai/basic/6823/"},{"title":"how to change the preferred response language in perplexity","url":"https://www.guideflow.com/et-ee/tutorial/how-to-change-the-preferred-response-language-in-perplexity"},{"title":"ai lab","url":"https://digital-gorilla.co.jp/ai-lab/?p=2670"},{"title":"Forked from maikelthedev/rag-flex","url":"https://lmstudio.ai/salamanders/rag-flex/files/docs/I18N.ja.md"},{"title":"Perplexity AI で言語を変更する方法(ステップバイステップチュートリアル)2025年","url":"https://lilys.ai/ja/notes/how-to-use-perplexity-20251109/change-perplexity-ai-language-tutorial"},{"title":"perplexity adds language learning tools on ios and web","url":"https://www.createwith.com/tool/perplexity/updates/perplexity-adds-language-learning-tools-on-ios-and-web"}]
+
+検索結果が返されました。Perplexityの日本語UI設定と言語変更に関する情報が見つかりました。
+
+## 検索結果のまとめ
+
+Perplexity AIは日本語に対応したAI検索エンジンで、日本語で質問を入力するとそのまま日本語で回答が返され、言語設定を変更する手間なく使い始められます。
+
+### UI言語の変更方法
+
+UI言語を変更する場合、プロフィールから「Preferences」を選択し、言語セクションで希望の言語を選びます。
+
+具体的には、プロフィールアイコンを左サイドバーでクリック → アカウントメニューの「Preferences」オプションをクリック → 「Preferred response language」ドロップダウンメニューをクリック → 言語ドロップダウンリストから希望の言語を選択します。
+
+Perplexityは日本語に完全対応しており、設定次第で毎回の日本語指定も不要になります。
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"perplexity\" terms of service \"non-commercial\" personal use 2026", "mode": "standard"}
+Web search results for query: ""perplexity" terms of service "non-commercial" personal use 2026"
+
+Links: [{"title":"Perplexity AI · Perplexity AI Terms of Service · View original document ↗","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-ai-terms-of-service/provision/CA-P-023900/services-licensed-for-personal-non-commercial-use-only/"},{"title":"Provision record","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-enterprise-terms/provision/CA-P-064813/license-to-perplexity-to-use-customer-content/"},{"title":"Provision record","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-terms-of-service/provision/CA-P-049576/personal-non-commercial-use-license-grant/"},{"title":"perplexity terms of service","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-terms-of-service/"},{"title":"2026 07 24 perplexity ai perplexity terms of service 3943","url":"https://conductatlas.com/change/2026-07-24-perplexity-ai-perplexity-terms-of-service-3943/"},{"title":"Provision record","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-terms-of-service/provision/CA-P-049579/license-is-non-assignable-non-sublicensable-non-transferable/"},{"title":"2026 07 24 perplexity ai perplexity api terms of service 3944","url":"https://conductatlas.com/change/2026-07-24-perplexity-ai-perplexity-api-terms-of-service-3944/"},{"title":"perplexity ai terms of service","url":"https://conductatlas.com/platform/perplexity-ai/perplexity-ai-terms-of-service/"},{"title":"Perplexity — Terms of Service","url":"https://tostracker.app/document/perplexity"}]
+
+Based on the web search results, here's what I found regarding Perplexity's terms of service regarding non-commercial personal use in 2026:
+
+Perplexity's Terms of Service state: "We hereby permit you to use the Services for your personal, non-commercial use only, provided that you comply with these Terms in connection with all such use."
+
+Limiting permitted use to personal, non-commercial purposes means any commercial use of the Services falls outside the license granted and could constitute a breach of the Terms. Users are permitted to use the Services only for personal, non-commercial purposes, and that permission is conditioned on full compliance with the Terms.
+
+The Perplexity Terms of Service were last updated in May 2026, with additional clarifications made in July and August 2026. The updated notice also explicitly clarifies that Perplexity does not sell personal data or share queries, prompts, or conversation content with advertisers.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://hub-prod.perplexity.ai/hub/legal/enterprise-terms-of-service", "prompt": "Find and quote any language about business/commercial use permissions, and any reference to the standard consumer Terms of Service being personal/non-commercial only."}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch ERROR {"url": "https://web.archive.org/web/2026*/https://www.perplexity.ai/pricing", "prompt": "List archived snapshots available for the Perplexity pricing page in 2026, especially recent dates near September 2026."}
+Claude Code is unable to fetch from web.archive.org
+
+######## WebSearch {"query": "Perplexity Enterprise Pro Enterprise Max pricing per user month official", "mode": "standard"}
+Web search results for query: "Perplexity Enterprise Pro Enterprise Max pricing per user month official"
+
+Links: [{"title":"On this page","url":"https://coworker.ai/blog/perplexity-enterprise-pricing"},{"title":"Perplexity pricing in 2025: Free vs. Pro, features, and costs","url":"https://withorb.com/blog/perplexity-pricing"},{"title":"Perplexity Pricing in 2026 for Individuals, Orgs & Developers","url":"https://www.finout.io/blog/perplexity-pricing-in-2026"},{"title":"Perplexity pricing 2026: Is the $20/mo Pro plan worth it?","url":"https://www.eesel.ai/blog/perplexity-pricing"},{"title":"Pricing Page Teardown: Perplexity","url":"https://valueiq.substack.com/p/pricing-page-teardown-perplexity"},{"title":"perplexity pricing","url":"https://www.cloudzero.com/blog/perplexity-pricing"},{"title":"Quick Answer","url":"https://costbench.com/software/ai-chatbots/perplexity"},{"title":"Quick Answer","url":"https://costbench.com/software/ai-chatbots/perplexity/hidden-costs"},{"title":"How to Negotiate Perplexity AI Pricing in 2026","url":"https://costbench.com/software/ai-chatbots/perplexity/negotiation/"}]
+
+Based on the search results, here is the official Perplexity Enterprise pricing:
+
+**Enterprise Pro:** $40 per seat per month, or $400 per seat per year, confirmed on Perplexity's official pricing FAQ as of July 17, 2026.
+
+**Enterprise Max:** $325 per seat per month ($3,250 per year).
+
+Organizations can mix Pro and Max seats in one org rather than picking one tier for everyone.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://r.jina.ai/https://www.perplexity.ai/pricing", "prompt": "Extract all pricing plans, prices, billing cadence, and features for each plan (Free, Pro, Max, Enterprise Pro, Enterprise Max)."}
+# Perplexity Pricing Information
+
+I cannot extract pricing plans, prices, billing cadence, and features based on the provided content. The page snapshot only contains Perplexity's cookie policy language and does not include any pricing tier information.
+
+The cached content shows: "We and our partners use cookies, pixels, SDKs, APIs, and server-to-server integrations" for measuring ad performance and service improvement, but contains no data about Free, Pro, Max, Enterprise Pro, or Enterprise Max plans.
+
+**Recommendation:** To obtain Perplexity's current pricing details, you would need to access the live pricing page directly or retrieve a more complete version of that webpage without the iframe limitations noted in the warnings.
+
+######## WebSearch {"query": "\"perplexity.ai/help\" OR \"help.perplexity.ai\" \"Pro Search\" per day free plan quote", "mode": "extended"}
+Web search results for query: ""perplexity.ai/help" OR "help.perplexity.ai" "Pro Search" per day free plan quote"
+
+Links: [{"title":"Perplexity AI Free: What You Actually Get (And When to Upgrade)","url":"https://www.bleap.finance/en-us/blog/perplexity-ai-free-what-you-get-when-to-upgrade"},{"title":"Perplexity Free Plan: Daily Query Limits & What Pro Adds","url":"https://costbench.com/software/ai-chatbots/perplexity/free-plan/"},{"title":"Perplexity Pricing: Free, Pro, Max & API Plans 2026","url":"https://techjacksolutions.com/ai-tools/perplexity/perplexity-pricing/"},{"title":"Perplexity free plan restrictions: features, speed, and usage limits","url":"https://www.datastudios.org/post/perplexity-free-plan-restrictions-features-speed-and-usage-limits"},{"title":"How to Use Perplexity AI for Free (2026): Free Plan Guide + Ways to Get Pro Free","url":"https://perplexityaimagazine.com/perplexity-hub/how-to-use-perplexity-ai-for-free/"},{"title":"Perplexity AI pro vs free — The Honest 2026 Guide - Perplexityaimagazine.com","url":"https://perplexityaimagazine.com/perplexity-hub/perplexity-pro-vs-free-comparison/"},{"title":"Is Perplexity AI Free? Free Plan Limits in 2026","url":"https://felloai.com/is-perplexity-ai-free/"},{"title":"Is Perplexity Free? Free Plan Limits & Upgrade Guide 52","url":"https://www.glbgpt.com/hub/is-perplexity-free-full-breakdown-of-the-2025-free-plan/"},{"title":"Perplexity AI Pricing 2026: Free vs Pro vs Max vs Enterprise Compared | TechSifted","url":"https://www.techsifted.com/reviews/perplexity-ai-pricing-2026/"}]
+
+Based on the search results, here's what I found regarding Perplexity AI's Pro Search limits on the free plan:
+
+Perplexity Free includes about 5 Pro Search queries per day with basic models and citations, though some sources report 3, so you should check your account for the current figure. 
+
+Multiple recent sources confirm this limit. Free users are capped at 5 Pro Searches per day (Perplexity pricing page, as of May 2026). Approximately five Pro Searches per day on the free plan, and the limit resets daily.
+
+In contrast, Pro subscribers get 300 per day.
+
+The exact number may vary slightly and could have changed, but the general consensus across multiple recent sources (from mid-2026) is that free users have approximately 5 Pro Search queries available per day.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Perplexity Enterprise SOC 2 security data privacy official", "mode": "standard"}
+Web search results for query: "Perplexity Enterprise SOC 2 security data privacy official"
+
+Links: [{"title":"Written by","url":"https://hub-prod.perplexity.ai/hub/blog/how-perplexity-enterprise-pro-keeps-your-data-secure"},{"title":"Calendar Icon White","url":"https://www.strac.io/blog/is-perplexity-safe"},{"title":"Perplexity AI Data Privacy Policy Explained [And How To Stay in Control]","url":"https://www.cape.co/blog/perplexity-ai-data-privacy-policy"},{"title":"privacy security","url":"https://docs.perplexity.ai/guides/privacy-security"},{"title":"Telefonica Tech expands its AI services by offering Perplexity to the business segment","url":"https://www.telefonica.com/en/wp-content/uploads/sites/5/2025/07/Telefonica-Tech-expands-its-AI-services-by-offering-Perplexity-to-the-business-segment.pdf"},{"title":"Give your team their time back","url":"https://enterprise-prod.perplexity.ai/enterprise/pricing"},{"title":"Last Updated on Jan 28, 2026 by Kurt Dunphy","url":"https://www.spellbook.legal/learn/perplexity-vs-chatgpt-privacy"},{"title":"Accurate AI that works for your team","url":"https://enterprise-prod.perplexity.ai/"},{"title":"Your security is our top priority","url":"https://enterprise-prod.perplexity.ai/enterprise/security"}]
+
+Based on the search results, here's what I found about Perplexity Enterprise's security and data privacy:
+
+## SOC 2 Compliance
+
+Perplexity is now SOC 2 Type II compliant, which independently validates its security practices and confirms that the platform meets the highest data protection standards. The SOC 2 Type 2 certification is provided by independent auditors, ensuring customer information remains protected at all times.
+
+## Data Privacy Commitments
+
+Perplexity never trains its LLMs on enterprise customer's data. Alongside adherence to GDPR and PCI DSS frameworks, Perplexity provides enterprise customers with verified assurance that their sensitive information is handled with the highest standards of care and protection.
+
+## Security Features
+
+Enterprise Pro provides advanced privacy protections, admin controls, and compliance-ready infrastructure with powerful answer engine and deep research tools for the web and internal files while keeping data private and secure.
+
+## Compliance Standards
+
+Perplexity's data is handled in compliance with GDPR and HIPAA, and includes PCI compliance for comprehensive payment security that meets the highest industry standards.
+
+The official information can be accessed through Perplexity's dedicated security documentation and Trust Center for more comprehensive details.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Perplexity Spaces Gmail Slack Notion integration connectors official", "mode": "standard"}
+Web search results for query: "Perplexity Spaces Gmail Slack Notion integration connectors official"
+
+Links: [{"title":"how to use perplexity computer business automation","url":"https://www.mindstudio.ai/blog/how-to-use-perplexity-computer-business-automation"},{"title":"Per-pair page","url":"https://tinycommand.com/integrations/perplexity/with/notion"},{"title":"uipath perplexity perplexity","url":"https://docs.uipath.com/integration-service/automation-cloud/latest/user-guide/uipath-perplexity-perplexity"},{"title":"Per-pair page","url":"https://tinycommand.com/integrations/perplexity/with/slack"},{"title":"editor.vercel.zapier.com","url":"https://editor.vercel.zapier.com/apps/perplexity/integrations"},{"title":"perplexity adds email calendar notion and github integrations","url":"https://www.createwith.com/tool/perplexity/updates/perplexity-adds-email-calendar-notion-and-github-integrations"},{"title":"aiagentrank.io","url":"https://aiagentrank.io/agent/perplexity-labs/integrations"},{"title":"aiagentrank.io","url":"https://aiagentrank.io/de/agent/perplexity-labs/integrations"},{"title":"aiagentrank.io","url":"https://aiagentrank.io/fr/agent/perplexity-labs/integrations"}]
+
+Based on the search results, here's what I found about Perplexity's integration capabilities:
+
+## Official Perplexity Integrations
+
+Perplexity Computer connects to Gmail, Notion, GitHub, and 100+ tools out of the box.
+
+### Perplexity Pro/Pro Max
+Pro users can now connect their email, calendar, Notion, and GitHub accounts, while Enterprise Pro users get additional support for Linear and Outlook.
+
+### Perplexity Labs (Agent Platform)
+Perplexity Labs currently integrates with 2 apps and APIs, including Slack, Notion. Perplexity Labs + Slack integration allows agents to be triggered from channels, post updates, and create threads, while Notion integration enables agents to read + write knowledge-base pages.
+
+### Integration Architecture
+Connectors are the integrations — the plumbing between Perplexity Computer and your external tools. Think of them as authorized access points. Without a connector, the agent can't read or write to any external service.
+
+The search results show that while Gmail, Slack, and Notion integrations are supported, official Gmail and Slack integrations may be limited to specific tiers or automation platforms, with more robust support appearing to be available through Perplexity Labs for Slack and Notion.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://enterprise-prod.perplexity.ai/enterprise/pricing", "prompt": "Extract exact pricing for Enterprise Pro and Enterprise Max plans: price per seat, billing cadence, and included features."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://enterprise-prod.perplexity.ai/enterprise/pricing
+    Redirect URL (from the server's Location header — server-supplied, not verified): http://perplexity.ai/hub/pricing?p=enterprise
+    Status: 308 Permanent Redirect
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "http://perplexity.ai/hub/pricing?p=enterprise"
+    - prompt: "Extract exact pricing for Enterprise Pro and Enterprise Max plans: price per seat, billing cadence, and included features."
+
+######## WebFetch {"url": "https://enterprise-prod.perplexity.ai/enterprise/security", "prompt": "Extract all security and compliance details: SOC 2, GDPR, HIPAA, data training policy, encryption, admin controls."}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://perplexity.ai/hub/pricing?p=enterprise", "prompt": "Extract exact pricing for all plans: Free, Pro, Max, Enterprise Pro, Enterprise Max. Price per month/year, billing cadence, and key included features per tier."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://perplexity.ai/hub/pricing", "prompt": "Extract exact pricing for all plans: Free, Pro, Max, Enterprise Pro, Enterprise Max. Price per month/year, billing cadence, and key included features per tier."}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebFetch {"url": "https://hub-prod.perplexity.ai/hub/blog/how-perplexity-enterprise-pro-keeps-your-data-secure", "prompt": "Extract all security and compliance details mentioned: SOC 2, GDPR, HIPAA, data training policy, encryption, admin controls, data retention."}
+The server returned HTTP 404 Not Found.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "hub-prod.perplexity.ai OR perplexity.ai/hub/faq pricing plans models", "mode": "standard"}
+Web search results for query: "hub-prod.perplexity.ai OR perplexity.ai/hub/faq pricing plans models"
+
+Links: [{"title":"perplexity pricing","url":"https://www.cloudzero.com/blog/perplexity-pricing"},{"title":"perplexity pricing","url":"https://team-gpt.com/blog/perplexity-pricing"},{"title":"opensource.weam.ai","url":"https://opensource.weam.ai/?p=17912"},{"title":"AI at Work: Insights from Amplemarket | Webinar Series","url":"https://team-gpt.com/?p=13053"},{"title":"Perplexity AI Logo","url":"https://founders.lakestar.com/perplexity-ai/pricing"},{"title":"# Perplexity Pricing 2026: Plans, Pro, Max, and Is It Worth It?","url":"https://geotoolbox.ai/blog/perplexity-pricing.md"},{"title":"perplexity pricing","url":"https://juma.ai/blog/perplexity-pricing"},{"title":"Quick Answer","url":"https://costbench.com/software/ai-chatbots/perplexity"},{"title":"wpdev.weam.ai","url":"https://wpdev.weam.ai/?p=17912"}]
+
+Based on the search results, here's information about Perplexity's pricing plans and AI models:
+
+## Pricing Plans
+
+Perplexity offers three main plans: Free ($0), Pro ($20/month), and Max ($200/month).
+
+**Free Plan:**
+Includes unlimited quick searches, 5 pro searches per day, and access to the standard AI model.
+
+**Pro Plan ($20/month):**
+Offers unlimited quick searches, 300+ pro searches per day, and access to advanced AI models like GPT-4 and Claude-3.
+
+**Max Plan ($200/month):**
+Includes frontier models, 10,000 monthly Computer credits plus 35,000 bonus credits, Model Council, Brain, and 5x video generation.
+
+**Enterprise:**
+Enterprise plans start at $40/month per seat for self-service with flexible pricing options, providing access to open-source models, Sonar models, and chat models.
+
+## AI Models
+
+Perplexity provides access to multiple AI models including GPT-4, Claude 3, Llama 3, and Gemini within one interface, allowing users to choose the best model for each query.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch ERROR {"query": "Perplexity Comet browser Android iOS available 2026", "mode": "standard"}
+You've hit your session limit · resets 11:10pm (Asia/Tokyo)
+
+######## WebSearch ERROR {"query": "Perplexity app Windows Mac desktop app iOS Android official download", "mode": "standard"}
+You've hit your session limit · resets 11:10pm (Asia/Tokyo)

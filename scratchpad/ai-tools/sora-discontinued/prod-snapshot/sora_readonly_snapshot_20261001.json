@@ -1,0 +1,125 @@
+{
+ "id": 679,
+ "title": "Sora",
+ "slug": "sora",
+ "status": "publish",
+ "modified": "2026-09-27T16:29:17",
+ "link_path": "/ai-tools/sora/",
+ "content_rendered_len": 0,
+ "featured_media": 0,
+ "categories": [
+  "動画生成"
+ ],
+ "features": [
+  "動画生成",
+  "画像生成"
+ ],
+ "tags": [
+  "スマホ対応",
+  "日本語対応",
+  "高精度"
+ ],
+ "platform": [
+  "Android",
+  "iOS",
+  "Web"
+ ],
+ "tool_status": "active",
+ "rating_overall": 4.5,
+ "pricing_type": "paid",
+ "has_free_plan": false,
+ "api_available": "unknown",
+ "commercial_use": "unknown",
+ "japanese_support": "full",
+ "official_url": "https://sora.com/",
+ "company_name": "OpenAI",
+ "is_featured": false,
+ "display_order": 28,
+ "tool_logo": 0,
+ "supported_devices": [],
+ "supported_models": [],
+ "short_description": "文章や画像をもとに映像を生成し、絵コンテ、リミックス、延長などの機能でアイデアを動画へ展開できるAI。生成した動画をアプリ内で共有・編集する体験も備える。",
+ "slim_seo": {
+  "title": "Sora - OmochiX",
+  "description": "文章や画像をもとに映像を生成し、絵コンテ、リミックス、延長などの機能でアイデアを動画へ展開できるAI。生成した動画をアプリ内で共有・編集する体験も備える。"
+ },
+ "info_checked_date": "",
+ "related_learn_ids": [],
+ "related_news_ids": [],
+ "related_lab_ids": [],
+ "related_compare_ids": [],
+ "key_features": [],
+ "pros": [],
+ "cons": [],
+ "omochix_view": "",
+ "pricing_details": "",
+ "notes": "",
+ "api_sdk_info": "",
+ "security_info": "",
+ "integrations": [],
+ "strengths": [],
+ "weaknesses": [],
+ "recommended_for": [],
+ "recommended_use_cases": [],
+ "not_recommended_for": [],
+ "page": {
+  "http": 200,
+  "title": "Sora &#8211; OmochiX",
+  "canonical": "/ai-tools/sora/",
+  "meta_description": "文章や画像をもとに映像を生成し、絵コンテ、リミックス、延長などの機能でアイデアを動画へ展開できるAI。生成した動画をアプリ内で共有・編集する体験も備える。",
+  "robots": "max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+  "ld_types": [
+   "WebSite",
+   "SearchAction",
+   "BreadcrumbList",
+   "ListItem",
+   "ListItem",
+   "ListItem",
+   "WebPage",
+   "Organization",
+   "SoftwareApplication",
+   "Organization",
+   "Review",
+   "Rating",
+   "Organization"
+  ],
+  "status_label": true
+ },
+ "prompts_relating_to_sora": [
+  {
+   "id": 796,
+   "slug": "video-text-to-video-shot-prompts",
+   "related_tool_ids": [
+    679,
+    678,
+    675
+   ]
+  }
+ ],
+ "site_search_Sora": [
+  {
+   "id": 679,
+   "type": "ai_tool",
+   "title": "Sora",
+   "path": "/ai-tools/sora/"
+  },
+  {
+   "id": 796,
+   "type": "prompt",
+   "title": "動画生成AI用にシーンをショット単位のプロンプトへ分解する",
+   "path": "/prompts/video-text-to-video-shot-prompts/"
+  }
+ ],
+ "recommends_sora": {
+  "/": false,
+  "/ai-tools/heygen/": true,
+  "/ai-tools/veo/": true,
+  "/ai-tools/pika/": true,
+  "/ai-tools/descript/": true,
+  "/ai-tools/synthesia/": true,
+  "/ai-tools/runway/": true,
+  "/ai-tools/luma-dream-machine/": true,
+  "/ai-tools/kling-ai/": true
+ },
+ "requests": 19
+}

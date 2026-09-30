@@ -1,0 +1,1202 @@
+# Raw tool results recovered from agent-ada96ed2e82a4eb51.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "Claude Code official product page claude.com/product/claude-code", "mode": "standard"}
+Web search results for query: "Claude Code official product page claude.com/product/claude-code"
+
+Links: [{"title":"claude code","url":"https://notes.billmill.org/AI/claude/claude_code.html"},{"title":"claude code","url":"https://packages-cdn.gentoo.org/packages/dev-util/claude-code"},{"title":"Claude Code","url":"https://realpython.com/ref/ai-coding-tools/claude-code"},{"title":"claude code source","url":"https://gitee.com/dgr6878/claude-code-source"},{"title":"claude code","url":"https://arize.com/docs/ax/integrations/platforms/claude-code"},{"title":"Understanding Claude Products: Chat, Code, and API","url":"https://answers.atlassian.syr.edu/wiki/spaces/ITSAI/pages/522158118"},{"title":"Curiosity · AI Model","url":"https://learn.engineering.vips.edu/ai-models/anthropic-claude-code"},{"title":"About Claude Code","url":"https://www.tooljunction.io/ai-tools/claude-code"},{"title":"what is claude code","url":"https://www.lowcode.agency/blog/what-is-claude-code"},{"title":"Claude Code","url":"https://www.respan.ai/market-map/best/coding-agents"}]
+
+Based on the search results, I found information about Claude Code from Anthropic's official product page:
+
+## Claude Code Overview
+
+Claude Code allows you to work with Claude directly in your codebase, and you can build, debug, and ship from your terminal, IDE, Slack, or the web.
+
+## What It Does
+
+Claude Code is Anthropic's official CLI coding agent, a tool that runs in your terminal, reads and writes files, executes shell commands, runs tests, manages git, and iterates autonomously until the task is done. It's designed for deep, multi-file changes across large codebases, executing commands in your environment and surfacing diffs for review to support debugging and everyday development.
+
+## Key Features
+
+It can autonomously navigate codebases, edit files across multiple turns, run shell commands, browse the web, and complete complex software engineering tasks while keeping the developer in the loop with permission gates.
+
+## Availability
+
+Claude Code was shipped by Anthropic in February 2025, and is available in your terminal, IDE, desktop app, and browser.
+
+For the official product page, you can visit: https://claude.com/product/claude-code
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Claude Code pricing 2026 Anthropic", "mode": "standard"}
+Web search results for query: "Claude Code pricing 2026 Anthropic"
+
+Links: [{"title":"Claude Code Pricing: Plans, API Rates, and Total Cost in 2026","url":"https://www.jetadmin.io/blog/untitled-9/"},{"title":"Claude Code Pricing 2026: Plans, Limits, and Hidden Costs","url":"https://www.superblocks.com/blog/claude-code-pricing"},{"title":"Claude Code","url":"https://pricepertoken.com/coding-assistants/claude-code"},{"title":"Claude AI Pricing 2026: Every Plan — Free, Pro $20, Max $100/$200","url":"https://www.heyuan110.com/posts/ai/2026-02-25-claude-code-pricing/"},{"title":"Claude Code pricing (2026): plans, real cost, hidden catches","url":"https://www.eesel.ai/blog/claude-code-pricing"},{"title":"Claude by Anthropic, the Complete Guide - Models, Pricing and How to Use It (2026)","url":"https://pasqualepillitteri.it/en/news/13165/claude-anthropic-complete-guide-models-pricing"},{"title":"claude pricing plans 2026","url":"https://ai-toolbox.co/claude-models/claude-pricing-plans-2026"},{"title":"Claude Code (Anthropic) Pricing 2026","url":"https://costbench.com/software/ai-computer-use/claude-code/"},{"title":"Claude Code Pricing (2026): Plans, Token Costs & How to Pay Less","url":"https://www.seawork.ai/en/blogs/claude-code-pricing-guide/"}]
+
+Based on the search results, here's what I found about Claude Code pricing in 2026 from Anthropic:
+
+## Claude Code Pricing Plans (2026)
+
+Plans range from $0 to $200/month for individuals and $20 to $125/seat for teams.
+
+### Individual Plans:
+
+- **Free**: Claude Code is not included in the free tier, which is best treated as a way to test Claude's general coding skills in chat
+- **Pro**: $20 per month for individual developers and covers light-to-medium daily use
+- **Max 5x**: $100 per month
+- **Max 20x**: $200 per month, designed for heavy, all-day Claude Code sessions
+
+### Team Plans:
+
+Team Standard costs $25/seat/month (or $20 annual), while Team Premium costs $125/seat/month (or $100 annual)
+
+### Enterprise:
+
+Enterprise adds advanced security and compliance controls (SSO, SCIM), flexible usage-based billing, no seat count limits, and dedicated support, with custom pricing available.
+
+### Key Considerations:
+
+Claude Code usage counts against the same limits as Claude chat usage, so if you spend time chatting with Claude in the browser and then switch to Claude Code in your terminal, both eat into the same usage caps.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Claude Code docs.claude.com overview", "mode": "standard"}
+Web search results for query: "Claude Code docs.claude.com overview"
+
+Links: [{"title":"code.claude.com","url":"https://code.claude.com/docs/zh-CN/overview"},{"title":"CLAUDE CODE DOCS intelligence overview","url":"https://lists.norml.org/claude-code-docs.html"},{"title":"docs.anthropic.com","url":"https://docs.anthropic.com/zh-CN/docs/claude-code/overview"},{"title":"> ## Documentation Index","url":"https://code.claude.com/docs/en/quickstart.md"},{"title":"> ## Documentation Index","url":"https://code.claude.com/docs/zh-TW/overview.md"},{"title":"> ## Documentation Index","url":"https://code.claude.com/docs/ko/overview.md"},{"title":"> ## Documentation Index","url":"https://code.claude.com/docs/zh-CN/overview.md"},{"title":"claude code docs","url":"https://tomevault.io/tome/thevibeworks/claude-code-docs"},{"title":"claude code docs","url":"https://www.skills.sh/wenerme/ai/claude-code-docs"}]
+
+Based on the search results, here's an overview of Claude Code from the official documentation:
+
+## Claude Code Overview
+
+Claude Code is Anthropic's intelligent programming tool that runs in your terminal, helping you transform ideas into code faster than ever before.
+
+### Key Features
+
+Claude Code can help you build features from descriptions, debug and fix problems, navigate any codebase, and automate tedious tasks. More specifically, it can:
+
+- Build features from descriptions in simple English, make plans, write code and ensure it works properly
+- Analyze your codebase, identify problems and implement fixes
+- Answer questions about your team's codebase while maintaining awareness of your entire project structure
+
+### Why Developers Use It
+
+Claude Code works in your terminal where you already work, uses tools you already enjoy, can directly edit files, run commands and create commits, and follows the Unix philosophy as a composable and scriptable tool.
+
+### Available Interfaces
+
+Claude Code is available on the web, as a desktop app, in VS Code and JetBrains IDEs, in Slack, and in CI/CD with GitHub Actions and GitLab.
+
+For more detailed information, you can visit the official documentation at [code.claude.com/docs](https://code.claude.com/docs).
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://code.claude.com/docs/en/overview", "prompt": "Extract details about Claude Code: overview, supported platforms (macOS/Linux/Windows), IDE integrations, supported models, installation instructions, key features list."}
+> ## Documentation Index
+> Fetch the complete documentation index at: https://code.claude.com/docs/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Overview
+
+> Claude Code is an agentic coding tool that reads your codebase, edits files, runs commands, and integrates with your development tools. Available in your terminal, IDE, desktop app, and browser.
+
+Claude Code is an AI-powered coding assistant that helps you build features, fix bugs, and automate development tasks. It understands your entire codebase and can work across multiple files and tools to get things done.
+
+## Get started
+
+Claude Code runs on several surfaces: the terminal, IDE extensions, a desktop app, and the web. Choose one from the tabs below to get started. Most surfaces require a [Claude subscription](https://claude.com/pricing?utm_source=claude_code\&utm_medium=docs\&utm_content=overview_pricing) or [Anthropic Console](https://platform.claude.com/) account. The Terminal CLI, VS Code, and JetBrains also support [third-party providers](/docs/en/third-party-integrations).
+
+<Tabs>
+  <Tab title="Terminal">
+    The full-featured CLI for working with Claude Code directly in your terminal. Edit files, run commands, and manage your entire project from the command line.
+
+    To install Claude Code, open a terminal and run the command for your system. If you haven't used a terminal before, the [terminal guide](/docs/en/terminal-guide) shows how to open one and paste the command.
+
+    <Tabs>
+      <Tab title="Native Install (Recommended)">
+        **macOS, Linux, WSL:**
+
+        ```bash theme={null}
+        curl -fsSL https://claude.ai/install.sh | bash
+        ```
+
+        **Windows PowerShell:**
+
+        ```powershell theme={null}
+        irm https://claude.ai/install.ps1 | iex
+        ```
+
+        **Windows CMD:**
+
+        ```batch theme={null}
+        curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+        ```
+
+        When the installer finishes, open a new terminal window and run `claude --version`. A working installation prints a version number. If your shell says `claude` isn't found or isn't recognized, the install directory isn't on your PATH yet: see [Fix your PATH](/docs/en/troubleshoot-install#command-not-found-claude-after-installation).
+
+        If you see `The token '&&' is not a valid statement separator`, you're in PowerShell, not CMD. If you see `'irm' is not recognized as an internal or external command`, you're in CMD, not PowerShell. Your prompt shows `PS C:\` when you're in PowerShell and `C:\` without the `PS` when you're in CMD.
+
+        If the install command fails with `syntax error near unexpected token '<'`, a `403`, or another curl error, see [Troubleshoot installation](/docs/en/troubleshoot-install#find-your-error) to match the error to a fix and for alternative install methods.
+
+        [Git for Windows](https://git-scm.com/downloads/win) is recommended on native Windows so Claude Code can use the Bash tool. If Git for Windows is not installed, Claude Code uses PowerShell as the shell tool instead. WSL setups do not need Git for Windows.
+
+        <Info>
+          Native installations automatically update in the background to keep you on the latest version.
+        </Info>
+      </Tab>
+
+      <Tab title="Homebrew">
+        ```bash theme={null}
+        brew install --cask claude-code
+        ```
+
+        Homebrew offers two casks. `claude-code` tracks the stable release channel, which is typically about a week behind and skips releases with major regressions. `claude-code@latest` tracks the latest channel and receives new versions as soon as they ship.
+
+        <Info>
+          Homebrew installations do not auto-update. Run `brew upgrade claude-code` or `brew upgrade claude-code@latest`, depending on which cask you installed, to get the latest features and security fixes.
+        </Info>
+      </Tab>
+
+      <Tab title="WinGet">
+        ```powershell theme={null}
+        winget install Anthropic.ClaudeCode
+        ```
+
+        <Info>
+          WinGet installations do not auto-update. Run `winget upgrade Anthropic.ClaudeCode` periodically to get the latest features and security fixes.
+        </Info>
+      </Tab>
+    </Tabs>
+
+    You can also install with [apt, dnf, or apk](/docs/en/setup#install-with-linux-package-managers) on Debian, Fedora, RHEL, and Alpine.
+
+    Then start Claude Code in any project. Replace `your-project` with the path to a project directory on your machine:
+
+    ```bash theme={null}
+    cd your-project
+    claude
+    ```
+
+    You'll be prompted to log in on first use. If you've set the `ANTHROPIC_API_KEY` environment variable, Claude Code skips the login prompt and asks you to approve the key instead. That's it! [Continue with the Quickstart →](/docs/en/quickstart)
+
+    <Tip>
+      See [advanced setup](/docs/en/setup) for installation options, manual updates, or uninstallation instructions. Visit [installation troubleshooting](/docs/en/troubleshoot-install) if you hit issues.
+    </Tip>
+  </Tab>
+
+  <Tab title="VS Code">
+    The VS Code extension provides inline diffs, @-mentions, plan review, and conversation history directly in your editor.
+
+    * [Install for VS Code](vscode:extension/anthropic.claude-code)
+    * [Install for Cursor](cursor:extension/anthropic.claude-code)
+
+    Or search for "Claude Code" in the Extensions view (`Cmd+Shift+X` on Mac, `Ctrl+Shift+X` on Windows/Linux). After installing, open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`), type "Claude Code", and select **Open in New Tab**.
+
+    [Get started with VS Code →](/docs/en/vs-code#get-started)
+  </Tab>
+
+  <Tab title="Desktop app">
+    A standalone app for running Claude Code outside your IDE or terminal. Review diffs visually, run multiple sessions side by side, schedule recurring tasks, and start cloud sessions.
+
+    Download and install:
+
+    * [macOS](https://claude.ai/api/desktop/darwin/universal/dmg/latest/redirect?utm_source=claude_code\&utm_medium=docs) (Intel and Apple Silicon)
+    * [Windows](https://claude.ai/api/desktop/win32/x64/setup/latest/redirect?utm_source=claude_code\&utm_medium=docs) (x64)
+    * [Windows ARM64](https://claude.ai/api/desktop/win32/arm64/setup/latest/redirect?utm_source=claude_code\&utm_medium=docs)
+    * On Ubuntu or Debian, where the app is in beta, install it with apt by following the [Linux install instructions](/docs/en/desktop-linux)
+
+    After installing, launch Claude, sign in, and click the **Code** tab to start coding. The app includes Claude Code, so you don't need to install the CLI separately. A [paid subscription](https://claude.com/pricing?utm_source=claude_code\&utm_medium=docs\&utm_content=overview_desktop_pricing) is required.
+
+    [Learn more about the desktop app →](/docs/en/desktop-quickstart)
+  </Tab>
+
+  <Tab title="Web">
+    Run Claude Code in your browser with no local setup. Kick off long-running tasks and check back when they're done, work on repos you don't have locally, or run multiple tasks in parallel. For a longer body of work, create a [project](/docs/en/claude-projects) and let Claude coordinate the parallel sessions for you. Available on desktop browsers and [the Claude app for iOS and Android](/docs/en/mobile).
+
+    Start coding at [claude.ai/code](https://claude.ai/code).
+
+    [Get started →](/docs/en/web-quickstart)
+  </Tab>
+
+  <Tab title="JetBrains">
+    A plugin for IntelliJ IDEA, PyCharm, WebStorm, and other JetBrains IDEs with interactive diff viewing and selection context sharing.
+
+    Install the [Claude Code plugin](https://plugins.jetbrains.com/plugin/27310-claude-code-beta-) from the JetBrains Marketplace and restart your IDE. The plugin requires the Claude Code CLI, installed separately; see the [JetBrains setup steps](/docs/en/jetbrains#installation).
+
+    [Get started with JetBrains →](/docs/en/jetbrains)
+  </Tab>
+</Tabs>
+
+## What you can do
+
+Here are some of the ways you can use Claude Code:
+
+<AccordionGroup>
+  <Accordion title="Automate the work you keep putting off" icon="wand-magic-sparkles">
+    Claude Code handles the tedious tasks that eat up your day: writing tests for untested code, fixing lint errors across a project, resolving merge conflicts, updating dependencies, and writing release notes.
+
+    ```bash theme={null}
+    claude "write tests for the auth module, run them, and fix any failures"
+    ```
+  </Accordion>
+
+  <Accordion title="Build features and fix bugs" icon="hammer">
+    Describe what you want in plain language. Claude Code plans the approach, writes the code across multiple files, and verifies it works.
+
+    For bugs, paste an error message or describe the symptom. Claude Code traces the issue through your codebase, identifies the root cause, and implements a fix. See [common workflows](/docs/en/common-workflows) for more examples.
+  </Accordion>
+
+  <Accordion title="Create commits and pull requests" icon="code-branch">
+    Claude Code works directly with git. It stages changes, writes commit messages, creates branches, and opens pull requests.
+
+    ```bash theme={null}
+    claude "commit my changes with a descriptive message"
+    ```
+
+    In CI, you can automate code review and issue triage with [GitHub Actions](/docs/en/github-actions) or [GitLab CI/CD](/docs/en/gitlab-ci-cd).
+  </Accordion>
+
+  <Accordion title="Connect your tools with MCP" icon="plug">
+    The [Model Context Protocol (MCP)](/docs/en/mcp) is an open standard for connecting AI tools to external data sources. With MCP, Claude Code can read your design docs in Google Drive, update tickets in Jira, pull data from Slack, or use your own custom tooling. The [MCP quickstart](/docs/en/mcp-quickstart) connects your first server end to end.
+  </Accordion>
+
+  <Accordion title="Customize with instructions, skills, and hooks" icon="sliders">
+    [`CLAUDE.md`](/docs/en/memory) is a markdown file you add to your project root that Claude Code reads at the start of every session. Use it to set coding standards, architecture decisions, preferred libraries, and review checklists. If your repository already has an `AGENTS.md` for other coding agents, Claude Code [can read that](/docs/en/memory#agents-md) on its own or alongside `CLAUDE.md`. Claude also builds [auto memory](/docs/en/memory#auto-memory) as it works, saving learnings across sessions without you writing anything.
+
+    Create [skills](/docs/en/skills) to package repeatable workflows your team can share, like `/review-pr` or `/deploy-staging`.
+
+    [Hooks](/docs/en/hooks) let you run shell commands before or after Claude Code actions, like auto-formatting after every file edit or running lint before a commit.
+  </Accordion>
+
+  <Accordion title="Run agents in parallel and build custom agents" icon="users">
+    Spawn [multiple Claude Code agents](/docs/en/sub-agents) that work on different parts of a task simultaneously. A lead agent coordinates the work, assigns subtasks, and merges results.
+
+    To run several full sessions in parallel and watch them from one screen, use [background agents](/docs/en/agent-view). For fully custom workflows, the [Agent SDK](/docs/en/agent-sdk/overview) lets you build your own agents powered by Claude Code's tools and capabilities, with full control over orchestration, tool access, and permissions.
+  </Accordion>
+
+  <Accordion title="Pipe, script, and automate with the CLI" icon="terminal">
+    Claude Code is composable and follows the Unix philosophy. Pipe logs into it, run it in CI, or chain it with other tools:
+
+    ```bash theme={null}
+    # Analyze recent log output
+    tail -200 app.log | claude -p "Slack me if you see any anomalies"
+
+    # Automate translations in CI
+    claude -p "translate new strings into French and raise a PR for review"
+
+    # Bulk operations across files
+    git diff main --name-only | claude -p "review these changed files for security issues"
+    ```
+
+    See the [CLI reference](/docs/en/cli-reference) for the full set of commands and flags.
+  </Accordion>
+
+  <Accordion title="Schedule recurring tasks" icon="clock">
+    Run Claude on a schedule to automate work that repeats: morning PR reviews, overnight CI failure analysis, weekly dependency audits, or syncing docs after PRs merge.
+
+    * [Routines](/docs/en/routines) run in the cloud, so they keep running even when your computer is off. They can also trigger on API calls or GitHub events. Create them from the web, the Desktop app, or by running `/schedule` in the CLI.
+    * [Desktop scheduled tasks](/docs/en/desktop-scheduled-tasks) run on your machine, with direct access to your local files and tools
+    * [`/loop`](/docs/en/scheduled-tasks) repeats a prompt within a CLI session for quick polling
+  </Accordion>
+
+  <Accordion title="Work from anywhere" icon="globe">
+    Sessions aren't tied to a single surface. Move work between them as your context changes:
+
+    * Step away from your desk and keep working from your phone or any browser with [Remote Control](/docs/en/remote-control)
+    * Message [Dispatch](/docs/en/desktop#sessions-from-dispatch) a task from your phone and open the Desktop session it creates
+    * Start a long-running task on the [web](/docs/en/claude-code-on-the-web) or the [Claude mobile app](/docs/en/mobile), then pull it into your terminal with `claude --teleport`. Teleport requires a claude.ai subscription.
+    * Run `/desktop` to continue your current terminal session in the [Desktop app](/docs/en/desktop), where you can review diffs visually. The `/desktop` handoff requires a claude.ai subscription. Available on macOS and x64 Windows.
+    * Route tasks from team chat: mention `@Claude` in [Slack](/docs/en/slack) with a bug report and get a pull request back
+  </Accordion>
+</AccordionGroup>
+
+## Use Claude Code everywhere
+
+Each [surface](/docs/en/glossary#surface) connects to the same underlying Claude Code engine, so your repo's CLAUDE.md files, settings, and MCP servers work across all of them.
+
+Beyond the [Terminal](/docs/en/quickstart), [VS Code](/docs/en/vs-code), [JetBrains](/docs/en/jetbrains), [Desktop](/docs/en/desktop), and [Web](/docs/en/claude-code-on-the-web) surfaces above, Claude Code integrates with CI/CD, chat, and browser workflows:
+
+| What I want to do | Best option |
+| - | - |
+| Continue a local session from my phone or another device | [Remote Control](/docs/en/remote-control) |
+| Push events from Telegram, Discord, iMessage, or my own webhooks into a session | [Channels](/docs/en/channels) |
+| Start a task locally, continue on mobile | [`claude --cloud`](/docs/en/claude-code-on-the-web#from-terminal-to-cloud), then the [Claude mobile app](/docs/en/mobile) |
+| Run Claude on a recurring schedule | [Routines](/docs/en/routines) or [Desktop scheduled tasks](/docs/en/desktop-scheduled-tasks) |
+| Automate PR reviews and issue triage | [GitHub Actions](/docs/en/github-actions) or [GitLab CI/CD](/docs/en/gitlab-ci-cd) |
+| Get automatic code review on every PR | [GitHub Code Review](/docs/en/code-review) |
+| Route bug reports from Slack to pull requests | [Slack](/docs/en/slack) |
+| Debug live web applications | [Chrome](/docs/en/chrome) |
+| Build custom agents for your own workflows | [Agent SDK](/docs/en/agent-sdk/overview) |
+
+## Next steps
+
+Once you've installed Claude Code, these guides help you go deeper.
+
+* [Quickstart](/docs/en/quickstart): walk through your first real task, from exploring a codebase to committing a fix
+* [Store instructions and memories](/docs/en/memory): give Claude persistent instructions with CLAUDE.md files and auto memory
+* [Common workflows](/docs/en/common-workflows) and [best practices](/docs/en/best-practices): patterns for getting the most out of Claude Code
+* [Claude Academy](https://academy.claude.com/): free self-paced courses, including [Claude Code 101](https://academy.claude.com/courses/claude-code-101) and [Claude Code in Action](https://academy.claude.com/courses/claude-code-in-action)
+* [A harness for every task](https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code): how the Claude Code team uses [dynamic workflows](/docs/en/workflows) to orchestrate many subagents at once
+* [Settings](/docs/en/settings): customize Claude Code for your workflow
+* [Troubleshooting](/docs/en/troubleshooting): solutions for common issues
+* [code.claude.com](https://code.claude.com/): demos, pricing, and product details
+
+
+######## WebFetch {"url": "https://claude.com/product/claude-code", "prompt": "Extract all details about Claude Code: what it is, key features, supported platforms/IDEs, pricing mentions, models used, any Japanese/localization mentions, links to docs/pricing pages."}
+# Claude Code: Comprehensive Overview
+
+## What It Is
+Claude Code is an AI coding agent built by Anthropic that automates software development tasks. It plans work, writes code, runs tests, and opens pull requests while allowing developers to steer and review from their preferred environment.
+
+## Key Features
+- **Multi-hour task handling**: Manages bug fixes, refactors, migrations, and new features that run for extended periods
+- **Codebase understanding**: Maps and explains entire codebases quickly using agentic search
+- **GitHub/GitLab integration**: Reads issues, writes code, runs tests, and opens pull requests
+- **Auto mode**: Runs autonomously by default while catching risky commands
+- **Projects feature**: Groups related coding sessions to supervise multiple agents simultaneously
+- **Artifacts**: Preview in-progress work as interactive, shareable artifacts
+- **Self-hosted environments**: Run sessions on your own infrastructure (public beta)
+
+## Supported Platforms & IDEs
+- **Desktop**: macOS, Linux, Windows
+- **Editors**: VS Code, Cursor, Devin Desktop, JetBrains IDEs
+- **Interfaces**: Terminal, web browser, iOS app, Android app
+- **Integrations**: Slack, GitHub Actions
+- **Installation**: `curl -fsSL https://claude.ai/install.sh | bash`
+
+## Pricing
+- **Pro**: $17/month (annual) or $20/month (monthly) – Included in plan
+- **Max 5x**: $100/month
+- **Max 20x**: $200/month
+- **API usage**: Standard API pricing for Console accounts
+
+## Claude Models Used
+- Opus (primary for Claude Code)
+- Sonnet
+- Haiku
+- Mythos
+- Fable
+- **Fast mode**: Available on Opus 5.5 at 2.5x speed ($8/$40 per million tokens)
+
+## Localization
+The page mentions Japanese (日本語) as an available language option in the footer language selector.
+
+## Key Documentation & Links
+- **Developer Docs**: https://code.claude.com/docs/en/overview
+- **Changelog**: Available via documentation portal
+- **Common Workflows**: Documented for users
+- **Support**: https://support.claude.com/en/
+
+######## WebFetch {"url": "https://claude.com/pricing", "prompt": "Extract all pricing plan details: plan names, monthly/annual prices, what's included, Claude Code inclusion per plan, free plan availability, API/usage-based pricing mentions."}
+# Claude Pricing Plans Summary
+
+## Individual Plans
+
+**Free**
+- Cost: $0
+- Includes: Web/desktop/mobile chat, web search, file creation, code execution, memory, app connections, artifacts
+- Claude Code: Not included
+
+**Pro**
+- Cost: $17/month (annual) or $20/month (monthly)
+- Includes: Everything in Free, plus increased usage, task scheduling, Claude Design/Slides/Docs, Claude Science, Projects, additional models, Chrome and Microsoft 365 extensions
+- Claude Code: Included
+
+**Max**
+- Cost: From $100/month
+- Includes: Everything in Pro, plus 5x or 20x usage options, higher output limits, early access to advanced features, priority access during peak times
+- Claude Code: Included
+
+## Team Plans
+
+**Standard Seat**
+- Cost: $20/month (annual) or $25/month (monthly)
+- For teams of 2-150 members
+
+**Premium Seat**
+- Cost: $100/month (annual) or $125/month (monthly)
+- Provides 5x more usage than standard seats
+
+Both include central billing, SSO, Claude Code, Design tools, Science features, and enterprise search capabilities.
+
+## Enterprise Plan
+
+- Cost: "$20/seat/month, billed annually. Usage cost scales with model and task"
+- Includes all Team features plus spend controls, role-based access, SCIM, audit logs, compliance API, data retention controls, HIPAA-ready offering
+
+## API Pricing (Latest Models)
+
+- **Haiku 4.5**: Input $1/MTok, Output $5/MTok
+- **Sonnet 5.5**: Input $2/MTok, Output $10/MTok
+- **Opus 5.5**: Input $4/MTok, Output $20/MTok
+- **Fable 5.1**: Input $10/MTok, Output $50/MTok
+
+Additional features: Web search ($10/1K searches), Code execution ($0.05/hour), Managed Agents ($0.08/session-hour)
+
+######## WebFetch {"url": "https://code.claude.com/docs/en/agent-sdk/overview", "prompt": "Extract details about the Claude Agent SDK: what it is, how it relates to Claude Code, languages supported, what developers can build with it, installation, key constraints."}
+> ## Documentation Index
+> Fetch the complete documentation index at: https://code.claude.com/docs/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Agent SDK overview
+
+> Build production AI agents with Claude Code as a library
+
+An agent is an application that completes a task by planning its own steps and calling tools that read files, run commands, or edit code. The Agent SDK gives you the same tools, [agent loop](/docs/en/agent-sdk/agent-loop), and context management that power Claude Code, programmable in Python and TypeScript.
+
+## Compare the Agent SDK to other Claude tools
+
+The Agent SDK, the CLI, the Client SDK, and Managed Agents differ in who runs the agent, what comes built in, and how you reach it. Find the row that matches how you want to build and run yours.
+
+| You want to | Use | What you get |
+| - | - | - |
+| Embed Claude Code's agent in your own Python or TypeScript application, in a process you operate | **Agent SDK** | A library that runs the Claude Code binary, with Claude Code's [capabilities](#capabilities), such as built-in tools, permissions, sessions, and hooks. |
+| Do interactive development or run one-off tasks from a terminal | [**Claude Code CLI**](/docs/en/overview) | The terminal interface, built for daily interactive use. |
+| Call the Claude API directly from your own code | [**Client SDK**](https://platform.claude.com/docs/en/cli-sdks-libraries/overview) | Direct access to the Claude API from any of the client SDK languages. You write the tool loop yourself, or let the client SDK's beta [tool runner](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-runner) drive it. |
+| Have Anthropic host the agent, configured through the Claude API | [**Managed Agents**](https://platform.claude.com/docs/en/managed-agents/overview) | A hosted agent harness that runs the agent loop, with sessions in an Anthropic-managed cloud sandbox or a [self-hosted sandbox](https://platform.claude.com/docs/en/managed-agents/self-hosted-sandboxes) on your own infrastructure. Use it from the [SDK for your language](https://platform.claude.com/docs/en/managed-agents/quickstart#install-the-sdk), the `ant` CLI, or the REST API. |
+
+To drive the same agent loop from a language other than Python or TypeScript, [run the CLI as a subprocess](/docs/en/headless) with the `-p` flag and `--output-format json`.
+
+## Capabilities
+
+These Claude Code capabilities are available in the SDK:
+
+| Capability | What it does | Learn more |
+| - | - | - |
+| Built-in tools | Read, write, edit files, run commands, and search the web | [Tools reference](/docs/en/tools-reference) |
+| Hooks | Run custom code at key points in the agent lifecycle | [Hooks](/docs/en/agent-sdk/hooks) |
+| Subagents | Spawn specialized agents for focused subtasks | [Subagents](/docs/en/agent-sdk/subagents) |
+| MCP | Connect external tools and data sources via the Model Context Protocol | [MCP](/docs/en/agent-sdk/mcp) |
+| Permissions | Control which tools run automatically, which need approval | [Permissions](/docs/en/agent-sdk/permissions) |
+| Sessions | Maintain context across exchanges, resume or fork later | [Sessions](/docs/en/agent-sdk/sessions) |
+| Skills, commands, and memory | Load automatically from your project's `.claude/` and from `~/.claude/`, same as Claude Code | [Skills](/docs/en/agent-sdk/skills), [Commands](/docs/en/agent-sdk/skills#commands-in-agent-sdk-sessions), [Memory](/docs/en/agent-sdk/modifying-system-prompts), [Configuration loading](/docs/en/agent-sdk/claude-code-features) |
+| Plugins | Package skills, agents, hooks, and MCP servers, and load them by local path | [Plugins](/docs/en/agent-sdk/plugins) |
+
+## Get started
+
+Follow the [Quickstart](/docs/en/agent-sdk/quickstart) to install the SDK, set your API key, and build your first agent, one that finds and fixes bugs in existing code.
+
+<Note>
+  Unless previously approved, Anthropic does not allow third party developers to offer claude.ai login or rate limits for their products, including agents built on the Claude Agent SDK. Use the API key authentication methods described in the [Quickstart](/docs/en/agent-sdk/quickstart) instead.
+</Note>
+
+## Changelog
+
+View the full changelog for SDK updates, bug fixes, and new features:
+
+* **TypeScript SDK**: [view CHANGELOG.md](https://github.com/anthropics/claude-agent-sdk-typescript/blob/main/CHANGELOG.md)
+* **Python SDK**: [view CHANGELOG.md](https://github.com/anthropics/claude-agent-sdk-python/blob/main/CHANGELOG.md)
+
+## Report bugs
+
+If you encounter bugs or issues with the Agent SDK:
+
+* **TypeScript SDK**: [report issues on GitHub](https://github.com/anthropics/claude-agent-sdk-typescript/issues)
+* **Python SDK**: [report issues on GitHub](https://github.com/anthropics/claude-agent-sdk-python/issues)
+
+## Branding guidelines
+
+For partners integrating the Claude Agent SDK, use of Claude branding is optional. When referencing Claude in your product:
+
+**Allowed:**
+
+* "Claude Agent", preferred for dropdown menus
+* "Claude", when within a menu already labeled "Agents"
+* "\{YourAgentName} Powered by Claude", if you have an existing agent name
+
+**Not permitted:**
+
+* "Claude Code" or "Claude Code Agent"
+* Claude Code-branded ASCII art or visual elements that mimic Claude Code
+
+Your product should maintain its own branding and not appear to be Claude Code or any Anthropic product. For questions about branding compliance, contact the Anthropic [sales team](https://www.anthropic.com/contact-sales).
+
+## License and terms
+
+Use of the Claude Agent SDK is governed by [Anthropic's Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms), including when you use it to power products and services that you make available to your own customers and end users, except to the extent a specific component or dependency is covered by a different license as indicated in that component's LICENSE file.
+
+## Next steps
+
+These resources cover deeper technical detail and example projects for building with the Agent SDK.
+
+* [Quickstart](/docs/en/agent-sdk/quickstart): build your first agent that finds and fixes bugs
+* [Migration guide](/docs/en/agent-sdk/migration-guide): migrate from the Claude Code SDK packages to the Agent SDK
+* [Agent loop](/docs/en/agent-sdk/agent-loop): how Claude plans, calls tools, and decides when a task is done
+* [Example agents](https://github.com/anthropics/claude-agent-sdk-demos): demo apps for local development
+* [TypeScript SDK](/docs/en/agent-sdk/typescript): full TypeScript API reference and examples
+* [Python SDK](/docs/en/agent-sdk/python): full Python API reference and examples
+* [Agent harness design](https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code): how the Claude Code team uses dynamic workflows to orchestrate many subagents at once
+
+
+######## WebSearch {"query": "Claude Code 日本語 対応 公式", "mode": "standard"}
+Web search results for query: "Claude Code 日本語 対応 公式"
+
+Links: [{"title":"DXを推進するAIポータルメディア「AIsmiley」| AI製品・サービスの比較・検索サイト","url":"https://aismiley.co.jp/?p=223454"},{"title":"DXを推進するAIポータルメディア「AIsmiley」| AI製品・サービスの比較・検索サイト","url":"https://aismiley.co.jp/ai_news/claude-japanese/"},{"title":"生成 AI のコラム","url":"https://cloudpack.jp/column/generative-ai/claude-japanese-settings-guide.html"},{"title":">>使うほど資産になる「JAPAN AI AGENT」の詳細はこちら<<","url":"https://japan-ai.co.jp/media/7133/"},{"title":"Claude Code (Kurodo Kodo) Japanese Guide 2026: Pronunciation, Pricing & Use","url":"https://ai.zenken.co.jp/en/post/kurodo-kodo-japanese-guide/"},{"title":"結論 — 日本語で話しかければ日本語で返ってくる","url":"https://www.ai-orchestra.ai/claude-code-training/columns/claude-code-nihongo"},{"title":"claude code japanese usage guide 2026","url":"https://uravation.com/media/claude-code-japanese-usage-guide-2026/"},{"title":"Prompt Gallery","url":"https://prompts.oomol.com/p/claude-code-japanese-hero-22165"},{"title":"[小ネタ]  Claude Codeの/voiceコマンドで日本語を認識させる方法","url":"https://dev.classmethod.jp/articles/claude-code-voice-japanese/"}]
+
+検索結果が返されました。以下は検索クエリ「Claude Code 日本語 対応 公式」に関連した情報です：
+
+## 検索結果サマリー
+
+Claude Codeは特別な日本語化の手順は必要なく、インストール直後から日本語で指示すれば日本語で応答します。
+
+### 日本語設定の方法
+
+常に日本語で返してほしい場合、settings.jsonファイルの`language`設定に"japanese"を指定することで、応答のデフォルト言語が日本語になります。
+
+### 音声入力の日本語対応
+
+Claude Codeの音声入力コマンド（/voiceコマンド）が展開中で、/configでLanguageをJapaneseに変更することで日本語音声入力が使えるようになります。
+
+### 注意点
+
+メニューや設定画面などツール自体の表示（UI）は英語です。
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Anthropic Commercial Terms of Service commercial use Claude", "mode": "standard"}
+Web search results for query: "Anthropic Commercial Terms of Service commercial use Claude"
+
+Links: [{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?no_head=1"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?r44b=no"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?pp=iaqb"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?bbpage=1"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?ssrid=ssr"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?re=true"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?Sid=1"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?authuser=0"},{"title":"commercial terms","url":"https://www.anthropic.com/legal/commercial-terms?like=1"}]
+
+I've successfully retrieved the Anthropic Commercial Terms of Service. Here's an overview of the key information found:
+
+## Commercial Terms of Service Overview
+
+The Commercial Terms of Service became effective on June 17, 2025.
+
+These Commercial Terms of Service are an agreement between Anthropic and you or the organization, company, or other entity that you represent ("Customer"). "Anthropic" means Anthropic Ireland, Limited if Customer resides in the European Economic Area ("EEA"), Switzerland or UK, and Anthropic, PBC if Customer resides anywhere else.
+
+### Scope
+
+The Terms govern Customer's use of Anthropic API keys and any other Anthropic offerings that reference these Terms, as well as all related Anthropic tools, documentation and services.
+
+### Consumer vs. Commercial Use
+
+Services under these Terms are not for consumer use, as consumer offerings (e.g., Claude.ai) are governed by the Consumer Terms of Service instead.
+
+### Commercial Use Permissions
+
+Subject to these Terms, Anthropic gives Customer permission to use the Services, including to power products and services Customer makes available to its own customers and end users.
+
+The full Commercial Terms of Service document is available at https://www.anthropic.com/legal/commercial-terms.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://code.claude.com/docs/ja/overview", "prompt": "Does this page exist as a Japanese-localized version of Claude Code documentation? If so summarize what's on it. If it redirects or 404s, say so."}
+> ## Documentation Index
+> Fetch the complete documentation index at: https://code.claude.com/docs/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# 概要
+
+> Claude Code は agentic coding ツールで、コードベースを読み取り、ファイルを編集し、コマンドを実行し、開発ツールと統合します。ターミナル、IDE、デスクトップアプリ、ブラウザで利用できます。
+
+Claude Code は AI を活用したコーディングアシスタントで、機能の構築、バグの修正、開発タスクの自動化を支援します。コードベース全体を理解し、複数のファイルとツール間で作業して目標を達成できます。
+
+<h2 id="get-started">
+  はじめに
+</h2>
+
+Claude Code は複数のサーフェスで実行されます。ターミナル、IDE 拡張機能、デスクトップアプリ、Web です。下のタブから 1 つを選択してはじめましょう。ほとんどのサーフェスには [Claude サブスクリプション](https://claude.com/pricing?utm_source=claude_code\&utm_medium=docs\&utm_content=overview_pricing)または [Anthropic Console](https://platform.claude.com/) アカウントが必要です。Terminal CLI、VS Code、JetBrains も [サードパーティプロバイダー](/docs/ja/third-party-integrations)をサポートしています。
+
+<Tabs>
+  <Tab title="Terminal">
+    ターミナルで Claude Code を直接操作するための機能豊富な CLI です。ファイルを編集し、コマンドを実行し、コマンドラインからプロジェクト全体を管理できます。
+
+    Claude Code をインストールするには、ターミナルを開いてシステムのコマンドを実行してください。ターミナルを使用したことがない場合は、[ターミナルガイド](/docs/ja/terminal-guide)でターミナルを開いてコマンドを貼り付ける方法を確認できます。
+
+    <Tabs>
+      <Tab title="ネイティブインストール（推奨）">
+        **macOS、Linux、WSL：**
+
+        ```bash theme={null}
+        curl -fsSL https://claude.ai/install.sh | bash
+        ```
+
+        **Windows PowerShell：**
+
+        ```powershell theme={null}
+        irm https://claude.ai/install.ps1 | iex
+        ```
+
+        **Windows CMD：**
+
+        ```batch theme={null}
+        curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+        ```
+
+        インストーラーが完了したら、新しいターミナルウィンドウを開いて `claude --version` を実行してください。インストールが正常に完了すると、バージョン番号が表示されます。シェルが `claude` が見つからない、または認識されていないと表示される場合は、インストールディレクトリがまだ PATH に含まれていません。[PATH を修正する](/docs/ja/troubleshoot-install#command-not-found-claude-after-installation)を参照してください。
+
+        `The token '&&' is not a valid statement separator` というエラーが表示される場合は、CMD ではなく PowerShell を使用しています。`'irm' is not recognized as an internal or external command` というエラーが表示される場合は、PowerShell ではなく CMD を使用しています。PowerShell を使用している場合、プロンプトに `PS C:\` と表示され、CMD を使用している場合は `PS` なしで `C:\` と表示されます。
+
+        インストールコマンドが `syntax error near unexpected token '<'`、`403`、またはその他の curl エラーで失敗する場合は、[インストールのトラブルシューティング](/docs/ja/troubleshoot-install#find-your-error)を参照して、エラーを修正方法に照合し、代替インストール方法を確認してください。
+
+        [Git for Windows](https://git-scm.com/downloads/win) は、Claude Code が Bash ツールを使用できるようにネイティブ Windows で推奨されます。Git for Windows がインストールされていない場合、Claude Code はシェルツールとして PowerShell を代わりに使用します。WSL セットアップは Git for Windows を必要としません。
+
+        <Info>
+          ネイティブインストールは、最新バージョンに保つために自動的にバックグラウンドで更新されます。
+        </Info>
+      </Tab>
+
+      <Tab title="Homebrew">
+        ```bash theme={null}
+        brew install --cask claude-code
+        ```
+
+        Homebrew は 2 つの cask を提供しています。`claude-code` は安定リリースチャネルを追跡しており、通常は約 1 週間遅れており、大きな回帰を伴うリリースをスキップします。`claude-code@latest` は最新チャネルを追跡し、新しいバージョンが出荷されるとすぐに受け取ります。
+
+        <Info>
+          Homebrew インストールは自動更新されません。インストールした cask に応じて、`brew upgrade claude-code` または `brew upgrade claude-code@latest` を実行して、最新の機能とセキュリティ修正を取得してください。
+        </Info>
+      </Tab>
+
+      <Tab title="WinGet">
+        ```powershell theme={null}
+        winget install Anthropic.ClaudeCode
+        ```
+
+        <Info>
+          WinGet インストールは自動更新されません。最新の機能とセキュリティ修正を取得するために、定期的に `winget upgrade Anthropic.ClaudeCode` を実行してください。
+        </Info>
+      </Tab>
+    </Tabs>
+
+    また、Debian、Fedora、RHEL、Alpine で [apt、dnf、または apk](/docs/ja/setup#install-with-linux-package-managers) を使用してインストールすることもできます。
+
+    その後、任意のプロジェクトで Claude Code を開始します。`your-project` をマシン上のプロジェクトディレクトリへのパスに置き換えてください：
+
+    ```bash theme={null}
+    cd your-project
+    claude
+    ```
+
+    初回使用時にログインするよう促されます。`ANTHROPIC_API_KEY` 環境変数を設定している場合、Claude Code はログインプロンプトをスキップし、代わりにキーを承認するよう求めます。これで完了です！[クイックスタートに進む →](/docs/ja/quickstart)
+
+    <Tip>
+      インストールオプション、手動更新、またはアンインストール手順については [高度なセットアップ](/docs/ja/setup) を参照してください。問題が発生した場合は [インストールのトラブルシューティング](/docs/ja/troubleshoot-install) にアクセスしてください。
+    </Tip>
+  </Tab>
+
+  <Tab title="VS Code">
+    VS Code 拡張機能は、インラインの差分表示、@-メンション、プラン確認、会話履歴をエディター内で直接提供します。
+
+    * [VS Code 用にインストール](vscode:extension/anthropic.claude-code)
+    * [Cursor 用にインストール](cursor:extension/anthropic.claude-code)
+
+    または、拡張機能ビュー（Mac では `Cmd+Shift+X`、Windows/Linux では `Ctrl+Shift+X`）で「Claude Code」を検索してください。インストール後、コマンドパレット（`Cmd+Shift+P` / `Ctrl+Shift+P`）を開き、「Claude Code」と入力して、**新しいタブで開く** を選択します。
+
+    [VS Code ではじめる →](/docs/ja/vs-code#get-started)
+  </Tab>
+
+  <Tab title="Desktop app">
+    IDE またはターミナルの外で Claude Code を実行するためのスタンドアロンアプリです。差分を視覚的に確認し、複数のセッションを並行実行し、定期的なタスクをスケジュール設定し、クラウドセッションを開始できます。
+
+    ダウンロードしてインストール：
+
+    * [macOS](https://claude.ai/api/desktop/darwin/universal/dmg/latest/redirect?utm_source=claude_code\&utm_medium=docs)（Intel および Apple Silicon）
+    * [Windows](https://claude.ai/api/desktop/win32/x64/setup/latest/redirect?utm_source=claude_code\&utm_medium=docs)（x64）
+    * [Windows ARM64](https://claude.ai/api/desktop/win32/arm64/setup/latest/redirect?utm_source=claude_code\&utm_medium=docs)
+    * Ubuntu または Debian では、アプリはベータ版です。[Linux インストール手順](/docs/ja/desktop-linux)に従って apt でインストールしてください。
+
+    インストール後、Claude を起動し、サインインして、**Code** タブをクリックしてコーディングを開始します。アプリには Claude Code が含まれているため、CLI を別途インストールする必要はありません。[有料サブスクリプション](https://claude.com/pricing?utm_source=claude_code\&utm_medium=docs\&utm_content=overview_desktop_pricing)が必要です。
+
+    [デスクトップアプリについて詳しく →](/docs/ja/desktop-quickstart)
+  </Tab>
+
+  <Tab title="Web">
+    ローカルセットアップなしでブラウザで Claude Code を実行します。長時間実行されるタスクを開始して完了を待つ、ローカルにないリポジトリで作業する、または複数のタスクを並行実行できます。長期的な作業の場合は、[プロジェクト](/docs/ja/claude-projects)を作成して、Claude に複数のセッションを調整させることができます。デスクトップブラウザと [iOS および Android 用 Claude アプリ](/docs/ja/mobile)で利用できます。
+
+    [claude.ai/code](https://claude.ai/code) でコーディングを開始します。
+
+    [Web ではじめる →](/docs/ja/web-quickstart)
+  </Tab>
+
+  <Tab title="JetBrains">
+    IntelliJ IDEA、PyCharm、WebStorm、その他の JetBrains IDE 用のプラグインで、インタラクティブな差分表示と選択コンテキスト共有機能があります。
+
+    JetBrains Marketplace から [Claude Code プラグイン](https://plugins.jetbrains.com/plugin/27310-claude-code-beta-) をインストールして IDE を再起動します。プラグインには Claude Code CLI が必要で、別途インストールしてください。[JetBrains セットアップステップ](/docs/ja/jetbrains#installation)を参照してください。
+
+    [JetBrains ではじめる →](/docs/ja/jetbrains)
+  </Tab>
+</Tabs>
+
+<h2 id="what-you-can-do">
+  できること
+</h2>
+
+Claude Code を使用できるいくつかの方法を紹介します：
+
+<AccordionGroup>
+  <Accordion title="先延ばしにしている作業を自動化する" icon="wand-magic-sparkles">
+    Claude Code は、1 日を費やす退屈なタスクを処理します：テストされていないコードのテスト作成、プロジェクト全体のリントエラー修正、マージコンフリクト解決、依存関係の更新、リリースノートの作成。
+
+    ```bash theme={null}
+    claude "write tests for the auth module, run them, and fix any failures"
+    ```
+  </Accordion>
+
+  <Accordion title="機能を構築し、バグを修正する" icon="hammer">
+    プレーンテキストで実現したいことを説明します。Claude Code はアプローチを計画し、複数のファイル間でコードを作成し、動作を検証します。
+
+    バグの場合は、エラーメッセージを貼り付けるか、症状を説明します。Claude Code はコードベース全体で問題をトレースし、根本原因を特定し、修正を実装します。詳細な例については [一般的なワークフロー](/docs/ja/common-workflows) を参照してください。
+  </Accordion>
+
+  <Accordion title="コミットとプルリクエストを作成する" icon="code-branch">
+    Claude Code は git と直接連携します。変更をステージングし、コミットメッセージを作成し、ブランチを作成し、プルリクエストを開きます。
+
+    ```bash theme={null}
+    claude "commit my changes with a descriptive message"
+    ```
+
+    CI では、[GitHub Actions](/docs/ja/github-actions) または [GitLab CI/CD](/docs/ja/gitlab-ci-cd) でコードレビューと問題トリアージを自動化できます。
+  </Accordion>
+
+  <Accordion title="MCP でツールを接続する" icon="plug">
+    [Model Context Protocol（MCP）](/docs/ja/mcp) は、AI ツールを外部データソースに接続するためのオープンスタンダードです。MCP を使用すると、Claude Code は Google Drive のデザインドキュメントを読み取り、Jira のチケットを更新し、Slack からデータをプルするか、独自のカスタムツーリングを使用できます。[MCP クイックスタート](/docs/ja/mcp-quickstart) は、最初のサーバーをエンドツーエンドで接続します。
+  </Accordion>
+
+  <Accordion title="指示、スキル、フックでカスタマイズする" icon="sliders">
+    [`CLAUDE.md`](/docs/ja/memory) はプロジェクトルートに追加するマークダウンファイルで、Claude Code はすべてのセッションの開始時に読み取ります。コーディング標準、アーキテクチャの決定、推奨ライブラリ、レビューチェックリストを設定するために使用します。リポジトリに他のコーディングエージェント用の `AGENTS.md` が既にある場合、Claude Code は [それを読み取ることができます](/docs/ja/memory#agents-md) 。Claude は [自動メモリ](/docs/ja/memory#auto-memory) も構築し、セッション間で学習内容を保存し、何も書かずに共有します。
+
+    [スキル](/docs/ja/skills) を作成して、チームが共有できる反復可能なワークフローをパッケージ化します（`/review-pr` や `/deploy-staging` など）。
+
+    [フック](/docs/ja/hooks) を使用すると、ファイル編集後の自動フォーマットやコミット前のリント実行など、Claude Code アクション前後にシェルコマンドを実行できます。
+  </Accordion>
+
+  <Accordion title="エージェントを並行実行し、カスタムエージェントを構築する" icon="users">
+    [複数の Claude Code エージェント](/docs/ja/sub-agents) を生成して、タスクの異なる部分に同時に取り組みます。リードエージェントが作業を調整し、サブタスクを割り当て、結果をマージします。
+
+    複数の完全なセッションを並行して実行し、1 つの画面から監視するには、[バックグラウンドエージェント](/docs/ja/agent-view) を使用します。完全にカスタムなワークフローの場合、[Agent SDK](/docs/ja/agent-sdk/overview) を使用すると、Claude Code のツールと機能を活用した独自のエージェントを構築でき、オーケストレーション、ツールアクセス、権限を完全に制御できます。
+  </Accordion>
+
+  <Accordion title="CLI でパイプ、スクリプト、自動化する" icon="terminal">
+    Claude Code は構成可能で Unix 哲学に従います。ログをパイプで渡し、CI で実行するか、他のツールと連鎖させます：
+
+    ```bash theme={null}
+    # 最近のログ出力を分析する
+    tail -200 app.log | claude -p "Slack me if you see any anomalies"
+
+    # CI で翻訳を自動化する
+    claude -p "translate new strings into French and raise a PR for review"
+
+    # ファイル全体でバルク操作
+    git diff main --name-only | claude -p "review these changed files for security issues"
+    ```
+
+    すべてのコマンドとフラグのセットについては [CLI リファレンス](/docs/ja/cli-reference) を参照してください。
+  </Accordion>
+
+  <Accordion title="定期的なタスクをスケジュール設定する" icon="clock">
+    繰り返される作業を自動化するためにスケジュールで Claude を実行します：朝の PR レビュー、夜間の CI 障害分析、週次の依存関係監査、または PR マージ後のドキュメント同期。
+
+    * [ルーティン](/docs/ja/routines) はクラウドで実行されるため、コンピューターがオフの場合でも実行し続けます。API 呼び出しまたは GitHub イベントでトリガーすることもできます。Web、デスクトップアプリ、または CLI で `/schedule` を実行して作成します。
+    * [デスクトップスケジュール済みタスク](/docs/ja/desktop-scheduled-tasks) はマシン上で実行され、ローカルファイルとツールに直接アクセスできます
+    * [`/loop`](/docs/ja/scheduled-tasks) は CLI セッション内でプロンプトを繰り返し、クイックポーリングを行います
+  </Accordion>
+
+  <Accordion title="どこからでも作業する" icon="globe">
+    セッションは単一のサーフェスに限定されません。コンテキストが変わるにつれて、環境間で作業を移動します：
+
+    * デスクから離れて、電話または [リモートコントロール](/docs/ja/remote-control) を使用した任意のブラウザから作業を続けます
+    * [Dispatch](/docs/ja/desktop#sessions-from-dispatch) にメッセージを送信して、電話からタスクを送信し、作成されたデスクトップセッションを開きます
+    * [Web](/docs/ja/claude-code-on-the-web) または [Claude モバイルアプリ](/docs/ja/mobile) で長時間実行されるタスクを開始し、`claude --teleport` でターミナルにプルします。Teleport には claude.ai サブスクリプションが必要です。
+    * `/desktop` を実行して、現在のターミナルセッションを [デスクトップアプリ](/docs/ja/desktop) に続行し、差分を視覚的に確認できます。`/desktop` ハンドオフには claude.ai サブスクリプションが必要です。macOS と x64 Windows で利用可能です。
+    * チームチャットからタスクをルーティング：[Slack](/docs/ja/slack) で `@Claude` にメンションしてバグレポートを送信し、プルリクエストを取得します
+  </Accordion>
+</AccordionGroup>
+
+<h2 id="use-claude-code-everywhere">
+  Claude Code をどこでも使用する
+</h2>
+
+各 [サーフェス](/docs/ja/glossary#surface) は同じ基盤となる Claude Code エンジンに接続するため、repo の CLAUDE.md ファイル、設定、MCP サーバーはすべてのサーフェスで機能します。
+
+上記の [Terminal](/docs/ja/quickstart)、[VS Code](/docs/ja/vs-code)、[JetBrains](/docs/ja/jetbrains)、[Desktop](/docs/ja/desktop)、[Web](/docs/ja/claude-code-on-the-web) サーフェスを超えて、Claude Code は CI/CD、チャット、ブラウザワークフローと統合します：
+
+| 実現したいこと | 最適なオプション |
+| - | - |
+| ローカルセッションを電話または別のデバイスから続行する | [リモートコントロール](/docs/ja/remote-control) |
+| Telegram、Discord、iMessage、または独自の webhook からセッションにイベントをプッシュする | [チャネル](/docs/ja/channels) |
+| ローカルでタスクを開始し、モバイルで続行する | [`claude --cloud`](/docs/ja/claude-code-on-the-web#from-terminal-to-cloud)、その後 [Claude モバイルアプリ](/docs/ja/mobile) |
+| 定期的なスケジュールで Claude を実行する | [ルーティン](/docs/ja/routines) または [デスクトップスケジュール済みタスク](/docs/ja/desktop-scheduled-tasks) |
+| PR レビューと問題トリアージを自動化する | [GitHub Actions](/docs/ja/github-actions) または [GitLab CI/CD](/docs/ja/gitlab-ci-cd) |
+| すべての PR で自動コードレビューを取得する | [GitHub Code Review](/docs/ja/code-review) |
+| Slack からプルリクエストへバグレポートをルーティングする | [Slack](/docs/ja/slack) |
+| ライブ Web アプリケーションをデバッグする | [Chrome](/docs/ja/chrome) |
+| 独自のワークフロー用のカスタムエージェントを構築する | [Agent SDK](/docs/ja/agent-sdk/overview) |
+
+<h2 id="next-steps">
+  次のステップ
+</h2>
+
+Claude Code をインストールしたら、これらのガイドでさらに詳しく学べます。
+
+* [クイックスタート](/docs/ja/quickstart)：コードベースの探索から修正のコミットまで、最初の実際のタスクを実行します
+* [指示とメモリを保存する](/docs/ja/memory)：CLAUDE.md ファイルと自動メモリで Claude に永続的な指示を与えます
+* [一般的なワークフロー](/docs/ja/common-workflows) と [ベストプラクティス](/docs/ja/best-practices)：Claude Code から最大限の価値を得るためのパターン
+* [Claude Academy](https://academy.claude.com/)：無料の自習コース。[Claude Code 101](https://academy.claude.com/courses/claude-code-101) と [Claude Code in Action](https://academy.claude.com/courses/claude-code-in-action) を含みます
+* [すべてのタスクのためのハーネス](https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code)：Claude Code チームが [動的ワークフロー](/docs/ja/workflows) を使用して大規模にサブエージェントを調整する方法
+* [設定](/docs/ja/settings)：ワークフローに合わせて Claude Code をカスタマイズします
+* [トラブルシューティング](/docs/ja/troubleshooting)：一般的な問題の解決策
+* [code.claude.com](https://code.claude.com/)：デモ、価格設定、製品の詳細
+
+
+######## WebSearch {"query": "Claude Code supported models list which Claude models", "mode": "standard"}
+Web search results for query: "Claude Code supported models list which Claude models"
+
+Links: [{"title":"> ## Documentation Index","url":"https://code.claude.com/docs/en/model-config"},{"title":"# Claude Code Models: How to Configure and Switch Models","url":"https://fast.io/resources/claude-code-models-configuration-guide.md"},{"title":"support.claude.com","url":"https://support.claude.com/en/articles/11940350"},{"title":"11940350 claude code model configuration)%5B","url":"https://support.claude.com/en/articles/11940350-claude-code-model-configuration)%5B"},{"title":"11940350 claude code model configuration","url":"https://support.claude.com/enhttps://images.synapticbloom.com/jiinsi/articles/11940350-claude-code-model-configuration"},{"title":"Available Models","url":"https://idi-coding-agents-dev.pwc.it/guide/models"},{"title":"www.ellipsis.dev","url":"https://www.ellipsis.dev/docs/harnesses"},{"title":"LLM Reference","url":"https://www.llmreference.com/agent/claude-code"},{"title":"LLM ReferenceLLM Reference","url":"https://www.llmreference.com/agents/claude-code"}]
+
+Based on the search results, here are the Claude models supported by Claude Code:
+
+Claude Code supports the following models:
+
+- Fable 5.1 (claude-fable-5-1)
+- Opus 5 (claude-opus-5)
+- Sonnet 5 (claude-sonnet-5)
+- Fable 5 (claude-fable-5)
+- Opus 4.8 (claude-opus-4-8)
+- Opus 4.7 (claude-opus-4-7)
+- Sonnet 4.6 (claude-sonnet-4-6)
+- Opus 4.6 (claude-opus-4-6)
+- Opus 4.5 (claude-opus-4-5-20251101)
+- Haiku 4.5 (claude-haiku-4-5-20251001)
+- Sonnet 4.5 (claude-sonnet-4-5-20250929)
+
+You can change models using the `/model` command directly within Claude Code, which works immediately without restarting your terminal. You can also use the `--model` flag when starting Claude Code to specify a model for that session, or set a default model using environment variables for all future sessions.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Claude Code changelog 2026 CHANGELOG.md release notes", "mode": "standard"}
+Web search results for query: "Claude Code changelog 2026 CHANGELOG.md release notes"
+
+Links: [{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.219"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.190"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.177"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.183"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.205"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.191"},{"title":"Claude Code Changelog & Release Notes","url":"https://www.havoptic.com/tools/claude-code"},{"title":"Claude Code Release Notes","url":"https://releasebot.io/updates/anthropic/claude-code"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.196"}]
+
+Based on the search results, here are Claude Code's 2026 release notes:
+
+**Recent Claude Code Releases (2026)**
+
+As of July 10, 2026, the latest Claude Code release is v2.1.207.
+
+Some notable 2026 releases include:
+
+- v2.1.219 (July 24, 2026): Early wiring for Claude Opus 5 support and tighter memory/self-correction behavior
+
+- v2.1.205 (July 8, 2026): Dropped native FreeBSD support and added a new MCP plugin tool
+
+- v2.1.196 (June 29, 2026): Added support for claude-opus-4-7-fast model and a new report_findings tool for structured code reviews
+
+- v2.1.183 (June 18, 2026): Updated agent instructions to always write tests when completing coding tasks
+
+- v2.1.190 (June 24, 2026): Refinements to built-in prompts and system instructions
+
+Havoptic tracks all 335 Claude Code releases with dated, AI-summarized changelog notes, updated daily.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Anthropic trust center security Claude Code data usage training privacy", "mode": "standard"}
+Web search results for query: "Anthropic trust center security Claude Code data usage training privacy"
+
+Links: [{"title":"Data policies","url":"https://docs.claude.com/en/docs/claude-code/data-usage"},{"title":"Data policies","url":"https://docs.anthropic.com/en/docs/claude-code/data-usage"},{"title":"> ## Documentation Index","url":"https://code.claude.com/docs/en/data-usage.md"},{"title":"> ## Documentation Index","url":"https://code.claude.com/docs/en/data-usage"},{"title":"- Enterprise","url":"https://claude-codex.fr/en/enterprise/faq/"},{"title":"Does Claude Code Store My Data","url":"https://claudelog.com/faqs/does-claude-code-store-my-data/"},{"title":"Claude Code Model Training Data Usage","url":"https://claudelog.com/faqs/claude-code-model-training-data-usage/"},{"title":"Is Claude Code Safe to Use?","url":"https://www.turbogeek.co.uk/?p=8675"},{"title":"12 Questions and Answers About claude data privacy and training opt-out","url":"https://www.securityscientist.net/blog/12-questions-and-answers-about-claude-data-privacy-and-training-opt-out/"}]
+
+Here are the key findings from the search results about Anthropic's trust center, Claude Code security, data usage, and privacy practices:
+
+## Data Retention
+
+Consumer users who allow data use for model improvement have a 5-year retention period to support model development and safety improvements, while those who don't allow data use for model improvement have a 30-day retention period. Commercial users have a standard 30-day retention period, with zero data retention available for appropriately configured API keys, and local caching may store sessions locally for up to 30 days to enable session resumption.
+
+## Security and Data Flow
+
+Claude Code runs locally, and in order to interact with the LLM, it sends data over the network that includes all user prompts and model outputs. The data is encrypted in transit via TLS and is not encrypted at rest. For details regarding API security controls, including API logging procedures, see compliance artifacts offered in the Anthropic Trust Center.
+
+## Model Training
+
+Data sent via the API is not used for model training. However, Anthropic now asks for your permission to use your interactions for model improvement with explicit consent, which applies specifically to conversations and coding sessions that help train AI models.
+
+## Data Transmission Details
+
+Claude Code sends your prompt, files it reads during the session, and results of executed commands, but does not automatically send your entire source code, and .env files, SSH keys, and system credentials are never sent unless you explicitly ask Claude to read them.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://code.claude.com/docs/en/model-config", "prompt": "Extract which Claude models Claude Code supports by default, and any details on model selection, fast mode, or model switching."}
+# Claude Models Supported by Claude Code
+
+## Default Supported Models
+
+Claude Code supports the following Claude models by default through **model aliases**:
+
+| Alias | Model | Use Case |
+|-------|-------|----------|
+| **`best`** | Fable (where available) or Opus | Hardest, longest-running tasks |
+| **`fable`** | Claude Fable 5.1 or 5 | Most capable; long autonomous sessions with investigation and verification |
+| **`opus`** | Opus 5.5 (Anthropic API) | Complex reasoning tasks |
+| **`sonnet`** | Sonnet 5.5 (Anthropic API) | Daily coding tasks |
+| **`haiku`** | Haiku | Fast, efficient model for simple tasks |
+| **`default`** | Opus 5.5 (Pro/Max/Team/Enterprise/API) | System default |
+
+### Extended Context Variants
+- **`opus[1m]`** - Opus with 1 million token context window
+- **`sonnet[1m]`** - Sonnet with 1 million token context window
+- **`fable[1m]`** - Fable with 1 million token context window
+
+### Hybrid Mode
+- **`opusplan`** - Uses Opus for planning, automatically switches to Sonnet for execution
+
+## Model Selection Methods
+
+You can select a model through (in order of priority):
+
+1. **During session**: `/model <alias|name>` or `/model` for picker
+2. **At startup**: `claude --model <alias|name>`
+3. **Environment variable**: `ANTHROPIC_MODEL=<alias|name>`
+4. **Settings file**: `model` field in `~/.claude/settings.json`
+5. **Default for new sessions**: `ANTHROPIC_DEFAULT_MODEL=<alias|name>`
+
+### Example Usage
+
+```bash
+# Launch with specific model
+claude --model opus
+
+# Switch models during session
+/model sonnet
+
+# Use 1M context window
+/model opus[1m]
+
+# Set default for future sessions
+/model   # opens picker, Enter saves selection
+```
+
+## Fast Mode
+
+Fast mode isn't explicitly detailed in this section, but the document references it can be toggled and respects `availableModels` restrictions.
+
+## Key Features
+
+- **Model switching saves as default** when using `/model` with Enter
+- **Session-only switching** with `s` key in picker (v2.1.257+)
+- **Resumed sessions** preserve their original model regardless of current default
+- **Fable models** require explicit selection; they're never account defaults
+- **Extended thinking** can be toggled with `Option+T` (macOS) or `Alt+T` (Windows/Linux)
+
+######## WebFetch {"url": "https://docs.claude.com/en/docs/claude-code/data-usage", "prompt": "Extract exact official details on Claude Code's data usage, retention periods, whether data is used for model training, encryption, and any security/compliance certifications mentioned (SOC2, HIPAA, etc)."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://docs.claude.com/en/docs/claude-code/data-usage
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://code.claude.com/docs/en/data-usage
+    Status: 301 Moved Permanently
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://code.claude.com/docs/en/data-usage"
+    - prompt: "Extract exact official details on Claude Code's data usage, retention periods, whether data is used for model training, encryption, and any security/compliance certifications mentioned (SOC2, HIPAA, etc)."
+
+######## WebFetch {"url": "https://code.claude.com/docs/en/data-usage", "prompt": "Extract exact official details on Claude Code's data usage, retention periods, whether data is used for model training, encryption, and any security/compliance certifications mentioned (SOC2, HIPAA, etc)."}
+> ## Documentation Index
+> Fetch the complete documentation index at: https://code.claude.com/docs/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Data usage
+
+> Learn about Anthropic's data usage policies for Claude
+
+## Data policies
+
+### Data training policy
+
+**Consumer users (Free, Pro, and Max plans)**:
+We give you the choice to allow your data to be used to improve future Claude models. We will train new models using data from Free, Pro, and Max accounts when this setting is on (including when you use Claude Code from these accounts).
+
+**Commercial users**: (Team and Enterprise plans, API, 3rd-party platforms, and Claude Gov) maintain existing policies: Anthropic does not train generative models using code or prompts sent to Claude Code under commercial terms, unless the customer has chosen to provide their data to us for model improvement (for example, the [Developer Partner Program](https://support.claude.com/en/articles/11174108-about-the-development-partner-program)).
+
+### Development Partner Program
+
+If you explicitly opt in to methods to provide us with materials to train on, such as via the [Development Partner Program](https://support.claude.com/en/articles/11174108-about-the-development-partner-program), we may use those materials provided to train our models. An organization admin can expressly opt-in to the Development Partner Program for their organization. Note that this program is available only for Anthropic first-party API, and not for Amazon Bedrock or Google Cloud's Agent Platform users.
+
+### Feedback using the `/feedback` command
+
+If you choose to send us feedback about Claude Code using the `/feedback` command, we may use your feedback to improve our products and services. Transcripts shared via `/feedback`, or via `/bug` and `/share`, which report through the same path, are retained for 5 years.
+
+With [Claude-drafted feedback](/docs/en/tools-reference#sendfeedback-tool-behavior), Claude can also draft a feedback report and queue it on your machine for you to review. Claude Code sends nothing until you choose to send the draft, and a sent draft goes through the same submission path and retention as other `/feedback` reports.
+
+### Session quality surveys
+
+When you see the "How is Claude doing this session?" prompt in Claude Code, responding to this survey, including selecting "Dismiss", records only your rating. We do not collect or store any conversation transcripts, inputs, outputs, or other session data as part of the rating prompt itself. Unlike thumbs up/down feedback or `/feedback` reports, this session quality survey is a simple product satisfaction metric.
+
+After the rating prompt, you may see a separate follow-up asking "Can Anthropic look at your session transcript to help us improve Claude Code?". This is an optional second step distinct from the rating:
+
+* **Yes**: uploads your conversation transcript, any subagent transcripts, and the raw session log file from disk to Anthropic. Known API key and token patterns are redacted before upload. Source code, file contents, and other conversation content are uploaded as-is. Shared transcripts are retained for up to 6 months. On Amazon Bedrock, Google Cloud's Agent Platform, Microsoft Foundry, and signed-in [Claude apps gateway](/docs/en/claude-apps-gateway) sessions, Yes writes the same payload to a local archive under `~/.claude/feedback-bundles/` instead of uploading; nothing leaves your machine until you forward that file.
+* **No**: declines without sending anything
+* **Don't ask again**: declines and stops this follow-up from appearing in future sessions
+
+Nothing is uploaded unless you explicitly select **Yes**. Organizations with [zero data retention](/docs/en/zero-data-retention), or where product feedback is disabled by organization policy, or where `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` is set, never see this follow-up. Your responses to this survey, including session transcripts submitted after the rating prompt, do not impact your data training preferences and cannot be used to train our AI models.
+
+To disable these surveys, set `CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1`. The survey is also disabled when `DISABLE_TELEMETRY`, `DO_NOT_TRACK`, or `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` is set. Organizations that block nonessential traffic but capture survey responses through their own [OpenTelemetry collector](/docs/en/monitoring-usage) can opt the survey back in by setting `CLAUDE_CODE_ENABLE_FEEDBACK_SURVEY_FOR_OTEL=1`. The survey then logs ratings to the configured collector only. The transcript-share follow-up and all other Anthropic-bound feedback traffic stay disabled. To control frequency instead of disabling, set [`feedbackSurveyRate`](/docs/en/settings-reference#feedbacksurveyrate) in your settings file to a probability between `0` and `1`.
+
+### Data retention
+
+Anthropic retains Claude Code data based on your account type and preferences.
+
+**Consumer users (Free, Pro, and Max plans)**:
+
+* Users who allow data use for model improvement: 5-year retention period to support model development and safety improvements
+* Users who don't allow data use for model improvement: 30-day retention period
+* Privacy settings can be changed at any time at [claude.ai/settings/data-privacy-controls](https://claude.ai/settings/data-privacy-controls).
+
+**Commercial users (Team, Enterprise, and API)**:
+
+* Standard: 30-day retention period
+* [Zero data retention](/docs/en/zero-data-retention): available to qualified accounts for Claude Code on Claude for Enterprise. ZDR is not included in the standard Enterprise plan; it is enabled on a per-organization basis by your account team after confirming eligibility
+* Local caching: Claude Code clients store session transcripts locally in plaintext under `~/.claude/projects/` for 30 days by default to enable session resumption. Adjust the period with `cleanupPeriodDays`. See [application data](/docs/en/claude-directory#application-data) for what's stored and how to clear it.
+
+  Transcripts of sessions started or most recently continued in Claude Desktop or Cowork are [exempt from that limit by default](/docs/en/claude-directory#cleaned-up-automatically).
+
+You can delete individual cloud sessions at any time. Deleting a session permanently removes the session's event data. For instructions on how to delete sessions, see [Delete sessions](/docs/en/claude-code-on-the-web#delete-sessions).
+
+Learn more about data retention practices in our [Privacy Center](https://privacy.anthropic.com/).
+
+For full details, please review our [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms) (for Team, Enterprise, and API users) or [Consumer Terms](https://www.anthropic.com/legal/consumer-terms) (for Free, Pro, and Max users) and [Privacy Policy](https://www.anthropic.com/legal/privacy).
+
+## Data access
+
+For all first party users, you can learn more about what data is logged for [local Claude Code](#local-claude-code-data-flow-and-dependencies) and [remote Claude Code](#cloud-execution-data-flow-and-dependencies). [Remote Control](/docs/en/remote-control) sessions follow the local data flow since all execution happens on your machine; while connected, the session transcript is also stored on Anthropic servers to sync the conversation across devices, as described in [Connection and security](/docs/en/remote-control#connection-and-security). Note for remote Claude Code, Claude accesses the repository where you initiate your Claude Code session. Claude does not access repositories that you have connected but have not started a session in.
+
+## Local Claude Code: Data flow and dependencies
+
+The diagram below shows how Claude Code connects to external services during installation and normal operation. Solid lines indicate required connections, while dashed lines represent optional or user-initiated data flows.
+
+<img src="https://mintcdn.com/claude-code/YR4DRZyI3CdsXkiT/images/claude-code-data-flow.svg?fit=max&auto=format&n=YR4DRZyI3CdsXkiT&q=85&s=2846ea92cfc2297b8620c31c82b482ad" className="dark:hidden" alt="Diagram showing Claude Code's external connections: install/update connects to the distribution server, and user requests connect to Anthropic's Console auth and public-api, with optional telemetry flows carrying metrics and error reports to Anthropic and third-party services. Feedback sent with /feedback goes to Google Cloud Storage and optionally creates a GitHub issue" width="720" height="520" data-path="images/claude-code-data-flow.svg" />
+
+<img src="https://mintcdn.com/claude-code/_xqph1dUOslCOwsj/images/claude-code-data-flow-dark.svg?fit=max&auto=format&n=_xqph1dUOslCOwsj&q=85&s=4fb6e8c88a9740845217bf2a2b040877" className="hidden dark:block" alt="Diagram showing Claude Code's external connections: install/update connects to the distribution server, and user requests connect to Anthropic's Console auth and public-api, with optional telemetry flows carrying metrics and error reports to Anthropic and third-party services. Feedback sent with /feedback goes to Google Cloud Storage and optionally creates a GitHub issue" width="720" height="520" data-path="images/claude-code-data-flow-dark.svg" />
+
+Claude Code runs locally. To interact with the LLM, Claude Code sends data over the network. This data includes all user prompts and model outputs, encrypted in transit via TLS 1.2+. Claude Code is compatible with most popular VPNs and LLM proxies.
+
+Encryption at rest depends on your model provider:
+
+| Provider | Encryption at rest |
+| - | - |
+| Anthropic API | Infrastructure-level disk encryption (AES-256). Enable [Zero Data Retention](/docs/en/zero-data-retention) for no server-side persistence. |
+| Amazon Bedrock | AES-256 with AWS-managed keys. Customer-managed keys available via AWS KMS. |
+| Google Cloud's Agent Platform | Google-managed encryption keys. CMEK available. |
+| Microsoft Foundry | Depends on the deployment's [hosting option](https://platform.claude.com/docs/en/build-with-claude/claude-in-microsoft-foundry#hosting-options). For Hosted on Azure deployments, prompts and completions remain within Azure; only usage metadata and content flagged by Anthropic's safety systems egress to Anthropic. For Hosted on Anthropic deployments, requests route to Anthropic infrastructure with AES-256 disk encryption. |
+
+Claude Code is built on Anthropic's APIs. For details on API security controls, including API logging procedures, see the compliance artifacts in the [Anthropic Trust Center](https://trust.anthropic.com).
+
+### Cloud execution: Data flow and dependencies
+
+[Cloud sessions](/docs/en/claude-code-on-the-web) run in Anthropic-managed virtual machines by default instead of locally. Sessions your organization routes to a [self-hosted environment](/docs/en/self-hosted-environments) run on infrastructure you control; for what stays on your machines and what still goes to Anthropic, see [What stays on your infrastructure](/docs/en/self-hosted-environments#what-stays-on-your-infrastructure). In Anthropic-hosted cloud sessions:
+
+* **Code and data storage:** Your repository is cloned into the session's isolated VM. Anthropic stores the session transcript so you can return to the session later. Code and session data are subject to the [retention and usage policies](#data-retention) for your account type
+* **Credentials:** GitHub credentials are stored encrypted on Anthropic's servers and never enter the VM. GitHub traffic from the VM goes through an Anthropic proxy that attaches them on the server side
+* **Network traffic:** All outbound traffic goes through a security proxy for audit logging and abuse prevention
+* **Session data:** Prompts, code changes, and outputs follow the same data policies as local Claude Code usage
+
+For security details about cloud execution, see [Security](/docs/en/security#cloud-execution-security).
+
+## Telemetry services
+
+Claude Code sends two kinds of operational telemetry: usage metrics and error reports. You can turn each off individually with the environment variables below, or disable all non-essential traffic at once by setting `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`. Setting `DISABLE_TELEMETRY` or `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` also disables feature-flag evaluation, which can make [Remote Control](/docs/en/remote-control#requirements) unavailable; `DISABLE_ERROR_REPORTING` doesn't.
+
+**Metrics**: latency, reliability, and usage patterns, sent to Anthropic and to third-party logging infrastructure over TLS. Metrics never include your code, prompts, or file paths. Set `DISABLE_TELEMETRY=1` to opt out.
+
+**Error reports**: error messages and stack traces from Claude Code's own internals, sent to a third-party error tracking service over TLS. Claude Code redacts known patterns of secrets, file paths, email addresses, and other personal information before anything leaves your machine. Set `DISABLE_ERROR_REPORTING=1` to opt out.
+
+Error reporting is on only when all of these apply:
+
+* you sign in with a Claude Pro or Max subscription
+* you're running Claude Code v2.1.198 or later
+* you're connecting directly to the Claude API
+* your organization doesn't have a zero data retention or HIPAA agreement
+
+When you run the `/feedback` command, a copy of your conversation history including code is sent to Anthropic. The `/bug` and `/share` commands submit through the same path. Before submitting a report from the feedback dialog, you choose how much history to include: the current session only, which is the default, or also other sessions from the same project over the last 24 hours or 7 days. Claude Code submits [Claude-drafted feedback](/docs/en/tools-reference#sendfeedback-tool-behavior) through the same path, including the transcript when you chose to include it on the draft's review screen. The data is encrypted in transit via TLS and stored in Google Cloud Storage, which encrypts stored data at rest by default. Optionally, a GitHub issue is created in the public repository. To opt out, set the `DISABLE_FEEDBACK_COMMAND` environment variable to `1`.
+
+When you use a third-party provider such as Amazon Bedrock or Google Cloud's Agent Platform, or have no Anthropic credentials configured, `/feedback` writes the report to a local archive under `~/.claude/feedback-bundles/` instead of sending it to Anthropic. Known API key and token patterns are redacted before the archive is written. Nothing leaves your machine until you send that file to your Anthropic account representative or attach it to a support request.
+
+## Default behaviors by API provider
+
+By default, error reporting, telemetry, and bug reporting are disabled when using Amazon Bedrock, Google Cloud's Agent Platform, Microsoft Foundry, or Claude Platform on AWS. Session quality surveys and the WebFetch domain safety check are exceptions and run regardless of provider. On a signed-in [Claude apps gateway](/docs/en/claude-apps-gateway) session, usage analytics, error reporting, and survey ratings to Anthropic are disabled by the gateway credential itself, with no setting to re-enable them. You can opt out of all non-essential traffic, including surveys, at once by setting `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`. This variable doesn't affect the WebFetch check or official plugin marketplace auto-install; each has its own opt-out: `skipWebFetchPreflight` in [settings](/docs/en/settings) for WebFetch, and `CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL` for the marketplace. Here are the full default behaviors:
+
+| Service | Claude API | Google Cloud's Agent Platform API | Amazon Bedrock API | Microsoft Foundry API | Claude Platform on AWS |
+| - | - | - | - | - | - |
+| **Metrics** | Default on.<br />`DISABLE_TELEMETRY=1` to disable. | Default off.<br />`CLAUDE_CODE_USE_VERTEX` must be 1. | Default off.<br />`CLAUDE_CODE_USE_BEDROCK` must be 1. | Default off.<br />`CLAUDE_CODE_USE_FOUNDRY` must be 1. | Default off.<br />`CLAUDE_CODE_USE_ANTHROPIC_AWS` must be 1. |
+| **Error reports** | On for Pro and Max sign-ins on v2.1.198+, otherwise off.<br />`DISABLE_ERROR_REPORTING=1` to disable. | Default off.<br />`CLAUDE_CODE_USE_VERTEX` must be 1. | Default off.<br />`CLAUDE_CODE_USE_BEDROCK` must be 1. | Default off.<br />`CLAUDE_CODE_USE_FOUNDRY` must be 1. | Default off.<br />`CLAUDE_CODE_USE_ANTHROPIC_AWS` must be 1. |
+| **Claude API (`/feedback` reports)** | Default on.<br />`DISABLE_FEEDBACK_COMMAND=1` to disable. | Default off.<br />`CLAUDE_CODE_USE_VERTEX` must be 1. | Default off.<br />`CLAUDE_CODE_USE_BEDROCK` must be 1. | Default off.<br />`CLAUDE_CODE_USE_FOUNDRY` must be 1. | Default off.<br />`CLAUDE_CODE_USE_ANTHROPIC_AWS` must be 1. |
+| **Session quality surveys** | Default on.<br />`CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1` to disable. | Default on.<br />`CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1` to disable. | Default on.<br />`CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1` to disable. | Default on.<br />`CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1` to disable. | Default on.<br />`CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1` to disable. |
+| **WebFetch domain safety check** | Default on.<br />`skipWebFetchPreflight: true` in [settings](/docs/en/settings) to disable. | Default on.<br />`skipWebFetchPreflight: true` in [settings](/docs/en/settings) to disable. | Default on.<br />`skipWebFetchPreflight: true` in [settings](/docs/en/settings) to disable. | Default on.<br />`skipWebFetchPreflight: true` in [settings](/docs/en/settings) to disable. | Default on.<br />`skipWebFetchPreflight: true` in [settings](/docs/en/settings) to disable. |
+
+All environment variables can be checked into `settings.json` (see [settings reference](/docs/en/settings-reference)).
+
+When a host platform sets `CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST`, metrics default to on for Google Cloud's Agent Platform, Amazon Bedrock, Microsoft Foundry, and Claude Platform on AWS, and follow the standard `DISABLE_TELEMETRY` opt-out. Error reporting and `/feedback` reports remain off by default on those providers.
+
+### WebFetch domain safety check
+
+Before fetching a URL, the WebFetch tool sends the requested hostname to `api.anthropic.com` to check it against a safety blocklist maintained by Anthropic. Only the hostname is sent, not the full URL, path, or page contents. Claude Code caches a hostname that passes the check for five minutes, and re-checks a blocked or failed hostname on the next request.
+
+This check runs regardless of which model provider you use and is not affected by `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`. If your network blocks `api.anthropic.com`, WebFetch requests fail until you either allowlist the domain or set `skipWebFetchPreflight: true` in [settings](/docs/en/settings). Disabling the check means WebFetch attempts to retrieve any URL without consulting the blocklist, so combine it with [`WebFetch` permission rules](/docs/en/permissions#webfetch) if you need to restrict which domains Claude can reach.
+
+
+######## WebSearch {"query": "Anthropic Consumer Terms of Service Pro Max commercial use output ownership", "mode": "standard"}
+Web search results for query: "Anthropic Consumer Terms of Service Pro Max commercial use output ownership"
+
+Links: [{"title":"What Changed in 2025-2026","url":"https://terms.law/claude-output-ip"},{"title":"🔑 Key Takeaways: Claude Output Ownership","url":"https://terms.law/ai-output-rights/anthropic/"},{"title":"How do other AI platforms compare?","url":"https://www.terms.law/2024/08/24/who-owns-claudes-outputs-and-how-can-they-be-used/"},{"title":"AI Platform Terms of Service Comparison FAQ (2026)","url":"https://terms.law/FAQ/ai-tools/ai-platform-terms-comparison-faq.html"},{"title":"Members-only forum — Email to join","url":"https://terms.law/forum/thread/claude-ai-terms-business-use.html"},{"title":"COPYRIGHT: Who Owns Claude-Generated Content?","url":"https://hyperonomy.com/2026/04/08/copyright-who-owns-claude-generated-content/"},{"title":"Consumer Terms of Service","url":"https://anthropic.com/legal/terms"},{"title":"COPYRIGHT: Who owns Claude generated output?","url":"https://drss.io/reader/npub1zf7jwpgpe7cxvf6d2sg3crvtud30pu70uy4fxt97tw6vf6wfd5wqxl398t/copyright-who-owns-claude-generated-output"},{"title":"Anthropic · Anthropic Consumer Terms · View original document ↗","url":"https://conductatlas.com/platform/anthropic/anthropic-consumer-terms/output-ownership-assignment-and-accuracy-disclaimer/"}]
+
+Based on the search results, here's what I found regarding Anthropic's Consumer Terms of Service regarding output ownership and commercial use:
+
+## Output Ownership
+
+Anthropic's Terms of Service explicitly assign all right, title, and interest in Claude outputs to the user who generated them. Anthropic's Consumer Terms states: "Subject to your compliance with our Terms, we assign to you all of our right, title, and interest, if any, in Outputs."
+
+## Commercial Use Rights
+
+The commercial use rights vary by plan tier:
+
+- For Free tier users, commercial use is limited to "personal only"; for Pro ($20/mo) users, commercial use is described as "Limited"; and for Team/Enterprise and API tiers, users have "Full rights."
+- Pro users can use outputs commercially with human contribution, but lack indemnification.
+
+## Important Limitations
+
+The ownership assignment is conditional - if you violate Anthropic's Terms or Usage Policy, you may forfeit the assignment entirely.
+
+However, this doesn't guarantee copyright protection - AI-generated content without substantial human contribution isn't copyrightable under current U.S. law.
+
+For serious commercial use, Team/Enterprise or API tiers are recommended, as these provide full rights and copyright indemnity protections that the Pro tier lacks.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"code.claude.com\" changelog claude code release notes official", "mode": "standard"}
+Web search results for query: ""code.claude.com" changelog claude code release notes official"
+
+Links: [{"title":"claude code release notes","url":"https://claudelog.com/faqs/claude-code-release-notes"},{"title":"Release Notes","url":"https://docs.anthropic.com/en/release-notes/claude-code"},{"title":"claude code changelog","url":"https://claudelog.com/claude-code-changelog"},{"title":"# How to Check and Update Your Claude Code Version","url":"https://www.fast.io/resources/claude-code-version-changelog-guide.md"},{"title":"Tech Dev Notes","url":"https://techdevnotes.com/releases/claude-code"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.190"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.179"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.183"},{"title":"• Tech Dev NotesTech Dev Notes","url":"https://techdevnotes.com/releases/claude-code/2.1.177"}]
+
+Based on the search results, here's what I found about Claude Code release notes and changelogs:
+
+## Official Release Notes Resources
+
+Claude Code publishes its changelog in four places:
+- Official docs changelog at code.claude.com/docs/en/changelog
+- GitHub releases
+- CHANGELOG.md on GitHub
+
+For the most up-to-date version information and detailed changelogs, you can check the complete CHANGELOG.md in the claude-code repository.
+
+## Recent Release Activity
+
+The search results show recent patch releases with various improvements. For example, version 2.1.219 and 2.1.220 included internal auto-mode classifier work and Claude Code SDK compatibility, along with early wiring for Claude Opus 5 and tighter memory and self-correction behavior.
+
+## What's Included in Releases
+
+Each version includes feature additions, improvements, bug fixes, and links to relevant documentation. Recent changes have focused on areas like system prompt improvements for writing tests and refined plan mode instructions.
+
+The official Anthropic documentation at code.claude.com would be your best source for the most current and complete changelog information.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.

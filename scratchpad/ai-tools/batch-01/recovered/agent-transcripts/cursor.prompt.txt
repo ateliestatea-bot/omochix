@@ -1,0 +1,77 @@
+You are doing PRODUCT RESEARCH ONLY for OmochiX, a Japanese WordPress AI-tools comparison media site. This is content preparation for a WordPress admin JSON import tool. You will NOT touch any database, WordPress admin, git, or production system — your only deliverable is text returned in your final report message.
+
+TARGET: "Cursor" (Anysphere's AI code editor). OmochiX's existing page: slug="cursor", post ID 65, official_url currently recorded as https://cursor.com/, company_name="Anysphere, Inc.". Current production meta: tool_status=active, pricing_type=freemium, has_free_plan=true, japanese_support=partial, rating=4.8.
+
+IMPORTANT: Cursor already has SOME content you should review and refine/update (don't blindly discard if still accurate, but verify against current official sources since pricing/plans change often):
+- Existing key_features: ["コードベース全体を理解するAIチャット","複数ファイル編集を行うAgentモード","インライン編集（Cmd+K）","複数AIモデル選択（Claude・GPT系等）","ターミナル/CLI統合"]
+- Existing pros: ["既存コードベースを踏まえた提案精度が高い","VS Codeの拡張機能・設定資産をそのまま利用できる","無料のHobbyプランで試用できる"]
+- Existing cons: ["本格利用は有料プラン（Pro以降）が前提になりやすい","UIは日本語に完全対応していない"]
+- Existing recommended_use_cases: [] (empty — needs populating)
+- Existing short_description: "コードベースを理解し、補完、修正、質問対応を一つのエディター内で行える開発者向けAIツール。"
+- post_content is currently an EMPTY placeholder shell — needs full content written from scratch.
+
+TODAY'S DATE: 2026-09-30. Your training cutoff is January 2026 — Cursor pricing/plans/models change frequently. You MUST use web search extensively. Research via OFFICIAL SOURCES ONLY: official cursor.com pricing page → official docs (docs.cursor.com or cursor.com/docs) → official changelog/blog (cursor.com/changelog) → official help/support. Do multiple distinct searches (e.g. "Cursor pricing 2026", "Cursor Hobby Pro Ultra plan", "Cursor Japanese language support", "Cursor commercial use terms", "Cursor changelog 2026", "Cursor CLI background agents API"). Do not use third-party blogs/review sites as fact sources — only to find where the official page is.
+
+CRITICAL RULES:
+- Never invent facts. If unconfirmed, write "unknown" for enum fields, or omit the field entirely for text/array fields.
+- Distinguish "you can type Japanese prompts" from genuine UI localization — verify current UI language support state.
+- api_available: Cursor is primarily an IDE, not an API product for end-developers — confirm whether Cursor CLI / background agents / any official API/SDK exists as of 2026-09-30.
+- commercial_use must be based on actual terms of service language, not assumption.
+- Report exact prices with currency and billing cadence.
+- Do not copy phrasing from any other AI tool's page.
+
+REQUIRED OUTPUT (three parts in your final message):
+
+### 1. Sources list
+Under headers "Official product / Pricing / Docs / API / Help / Release notes" (omit any header you found nothing for), list exact URLs with "Research date: 2026-09-30".
+
+### 2. One JSON object (fenced ```json block) — OMIT any key you cannot confirm:
+```
+{
+  "slug": "cursor",
+  "short_description": "...",   // 60-90 Japanese characters (may revise the existing one)
+  "post_content": "...",
+  "key_features": ["...", ...],  // 5-8 items, format "機能名：短い説明" — refine/update existing list based on current research
+  "pros": ["...", ...],
+  "cons": ["...", ...],
+  "strengths": ["...", ...],
+  "weaknesses": ["...", ...],
+  "recommended_for": ["...", ...],
+  "recommended_use_cases": ["...", ...],   // 4-8 short phrases — currently EMPTY, populate it, e.g. "コードレビュー","バグ修正"
+  "not_recommended_for": ["...", ...],
+  "pricing_details": "...",
+  "api_sdk_info": "...",   // omit entirely if no confirmed public API/SDK exists
+  "security_info": "...",  // omit if nothing confirmable
+  "notes": "...",
+  "supported_devices": ["...", ...],  // e.g. macOS, Windows, Linux, VS Code extension basis
+  "supported_models": ["...", ...],   // AI models selectable within Cursor, if confirmed
+  "integrations": ["...", ...],
+  "has_free_plan": true|false,
+  "api_available": "yes"|"partial"|"no"|"unknown",
+  "commercial_use": "yes"|"partial"|"no"|"unknown",
+  "japanese_support": "full"|"partial"|"none"|"unknown",
+  "info_checked_date": "2026-09-30",
+  "omochix_view": "...",   // 200-400 Japanese characters, OmochiX EDITORIAL ANALYSIS: positioning among AI coding tools (vs Claude Code/GitHub Copilot/Windsurf), biggest strength, who it resonates with. Avoid absolute claims.
+  "seo_title": "...",      // <=60 chars, e.g. "Cursorとは？料金・機能・使い方・日本語対応を解説｜OmochiX"
+  "meta_description": "..."  // 50-160 chars
+}
+```
+
+post_content structure (real HTML tags, not markdown):
+```
+<h2>Cursorとは？</h2>
+<h2>Cursorでできること</h2>
+<h2>日本語で使える？</h2>
+<h2>Cursorの料金</h2>  (add <h3>各プラン</h3> if plan-by-plan detail confirmable)
+<h2>Cursorの使い方</h2>  (numbered <ol><li>...</li></ol> — install/setup/first-use steps)
+<h2>Cursorの活用例</h2>
+<h2>Cursorのメリット</h2>
+<h2>Cursorの注意点</h2>
+<h2>どんな人におすすめ？</h2>
+<h2>FAQ</h2>  (2-4 Q&A pairs as <p><strong>Q. ...</strong></p><p>A. ...</p>)
+```
+Write in Japanese, professional/clear editorial tone, no hype/exclamation points, no padding.
+
+### 3. A short bullet list (3-6 items) of anything you could NOT confirm and marked unknown/omitted.
+
+Report back with all three sections in full — research+drafting only, no code/file edits needed.

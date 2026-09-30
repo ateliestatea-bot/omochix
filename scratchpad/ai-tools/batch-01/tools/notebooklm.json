@@ -1,0 +1,81 @@
+{
+  "slug": "notebooklm",
+  "short_description": "アップロードした資料をもとに要約・質問応答・音声解説を生成するGoogleのリサーチ特化型AIツール。2026年7月に「Gemini Notebook」へ改称した。",
+  "post_content": "<h2>NotebookLMとは？</h2>\n<p>NotebookLM（ノートブックエルエム）は、Googleが提供するリサーチ・情報整理に特化したAIツールです。PDFやGoogleドキュメント、Webページ、YouTube動画のURLなど、自分で用意した資料（ソース）を読み込ませると、その内容の範囲内で要約・質問応答・音声解説などを生成できます。汎用的な対話AIと異なり、回答の根拠を自分のソースに限定できる点が特徴です。</p>\n<p>2026年7月16日、GoogleはNotebookLMを「Gemini Notebook」へ改称すると公式ブログで発表しました。既存のノートブックや共有リンクは自動リダイレクトで維持され、基本的な使い方は変わりません。公式ヘルプも現在は「Gemini Notebook」の名称で案内されています。本ページでは、広く知られている旧称の「NotebookLM」を主に用いて解説します。</p>\n<h2>NotebookLMでできること</h2>\n<p>NotebookLMの中核は、アップロードした資料に基づいて質問に答え、根拠となる箇所を引用付きで示す機能です。加えて、資料の内容を音声・動画・図解・学習教材といった別の形式に変換する機能が充実しています。</p>\n<h3>主要機能</h3>\n<ul>\n<li><strong>ソースに基づく質問応答</strong> — 資料の範囲内で回答を生成し、根拠箇所を引用として示す</li>\n<li><strong>Audio Overview（音声解説）</strong> — 資料の内容を2人のAIホストが対話形式で解説する音声を生成する。日本語音声にも対応</li>\n<li><strong>Video Overview（動画概要）</strong> — 資料の内容をスライド形式の動画にまとめる</li>\n<li><strong>マインドマップ</strong> — 資料の構造を図として可視化する</li>\n<li><strong>フラッシュカード・クイズ</strong> — 学習用の一問一答やクイズを自動作成する</li>\n<li><strong>多様なソース形式</strong> — PDF、Googleドキュメント／スライド、テキスト、Webページ、YouTube動画のURLを取り込める</li>\n<li><strong>コード実行</strong> — 2026年7月の改称以降、ノートブック内でデータ分析用のコードを実行する機能が順次追加されている</li>\n</ul>\n<h2>日本語で使える？</h2>\n<p>画面表示、資料のアップロード、チャットでの質問応答、Audio Overviewの生成はいずれも日本語で利用できます。Audio Overviewの日本語音声は2025年4月に追加されており、日本語の資料から日本語のポッドキャスト風音声を作成できます。公式ヘルプセンターにも日本語版があります。</p>\n<p>ただし、Audio Overviewの「Interactive（対話）モード」（音声ホストとリアルタイムで会話する機能）は、公式ヘルプの記載では英語のみの提供です。日本語ユーザーが使える範囲には一部制約が残っています。</p>\n<h2>NotebookLMの料金</h2>\n<p>NotebookLM単体の有料プランはありません。無料の「Standard」と、Googleの統合AIサブスクリプション（Google AI Plus／Pro／Ultra）または対象のGoogle Workspaceエディションに含まれる上位枠、という構成です（2026年10月1日、Google公式ヘルプおよびプランページで確認）。</p>\n<h3>各プラン</h3>\n<ul>\n<li><strong>Standard（無料）</strong> — ノートブック100件、1ノートブックあたりソース50件、チャット1日50回</li>\n<li><strong>Plus（Google AI Plus、月額725円）</strong> — ノートブック200件、ソース100件、チャット1日200回</li>\n<li><strong>Pro（Google AI Pro、月額2,900円）</strong> — ノートブック500件、ソース300件、チャット1日500回</li>\n<li><strong>Ultra（Google AI Ultra、月額14,500円または32,000円）</strong> — ノートブック500件、ソース500〜600件、チャット1日2,500〜5,000回</li>\n</ul>\n<p>上限の数値は変更される場合があると公式ヘルプに明記されています。Google AIの各プランにはGeminiアプリの利用枠やクラウドストレージなども含まれるため、NotebookLMだけの価格ではない点に注意してください。</p>\n<h2>NotebookLMの使い方</h2>\n<ol>\n<li><strong>ノートブックを作成</strong> — GoogleアカウントでNotebookLMにアクセスし、新しいノートブックを作成します。</li>\n<li><strong>ソースを追加</strong> — PDF、Googleドキュメント／スライド、テキスト、WebページやYouTube動画のURLを追加します。</li>\n<li><strong>質問する</strong> — チャット欄に質問を入力し、資料に基づく回答と引用元を確認します。</li>\n<li><strong>別の形式に変換</strong> — Audio Overview、Video Overview、マインドマップ、フラッシュカードなどを生成します。</li>\n<li><strong>保存・共有</strong> — 生成した音声や要約をダウンロード、またはノートブックを共有します。</li>\n</ol>\n<h2>NotebookLMの活用例</h2>\n<ul>\n<li><strong>研究・学習</strong> — 論文や専門資料を読み込み、要点を把握する</li>\n<li><strong>社内ナレッジ</strong> — マニュアルや議事録をもとに、質問形式で情報を引き出す</li>\n<li><strong>音声インプット</strong> — 移動中や作業中にAudio Overviewで資料の内容を聞く</li>\n<li><strong>試験対策・研修</strong> — フラッシュカードやクイズを作成する</li>\n<li><strong>情報整理</strong> — 複数の資料を横断してマインドマップで構造を整理する</li>\n</ul>\n<h2>NotebookLMのメリット</h2>\n<ul>\n<li>無料のStandardでも、要約・質問応答・Audio Overviewなど主要機能を試せる</li>\n<li>回答に出典箇所が示されるため、内容の裏付けを確認しやすい</li>\n<li>Audio Overviewを日本語で生成でき、音声でのインプットに使える</li>\n<li>PDF、Webページ、YouTube動画など多様な情報源を1つのノートブックにまとめられる</li>\n<li>対象のGoogle Workspaceエディションでは、追加契約なしで上位枠を使える場合がある</li>\n</ul>\n<h2>NotebookLMの注意点</h2>\n<ul>\n<li>資料を用意しない自由な雑談や汎用的な相談には向いていない</li>\n<li>無料のStandardはチャットが1日50回までなど、利用回数に上限がある</li>\n<li>Audio OverviewのInteractiveモードは英語のみで、日本語には対応していない</li>\n<li>個人アカウントでフィードバックを送信すると、そのやり取りが人によるレビューの対象となる場合がある</li>\n<li>個人向けには公開APIがなく、プログラムからの操作にはNotebookLM Enterpriseの契約が必要</li>\n</ul>\n<h2>どんな人におすすめ？</h2>\n<ul>\n<li>大量の論文・資料・議事録を読み込んで要点を把握したい研究者・学生</li>\n<li>社内資料をもとにQ&amp;Aや音声要約を作りたいビジネスパーソン</li>\n<li>移動中や作業中に資料の内容を音声で聞きたい人</li>\n<li>Google Workspaceを業務で利用している企業・チーム</li>\n</ul>\n<p>逆に、資料を用意せずに自由な会話をしたい人や、公開APIで自社サービスに深く組み込みたい個人開発者には不向きです。</p>\n<h2>FAQ</h2>\n<p><strong>Q. NotebookLMは無料で使えますか？</strong></p>\n<p>A. はい。無料の「Standard」でソースの取り込み、質問応答、Audio Overviewの生成などを利用できます。ノートブック100件、1ノートブックあたりソース50件、チャット1日50回といった上限があり、より多く使う場合はGoogle AI Plus／Pro／Ultra、または対象のGoogle Workspaceエディションが必要です。</p>\n<p><strong>Q. Audio Overviewは日本語で聞けますか？</strong></p>\n<p>A. 日本語のAudio Overviewを生成できます。ただし、音声ホストとリアルタイムで会話するInteractiveモードは英語のみの提供です。</p>\n<p><strong>Q. 「Gemini Notebook」とは別のサービスですか？</strong></p>\n<p>A. 同じサービスです。2026年7月16日にNotebookLMからGemini Notebookへ改称されました。既存のノートブックや共有リンクは自動リダイレクトで引き続き利用できます。</p>\n<p><strong>Q. 仕事や商用目的で使えますか？</strong></p>\n<p>A. Googleの利用規約では、サービスで生成したオリジナルコンテンツについてGoogleは所有権を主張しないとされています。組織で利用する場合は、アップロード内容が人によるレビューやモデル学習に使われないGoogle Workspaceの対象エディション、またはNotebookLM Enterpriseが用意されています。</p>\n<p><strong>Q. APIはありますか？</strong></p>\n<p>A. 個人向けのNotebookLMには公開APIがありません。Google Cloud上で別契約となるNotebookLM Enterpriseでは、ノートブックの作成やソースの追加をREST APIで操作できます。</p>",
+  "key_features": [
+    "ソースに基づく質問応答：アップロードした資料の範囲内で回答を生成し、根拠箇所を引用として明示する",
+    "Audio Overview（音声解説）：資料の内容を2人のAIホストが対話形式で解説する音声を自動生成。日本語音声にも対応",
+    "Video Overview（動画概要）：資料の内容をスライド形式の動画としてまとめる機能",
+    "マインドマップ：資料の構造を図として可視化する機能",
+    "フラッシュカード・クイズ生成：学習用の一問一答やクイズを自動作成する機能",
+    "多様なソース形式への対応：PDF、Googleドキュメント/スライド、テキスト、Webページ、YouTube動画URLを取り込み可能",
+    "コード実行機能：2026年7月の改称以降、ノートブック内でデータ分析用コードを実行できる機能が順次追加中"
+  ],
+  "pros": [
+    "無料プランでも要約・質問応答・Audio Overviewなど主要機能を試せる",
+    "回答に出典箇所が明示され、根拠を確認しやすい",
+    "Audio Overviewが日本語で生成できる",
+    "PDF・Webページ・YouTube動画など多様な情報源を一つのノートブックにまとめられる",
+    "Google Workspace利用企業では追加契約なしで上位機能にアクセスできる場合がある"
+  ],
+  "cons": [
+    "資料を持たない自由な雑談や汎用的な相談には向かない",
+    "無料のStandardはチャット1日50回までなど利用回数に上限がある",
+    "Audio OverviewのInteractiveモードは英語のみで日本語未対応",
+    "個人アカウントではフィードバック送信時にやり取りが人によるレビュー対象となる場合がある",
+    "個人向けには公開APIがなく、自社サービスへの組み込みは限定的"
+  ],
+  "strengths": [
+    "「自分の資料に基づく」回答に特化しており、根拠のない生成を抑えやすい設計",
+    "音声・動画・マインドマップなどテキスト以外の形式にも情報を再構成できる",
+    "2026年7月のGemini Notebookへの改称以降、Gemini本体やGoogle検索との連携が強化されつつある"
+  ],
+  "weaknesses": [
+    "汎用対話AI（Gemini本体やChatGPTなど）と比べ、資料なしの自由な生成には不向き",
+    "無料/有料の区分がGoogle AIサブスクリプション（Plus/Pro/Ultra）やWorkspaceのエディションに紐づき、料金体系がやや分かりにくい",
+    "一般開発者向けAPIがなく、自社サービス組み込みにはEnterprise版の別契約が必要"
+  ],
+  "recommended_for": [
+    "大量の論文・資料・議事録を読み込んで要点を把握したい研究者・学生",
+    "社内資料をもとにQ&Aや音声要約を作りたいビジネスパーソン",
+    "移動中や作業中に資料内容を音声で聞きたい人",
+    "Google Workspaceを業務利用している企業・チーム"
+  ],
+  "recommended_use_cases": [
+    "学習・研究資料の整理と要約",
+    "論文・レポートの要点把握",
+    "社内ドキュメントのQ&A化",
+    "Audio Overviewによる音声インプット",
+    "会議資料・議事録の内容整理",
+    "学習用フラッシュカード・クイズの作成"
+  ],
+  "not_recommended_for": [
+    "資料を用意せず自由な雑談や汎用的な相談をしたい人",
+    "公開APIで自社サービスに深く組み込みたい個人・小規模の開発者",
+    "利用回数の上限なく無料で使い続けたい人"
+  ],
+  "pricing_details": "NotebookLM（Gemini Notebook）単体の有料プランはなく、無料の「Standard」と、Google AI Plus／Pro／Ultraまたは対象のGoogle Workspaceエディションに含まれる上位枠で構成される。Standard（無料）はノートブック100件、1ノートブックあたりソース50件、チャット1日50回。Plus（Google AI Plus、月額725円）は200件・100件・1日200回。Pro（Google AI Pro、月額2,900円）は500件・300件・1日500回。Ultra（Google AI Ultra、月額14,500円または32,000円）は500件・500〜600件・1日2,500〜5,000回。上限は変更される場合があると公式ヘルプに明記されている。Google AIの各プランはGeminiアプリの利用枠やクラウドストレージなどを含む統合サブスクリプションで、NotebookLM単独の価格ではない。（2026年10月1日、support.google.comおよびgemini.google/subscriptionsで確認）",
+  "api_sdk_info": "個人向け（Standard／Plus／Pro／Ultra）のNotebookLMには、一般開発者向けの公開APIは提供されていない。プログラムからの操作が可能なのは、Google Cloud上で別契約となる「NotebookLM Enterprise」のみで、ノートブックの作成・管理やソースの追加をREST API経由で行える。利用には組織向けのGoogle Cloudプロジェクトとライセンス契約が必要で、個人開発者がAPIキーを発行してすぐ使える形態ではない。",
+  "security_info": "個人アカウントでは、サムズアップ/ダウンなどのフィードバックを送信した場合に限り、そのやり取り（質問・アップロード内容・出力）が人によるレビュー対象となる可能性がある。フィードバックを送らない通常利用では、内容がGoogleの基盤モデルの学習に直接使われることはないとされる。一方、Google Workspace（対象エディション）およびNotebookLM Enterpriseでは、フィードバックの有無にかかわらずアップロード内容・チャット内容が人によるレビューやモデル学習に使われない、より強固なデータ保護が提供される。Enterprise版ではVPC Service ControlsやCMEK（顧客管理暗号鍵）などGoogle Cloudのエンタープライズ向けセキュリティ機能にも対応する。",
+  "notes": "2026年7月16日、GoogleはNotebookLMを「Gemini Notebook」へ改称すると公式ブログで発表した。既存の共有リンクやノートブックは自動リダイレクトで維持される。本ページでは広く知られた旧称の「NotebookLM」を主に用いている。利用上限やGoogle AIプランの内容は変更されることがあるため、契約前に公式ページで最新情報を確認することを推奨する。Audio OverviewのInteractiveモードは英語のみの提供（公式ヘルプの記載）。",
+  "supported_devices": [
+    "Web",
+    "iOS",
+    "Android"
+  ],
+  "integrations": [
+    "Google ドライブ",
+    "Google ドキュメント",
+    "Google スライド",
+    "YouTube",
+    "Google Workspace"
+  ],
+  "has_free_plan": true,
+  "api_available": "partial",
+  "commercial_use": "yes",
+  "japanese_support": "full",
+  "info_checked_date": "2026-10-01",
+  "omochix_view": "NotebookLMは、汎用的な対話に強いChatGPTやGemini本体とは異なり、「自分が用意した資料の範囲内で答える」ことに特化したリサーチ特化型AIツールとして位置づけられる。最大の特徴は、回答に出典箇所が明示される点と、資料をポッドキャスト風の音声（Audio Overview）やマインドマップなど複数の形式に変換できる点にあり、大量の資料を読み込む研究者・学生・社会人の情報整理を助けやすい。無料枠でも主要機能を試せる一方、日次の利用回数には上限があり、本格的に使う場合はGoogleの上位AIプランやWorkspace契約の検討が必要になる。2026年7月のGemini Notebookへの改称でGemini本体やGoogle検索との連携も強化されつつあり、今後の展開は注視する価値がある。",
+  "seo_title": "NotebookLM（Gemini Notebook）とは？料金・機能・日本語対応を解説｜OmochiX",
+  "meta_description": "NotebookLM（2026年7月にGemini Notebookへ改称）の料金と無料枠の上限、Audio Overviewの日本語対応、使い方、APIや商用利用の考え方をOmochiXが公式情報をもとに解説します。"
+}

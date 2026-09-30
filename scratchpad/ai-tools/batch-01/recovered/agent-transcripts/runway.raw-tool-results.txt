@@ -1,0 +1,766 @@
+# Raw tool results recovered from agent-a6dd9aa03f9dc2035.jsonl (2026-09-30)
+
+
+######## WebSearch {"query": "Runway AI pricing plans 2026 runwayml.com", "mode": "standard"}
+Web search results for query: "Runway AI pricing plans 2026 runwayml.com"
+
+Links: [{"title":"← Back to Blog","url":"https://argil.ai/blog/runway-pricing-plans-5c7fc"},{"title":"Runway pricing (2026): plans, credits, and what you'll actually pay","url":"https://creatify.ai/ja/blog/runway-pricing-(2026)-plans-credits-and-what-you-ll-actually-pay"},{"title":"Runway pricing (2026): plans, credits, and what you'll actually pay","url":"https://creatify.ai/blog/runway-pricing-(2026)-plans-credits-and-what-you-ll-actually-pay"},{"title":"Runway pricing (2026): plans, credits, and what you'll actually pay","url":"https://creatify.ai/es/blog/runway-pricing-(2026)-plans-credits-and-what-you-ll-actually-pay"},{"title":"Runway pricing (2026): plans, credits, and what you'll actually pay","url":"https://creatify.ai/pt/blog/runway-pricing-(2026)-plans-credits-and-what-you-ll-actually-pay"},{"title":"Runway pricing (2026): plans, credits, and what you'll actually pay","url":"https://creatify.ai/de/blog/runway-pricing-(2026)-plans-credits-and-what-you-ll-actually-pay"},{"title":"Runway ML Pricing Change — March 2026","url":"https://costbench.com/changelog/runway-ml-plan-added-2026-03/"},{"title":"Runway ML Pricing Change — March 2026","url":"https://costbench.com/changelog/runway-ml-price-increase-2026-03/"},{"title":"Runway ML Pricing 2026","url":"https://costbench.com/software/video-editing/runway-ml/"},{"title":"Runway Pricing Change — April 2026","url":"https://costbench.com/changelog/runway-plan-added-2026-04/"}]
+
+Based on the search results, here's the current information about Runway AI pricing plans in 2026:
+
+## Runway Pricing Plans 2026
+
+Runway offers four published plans and one quote-based Enterprise plan. Every paid subscription is billed per editor.
+
+### Plan Tiers and Pricing:
+
+
+- **Free**: $0/month (with annual effective price of $0/month)
+- **Standard**: $15/month (annual effective price: $12/month)
+- **Pro**: $35/month (annual effective price: $28/month)
+- **Max**: $95/month (annual effective price: $76/month)
+- **Enterprise**: Contact sales for custom pricing
+
+
+### Credits and Features:
+
+The free plan includes 125 one-time credits, while the Standard plan provides 625 credits each month. The Standard and Pro plans refresh their credits each month without rollover.
+
+Note: Pricing on runwayml.com/pricing updates often as new model versions ship, and the amounts were verified on May 1, 2026.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Runway API developer docs.dev.runwayml.com", "mode": "standard"}
+Web search results for query: "Runway API developer docs.dev.runwayml.com"
+
+Links: [{"title":"# Runway Dev context","url":"https://docs.dev.runwayml.com/ai-context.md"},{"title":"docs.boost.space","url":"https://docs.boost.space/?p=15057"},{"title":"rw fetch api reference","url":"https://mcpservers.org/es/agent-skills/runwayml/rw-fetch-api-reference"},{"title":"rw fetch api reference","url":"https://mcpservers.org/zh-TW/agent-skills/runwayml/rw-fetch-api-reference"},{"title":"runway ml api","url":"https://make.com/en/help/app/runway-ml-api"},{"title":"rw fetch api reference","url":"https://mcpservers.org/ja/agent-skills/runwayml/rw-fetch-api-reference"},{"title":"rw fetch api reference","url":"https://mcpservers.org/de/agent-skills/runwayml/rw-fetch-api-reference"},{"title":"rw fetch api reference","url":"https://mcpservers.org/pt-BR/agent-skills/runwayml/rw-fetch-api-reference"},{"title":"rw fetch api reference","url":"https://mcpservers.org/hi/agent-skills/runwayml/rw-fetch-api-reference"},{"title":"fetch api reference","url":"https://skills.sh/runwayml/skills/fetch-api-reference"}]
+
+Based on the search results, here's what I found about the Runway API developer documentation:
+
+## Runway API Documentation Overview
+
+The Runway Dev documentation is a condensed primer for agents and language models working with Runway Dev, covering authentication, the task lifecycle, the complete endpoint surface, and common integration mistakes.
+
+### Key Access Information
+
+The base URL is `https://api.dev.runwayml.com`, authentication uses `Authorization: Bearer <your API secret>`, and every request requires `X-Runway-Version: 2024-11-06`. API keys can be obtained from the Developer Portal at https://dev.runwayml.com.
+
+### Available SDKs
+
+Official SDKs are `@runwayml/sdk` for Node and `runwayml` for Python.
+
+### API Capabilities
+
+The generation endpoints include `/v1/text_to_video`, `/v1/image_to_video`, `/v1/video_to_video`, `/v1/text_to_image`, `/v1/image_upscale`, `/v1/video_upscale`, `/v1/character_performance`, `/v1/text_to_speech`, `/v1/speech_to_speech`, `/v1/sound_effect`, `/v1/voice_dubbing`, and `/v1/voice_isolation`.
+
+### Documentation Resources
+
+Complete documentation is available at https://docs.dev.runwayml.com, where every page is available as raw Markdown by appending `.md` to its path.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://runwayml.com/pricing", "prompt": "Extract all pricing plan details: plan names, monthly price, annual price, credits included, features per plan, commercial use terms if mentioned, free plan details."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://runwayml.com/pricing
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://runway.com/pricing
+    Status: 308 Permanent Redirect
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://runway.com/pricing"
+    - prompt: "Extract all pricing plan details: plan names, monthly price, annual price, credits included, features per plan, commercial use terms if mentioned, free plan details."
+
+######## WebFetch {"url": "https://docs.dev.runwayml.com/ai-context.md", "prompt": "Extract all information about the Runway API: authentication, endpoints, SDKs, models supported, rate limits, pricing for API usage, any constraints."}
+# Runway Dev API Reference
+
+## Authentication
+- **Base URL:** `https://api.dev.runwayml.com`
+- **Method:** Bearer token via `Authorization: Bearer <your API secret>`
+- **Required Header:** `X-Runway-Version: 2024-11-06` on every request
+- **API Key Source:** Developer Portal at https://dev.runway.com; SDKs read from `RUNWAYML_API_SECRET` environment variable
+
+## Official SDKs
+- **Node.js:** `@runwayml/sdk`
+- **Python:** `runwayml`
+
+These SDKs handle version headers, retries, and task polling automatically.
+
+## Core Architecture
+Generation operates asynchronously:
+1. Submit request (e.g., `POST /v1/text_to_video`)
+2. Receive task ID in response
+3. Poll `GET /v1/tasks/{id}` until completion
+4. Retrieve outputs from successful task
+
+"status is one of PENDING, THROTTLED, RUNNING, SUCCEEDED, FAILED, or CANCELLED"
+
+## Endpoint Categories (58 operations across 13 groups)
+
+**Generation:** Text-to-video, image-to-video, video-to-video, text-to-image, upscaling, character performance, text-to-speech, speech-to-speech, sound effects, voice dubbing, voice isolation
+
+**Task Management:** Retrieve and delete tasks
+
+**Uploads:** Ephemeral file uploads via `POST /v1/uploads`
+
+**Recipes:** Multi-step workflows including product ads, product swap, UGC, multi-shot video, localization, and marketing imagery
+
+**Model Router:** Configuration-based model selection optimizing for cost, latency, or quality
+
+**Characters:** Avatar conversations with tool-calling support; includes knowledge documents and custom voices
+
+**Organization & Workflows:** Credit balance, usage tracking, workflow invocation
+
+## Model Requirements
+Request bodies vary by model—"ratio, duration, prompt length, and optional fields all change depending on the model you pick." Never reuse parameters across models.
+
+## Input Media Methods
+1. HTTPS URLs (publicly reachable)
+2. Base64 data URIs
+3. Ephemeral uploads for local files
+
+## Rate Limits & Throttling
+"A THROTTLED task is queued behind your rate limit" and proceeds automatically. Rate limits vary by usage tier.
+
+## Pricing & Costs
+"Do not state or estimate credit costs. Pricing lives only at https://docs.dev.runwayml.com/guides/pricing.md"
+
+## Output Management
+"Output URLs are temporary. Download and store anything you intend to keep."
+
+## Content Moderation
+Moderation failures surface as failed tasks, not HTTP errors. Moderated generations consume credits regardless of success.
+
+## Documentation Resources
+- Complete API specification: `/api.md`
+- OpenAPI spec: `/openapi.json`
+- Models guide: `/guides/models.md`
+- Pricing reference: `/guides/pricing.md`
+- Production checklist: `/guides/go-live.md`
+
+######## WebFetch {"url": "https://runway.com/pricing", "prompt": "Extract all pricing plan details: plan names, monthly price, annual price, credits included, features per plan, commercial use terms if mentioned, free plan details, currency."}
+# Runway AI Pricing Plan Details
+
+## Plan Names & Pricing
+
+**Free Plan**
+- Monthly: $0
+- Annual: N/A
+- Credits: 125 one-time credits
+- Description: "For people looking to explore Runway's AI Tools"
+
+**Standard Plan**
+- Monthly: $12 (annual billing, saves $36/year vs. $15 monthly)
+- Annual: $144
+- Credits: 625 credits/month (7,500/year)
+- Description: "For curious creators trying AI video"
+
+**Pro Plan**
+- Monthly: $28 (annual billing, saves $84/year vs. $35 monthly)
+- Annual: $336
+- Credits: 2,250 credits/month (27,000/year)
+- Description: "For creators leveling up their craft"
+- Marked as "Popular"
+
+**Max Plan**
+- Monthly: $76 (annual billing, saves $228/year vs. $95 monthly)
+- Annual: $912
+- Credits: 9,500 credits/month (114,000/year)
+- Description: "Best value for heavy solo usage"
+- Marked as "Best value"
+
+## Key Features by Plan
+
+| Feature | Free | Standard | Pro | Max |
+|---------|------|----------|-----|-----|
+| Storage | 5GB | 20GB | 100GB | 500GB |
+| Projects | N/A | Up to 3 | Up to 5 | Up to 10 |
+| Parallel Generations | N/A | 5 | 15 | 20 |
+| Brand Kits | N/A | N/A | 1 | Up to 3 |
+| Voice Clones | N/A | N/A | 1 | Up to 3 |
+| 4K Upscaling | N/A | Yes | Unlimited | Unlimited |
+| Credit Rollover | N/A | No | No | 1 month |
+
+## Included Models (All Paid Plans)
+- Gen-4.5
+- Kling 3.0
+- Nano Banana Pro
+- Audio models (Seed Audio, Lyria, Text-to-Speech)
+
+## Credit Usage Examples
+
+Gen-4.5 video: 12 credits per 5 seconds
+Gen-4 Images: 8 credits per 1080p image
+Text-to-Speech: 1 credit per 50 characters
+
+## Commercial Use
+No specific commercial use restrictions are mentioned in the provided content.
+
+## Currency
+USD ($)
+
+######## WebFetch {"url": "https://docs.dev.runwayml.com/guides/models.md", "prompt": "List all Runway model names/versions available (video, image, audio) with brief descriptions and capabilities."}
+# Runway AI Models Overview
+
+## Video Generation
+**Text/Image-to-Video Models:**
+- `wan3`, `wan3_prime` - Generate video from text or images
+- `seedance2.5`, `seedance2`, `seedance2_fast`, `seedance2_mini` - Support text, image, or video inputs
+- `grok_imagine_1_5`, `h3_max`, `hailuo3` - Text or image inputs
+- `gen4.5` - Flagship model with professional output formats (ProRes, HDR)
+- `gen4_turbo` - Image-only input
+- `veo3.1`, `veo3.1_fast` - Fast video generation options
+- `happyhorse_1_0` - Text or image capable
+- `gemini_omni_flash`, `gemini_omni_flash_1.1` - Multimodal inputs
+
+**Specialized Video Models:**
+- `aleph2` - Video editing with text/image guidance
+- `act_two` - Character performance from image or video
+
+## Real-Time
+- `gwm1_avatars` - "Text (conversation)" input producing "Video + Audio"
+
+## Image Generation
+- `gpt_image_2_5_flare`, `gpt_image_2_5_sunburst`, `muse_image`, `grok_imagine_image_2` - Text/image references
+- `seedream5_pro`, `seedream5_lite` - Professional and lite versions
+- `gen4_image`, `gen4_image_turbo` - Reference-based generation
+- `gemini_image3_pro`, `gemini_image3.1_flash`, `gemini_2.5_flash` - Google's Nano Banana variants
+
+## Enhancement & Conversion
+- **Upscale Image:** `magnific_precision_upscaler_v2`
+- **Upscale Video:** `magnific_video_upscaler_creative`
+- **Frame Rate:** `enhance_frame_rate` (supports 24-120 fps)
+- **SDR to HDR:** `ruby` model
+
+## Audio
+- `seed_audio` - Text-to-speech and sound effects
+- `eleven_v3`, `eleven_multilingual_v2` - Speech synthesis
+- `eleven_text_to_sound_v2` - Sound effect generation
+- `eleven_voice_isolation`, `eleven_voice_dubbing`, `eleven_multilingual_sts_v2` - Audio processing
+
+######## WebFetch {"url": "https://docs.dev.runwayml.com/guides/pricing.md", "prompt": "Extract API pricing details: credit costs per model/operation, how API billing works, minimum spend, any free tier for API."}
+# Runway Dev API Pricing Summary
+
+## Billing Model
+Credits are the currency for all API operations, purchased at **$0.01 per credit** through the developer portal. Sales tax may apply by location.
+
+## Video Generation Costs
+Pricing varies significantly by model and resolution:
+- **Budget tier**: `wan3` (480p) at 5 credits/second; `gen4_turbo` at 5 credits/second
+- **Mid-range**: `gen4.5` at 12 credits/second; `hailuo3` (768p) at 10 credits/second
+- **Premium**: `seedance2_5` (1080p) at 68 credits/second; `veo3.1` (audio) at 40 credits/second
+
+Some models include minimum charges per generation (e.g., `aleph2` requires 56 credits minimum).
+
+## Image Generation Costs
+Range from 1-76 credits per image depending on model and resolution:
+- Budget: `muse_image` (1 credit) and `gen4_image_turbo` (2 credits)
+- Premium: `gpt_image_2_5_flare`/`sunburst` up to 76 credits at highest quality
+
+## Additional Operations
+- **Audio**: 0.25-1 credit per second for generation; 1 credit per 50 characters for text-to-speech
+- **Upscaling**: 25 credits for images; video upscaling at $0.007-$0.012 per output frame
+- **HDR conversion**: 20-40 credits per second
+
+## Free Tier
+No free tier mentioned; all operations require credit purchase.
+
+######## WebSearch {"query": "Runway AI Japanese support 日本語 help center localization", "mode": "standard"}
+Web search results for query: "Runway AI Japanese support 日本語 help center localization"
+
+Links: [{"title":"24342920074131 What languages can I prompt in","url":"https://help.runwayml.com/hc/en-us/articles/24342920074131-What-languages-can-I-prompt-in"},{"title":"Native Japanese AI Response Evaluation by Masataka IshidaNative Japanese AI Response Evaluation by Masataka Ishida","url":"https://contra.com/s/PvNbkNZb-native-japanese-ai-response-evaluation"},{"title":"japanese language support in operations console now generally available","url":"https://support.pagerduty.com/main/changelog/japanese-language-support-in-operations-console-now-generally-available"},{"title":"www.watch.impress.co.jp","url":"https://www.watch.impress.co.jp/docs/news/2108960.html"},{"title":"Runway Logo","url":"https://www.builtinchicago.org/job/creative-workflow-architect/8993451"},{"title":"20260515 runway comes to japan","url":"https://www.gigazine.net/gsc_news/en/20260515-runway-comes-to-japan/"},{"title":"Published on: December 11, 2025","url":"https://about.gitlab.com/blog/how-we-built-and-automated-our-new-japanese-gitlab-docs-site/"},{"title":"support multiple languages support","url":"https://feedback-1minai.userjot.com/board/p/support-multiple-languages-support"},{"title":"deploying ai application system enhance efficiency japanese clients","url":"https://runsystem.net/en/news/deploying-ai-application-system-enhance-efficiency-japanese-clients"}]
+
+Based on the search results, here's what I found about Runway AI's Japanese support:
+
+## Current State of Japanese Support
+
+While Runway's development team primarily speaks English, their models accept prompts in other languages. However, Runway does not yet have a localized interface, meaning the help center and support documentation are not available in Japanese.
+
+## Recent Japanese Market Expansion
+
+Runway has made significant moves toward the Japanese market. Runway has announced the opening of its Tokyo office, which will serve as its Japanese headquarters, with the company investing $40 million in initial investment. Runway is seeking a head of its Japan operations to build a broader team across product, engineering, sales, and customer deployment, looking for someone who understands both the Japanese creative industry and the enterprise market.
+
+## Support Resources
+
+For users with issues using Runway in Japanese, Runway encourages users to reach out to their support team with any comments, concerns, or feedback regarding language-specific prompting challenges.
+
+While Runway is actively expanding its presence in Japan, full localization of the help center and interface appears to still be in development.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Runway AI iOS Android app mobile", "mode": "standard"}
+Web search results for query: "Runway AI iOS Android app mobile"
+
+Links: [{"title":"apps.apple.com","url":"https://apps.apple.com/us/app/1665024375"},{"title":"Apr 24, 2023·1 min read","url":"https://appmaster.io/news/runway-ai-powered-app-video-to-video-generation-ios"},{"title":"Runway Rolls Out Generative AI Video Editor App for iOS","url":"https://voicebot.ai/?p=28690"},{"title":"apps.apple.com","url":"https://apps.apple.com/om/app/id1665024375"},{"title":"Runway lets you create animated AI videos on your iPhone—here's how it works","url":"https://www.businessinsider.in/tech/news/how-to-create-animated-ai-videos-on-your-iphone/amp_articleshow/99805595.cms"},{"title":"apps.apple.com","url":"https://apps.apple.com/st/app/id1665024375"},{"title":"apps.apple.com","url":"https://apps.apple.com/bs/app/id1665024375"},{"title":"apps.apple.com","url":"https://apps.apple.com/us/app/-/id6749021607"},{"title":"24 apr 2023·1 min di lettura","url":"https://appmaster.io/it/news/runway-ai-powered-app-video-to-video-generation-ios-it"},{"title":"24. Apr. 2023·1 Min. Lesezeit","url":"https://appmaster.io/de/news/startbahn-ai-powered-app-video-zu-video-generation-ios"}]
+
+Based on the search results, here's what I found about Runway AI's mobile apps:
+
+## iOS App
+
+Runway offers an iOS app for iPhone with AI image and video generation features, available for free with in-app purchases. The app includes AI models like Gen-4.5 and allows users to generate images and videos in any style with consistent characters, objects and locations. It features Chat Mode for generating content through a conversational interface without complex prompting or workflows.
+
+The iOS app requires iOS 15.1 or later and is designed for iPhone.
+
+## Android App
+
+The search results do not show information about an Android version of the Runway app. The results indicate that Runway currently has an iOS app available, but there's no mention of an Android app being released.
+
+## Background
+
+Runway introduced its first mobile app for iOS devices in April 2023, giving users access to its video-to-video generative AI model Gen-1. Users with an existing Runway desktop account can transfer assets seamlessly from their phone to their computer.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Runway AI terms of service commercial use ownership generated content", "mode": "standard"}
+Web search results for query: "Runway AI terms of service commercial use ownership generated content"
+
+Links: [{"title":"📋 What Runway's Terms Actually Say","url":"https://terms.law/ai-output-rights/runway/"},{"title":"Can I use the generated content for commercial purposes?","url":"https://help.runware.ai/articles/6787013685-can-i-use-the-generated-content-for-commercial-purposes"},{"title":"Private members-only forum","url":"https://terms.law/forum/thread/runway-ml-video-commercial-rights.html"},{"title":"help.runwayml.com","url":"https://help.runwayml.com/hc/en-us/articles/21668707517587"},{"title":"can you use ai generated video commercially heres the checklist tool by tool","url":"https://hackernoon.com/can-you-use-ai-generated-video-commercially-heres-the-checklist-tool-by-tool"},{"title":"Runway · Runway Terms of Service · View original document ↗","url":"https://conductatlas.com/platform/runway/runway-terms-of-service/ai-training-license-over-inputs-and-outputs/"},{"title":"conductatlas.com","url":"https://conductatlas.com/platform/runway/runway-terms-of-service/history/"},{"title":"Runway · Runway Terms of Service · View original document ↗","url":"https://conductatlas.com/platform/runway/runway-terms-of-service/ai-training-data-license-inputs-and-outputs/"},{"title":"AI / ML Training Rights — wording history","url":"https://tostracker.app/document/runwayml/clause/ai-training"}]
+
+Based on the search results, here's what Runway AI's terms of service say about commercial use and ownership of generated content:
+
+## Commercial Use
+
+The content you create using Runway is yours to use without any non-commercial restrictions, and you retain ownership and all your rights for your creations and generations. However, paid subscribers can use generated content commercially without restrictions, while free plan users are limited to personal, non-commercial use.
+
+## Ownership of Generated Content
+
+Runway explicitly does not claim ownership of your inputs or outputs, and you retain ownership of all content you generate.
+
+## Data Training Rights
+
+An important caveat: Runway does maintain a license to use your content for model training (except Enterprise). More specifically, users grant Runway a non-exclusive, irrevocable, perpetual, worldwide, royalty-free right and license to use any Inputs and Outputs in connection with AI model training and improvement purposes. This means even if you delete your account, Runway retains the right to use your past Inputs and Outputs indefinitely for AI training purposes, and any creative prompts or generated content you submit can be used by Runway to improve its AI models.
+
+## Important Copyright Note
+
+While Runway grants you contractual rights to use the content commercially, purely AI-generated content cannot be copyrighted because it lacks the human authorship required by copyright law. However, if you substantially edit, direct, or transform AI outputs, your human creative contributions may qualify for copyright protection.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "runway.com terms of service official site:runway.com OR site:runwayml.com", "mode": "standard"}
+Web search results for query: "runway.com terms of service official site:runway.com OR site:runwayml.com"
+
+Links: [{"title":"Terms of Use Agreement","url":"https://runwayml.com/terms-of-use"},{"title":"Free playbook Before you spend $50K on AI, run this audit","url":"https://runway.com/terms"},{"title":"Runway Enterprise Services Terms","url":"https://runwayml.com/enterprise-terms"},{"title":"Terms of Use Agreement","url":"https://runway.com/terms-of-use"},{"title":"Terms of Use Agreement","url":"https://runway.com/en/terms-of-use"},{"title":"terms of use","url":"https://runway.com/fr/terms-of-use"},{"title":"terms of use","url":"https://runway.com/pt-br/terms-of-use"},{"title":"2026 05 14 runway runway terms of service 2070","url":"https://conductatlas.com/change/2026-05-14-runway-runway-terms-of-service-2070/"},{"title":"2026 05 12 runway runway terms of service 2032","url":"https://conductatlas.com/change/2026-05-12-runway-runway-terms-of-service-2032/"},{"title":"2026 05 27 runway runway terms of service 2365","url":"https://conductatlas.com/change/2026-05-27-runway-runway-terms-of-service-2365/"}]
+
+I've completed the web search for "runway.com terms of service official site:runway.com OR site:runwayml.com". Here are the results:
+
+## Found Multiple Terms of Service Pages
+
+The search found several official terms of service pages:
+
+1. **Runway ML Terms of Use** - Last updated May 11, 2026
+   - Located at: https://runwayml.com/terms-of-use
+   - Governs use of the Services, including the website, hosted services, software applications, games, interactive media experiences, agents, and APIs
+
+2. **Runway Financial Terms of Service** - Located at: https://runway.com/terms
+   - A legally binding agreement between you and Runway Financial, Inc. governing use of their website
+
+3. **Runway AI Terms of Use** - Located at: https://runway.com/terms-of-use
+   - Last updated May 11, 2026
+   - Governs use of Runway AI, Inc.'s services including website, hosted services, software applications, games, interactive media experiences, agents, and APIs
+
+4. **Runway Enterprise Services Terms** - Located at: https://runwayml.com/enterprise-terms
+   - This is a separate agreement for organizations using Runway Enterprise Services
+
+Note: There appear to be different Runway entities (Runway AI, Inc. and Runway Financial, Inc.) with their respective terms of service pages.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://help.runwayml.com/hc/en-us/articles/24342920074131-What-languages-can-I-prompt-in", "prompt": "What does this article say about which languages can be used for prompting, and any mention of Japanese language support, UI localization, or support in Japanese?"}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "Runway AI SOC 2 enterprise security compliance", "mode": "standard"}
+Web search results for query: "Runway AI SOC 2 enterprise security compliance"
+
+Links: [{"title":"Runway Security","url":"https://runway.com/data-security"},{"title":"Runway Security","url":"https://runway.com/ko/data-security"},{"title":"Runway Security","url":"https://runway.com/ja/data-security"},{"title":"runway has achieved soc 2 type 2 certification","url":"https://runway.team/blog/runway-has-achieved-soc-2-type-2-certification"},{"title":"🚀  Introducing Rollouts by Runway! Learn more  📈","url":"https://www.runway.team/blog/soc-2-certification"},{"title":"How Runway Propelled Its Business with SOC 2 Compliance","url":"https://drata.com/customers/runway"},{"title":"24300377879827 Understanding Runway s security and privacy standards","url":"https://help.runwayml.com/hc/en-us/articles/24300377879827-Understanding-Runway-s-security-and-privacy-standards"},{"title":"Case Study","url":"https://businesstechnavigator.com/case-studies/soc-2-type-ii-ai-saas-case-study-2026"},{"title":"Runway vs StackAIComparison","url":"https://www.rfp.wiki/artificial-intelligence/runway/stackai"}]
+
+Based on the search results, here's what I found about Runway AI's SOC 2 enterprise security compliance:
+
+## SOC 2 Type II Certification
+
+Runway has successfully maintained SOC 2 Type II certification and enterprise customers can request the SOC 2 Type II report through their sales process or through Runway's Trust Center.
+
+## Additional Security Certifications
+
+Beyond SOC 2, Runway is certified to ISO/IEC 27001, the international standard for information security management systems, with certification issued by an accredited certification body following an independent audit of their security program.
+
+## Additional Security Standards
+
+Beyond SOC 2 and ISO 27001, Runway aligns with other key security standards including GDPR Readiness, with their systems incorporating protections for European users in accordance with GDPR requirements.
+
+## Enterprise Customer Access
+
+Runway maintains SOC 2 Type II certification, validating security controls through independent auditing, and their SOC 2 compliance guarantees that all uploaded media is not accessible or extractable by unauthorized team members and/or third parties. For Enterprise Plan customers, this compliance applies, and any additional requested, discussed, or amended plan-based security details are specifically outlined in their original enterprise contract.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://runway.com/terms-of-use", "prompt": "Extract clauses about: ownership of user-generated outputs, commercial use rights (especially any difference between free plan and paid plan), license granted to Runway over user inputs/outputs for training purposes, and any content moderation policy."}
+# Runway Terms of Use: Key Clauses on Outputs, Commercial Use, Training Rights & Moderation
+
+## Ownership of User-Generated Outputs
+
+Runway explicitly disclaims ownership: "Company does not claim ownership of any of your Inputs or Outputs." Users retain their outputs while granting Runway a broad license for training and improvement purposes.
+
+## Commercial Use Rights
+
+The terms state that "the Company does not restrict your commercial use of your Outputs." Notably, the document makes no distinction between free and paid plan users regarding commercial rights—both appear to have equal commercial use permissions for their generated outputs.
+
+## License Granted to Runway for Training
+
+This is a critical provision. Users grant Runway "a non-exclusive, irrevocable, perpetual, worldwide, royalty-free, fully paid, transferable, sublicensable right and license to use any Inputs and Outputs" for purposes including "labeling, classification, content moderation and model training."
+
+This means user data becomes training material for Runway's AI systems automatically.
+
+## Content Moderation Policy
+
+The terms reference a separate Usage Policy document but provide limited detail here. The agreement notes Company reserves the right to "pre-screen, refuse or remove any Content" and that users grant "irrevocable consent to such monitoring." No expectation of privacy exists for transmitted content.
+
+######## WebFetch {"url": "https://runway.com/data-security", "prompt": "Extract information about security certifications (SOC 2, ISO 27001, GDPR), data handling, encryption, and enterprise security features."}
+# Runway AI Security Overview
+
+## Certifications & Compliance
+
+**SOC 2 Type II**: Runway maintains annual recertification, demonstrating "systems effectively protect customer data" through rigorous independent auditing by the AICPA.
+
+**ISO/IEC 27001**: The company holds certification to this international standard for information security management systems, issued by an accredited certification body.
+
+**Additional Standards**: The platform aligns with GDPR requirements, CCPA/CPRA protections, and incorporates NIST framework elements.
+
+## Data Handling & Encryption
+
+Runway processes several data categories including user accounts, authentication tokens, customer content, and system logs. The organization maintains strict separation between production data and testing environments—customer content never supports feature testing.
+
+**Encryption Protocols**:
+- Transit: "TLS 1.2+ with strong cipher suites" protects transmitted data
+- Storage: "AES-256 encryption" secures data at rest, with keys managed and rotated regularly
+
+The company avoids custom cryptographic implementations, relying instead on industry-proven encryption libraries.
+
+## Enterprise Security Features
+
+- Role-based access controls following least privilege principles
+- Multi-factor authentication across internal systems and production environments
+- Automated deployment pipelines to minimize direct human access
+- Comprehensive audit logging and 24/7 infrastructure monitoring
+- Disaster recovery and business continuity planning
+- Content isolation with granular sharing controls
+- Third-party vendor security assessments and formal data protection contracts
+
+Enterprise customers can access detailed security reports through Runway's Trust Center at trust.runwayml.com.
+
+######## WebFetch {"url": "https://runway.com/ja", "prompt": "Is this page in Japanese? Describe what Japanese-language content appears - is this a full Japanese localization of the Runway product homepage, marketing site, or just a landing page?"}
+# Japanese Localization of Runway Homepage
+
+Yes, this is a full Japanese localization of Runway's main product homepage. The page contains comprehensive translated content across all major sections:
+
+**Scope of localization:**
+The site includes Japanese versions of product descriptions, navigation menus, and marketing copy. For example, the main headline states "Real-World Intelligenceを構築する" (Build Real-World Intelligence), with descriptions of all three platforms: Runway Creative, Dev, and Robotics.
+
+**Extent of translation:**
+This represents a complete localization rather than a simple landing page. The footer navigation spans multiple categories including Creative, Dev, Robotics, Enterprise, Research, Resources, and Company—all translated into Japanese. The page also features localized news sections and links to Japanese-language resources like the Academy and Help Center.
+
+**Language features:**
+The content maintains the original structure while using natural Japanese phrasing. For instance, Runway Creative is described as "何でもつくれる、必要なすべてが揃った完全なクリエイティブスイート" (a complete creative suite with everything needed to create anything).
+
+This indicates Runway has invested in a professional, full-scale Japanese localization of their primary marketing and product information site.
+
+######## WebFetch {"url": "https://runway.com/ja/pricing", "prompt": "Is this pricing page in Japanese? List the plan names and prices shown, and note the currency used (USD or JPY)."}
+# Runway AI Pricing Page Analysis
+
+**Language:** Yes, this is a Japanese pricing page.
+
+**Plan Names and Prices (in USD):**
+
+1. **Free** - $0/month
+2. **Standard** - $12/month (annual: 20% discount from $15/month)
+3. **Pro** - $28/month (annual: 20% discount from $35/month)
+4. **Max** - $76/month (annual: 20% discount from $95/month)
+
+**Currency:** USD (United States Dollars)
+
+The page displays monthly pricing with annual payment options that offer a "20%オフ" (20% off) discount. All prices are shown in dollars, making this pricing tier accessible to international users despite the Japanese language interface.
+
+######## WebSearch {"query": "Runway ヘルプセンター 日本語 サポート 問い合わせ", "mode": "standard"}
+Web search results for query: "Runway ヘルプセンター 日本語 サポート 問い合わせ"
+
+Links: [{"title":"IAS では、お客様に少しでもスムーズにIASのソリューションをご利用いただけるよう、さまざまなドキュメントや専門スタッフによる日本語でのサポートサービスを提供しています。","url":"https://integralads.com/jp/insider/ias-ui-help-center-how-to-submit-request/"},{"title":"20821762056723 How to submit a support request","url":"https://help.runwayml.com/hc/en-us/articles/20821762056723-How-to-submit-a-support-request"},{"title":"help.runwayml.com","url":"https://help.runwayml.com/hc/en-us/articles/20821762056723"},{"title":"help.runwayml.com","url":"https://help.runwayml.com/hc/en-us/requests/new"},{"title":"📣 Join our Flight Deck mobile engineering meetup on Nov 20th in SF — RSVP","url":"https://runway.team/contact-us"},{"title":"37661155432599 Documentation tutorials","url":"https://support.ozrunways.com/hc/en-au/articles/37661155432599-Documentation-tutorials"},{"title":"www.jal.co.jp","url":"https://www.jal.co.jp/jp/ja/information/branch/sr/th/"},{"title":"37661141219095 Documentation tutorials","url":"https://support.ozrunways.com/hc/en-au/articles/37661141219095-Documentation-tutorials"},{"title":"www.jal.co.jp","url":"https://www.jal.co.jp/eg/ja/help/index.html"}]
+
+Based on the search results, I found information about Runway's support options:
+
+Runway provides an AI assistant available for instant help with Runway accounts and products through their Help Center and Runway Academy. Support can be accessed by using the triple-dots icon in the top-right corner of your dashboard or generative session, then selecting Customer Support Chat.
+
+All users can receive billing and account support through an AI assistant, while product and technical support is exclusively available to customers on a Pro plan or higher. For users on a paid plan, you can expect a response 1-3 business days after your submission.
+
+However, the search results I found are in English. For Japanese-language support documentation and contact options specific to Runway's Japanese help center (ヘルプセンター), you may want to visit their Japanese help center directly at help.runwayml.com or contact their support team at support@runway.team.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://help.runwayml.com/hc/ja", "prompt": "Is there a Japanese-language version of the Runway help center? What content is shown, and is it in Japanese or English?"}
+The server returned HTTP 403 Forbidden.
+
+The response body was not retrieved. If this URL requires authentication, use an authenticated tool (e.g. `gh` for GitHub, or an MCP-provided fetch tool) instead of WebFetch.
+
+######## WebSearch {"query": "Runway Tokyo office Japan announcement official blog 2026", "mode": "standard"}
+Web search results for query: "Runway Tokyo office Japan announcement official blog 2026"
+
+Links: [{"title":"runway is coming to japan","url":"https://runwayml.com/news/runway-is-coming-to-japan"},{"title":"www.oricon.co.jp","url":"https://www.oricon.co.jp/news/2425925/full/"},{"title":"www.thefirsttimes.jp","url":"https://www.thefirsttimes.jp/?p=737878"},{"title":"ascii.jp","url":"https://ascii.jp/elem/000/004/402/4402708/"},{"title":"Aぇ! group、2ndアルバム『Runway』リリース&アリーナツアー開催 洗練された表情の新ビジュアルも","url":"https://realsound.jp/2025/12/post-2255063.html/amp"},{"title":"rakutenfashionweektokyo.com","url":"https://rakutenfashionweektokyo.com/en/?p=21193"},{"title":"rakutenfashionweektokyo.com","url":"https://rakutenfashionweektokyo.com/en/wp-json/wp/v2/information/20828"},{"title":"art 20260126 01","url":"https://rakutenfashionweektokyo.com/en/topics/information/art_20260126_01/"},{"title":"b23082f3 c23e 4155 a1e5 18ff27d7ed2f","url":"https://www.traeai.com/articles/b23082f3-c23e-4155-a1e5-18ff27d7ed2f"}]
+
+Based on the search results, I found relevant information about Runway's Tokyo office announcement:
+
+Runway announced on May 14, 2026, its expansion into Japan by opening a Tokyo office as its Japan headquarters, committing an initial $40M to build its presence in the country and hiring a Head of Japan to lead the effort.
+
+Japan has been one of Runway's fastest-growing markets, serving as its third-largest market among both enterprise and self-serve customers, and the fastest-growing self-serve market in Asia. The company saw 300% growth in enterprise customers in the past 12 months, with Japan driving a third of Runway's sales volume in Asia overall.
+
+The announcement brings Runway closer to customers like Yamaha, SoftBank Corp. and NHN, who are using Runway across marketing, advertising and creative pipelines.
+
+This official announcement was published on Runway's official blog at runwayml.com/news/.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://runwayml.com/news/runway-is-coming-to-japan", "prompt": "Extract all details: date of announcement, Tokyo office plans, investment amount, any mention of Japanese language support/localization plans for the product or support, named customers (Yamaha, SoftBank, NHN etc.), and any other concrete facts."}
+REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.
+
+    Original URL: https://runwayml.com/news/runway-is-coming-to-japan
+    Redirect URL (from the server's Location header — server-supplied, not verified): https://runway.com/news/runway-is-coming-to-japan
+    Status: 308 Permanent Redirect
+
+    To complete your request, I need to fetch content from the redirected URL. Please use WebFetch again with these parameters:
+    - url: "https://runway.com/news/runway-is-coming-to-japan"
+    - prompt: "Extract all details: date of announcement, Tokyo office plans, investment amount, any mention of Japanese language support/localization plans for the product or support, named customers (Yamaha, SoftBank, NHN etc.), and any other concrete facts."
+
+######## WebFetch {"url": "https://runway.com/news/runway-is-coming-to-japan", "prompt": "Extract all details: date of announcement, Tokyo office plans, investment amount, any mention of Japanese language support/localization plans for the product or customer support, named customers (Yamaha, SoftBank, NHN etc.), and any other concrete facts."}
+# Runway Japan Expansion: Key Details
+
+**Announcement Date:** May 14, 2026
+
+**Tokyo Office & Investment:**
+- Opening Tokyo as Japan headquarters
+- Initial $40M investment committed
+- Hiring a Head of Japan to lead operations
+
+**Market Performance:**
+Japan ranks as Runway's third-largest market overall and fastest-growing self-serve market in Asia. The company reports 300% enterprise customer growth over the past 12 months, with Japan driving one-third of Asia's sales volume.
+
+**Named Customers:**
+- Yamaha
+- SoftBank Corp.
+- NHN
+
+A SoftBank executive stated: "Our corporate marketing team uses Runway's services for certain tasks. It allows us to easily create high-quality creative assets."
+
+**Product Localization:**
+The announcement contains no information about Japanese language support, localized product features, or dedicated customer support in Japanese. The page provides both English and Japanese versions of the announcement itself, but does not detail any product-specific localization plans.
+
+**Hiring Plans:**
+Runway seeks a Head of Japan to build teams across product, engineering, sales, and customer deployment, with focus on Japan's creative industries and enterprise sectors including production, advertising, and robotics.
+
+######## WebSearch {"query": "site:help.runwayml.com hc/ja", "mode": "standard"}
+Web search results for query: "site:help.runwayml.com hc/ja"
+
+Links: [{"title":"40813154082451 API","url":"https://help.runwayml.com/hc/en-us/sections/40813154082451-API"},{"title":"rw fetch api reference","url":"https://mcpservers.org/ja/agent-skills/runwayml/rw-fetch-api-reference"},{"title":"rw recipe full setup","url":"https://mcpservers.org/ru/agent-skills/runwayml/rw-recipe-full-setup"},{"title":"mcpservers.org","url":"https://mcpservers.org/agent-skills/author/runwayml"},{"title":"mcpservers.org","url":"https://mcpservers.org/hi/agent-skills/author/runwayml"},{"title":"rw recipe full setup","url":"https://mcpservers.org/th/agent-skills/runwayml/rw-recipe-full-setup"},{"title":"apitracker.io","url":"https://apitracker.io/a/runwayml/sdks"},{"title":"recipe full setup","url":"https://skills.sh/runwayml/skills/recipe-full-setup"},{"title":"fetch api reference","url":"https://skills.sh/runwayml/skills/fetch-api-reference"}]
+
+The search results did not return any pages specifically from the Japanese help section (`hc/ja`) of the Runway ML Help Center. The search appears to have returned results related to Runway ML's API documentation and developer skills instead.
+
+It's possible that either:
+1. The Japanese help section (`hc/ja`) may not be indexed by search engines in the same way
+2. The help center content at that specific path may not be publicly accessible
+3. The Japanese language help documentation may not be available at that URL structure
+
+If you're looking for Japanese language support documentation from Runway ML, you might try:
+- Visiting help.runwayml.com directly and looking for language options
+- Checking if there's a language switcher on their help center pages
+- Contacting Runway ML's support team directly for Japanese language resources
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Runway app.runway.com 言語設定 日本語 インターフェース 切り替え", "mode": "standard"}
+Web search results for query: "Runway app.runway.com 言語設定 日本語 インターフェース 切り替え"
+
+Links: [{"title":"help.runwayml.com","url":"https://help.runwayml.com/hc/en-us/articles/25563791920147"},{"title":"Runway is Coming to Japan","url":"https://runway.com/news/runway-is-coming-to-japan"},{"title":"runway is coming to japan","url":"https://runway.com/en/news/runway-is-coming-to-japan"},{"title":"language preferences","url":"https://docs.tago.io/docs/tagoio/tagorun/getting-started/language-preferences"},{"title":"런웨이 Runway-내 손 안의 간편한 패션 쇼핑 지도","url":"https://apps.apple.com/cy/app/%EB%9F%B0%EC%9B%A8%EC%9D%B4-runway-%EB%82%B4-%EC%86%90-%EC%95%88%EC%9D%98-%EA%B0%84%ED%8E%B8%ED%95%9C-%ED%8C%A8%EC%85%98-%EC%87%BC%ED%95%91-%EC%A7%80%EB%8F%84/id1671808515?l=el"},{"title":"install japanese language extension automatic1111","url":"https://www.rundiffusion.com/install-japanese-language-extension-automatic1111"},{"title":"comparateur-ia.com","url":"https://comparateur-ia.com/avis/runway"},{"title":"Avis Runway : notre test complet de l’IA vidéo générative","url":"https://comparateur-ia.com/?p=1172"},{"title":"comparateur ia","url":"https://comparateur-ia.com/?p=35"}]
+
+Based on the search results, I can provide you with information about Runway's language settings:
+
+Runway is only available in American English at this time. Therefore, there is currently no built-in Japanese language option on app.runway.com.
+
+However, if you would like to use Runway in Japanese, Chrome offers an in-browser automatic translation service that will localize the text on the Runway interface into any language of your choice. The process involves:
+
+1. Right click on any Runway page and select Translate to [language] to translate the page
+2. Click the Translate icon that appears in the address bar, select the three vertical dots and then Choose another language, select your preferred language, and click Translate
+
+It's worth noting that while Japan has been one of Runway's fastest-growing markets and the company has recently announced expansion into Japan, native Japanese language support for the interface is not yet available.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://docs.dev.runwayml.com/guides/pricing.md", "prompt": "Quote the exact raw text/table rows related to gen4.5 and gen4_turbo video pricing, and explain the exact unit (per second, per 5 seconds, per generation) for credit costs. Also state exactly how credits convert to USD."}
+# Gen4.5 and Gen4 Turbo Video Pricing
+
+**Exact pricing table rows:**
+
+| Model | Pricing |
+|-------|---------|
+| `gen4.5` | "12 credits per second" |
+| `gen4_turbo` | "5 credits per second" |
+
+**Unit of measurement:** Both models charge credits based on individual seconds of video output.
+
+**Credit to USD conversion:** "Credits can be purchased for $0.01 per credit," meaning 1 credit = $0.01 USD.
+
+**Practical example:** A 10-second Gen4.5 video would cost 120 credits (12 × 10), equating to $1.20.
+
+######## WebFetch {"url": "https://runway.com/about", "prompt": "Extract company background: what Runway is, founding info if mentioned, mission, what products/platforms it offers (Creative, Dev, Robotics etc.), any notable facts like AI Film Festival or research focus."}
+# Runway AI: Company Background
+
+## What Runway Is
+Runway AI is an artificial intelligence company focused on building world models and multimodal simulators. The company describes its mission as "building AI to simulate the world through merging art and science."
+
+## Core Philosophy
+The organization believes that "world models are at the frontier of progress in artificial intelligence" and emphasizes that language models alone cannot address major challenges like robotics, disease, and scientific discovery. They advocate for models that learn through experiential trial-and-error, particularly through simulation rather than real-world testing.
+
+## Products & Platforms
+
+**Creative Platform**: Video generation and AI creative tools accessible via web, Android app, iOS app, and ChatGPT integration.
+
+**Dev Platform**: APIs and tools for developers, including model routers, workflows, and recipes for building with Runway's technology.
+
+**Robotics Division**: Offers policy models, offline policy evaluation, data augmentation, and video model licensing for robotics applications.
+
+**Research Focus**: The company pioneers general-purpose multimodal world simulators, with recent developments including Runway Aleph, Gen-4, and General World Models.
+
+## Global Presence
+Runway maintains offices across seven major cities: New York, San Francisco, Seattle, London, Paris, Tel Aviv, and Tokyo, with distributed remote teams worldwide.
+
+######## WebSearch {"query": "Runway AI Film Festival Aleph Act-Two Motion Brush features overview", "mode": "standard"}
+Web search results for query: "Runway AI Film Festival Aleph Act-Two Motion Brush features overview"
+
+Links: [{"title":"How to Use Runway AI: Video Generation Guide (2026)","url":"https://dupple.com/learn/how-to-use-runway-ai"},{"title":"Runway’s New Aleph Video Model Offers Insane New Ways for AI to Edit Your Videos","url":"https://nofilmschool.com/runway-new-aleph-video-model"},{"title":"Runway Launches Next-Gen Motion Capture AI Model With Aim to Revolutionize MoCap Industry","url":"https://nofilmschool.com/runway-act-two"},{"title":"Briefing: Runway AI's Advanced Creative Toolkit","url":"https://www.audible.it/pd/B0GKRV9DZ1"},{"title":"academy.runwayml.com","url":"https://academy.runwayml.com/gen4"},{"title":"Runway Academy","url":"https://academy.runwayml.com/courses"},{"title":"academy.runway.com","url":"https://academy.runway.com/"},{"title":"Runway Act-Two","url":"https://docs.fuser.studio/docs/nodes/video/runway-act-two"},{"title":"Runway Unveils Impressive New Tools for Greater Creative Control in Generative AI Video","url":"https://www.maginative.com/article/runway-unveils-impressive-new-tools-for-greater-creative-control-in-generative-ai-video/"},{"title":"Runway Gen-4 Review✦Build Fast with AI✦Freemium✦Runway Gen-4 Review✦Build Fast with AI✦Freemium✦","url":"https://buildfastwithai.com/ai-tools/runway-gen-4"}]
+
+Based on the search results, here's an overview of Runway AI's key features including Aleph, Act-Two, and Motion Brush:
+
+## Aleph
+
+Aleph is a state-of-the-art in-context video model that offers advanced video editing capabilities. Aleph promises to set a new frontier for multi-task visual generation, with capabilities such as adding, removing, and transforming objects, generating any angle of a scene, and modifying style and lighting. It enables in-context video editing to change lighting, style, mood, or backgrounds on existing clips.
+
+## Act-Two
+
+Act-Two is a next-gen motion capture model marked by improvements to previous versions in generation quality and support for head, face, body, and hand tracking. Act-Two is capable of animating any character with a single driving performance, and can translate that performance to a wide variety of characters in a diverse set of environments, styles, and art directions without compromising performance fidelity.
+
+## Motion Brush
+
+Motion Brush allows users to "paint" motion onto their AI generations with exacting directional control, where creators can choose an area, define a direction, and adjust intensity to add movement with intention. Motion Brush targets specific regions of an image for independent motion control — animate the water in a scene without affecting the still background, or move a character's hair while keeping the rest static.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Runway Android app Google Play 2026", "mode": "standard"}
+Web search results for query: "Runway Android app Google Play 2026"
+
+Links: [{"title":"🚀 Introducing Flightpaths by Runway — read the announcement","url":"https://www.runway.team/product-updates/whats-new-is-whats-new-in-runway-plus-android"},{"title":"runway.airforce.gov.au","url":"https://runway.airforce.gov.au/node/4681"},{"title":"A better way to ship Android","url":"https://get.runway.team/google-play"},{"title":"🚀 Introducing Flightpaths by Runway — read the announcement","url":"https://www.runway.team/react-native"},{"title":"Running Route Builder(Runway)","url":"https://apps.apple.com/us/app/id6757373514"},{"title":"submit release from runway plus company updates","url":"https://www.runway.team/product-updates/submit-release-from-runway-plus-company-updates"},{"title":"Runway — Overview & Pricing","url":"https://subger.com/en/service/runway"},{"title":"Runway — Огляд та ціни","url":"https://subger.com/uk/service/runway"},{"title":"Runway — Présentation générale et tarifs","url":"https://subger.com/fr/service/runway"}]
+
+Based on the search results, here's what I found about Runway and Android on Google Play:
+
+There are actually multiple products called "Runway" available on Google Play. The most relevant findings are:
+
+1. **Runway (Mobile App Release Management)**: Runway's long-awaited support for Android has launched, allowing teams to coordinate releases for both Android and iOS apps within Runway, with a Google Play integration that uses Google's Play Developer API.
+
+2. **Runway (AI Creative Tools)**: Runway's AI creative product offers generative image, video or media tools through the App Store, Google Play, and other billing surfaces. It's a service with plans starting from $12/month, with current 2026 tiers including Free, Standard ($15/month), Pro ($35/month), Unlimited ($95/month), and Enterprise options.
+
+3. **The Runway (Australian Air Force App)**: The Runway mobile app was developed for users to access professional development content via mobile devices and is available from the Apple App Store and Google Play Store.
+
+Which Runway app were you specifically interested in learning more about?
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "Runway ChatGPT integration app 2026", "mode": "standard"}
+Web search results for query: "Runway ChatGPT integration app 2026"
+
+Links: [{"title":"Runway opens MCP server for ChatGPT, Claude, Cursor, Replit","url":"https://aiweekly.co/alerts/runway-opens-mcp-server-for-chatgpt-claude-cursor-replit"},{"title":"runway s new iphone app came out","url":"https://aisuite.beehiiv.com/p/runway-s-new-iphone-app-came-out"},{"title":"www.getdrio.com","url":"https://www.getdrio.com/app-tracker/runway"},{"title":"Streamline Data Integration from 2000+ Apps | Boost.space","url":"https://boost.space/integrations/runway-ml-api"},{"title":"ChatGPT integra Spotify, Uber y Canva: guía 2026","url":"https://ecosistemastartup.com/?p=74541"},{"title":"aiagentrank.io","url":"https://aiagentrank.io/agent/runway/integrations"},{"title":"aiagentrank.io","url":"https://aiagentrank.io/ja/agent/runway/integrations"},{"title":"aiagentrank.io","url":"https://aiagentrank.io/fr/agent/runway/integrations"},{"title":"aiagentrank.io","url":"https://aiagentrank.io/de/agent/runway/integrations"}]
+
+Based on the search results, here's what I found about Runway's ChatGPT integration in 2026:
+
+## Key Development: MCP Server Integration
+
+Runway opened a hosted MCP server on May 27, 2026, letting agents in ChatGPT, Claude, Cursor and Replit call its models directly. Users can call Runway's image and video generation directly, and users add the server as a custom connector, sign in with an existing Runway account, and mention @Runway in the conversation; generations are billed against that plan, and no API key is required for ChatGPT integration.
+
+## Available Models
+
+Available models include Runway's Gen-4.5 plus Seedance, Kling 3.0, Veo 3.1, GPT Image 2 and Nano Banana Pro.
+
+## User Experience
+
+"You can generate polished images and videos without switching context – just ask your agent to use Runway," with generations coming back in the same window.
+
+## ChatGPT App Status
+
+Runway was first listed as a ChatGPT app on July 10, 2026, indicating it's available in the official ChatGPT app catalog as well.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebSearch {"query": "\"runway\" AI video app Google Play store listing generative", "mode": "standard"}
+Web search results for query: ""runway" AI video app Google Play store listing generative"
+
+Links: [{"title":"runway app iphone ia video generativi","url":"https://www.smartworld.it/app/runway-app-iphone-ia-video-generativi.html"},{"title":"ai startup runway launches app to bring users video to video generative ai","url":"https://techcrunch.com/2023/04/25/ai-startup-runway-launches-app-to-bring-users-video-to-video-generative-ai"},{"title":"Runway brings AI-Powered Video Editing to iOS with mobile app launch","url":"https://alternativeto.net/news/2023/4/runway-brings-ai-powered-video-editing-to-ios-with-mobile-app-launch/"},{"title":"AI startup Runway launches app to bring users video-to-video generative AI","url":"https://techcrunch.com/2023/04/25/ai-startup-runway-launches-app-to-bring-users-video-to-video-generative-ai/embed/"},{"title":"Runway Rolls Out Generative AI Video Editor App for iOS","url":"https://voicebot.ai/?p=28690"},{"title":"ai startup runway launches app to bring users video to video generative ai pickupnews","url":"https://thebridge.jp/2023/04/ai-startup-runway-launches-app-to-bring-users-video-to-video-generative-ai-pickupnews"},{"title":"runway ai 3366671","url":"https://www.androidauthority.com/runway-ai-3366671/"},{"title":"midjourneys founders launch their first generative video app on ios","url":"https://www.fanaticalfuturist.com/2023/04/midjourneys-founders-launch-their-first-generative-video-app-on-ios/"},{"title":"www.elitecontentmarketer.com","url":"https://www.elitecontentmarketer.com/stack/runway/"}]
+
+I found search results about Runway's generative AI video app. Here's what I discovered:
+
+## About Runway AI
+
+Runway is an AI startup that helped develop the AI image generator Stable Diffusion and launched its first mobile app to give users access to Gen-1, its video-to-video generative AI model.
+
+## Mobile App Details
+
+The app is currently only available on iOS devices. The search results focus on the iOS release, and while your query asked about Google Play store listings, the results indicate the app was initially iOS-exclusive.
+
+## Features
+
+With the app, users can record a video from their phones and generate an AI video in minutes, and they can transform any existing video by using text prompts, images or style presets. Users can record up to 15 seconds of video through the app or upload pre-existing videos, then choose from a collection of visual styles to transform a film into watercolor, charcoal sketches, or stop-motion clay figures.
+
+## Pricing
+
+Runway charges on a credit-per-second model at about 14 credits per second of video, and the free version comes with just 525 credits and won't make more than five seconds of video.
+
+The search results don't specifically mention a Google Play store listing, but they do confirm the app's availability and features for iOS users.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.
+
+######## WebFetch {"url": "https://apps.apple.com/us/app/1665024375", "prompt": "What is the name of this app, who publishes it, and what does it do? Is this Runway AI's video/image generation app?"}
+# Runway: AI Image & Video App
+
+**App Name:** Runway: AI Image & Video
+
+**Publisher:** Runway AI, Inc. (developer: runwayml)
+
+**What It Does:**
+
+This is indeed Runway AI's creative tool for generating images and videos using artificial intelligence. The app provides access to multiple AI models including "Seedance 2.5, Kling 3 Pro, Gen-4.5, Nano Banana Pro, Nano Banana 2 and more, all in one place."
+
+**Key Capabilities:**
+
+The platform enables users to create content through text-to-video, image-to-video, and video editing features. It also offers "Runway Agent," which allows users to "Describe what you want in plain language and Agent plans the shots, generates them and assembles the finished video."
+
+**Target Use Cases:**
+
+According to the listing, creators can produce "short films and cinematic scenes," marketing content, music videos, social media content, storyboards, and character designs. The app is "used by AMC Networks, Lionsgate, The Late Show with Stephen Colbert and millions of creators, filmmakers, designers and marketers worldwide."
+
+**Availability & Pricing:**
+
+The app is free to download with in-app purchases ranging from $10 to $143.99, offering various credit packages and subscription tiers.
+
+######## Bash {"command": "python3 - <<'EOF'\ns1 = \"Runwayは自社製Gen-4.5に加えKling・Veoなど他社モデルも使える動画生成AIプラットフォーム。編集やキャラクター演技転写など高度な制作機能を備える。\"\nprint(len(s1), s1)\n\ns2 = \"Runwayとは？料金・機能・使い方・日本語対応を解説｜OmochiX\"\nprint(len(s2), s2)\n\ns3 = \"Runwayの料金プラン、Gen-4.5やAleph・Act-Twoなどの主要機能、日本語対応状況、商用利用の可否、APIの使い方までOmochiXが解説します。\"\nprint(len(s3), s3)\n\ns4 = \"Runwayは動画生成AIの草分け的存在として、自社開発のGen-4.5に加えKling、Veo、Seedanceなど他社モデルも一つの画面から使えるマルチモデル型のプラットフォームへと進化している。単に動画を生成するだけでなく、Alephによる既存映像の編集やAct-Twoによるキャラクターモーション転写など、制作の「後工程」に踏み込んだ機能が多いことが競合との違いとして際立つ。API/Dev基盤も整備されており、映像制作の現場だけでなく開発者がサービスに組み込む用途にも対応する。一方で製品UIや技術サポートは英語中心で
+82 Runwayは自社製Gen-4.5に加えKling・Veoなど他社モデルも使える動画生成AIプラットフォーム。編集やキャラクター演技転写など高度な制作機能を備える。
+35 Runwayとは？料金・機能・使い方・日本語対応を解説｜OmochiX
+81 Runwayの料金プラン、Gen-4.5やAleph・Act-Twoなどの主要機能、日本語対応状況、商用利用の可否、APIの使い方までOmochiXが解説します。
+337 Runwayは動画生成AIの草分け的存在として、自社開発のGen-4.5に加えKling、Veo、Seedanceなど他社モデルも一つの画面から使えるマルチモデル型のプラットフォームへと進化している。単に動画を生成するだけでなく、Alephによる既存映像の編集やAct-Twoによるキャラクターモーション転写など、制作の「後工程」に踏み込んだ機能が多いことが競合との違いとして際立つ。API/Dev基盤も整備されており、映像制作の現場だけでなく開発者がサービスに組み込む用途にも対応する。一方で製品UIや技術サポートは英語中心で、日本語での使い勝手は発展途上な段階にあると考えられる。料金もクレジット消費型で、用途によって実質コストが変動しやすい点は事前に確認しておきたい。

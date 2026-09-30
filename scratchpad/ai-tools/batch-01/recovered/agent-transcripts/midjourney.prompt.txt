@@ -1,0 +1,78 @@
+You are doing PRODUCT RESEARCH ONLY for OmochiX, a Japanese WordPress AI-tools comparison media site. This is content preparation for a WordPress admin JSON import tool. You will NOT touch any database, WordPress admin, git, or production system — your only deliverable is text returned in your final report message.
+
+TARGET: "Midjourney" (AI image/video generation). OmochiX's existing page: slug="midjourney", post ID 59, official_url currently recorded as https://www.midjourney.com/, company_name="Midjourney". Current production meta: tool_status=active, pricing_type=paid, has_free_plan=false, japanese_support=full, rating=4.7, categories=image-generation.
+
+IMPORTANT: Midjourney ALREADY has some content set that you should review, and either confirm/refine/extend rather than blindly discard, IF your research confirms it's still accurate as of 2026-09-30 (correct it if outdated):
+- Existing key_features: ["高品質なAI画像生成","写真・イラスト・アートなど幅広い表現","短いプロンプトからビジュアルを生成","画像をもとにした生成・編集","スタイルや構図の細かな調整","クリエイティブ制作に強い"]
+- Existing pros: ["高品質な画像を短時間で生成できる","独創的なビジュアルを作りやすい","デザインや企画のアイデア出しに使える","専門的な画像制作スキルがなくても利用できる","幅広いテイストの画像を生成できる"]
+- Existing cons: ["無料プランがない","狙った結果を出すにはプロンプトの工夫が必要","生成結果は毎回同じになるとは限らない","商用利用時は契約プランや利用条件の確認が必要"]
+- Existing recommended_use_cases: [] (empty — needs populating)
+- Existing short_description: "短い指示から高品質で独創的なビジュアルを生成でき、企画やデザイン制作に強い画像生成AI。"
+- post_content is currently an EMPTY placeholder shell — needs full content written from scratch.
+- Note: has Midjourney added video generation since your training cutoff (Jan 2026)? Verify current scope — don't assume it's still image-only if official sources say otherwise.
+
+TODAY'S DATE: 2026-09-30. Your training cutoff is January 2026 — pricing, model version (V7/V8/whatever is current), and feature scope may have changed. Research via OFFICIAL SOURCES ONLY: official midjourney.com pages → official pricing page → official docs (docs.midjourney.com) → official Discord announcements/changelog if linked from the official site → official terms of service for commercial use. Do multiple distinct searches (e.g. "Midjourney pricing 2026", "Midjourney API official", "Midjourney commercial use terms 2026", "Midjourney version 2026 release", "Midjourney video generation"). Do not use third-party blogs/review sites as fact sources — only to find where the official page is.
+
+CRITICAL RULES:
+- Never invent facts. If you cannot confirm something from an official source, write "unknown" for enum fields, or omit the field entirely for text/array fields.
+- Distinguish "you can type Japanese prompts" from genuine UI/output/support localization.
+- api_available: Midjourney has historically had NO official public API (only web/Discord). Verify current status — if still no official API, set api_available="no" with a note, don't guess "unknown" if you can confirm its absence from the official site/docs.
+- commercial_use must be based on actual terms of service language, not assumption.
+- Report exact prices with currency and billing cadence (monthly vs annual, GPU-hours/fast-hours, etc.).
+- Do not copy phrasing from any other AI tool's page.
+
+REQUIRED OUTPUT (three parts in your final message):
+
+### 1. Sources list
+Under headers "Official product / Pricing / Docs / API / Help / Release notes" (omit any header you found nothing for), list exact URLs with "Research date: 2026-09-30".
+
+### 2. One JSON object (fenced ```json block) — OMIT any key you cannot confirm:
+```
+{
+  "slug": "midjourney",
+  "short_description": "...",   // 60-90 Japanese characters (revise the existing one if you can improve/update it, otherwise may keep similar)
+  "post_content": "...",
+  "key_features": ["...", ...],  // 5-8 items, format "機能名：短い説明" — refine/update the existing list above based on current research, don't just copy verbatim
+  "pros": ["...", ...],
+  "cons": ["...", ...],
+  "strengths": ["...", ...],
+  "weaknesses": ["...", ...],
+  "recommended_for": ["...", ...],
+  "recommended_use_cases": ["...", ...],   // 4-8 short phrases — this is currently EMPTY, populate it
+  "not_recommended_for": ["...", ...],
+  "pricing_details": "...",
+  "api_sdk_info": "...",   // omit entirely if confirmed no public API exists, but you may note the absence in post_content's 注意点 section instead
+  "security_info": "...",  // omit if nothing confirmable
+  "notes": "...",
+  "supported_devices": ["...", ...],
+  "supported_models": ["...", ...],   // e.g. "V7" if confirmed
+  "integrations": ["...", ...],
+  "has_free_plan": true|false,
+  "api_available": "yes"|"partial"|"no"|"unknown",
+  "commercial_use": "yes"|"partial"|"no"|"unknown",
+  "japanese_support": "full"|"partial"|"none"|"unknown",
+  "info_checked_date": "2026-09-30",
+  "omochix_view": "...",   // 200-400 Japanese characters, OmochiX EDITORIAL ANALYSIS: positioning, biggest strength, differentiation vs other image-gen tools, who it resonates with. Avoid absolute claims.
+  "seo_title": "...",      // <=60 chars, e.g. "Midjourneyとは？料金・機能・使い方・日本語対応を解説｜OmochiX"
+  "meta_description": "..."  // 50-160 chars
+}
+```
+
+post_content structure (real HTML tags, not markdown):
+```
+<h2>Midjourneyとは？</h2>
+<h2>Midjourneyでできること</h2>  (add <h3>主要モデル・主要機能</h3> if there are multiple named modes/models to describe)
+<h2>日本語で使える？</h2>
+<h2>Midjourneyの料金</h2>  (add <h3>各プラン</h3> if plan-by-plan detail confirmable)
+<h2>Midjourneyの使い方</h2>  (numbered <ol><li>...</li></ol>)
+<h2>Midjourneyの活用例</h2>
+<h2>Midjourneyのメリット</h2>
+<h2>Midjourneyの注意点</h2>
+<h2>どんな人におすすめ？</h2>
+<h2>FAQ</h2>  (2-4 Q&A pairs as <p><strong>Q. ...</strong></p><p>A. ...</p>)
+```
+Write in Japanese, professional/clear editorial tone, no hype/exclamation points, no padding.
+
+### 3. A short bullet list (3-6 items) of anything you could NOT confirm and marked unknown/omitted.
+
+Report back with all three sections in full — research+drafting only, no code/file edits needed.
