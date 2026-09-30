@@ -367,6 +367,7 @@ $omochix_compare_hub_post = $omochix_compare_hub_posts ? $omochix_compare_hub_po
                         $omochix_pricing_label = function_exists('omochix_core_get_pricing_type_label')
                             ? omochix_core_get_pricing_type_label($omochix_pricing_value)
                             : ($omochix_pricing_options[$omochix_pricing_value] ?? __('要問い合わせ', 'omochix'));
+                        $omochix_pricing_label = omochix_get_ai_tool_pricing_display_label($omochix_tool_id, $omochix_pricing_label);
                         $omochix_jp_label = function_exists('omochix_core_get_japanese_support_label')
                             ? omochix_core_get_japanese_support_label($omochix_jp_value)
                             : ($omochix_japanese_options[$omochix_jp_value] ?? __('未確認', 'omochix'));
@@ -381,6 +382,7 @@ $omochix_compare_hub_post = $omochix_compare_hub_posts ? $omochix_compare_hub_po
                                             <span aria-hidden="true"><?php echo esc_html(function_exists('mb_substr') ? mb_substr($omochix_title, 0, 1) : substr($omochix_title, 0, 1)); ?></span>
                                         <?php endif; ?>
                                     </div>
+                                    <?php echo wp_kses_post(omochix_get_ai_tool_status_badge($omochix_tool_id)); ?>
                                     <?php if ($omochix_rating > 0) : ?>
                                         <p class="tool-list-card__rating" aria-label="<?php echo esc_attr(sprintf(__('OmochiX編集部評価 5点満点中%s', 'omochix'), number_format_i18n($omochix_rating, 1))); ?>">
                                             <span aria-hidden="true">★</span><strong><?php echo esc_html(number_format_i18n($omochix_rating, 1)); ?></strong><small>/ 5</small>

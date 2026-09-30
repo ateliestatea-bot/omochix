@@ -234,7 +234,7 @@ OmochiXで公開する実用プロンプト100件のCSVと、その検証結果�
 | slug | タイトル | 難易度 | 対応AI | 関連AIツール |
 |---|---|---|---|---|
 | `video-short-vertical-30s-script` | 縦型ショート動画（30秒）の台本と構成を作るプロンプト | 初級 | chatgpt, claude | chatgpt, descript |
-| `video-text-to-video-shot-prompts` | 動画生成AI用にシーンをショット単位のプロンプトへ分解する | 中級 | video, chatgpt | sora, veo, runway |
+| `video-text-to-video-shot-prompts` | 動画生成AI用にシーンをショット単位のプロンプトへ分解する | 中級 | video, chatgpt | kling-ai, runway, veo |
 | `video-youtube-explainer-script` | YouTube解説動画の構成と台本を作るプロンプト | 中級 | claude, chatgpt | claude, chatgpt |
 | `video-storyboard-shot-list` | 企業PR・商品紹介動画の絵コンテ（カット表）を作るプロンプト | 中級 | chatgpt, claude | chatgpt, runway |
 | `video-ai-avatar-training-video-script` | AIアバターで作る社内研修動画の原稿を作るプロンプト | 初級 | chatgpt, video | heygen, synthesia |

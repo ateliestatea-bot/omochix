@@ -108,6 +108,8 @@ if (have_posts()) :
             ? omochix_core_get_japanese_support_label($omochix_japanese)
             : ($omochix_japanese_labels[$omochix_japanese] ?? __('未確認', 'omochix'));
         $omochix_status_label = $omochix_status_labels[$omochix_status] ?? __('未確認', 'omochix');
+        // Discontinued tools show their pricing as past data ("提供時：有料").
+        $omochix_pricing_label = omochix_get_ai_tool_pricing_display_label($omochix_tool_id, $omochix_pricing_label);
 
         $omochix_support_labels = [
             'yes' => __('対応', 'omochix'), 'partial' => __('一部対応', 'omochix'),

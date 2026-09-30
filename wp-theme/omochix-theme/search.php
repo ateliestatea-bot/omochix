@@ -99,6 +99,7 @@ $omochix_type_links = [
                             $omochix_japanese = get_post_meta($omochix_tool_id, 'japanese_support', true) ?: 'unknown';
                             $omochix_rating = (float) get_post_meta($omochix_tool_id, 'rating_overall', true);
                             $omochix_pricing_label = function_exists('omochix_core_get_pricing_type_label') ? omochix_core_get_pricing_type_label($omochix_pricing) : __('料金未確認', 'omochix');
+                            $omochix_pricing_label = omochix_get_ai_tool_pricing_display_label($omochix_tool_id, $omochix_pricing_label);
                             $omochix_japanese_label = function_exists('omochix_core_get_japanese_support_label') ? omochix_core_get_japanese_support_label($omochix_japanese) : __('日本語対応未確認', 'omochix');
                             ?>
                             <article class="search-card search-card--tool">
@@ -111,6 +112,7 @@ $omochix_type_links = [
                                                 <span aria-hidden="true"><?php echo esc_html(function_exists('mb_substr') ? mb_substr(get_the_title(), 0, 1) : substr(get_the_title(), 0, 1)); ?></span>
                                             <?php endif; ?>
                                         </div>
+                                        <?php echo wp_kses_post(omochix_get_ai_tool_status_badge($omochix_tool_id)); ?>
                                         <span class="search-card__type"><?php esc_html_e('AIツール', 'omochix'); ?></span>
                                     </div>
                                     <div class="search-tool-card__identity">
