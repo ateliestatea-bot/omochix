@@ -1,0 +1,38 @@
+{
+  "tools": [
+    {
+      "slug": "veo",
+      "featured_image_attachment_id": 1087
+    },
+    {
+      "slug": "kling-ai",
+      "featured_image_attachment_id": 1083
+    },
+    {
+      "slug": "runway",
+      "tool_logo_attachment_id": 1088,
+      "featured_image_attachment_id": 1086
+    },
+    {
+      "slug": "midjourney",
+      "featured_image_attachment_id": 1084
+    },
+    {
+      "slug": "claude-code",
+      "tool_logo_attachment_id": 1089,
+      "featured_image_attachment_id": 1080
+    },
+    {
+      "slug": "notebooklm",
+      "featured_image_attachment_id": 1085
+    },
+    {
+      "slug": "chatgpt",
+      "featured_image_attachment_id": 1079
+    },
+    {
+      "slug": "gemini",
+      "featured_image_attachment_id": 1096
+    }
+  ]
+}

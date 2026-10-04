@@ -1,0 +1,59 @@
+{
+  "slug": "midjourney",
+  "tool_name": "Midjourney",
+  "post_id": 59,
+  "manifest_ref": "H-04 / L-04",
+  "audited_at": "2026-10-03 (production READ ONLY)",
+  "current_tool_logo_attachment_id": 0,
+  "current_featured_image_attachment_id": 0,
+  "current_logo": null,
+  "current_hero": null,
+  "logo": {
+    "decision": "MISSING",
+    "status": "BLOCKED",
+    "planned_filename": "omochix-ai-tool-midjourney-logo.webp",
+    "alt_text": "Midjourney ロゴ",
+    "ready_file": null,
+    "source": "https://docs.midjourney.com/hc/en-us/articles/32084281102349-Midjourney-Trademark-Policy （問い合わせ：press@midjourney.com）",
+    "blocked_reason": "公開ロゴキットなし。www.midjourney.com/press・/brand は 404（2026-10-03）。Trademark Policy は改変禁止・推奨示唆禁止。公式高解像度 asset が確認できないため使用しない（press@midjourney.com に依頼が必要）"
+  },
+  "hero": {
+    "decision": "MISSING",
+    "status": "READY",
+    "planned_filename": "omochix-ai-tool-midjourney-hero.webp",
+    "alt_text": "霧の中に多様な画風のキャンバスが浮かぶ、Midjourneyによる画像生成のイメージ",
+    "ready_file": "omochix-ai-tool-midjourney-hero.webp",
+    "prompt_file": "prompts/midjourney-hero.md",
+    "qa": {
+      "date": "2026-10-03",
+      "verdict": "PASS",
+      "source_sha256": "bc6d5df8c0dcd51df0d17f4cf969dd93012169ad2af4e5e438a72318e7cce687",
+      "bytes": 204416
+    }
+  },
+  "new_logo_attachment_id": null,
+  "new_hero_attachment_id": 1084,
+  "alt_policy": "WordPress へのアップロード時に Media Library の alt を必ず上記 alt_text にする（ファイル名から自動生成された alt を残さない。Cursor では upload 直後の alt 漏れがあった）",
+  "expected_usage": {
+    "logo": [
+      "single-ai_tool .tool-detail__logo（thumbnail 150、表示 62〜96px、contain）。テーマは alt=\"\" を渡すが、Media Library の alt が出力される",
+      "archive／関連ツール .tool-list-card__logo（58〜64px）",
+      "search .search-tool-card__logo（64px）"
+    ],
+    "hero": [
+      "single-ai_tool .tool-detail__media（large 1024×576、16:9、cover）。img の alt はテーマが「Midjourneyのイメージ」を生成",
+      "og:image／twitter:image（原寸。og:image:alt は Media Library の alt）",
+      "SoftwareApplication.image（#thumbnail ImageObject）"
+    ]
+  },
+  "updater_plan": {
+    "note": "attachment ID は upload 後に確定する。未確定の ID は書かない。JSON には title を含めない。未取得の asset のキーは省略する（0 は不可）。",
+    "keys": [
+      "featured_image_attachment_id"
+    ]
+  },
+  "rollback": [
+    "hero：現状 0（未設定）。Updater では 0 を指定できないため、wp-admin でアイキャッチ画像を削除する",
+    "いずれも Apply 前の Updater before-snapshot JSON を保存する。旧 attachment は削除しない"
+  ]
+}

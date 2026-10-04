@@ -1,0 +1,72 @@
+{
+  "slug": "chatgpt",
+  "tool_name": "ChatGPT",
+  "post_id": 53,
+  "manifest_ref": "H-08 / L-08",
+  "audited_at": "2026-10-03 (production READ ONLY)",
+  "current_tool_logo_attachment_id": 54,
+  "current_featured_image_attachment_id": 566,
+  "current_logo": {
+    "url": "/uploads/2026/09/OAI_OpenAI-Blossom_Black.png",
+    "dimensions": "716x716",
+    "mime": "image/png",
+    "bytes": 15987,
+    "alt": "OAI OpenAI Blossom Black"
+  },
+  "current_hero": {
+    "url": "/uploads/2026/09/chatgpt-hero.png",
+    "dimensions": "1672x941",
+    "mime": "image/png",
+    "bytes": 1080958,
+    "alt": "ChatGPTのAIアシスタント画面"
+  },
+  "logo": {
+    "decision": "REPLACE",
+    "status": "BLOCKED",
+    "planned_filename": "omochix-ai-tool-chatgpt-logo.webp",
+    "alt_text": "ChatGPT ロゴ",
+    "ready_file": null,
+    "source": "https://openai.com/brand/ （「ロゴをダウンロード」は同意チェックが必要。ロゴ使用許可の申請・質問：partnercomms@openai.com）",
+    "blocked_reason": "公式ロゴのダウンロードボタン（openai.com/brand「ロゴをダウンロード」）は、使用条件への同意チェックボックス（download-logos-checkbox）にチェックしないと有効にならない。規約への同意はユーザー本人の判断が必要なため取得していない。ページ表示用の SVG を CDN から直接取得することも、同意手続きの回避になるため行わない。ユーザーが同意してロゴパックを取得し、sources/chatgpt/ に配置すれば作成できる"
+  },
+  "hero": {
+    "decision": "REPLACE",
+    "status": "READY",
+    "planned_filename": "omochix-ai-tool-chatgpt-hero.webp",
+    "alt_text": "対話を中心に多様なタスクが広がる、ChatGPTのAIアシスタントのイメージ",
+    "ready_file": "omochix-ai-tool-chatgpt-hero.webp",
+    "prompt_file": "prompts/chatgpt-hero.md",
+    "qa": {
+      "date": "2026-10-03",
+      "verdict": "PASS",
+      "source_sha256": "10616833105c5e37b4b80c727735eada09b3d311ed535144f5150bf7116282f2",
+      "bytes": 192396
+    }
+  },
+  "new_logo_attachment_id": null,
+  "new_hero_attachment_id": 1079,
+  "alt_policy": "WordPress へのアップロード時に Media Library の alt を必ず上記 alt_text にする（ファイル名から自動生成された alt を残さない。Cursor では upload 直後の alt 漏れがあった）",
+  "expected_usage": {
+    "logo": [
+      "single-ai_tool .tool-detail__logo（thumbnail 150、表示 62〜96px、contain）。テーマは alt=\"\" を渡すが、Media Library の alt が出力される",
+      "archive／関連ツール .tool-list-card__logo（58〜64px）",
+      "search .search-tool-card__logo（64px）"
+    ],
+    "hero": [
+      "single-ai_tool .tool-detail__media（large 1024×576、16:9、cover）。img の alt はテーマが「ChatGPTのイメージ」を生成",
+      "og:image／twitter:image（原寸。og:image:alt は Media Library の alt）",
+      "SoftwareApplication.image（#thumbnail ImageObject）"
+    ]
+  },
+  "updater_plan": {
+    "note": "attachment ID は upload 後に確定する。未確定の ID は書かない。JSON には title を含めない。未取得の asset のキーは省略する（0 は不可）。",
+    "keys": [
+      "featured_image_attachment_id"
+    ]
+  },
+  "rollback": [
+    "logo：Updater で tool_logo_attachment_id を旧 ID 54 に戻す",
+    "hero：Updater で featured_image_attachment_id を旧 ID 566 に戻す",
+    "いずれも Apply 前の Updater before-snapshot JSON を保存する。旧 attachment は削除しない"
+  ]
+}

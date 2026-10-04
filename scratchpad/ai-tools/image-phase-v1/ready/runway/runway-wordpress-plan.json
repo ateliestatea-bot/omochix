@@ -1,0 +1,61 @@
+{
+  "slug": "runway",
+  "tool_name": "Runway",
+  "post_id": 675,
+  "manifest_ref": "H-03 / L-03",
+  "audited_at": "2026-10-03 (production READ ONLY)",
+  "current_tool_logo_attachment_id": 0,
+  "current_featured_image_attachment_id": 0,
+  "current_logo": null,
+  "current_hero": null,
+  "logo": {
+    "decision": "MISSING",
+    "status": "READY",
+    "planned_filename": "omochix-ai-tool-runway-logo.webp",
+    "alt_text": "Runway ロゴ",
+    "ready_file": "omochix-ai-tool-runway-logo.webp",
+    "source": "https://runway.com/assets/Runway-Brand-Guidelines.zip",
+    "blocked_reason": null
+  },
+  "hero": {
+    "decision": "MISSING",
+    "status": "READY",
+    "planned_filename": "omochix-ai-tool-runway-hero.webp",
+    "alt_text": "重なり合う映像レイヤーを光がつなぐ、Runwayによる映像制作のイメージ",
+    "ready_file": "omochix-ai-tool-runway-hero.webp",
+    "prompt_file": "prompts/runway-hero.md",
+    "qa": {
+      "date": "2026-10-03",
+      "verdict": "PASS",
+      "source_sha256": "34bc380fc969b94be8fef697e6e7cf0f0973090858357cce6016822025fd5624",
+      "bytes": 167692
+    }
+  },
+  "new_logo_attachment_id": 1088,
+  "new_hero_attachment_id": 1086,
+  "alt_policy": "WordPress へのアップロード時に Media Library の alt を必ず上記 alt_text にする（ファイル名から自動生成された alt を残さない。Cursor では upload 直後の alt 漏れがあった）",
+  "expected_usage": {
+    "logo": [
+      "single-ai_tool .tool-detail__logo（thumbnail 150、表示 62〜96px、contain）。テーマは alt=\"\" を渡すが、Media Library の alt が出力される",
+      "archive／関連ツール .tool-list-card__logo（58〜64px）",
+      "search .search-tool-card__logo（64px）"
+    ],
+    "hero": [
+      "single-ai_tool .tool-detail__media（large 1024×576、16:9、cover）。img の alt はテーマが「Runwayのイメージ」を生成",
+      "og:image／twitter:image（原寸。og:image:alt は Media Library の alt）",
+      "SoftwareApplication.image（#thumbnail ImageObject）"
+    ]
+  },
+  "updater_plan": {
+    "note": "attachment ID は upload 後に確定する。未確定の ID は書かない。JSON には title を含めない。未取得の asset のキーは省略する（0 は不可）。",
+    "keys": [
+      "tool_logo_attachment_id",
+      "featured_image_attachment_id"
+    ]
+  },
+  "rollback": [
+    "logo：現状 0（未設定）。Updater では 0 を指定できないため、wp-admin で tool_logo を解除する",
+    "hero：現状 0（未設定）。Updater では 0 を指定できないため、wp-admin でアイキャッチ画像を削除する",
+    "いずれも Apply 前の Updater before-snapshot JSON を保存する。旧 attachment は削除しない"
+  ]
+}

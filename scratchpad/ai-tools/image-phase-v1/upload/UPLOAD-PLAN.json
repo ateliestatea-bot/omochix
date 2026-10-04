@@ -1,0 +1,271 @@
+{
+  "phase": "WordPress Upload Preparation",
+  "created": "2026-10-03",
+  "status": "UPLOADED_VERIFIED_UPDATER_JSON_READY",
+  "asset_count": 10,
+  "rules": [
+    "Media Library に手動アップロードし、アップロード直後に alt を本ファイルの値に設定する（ファイル名由来の自動 alt を残さない）",
+    "タイトル・キャプション・説明は変更不要（alt のみ必須）",
+    "ファイル名は変更しない。WordPress が接尾辞（-1 など）を付けた場合は実ファイル名を記録する",
+    "既存 attachment（566、636 など）は変更・削除しない",
+    "new_attachment_id はアップロード後に実値を記入する。架空の ID は入れない"
+  ],
+  "after_upload_checks": [
+    "attachment ID",
+    "source_url",
+    "alt_text",
+    "media_details width/height",
+    "mime_type = image/webp",
+    "10 件すべて揃っていること"
+  ],
+  "updater_json_rule": {
+    "format": "{\"tools\":[...]}",
+    "allowed_keys": [
+      "slug",
+      "tool_logo_attachment_id",
+      "featured_image_attachment_id"
+    ],
+    "per_tool_keys": {
+      "veo": [
+        "featured_image_attachment_id"
+      ],
+      "kling-ai": [
+        "featured_image_attachment_id"
+      ],
+      "runway": [
+        "tool_logo_attachment_id",
+        "featured_image_attachment_id"
+      ],
+      "midjourney": [
+        "featured_image_attachment_id"
+      ],
+      "claude-code": [
+        "tool_logo_attachment_id",
+        "featured_image_attachment_id"
+      ],
+      "notebooklm": [
+        "featured_image_attachment_id"
+      ],
+      "chatgpt": [
+        "featured_image_attachment_id"
+      ],
+      "gemini": [
+        "featured_image_attachment_id"
+      ]
+    },
+    "note": "ID 確定後に作成する。title は含めない（含めるとエラー）。0 は不可"
+  },
+  "blocked_not_in_scope": [
+    "veo logo",
+    "kling-ai logo",
+    "midjourney logo",
+    "notebooklm logo",
+    "chatgpt logo"
+  ],
+  "assets": [
+    {
+      "no": 1,
+      "tool": "Veo",
+      "slug": "veo",
+      "post_id": 678,
+      "type": "HERO",
+      "local_file": "ready/veo/omochix-ai-tool-veo-hero.webp",
+      "planned_wp_filename": "omochix-ai-tool-veo-hero.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-veo-hero.webp",
+      "sha256": "71c3705c1f2ce2b2187d5df821ca9691b3c54c4f09647bb807636051c2d637d4",
+      "dimensions": "1280x720",
+      "bytes": 140332,
+      "alt": "光の粒子が映像フレームへと変わっていく、Veoによる動画生成のイメージ",
+      "target_field": "featured_image_attachment_id",
+      "current_attachment_id": 0,
+      "action": "ADD",
+      "rollback": "wp-admin で post 678 のアイキャッチ画像を削除する（Updater では 0 を指定できない）",
+      "new_attachment_id": 1087,
+      "production_filename": "omochix-ai-tool-veo-hero.webp"
+    },
+    {
+      "no": 2,
+      "tool": "Kling AI",
+      "slug": "kling-ai",
+      "post_id": 677,
+      "type": "HERO",
+      "local_file": "ready/kling-ai/omochix-ai-tool-kling-ai-hero.webp",
+      "planned_wp_filename": "omochix-ai-tool-kling-ai-hero.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-kling-ai-hero.webp",
+      "sha256": "ea1a3f5a312a7f5c13b31f5fef7f8978778621f70f2162ea504f710db9d87928",
+      "dimensions": "1280x720",
+      "bytes": 150234,
+      "alt": "静止したかたちから滑らかな動きが生まれる、Kling AIによる動画生成のイメージ",
+      "target_field": "featured_image_attachment_id",
+      "current_attachment_id": 0,
+      "action": "ADD",
+      "rollback": "wp-admin で post 677 のアイキャッチ画像を削除する（Updater では 0 を指定できない）",
+      "new_attachment_id": 1083,
+      "production_filename": "omochix-ai-tool-kling-ai-hero.webp"
+    },
+    {
+      "no": 3,
+      "tool": "Runway",
+      "slug": "runway",
+      "post_id": 675,
+      "type": "LOGO",
+      "local_file": "ready/runway/omochix-ai-tool-runway-logo.webp",
+      "planned_wp_filename": "omochix-ai-tool-runway-logo.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-runway-logo.webp",
+      "sha256": "a658020608ed51ce553a7f62aa5d33b55a8f97dd29824886f68fef51a7b12730",
+      "dimensions": "512x512",
+      "bytes": 5112,
+      "alt": "Runway ロゴ",
+      "target_field": "tool_logo_attachment_id",
+      "current_attachment_id": 0,
+      "action": "ADD",
+      "rollback": "wp-admin で post 675 の tool_logo を解除する（Updater では 0 を指定できない）",
+      "new_attachment_id": 1088,
+      "production_filename": "omochix-ai-tool-runway-logo.webp"
+    },
+    {
+      "no": 4,
+      "tool": "Runway",
+      "slug": "runway",
+      "post_id": 675,
+      "type": "HERO",
+      "local_file": "ready/runway/omochix-ai-tool-runway-hero.webp",
+      "planned_wp_filename": "omochix-ai-tool-runway-hero.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-runway-hero.webp",
+      "sha256": "34bc380fc969b94be8fef697e6e7cf0f0973090858357cce6016822025fd5624",
+      "dimensions": "1280x720",
+      "bytes": 167692,
+      "alt": "重なり合う映像レイヤーを光がつなぐ、Runwayによる映像制作のイメージ",
+      "target_field": "featured_image_attachment_id",
+      "current_attachment_id": 0,
+      "action": "ADD",
+      "rollback": "wp-admin で post 675 のアイキャッチ画像を削除する（Updater では 0 を指定できない）",
+      "new_attachment_id": 1086,
+      "production_filename": "omochix-ai-tool-runway-hero.webp"
+    },
+    {
+      "no": 5,
+      "tool": "Midjourney",
+      "slug": "midjourney",
+      "post_id": 59,
+      "type": "HERO",
+      "local_file": "ready/midjourney/omochix-ai-tool-midjourney-hero.webp",
+      "planned_wp_filename": "omochix-ai-tool-midjourney-hero.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-midjourney-hero.webp",
+      "sha256": "bc6d5df8c0dcd51df0d17f4cf969dd93012169ad2af4e5e438a72318e7cce687",
+      "dimensions": "1280x720",
+      "bytes": 204416,
+      "alt": "霧の中に多様な画風のキャンバスが浮かぶ、Midjourneyによる画像生成のイメージ",
+      "target_field": "featured_image_attachment_id",
+      "current_attachment_id": 0,
+      "action": "ADD",
+      "rollback": "wp-admin で post 59 のアイキャッチ画像を削除する（Updater では 0 を指定できない）",
+      "new_attachment_id": 1084,
+      "production_filename": "omochix-ai-tool-midjourney-hero.webp"
+    },
+    {
+      "no": 6,
+      "tool": "Claude Code",
+      "slug": "claude-code",
+      "post_id": 665,
+      "type": "LOGO",
+      "local_file": "ready/claude-code/omochix-ai-tool-claude-code-logo.webp",
+      "planned_wp_filename": "omochix-ai-tool-claude-code-logo.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-claude-code-logo.webp",
+      "sha256": "49d3ef498443d021b64519adba7b65152fe3c01e2e367d04dc2de2a2963a275a",
+      "dimensions": "512x512",
+      "bytes": 61340,
+      "alt": "Claude Code ロゴ",
+      "target_field": "tool_logo_attachment_id",
+      "current_attachment_id": 0,
+      "action": "ADD",
+      "rollback": "wp-admin で post 665 の tool_logo を解除する（Updater では 0 を指定できない）",
+      "new_attachment_id": 1089,
+      "production_filename": "omochix-ai-tool-claude-code-logo.webp"
+    },
+    {
+      "no": 7,
+      "tool": "Claude Code",
+      "slug": "claude-code",
+      "post_id": 665,
+      "type": "HERO",
+      "local_file": "ready/claude-code/omochix-ai-tool-claude-code-hero.webp",
+      "planned_wp_filename": "omochix-ai-tool-claude-code-hero.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-claude-code-hero.webp",
+      "sha256": "8a637f6bad7be68783fefaac5760013066cdb5135f15720f05fd43fd460080e1",
+      "dimensions": "1280x720",
+      "bytes": 144396,
+      "alt": "ターミナルの中でコードが段階的に組み上がっていく、Claude Codeによるエージェント型開発のイメージ",
+      "target_field": "featured_image_attachment_id",
+      "current_attachment_id": 0,
+      "action": "ADD",
+      "rollback": "wp-admin で post 665 のアイキャッチ画像を削除する（Updater では 0 を指定できない）",
+      "new_attachment_id": 1080,
+      "production_filename": "omochix-ai-tool-claude-code-hero.webp"
+    },
+    {
+      "no": 8,
+      "tool": "NotebookLM",
+      "slug": "notebooklm",
+      "post_id": 659,
+      "type": "HERO",
+      "local_file": "ready/notebooklm/omochix-ai-tool-notebooklm-hero.webp",
+      "planned_wp_filename": "omochix-ai-tool-notebooklm-hero.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-notebooklm-hero.webp",
+      "sha256": "35940f8ce895c33cc77d9da3f92e7c5dbe4933499508f4e44f0bac0b86b6bea5",
+      "dimensions": "1280x720",
+      "bytes": 187160,
+      "alt": "複数の資料がつながり1冊のノートと音声にまとまる、NotebookLMによるリサーチ支援のイメージ",
+      "target_field": "featured_image_attachment_id",
+      "current_attachment_id": 0,
+      "action": "ADD",
+      "rollback": "wp-admin で post 659 のアイキャッチ画像を削除する（Updater では 0 を指定できない）",
+      "new_attachment_id": 1085,
+      "production_filename": "omochix-ai-tool-notebooklm-hero.webp"
+    },
+    {
+      "no": 9,
+      "tool": "ChatGPT",
+      "slug": "chatgpt",
+      "post_id": 53,
+      "type": "HERO",
+      "local_file": "ready/chatgpt/omochix-ai-tool-chatgpt-hero.webp",
+      "planned_wp_filename": "omochix-ai-tool-chatgpt-hero.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-chatgpt-hero.webp",
+      "sha256": "10616833105c5e37b4b80c727735eada09b3d311ed535144f5150bf7116282f2",
+      "dimensions": "1280x720",
+      "bytes": 192396,
+      "alt": "対話を中心に多様なタスクが広がる、ChatGPTのAIアシスタントのイメージ",
+      "target_field": "featured_image_attachment_id",
+      "current_attachment_id": 566,
+      "action": "REPLACE",
+      "rollback": "Updater で featured_image_attachment_id を旧 ID 566 に戻す（旧 attachment は削除しない）",
+      "new_attachment_id": 1079,
+      "production_filename": "omochix-ai-tool-chatgpt-hero.webp"
+    },
+    {
+      "no": 10,
+      "tool": "Gemini",
+      "slug": "gemini",
+      "post_id": 61,
+      "type": "HERO",
+      "local_file": "ready/gemini/omochix-ai-tool-gemini-hero.webp",
+      "planned_wp_filename": "omochix-ai-tool-gemini-hero.webp",
+      "expected_media_path": "/wp-content/uploads/2026/10/omochix-ai-tool-gemini-hero-v3.webp",
+      "sha256": "d48755fa49d4f7d2631e622b78801ac6b9a8a760edc5dfbc649c4c51e9ee4ca9",
+      "dimensions": "1280x720",
+      "bytes": 217930,
+      "alt": "テキスト・画像・音声・動画の流れが1点に合流する、GeminiのマルチモーダルAIのイメージ",
+      "target_field": "featured_image_attachment_id",
+      "current_attachment_id": 636,
+      "action": "REPLACE",
+      "rollback": "Updater で featured_image_attachment_id を旧 ID 636 に戻す（旧 attachment は削除しない）",
+      "new_attachment_id": 1096,
+      "production_filename": "omochix-ai-tool-gemini-hero-v3.webp",
+      "filename_deviation": "ユーザー承認（B 案、2026-10-04）により -v3 付きのファイル名を正式値とする。内容は QA PASS の v3（sha256 一致）"
+    }
+  ],
+  "upload_verified": "2026-10-04 READ ONLY: 10/10 で sha256・alt・寸法・MIME が一致、重複なし",
+  "updater_json": "upload/ai-tools-image-update-batch-01.json",
+  "rollback_snapshot": "upload/ai-tools-image-rollback-snapshot-batch-01.json"
+}

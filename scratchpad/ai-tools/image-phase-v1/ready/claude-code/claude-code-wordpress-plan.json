@@ -1,0 +1,61 @@
+{
+  "slug": "claude-code",
+  "tool_name": "Claude Code",
+  "post_id": 665,
+  "manifest_ref": "H-05 / L-05",
+  "audited_at": "2026-10-03 (production READ ONLY)",
+  "current_tool_logo_attachment_id": 0,
+  "current_featured_image_attachment_id": 0,
+  "current_logo": null,
+  "current_hero": null,
+  "logo": {
+    "decision": "MISSING",
+    "status": "READY",
+    "planned_filename": "omochix-ai-tool-claude-code-logo.webp",
+    "alt_text": "Claude Code ロゴ",
+    "ready_file": "omochix-ai-tool-claude-code-logo.webp",
+    "source": "https://www.anthropic.com/press-kit → https://www-cdn.anthropic.com/ae59ca4ca194dac9c9dc3bc78c5829468cb0e8af.zip",
+    "blocked_reason": null
+  },
+  "hero": {
+    "decision": "MISSING",
+    "status": "READY",
+    "planned_filename": "omochix-ai-tool-claude-code-hero.webp",
+    "alt_text": "ターミナルの中でコードが段階的に組み上がっていく、Claude Codeによるエージェント型開発のイメージ",
+    "ready_file": "omochix-ai-tool-claude-code-hero.webp",
+    "prompt_file": "prompts/claude-code-hero.md",
+    "qa": {
+      "date": "2026-10-03",
+      "verdict": "PASS",
+      "source_sha256": "8a637f6bad7be68783fefaac5760013066cdb5135f15720f05fd43fd460080e1",
+      "bytes": 144396
+    }
+  },
+  "new_logo_attachment_id": 1089,
+  "new_hero_attachment_id": 1080,
+  "alt_policy": "WordPress へのアップロード時に Media Library の alt を必ず上記 alt_text にする（ファイル名から自動生成された alt を残さない。Cursor では upload 直後の alt 漏れがあった）",
+  "expected_usage": {
+    "logo": [
+      "single-ai_tool .tool-detail__logo（thumbnail 150、表示 62〜96px、contain）。テーマは alt=\"\" を渡すが、Media Library の alt が出力される",
+      "archive／関連ツール .tool-list-card__logo（58〜64px）",
+      "search .search-tool-card__logo（64px）"
+    ],
+    "hero": [
+      "single-ai_tool .tool-detail__media（large 1024×576、16:9、cover）。img の alt はテーマが「Claude Codeのイメージ」を生成",
+      "og:image／twitter:image（原寸。og:image:alt は Media Library の alt）",
+      "SoftwareApplication.image（#thumbnail ImageObject）"
+    ]
+  },
+  "updater_plan": {
+    "note": "attachment ID は upload 後に確定する。未確定の ID は書かない。JSON には title を含めない。未取得の asset のキーは省略する（0 は不可）。",
+    "keys": [
+      "tool_logo_attachment_id",
+      "featured_image_attachment_id"
+    ]
+  },
+  "rollback": [
+    "logo：現状 0（未設定）。Updater では 0 を指定できないため、wp-admin で tool_logo を解除する",
+    "hero：現状 0（未設定）。Updater では 0 を指定できないため、wp-admin でアイキャッチ画像を削除する",
+    "いずれも Apply 前の Updater before-snapshot JSON を保存する。旧 attachment は削除しない"
+  ]
+}

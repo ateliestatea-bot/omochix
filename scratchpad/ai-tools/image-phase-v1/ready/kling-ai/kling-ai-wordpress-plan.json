@@ -1,0 +1,59 @@
+{
+  "slug": "kling-ai",
+  "tool_name": "Kling AI",
+  "post_id": 677,
+  "manifest_ref": "H-02 / L-02",
+  "audited_at": "2026-10-03 (production READ ONLY)",
+  "current_tool_logo_attachment_id": 0,
+  "current_featured_image_attachment_id": 0,
+  "current_logo": null,
+  "current_hero": null,
+  "logo": {
+    "decision": "MISSING",
+    "status": "BLOCKED",
+    "planned_filename": "omochix-ai-tool-kling-ai-logo.webp",
+    "alt_text": "Kling AI ロゴ",
+    "ready_file": null,
+    "source": "https://kling.ai/ （問い合わせ：support@kling.ai）",
+    "blocked_reason": "kling.ai に press／brand／media kit ページなし（2026-10-03 再確認：Resources・About Us メニューは製品・ドキュメント・ブログのみ。/brand・/press はトップへ転送）。公式 CDN の apple-touch-icon（180×180）は高解像度要件を満たさず、ブランド配布物でもない。非公式ロゴは使わない"
+  },
+  "hero": {
+    "decision": "MISSING",
+    "status": "READY",
+    "planned_filename": "omochix-ai-tool-kling-ai-hero.webp",
+    "alt_text": "静止したかたちから滑らかな動きが生まれる、Kling AIによる動画生成のイメージ",
+    "ready_file": "omochix-ai-tool-kling-ai-hero.webp",
+    "prompt_file": "prompts/kling-ai-hero.md",
+    "qa": {
+      "date": "2026-10-03",
+      "verdict": "PASS",
+      "source_sha256": "ea1a3f5a312a7f5c13b31f5fef7f8978778621f70f2162ea504f710db9d87928",
+      "bytes": 150234
+    }
+  },
+  "new_logo_attachment_id": null,
+  "new_hero_attachment_id": 1083,
+  "alt_policy": "WordPress へのアップロード時に Media Library の alt を必ず上記 alt_text にする（ファイル名から自動生成された alt を残さない。Cursor では upload 直後の alt 漏れがあった）",
+  "expected_usage": {
+    "logo": [
+      "single-ai_tool .tool-detail__logo（thumbnail 150、表示 62〜96px、contain）。テーマは alt=\"\" を渡すが、Media Library の alt が出力される",
+      "archive／関連ツール .tool-list-card__logo（58〜64px）",
+      "search .search-tool-card__logo（64px）"
+    ],
+    "hero": [
+      "single-ai_tool .tool-detail__media（large 1024×576、16:9、cover）。img の alt はテーマが「Kling AIのイメージ」を生成",
+      "og:image／twitter:image（原寸。og:image:alt は Media Library の alt）",
+      "SoftwareApplication.image（#thumbnail ImageObject）"
+    ]
+  },
+  "updater_plan": {
+    "note": "attachment ID は upload 後に確定する。未確定の ID は書かない。JSON には title を含めない。未取得の asset のキーは省略する（0 は不可）。",
+    "keys": [
+      "featured_image_attachment_id"
+    ]
+  },
+  "rollback": [
+    "hero：現状 0（未設定）。Updater では 0 を指定できないため、wp-admin でアイキャッチ画像を削除する",
+    "いずれも Apply 前の Updater before-snapshot JSON を保存する。旧 attachment は削除しない"
+  ]
+}

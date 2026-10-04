@@ -1,0 +1,308 @@
+{
+  "snapshot_type": "pre-apply image rollback snapshot",
+  "taken_at": "2026-10-04T00:56:04+09:00",
+  "source": "public REST GET /wp-json/wp/v2/ai-tools (read only)",
+  "tools": [
+    {
+      "slug": "veo",
+      "post_id": 678,
+      "title": "Veo",
+      "modified": "2026-10-01T00:48:07",
+      "before": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 0
+      },
+      "after": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 1087
+      },
+      "changed_fields": [
+        "featured_image_attachment_id"
+      ],
+      "unchanged_image_fields": [
+        "tool_logo_attachment_id"
+      ],
+      "rollback": [
+        {
+          "field": "featured_image_attachment_id",
+          "method": "wp-admin",
+          "action": "アイキャッチ画像を削除",
+          "note": "Updater は 0 を受け付けないため"
+        }
+      ]
+    },
+    {
+      "slug": "kling-ai",
+      "post_id": 677,
+      "title": "Kling AI",
+      "modified": "2026-10-01T00:48:07",
+      "before": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 0
+      },
+      "after": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 1083
+      },
+      "changed_fields": [
+        "featured_image_attachment_id"
+      ],
+      "unchanged_image_fields": [
+        "tool_logo_attachment_id"
+      ],
+      "rollback": [
+        {
+          "field": "featured_image_attachment_id",
+          "method": "wp-admin",
+          "action": "アイキャッチ画像を削除",
+          "note": "Updater は 0 を受け付けないため"
+        }
+      ]
+    },
+    {
+      "slug": "runway",
+      "post_id": 675,
+      "title": "Runway",
+      "modified": "2026-10-01T00:48:07",
+      "before": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 0
+      },
+      "after": {
+        "tool_logo_attachment_id": 1088,
+        "featured_image_attachment_id": 1086
+      },
+      "changed_fields": [
+        "tool_logo_attachment_id",
+        "featured_image_attachment_id"
+      ],
+      "unchanged_image_fields": [],
+      "rollback": [
+        {
+          "field": "tool_logo_attachment_id",
+          "method": "wp-admin",
+          "action": "tool_logo を解除（未設定に戻す）",
+          "note": "Updater は 0 を受け付けないため"
+        },
+        {
+          "field": "featured_image_attachment_id",
+          "method": "wp-admin",
+          "action": "アイキャッチ画像を削除",
+          "note": "Updater は 0 を受け付けないため"
+        }
+      ]
+    },
+    {
+      "slug": "midjourney",
+      "post_id": 59,
+      "title": "Midjourney",
+      "modified": "2026-10-01T00:48:07",
+      "before": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 0
+      },
+      "after": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 1084
+      },
+      "changed_fields": [
+        "featured_image_attachment_id"
+      ],
+      "unchanged_image_fields": [
+        "tool_logo_attachment_id"
+      ],
+      "rollback": [
+        {
+          "field": "featured_image_attachment_id",
+          "method": "wp-admin",
+          "action": "アイキャッチ画像を削除",
+          "note": "Updater は 0 を受け付けないため"
+        }
+      ]
+    },
+    {
+      "slug": "claude-code",
+      "post_id": 665,
+      "title": "Claude Code",
+      "modified": "2026-10-01T00:48:07",
+      "before": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 0
+      },
+      "after": {
+        "tool_logo_attachment_id": 1089,
+        "featured_image_attachment_id": 1080
+      },
+      "changed_fields": [
+        "tool_logo_attachment_id",
+        "featured_image_attachment_id"
+      ],
+      "unchanged_image_fields": [],
+      "rollback": [
+        {
+          "field": "tool_logo_attachment_id",
+          "method": "wp-admin",
+          "action": "tool_logo を解除（未設定に戻す）",
+          "note": "Updater は 0 を受け付けないため"
+        },
+        {
+          "field": "featured_image_attachment_id",
+          "method": "wp-admin",
+          "action": "アイキャッチ画像を削除",
+          "note": "Updater は 0 を受け付けないため"
+        }
+      ]
+    },
+    {
+      "slug": "notebooklm",
+      "post_id": 659,
+      "title": "NotebookLM",
+      "modified": "2026-10-01T00:48:08",
+      "before": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 0
+      },
+      "after": {
+        "tool_logo_attachment_id": 0,
+        "featured_image_attachment_id": 1085
+      },
+      "changed_fields": [
+        "featured_image_attachment_id"
+      ],
+      "unchanged_image_fields": [
+        "tool_logo_attachment_id"
+      ],
+      "rollback": [
+        {
+          "field": "featured_image_attachment_id",
+          "method": "wp-admin",
+          "action": "アイキャッチ画像を削除",
+          "note": "Updater は 0 を受け付けないため"
+        }
+      ]
+    },
+    {
+      "slug": "chatgpt",
+      "post_id": 53,
+      "title": "ChatGPT",
+      "modified": "2026-10-01T00:48:08",
+      "before": {
+        "tool_logo_attachment_id": 54,
+        "featured_image_attachment_id": 566
+      },
+      "after": {
+        "tool_logo_attachment_id": 54,
+        "featured_image_attachment_id": 1079
+      },
+      "changed_fields": [
+        "featured_image_attachment_id"
+      ],
+      "unchanged_image_fields": [
+        "tool_logo_attachment_id"
+      ],
+      "rollback": [
+        {
+          "field": "featured_image_attachment_id",
+          "method": "updater",
+          "restore_to": 566
+        }
+      ]
+    },
+    {
+      "slug": "gemini",
+      "post_id": 61,
+      "title": "Gemini",
+      "modified": "2026-10-01T00:48:07",
+      "before": {
+        "tool_logo_attachment_id": 634,
+        "featured_image_attachment_id": 636
+      },
+      "after": {
+        "tool_logo_attachment_id": 634,
+        "featured_image_attachment_id": 1096
+      },
+      "changed_fields": [
+        "featured_image_attachment_id"
+      ],
+      "unchanged_image_fields": [
+        "tool_logo_attachment_id"
+      ],
+      "rollback": [
+        {
+          "field": "featured_image_attachment_id",
+          "method": "updater",
+          "restore_to": 636
+        }
+      ]
+    }
+  ],
+  "rollback_updater_json": {
+    "tools": [
+      {
+        "slug": "chatgpt",
+        "featured_image_attachment_id": 566
+      },
+      {
+        "slug": "gemini",
+        "featured_image_attachment_id": 636
+      }
+    ]
+  },
+  "rollback_manual_wp_admin": [
+    {
+      "slug": "veo",
+      "post_id": 678,
+      "actions": [
+        "アイキャッチ画像を削除"
+      ]
+    },
+    {
+      "slug": "kling-ai",
+      "post_id": 677,
+      "actions": [
+        "アイキャッチ画像を削除"
+      ]
+    },
+    {
+      "slug": "runway",
+      "post_id": 675,
+      "actions": [
+        "tool_logo を解除（未設定に戻す）",
+        "アイキャッチ画像を削除"
+      ]
+    },
+    {
+      "slug": "midjourney",
+      "post_id": 59,
+      "actions": [
+        "アイキャッチ画像を削除"
+      ]
+    },
+    {
+      "slug": "claude-code",
+      "post_id": 665,
+      "actions": [
+        "tool_logo を解除（未設定に戻す）",
+        "アイキャッチ画像を削除"
+      ]
+    },
+    {
+      "slug": "notebooklm",
+      "post_id": 659,
+      "actions": [
+        "アイキャッチ画像を削除"
+      ]
+    }
+  ],
+  "keep_attachments": [
+    566,
+    636,
+    54,
+    634
+  ],
+  "notes": [
+    "旧 attachment は削除しない",
+    "Apply 直前に Updater が自動取得する before snapshot JSON も必ずダウンロードして保存する",
+    "画像フィールド以外は Updater JSON に含めないので、本文・SEO・メタは変化しない"
+  ]
+}
