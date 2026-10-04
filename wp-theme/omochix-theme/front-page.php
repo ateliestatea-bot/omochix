@@ -376,9 +376,6 @@ $omochix_has_hero_image  = file_exists($omochix_hero_image_path);
             $omochix_logo_url         = is_numeric($omochix_logo_value) ? wp_get_attachment_image_url((int) $omochix_logo_value, 'thumbnail') : $omochix_logo_value;
             $omochix_short_description = get_post_meta($omochix_tool_id, 'short_description', true);
 
-            if (!$omochix_logo_url) {
-                $omochix_logo_url = get_the_post_thumbnail_url($omochix_tool_id, 'thumbnail');
-            }
             if (!$omochix_short_description) {
                 $omochix_short_description = get_the_excerpt($omochix_tool_id);
             }
