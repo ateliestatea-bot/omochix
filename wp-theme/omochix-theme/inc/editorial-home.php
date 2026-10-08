@@ -65,14 +65,20 @@ function omochix_editorial_selection() {
     return ['feature' => $feature, 'latest' => $latest, 'tools' => $tools, 'prompt' => $prompts ? $prompts[0] : null];
 }
 
-function omochix_editorial_media($post, $size = 'large', $priority = false) {
+function omochix_editorial_media($post, $size = 'large', $priority = false, $fallback = 'news') {
     if (has_post_thumbnail($post)) {
         echo get_the_post_thumbnail($post, $size, [
             'alt' => '', 'loading' => $priority ? 'eager' : 'lazy', 'decoding' => 'async',
         ]);
     } else {
-        echo '<span class="ed-media-fallback" aria-hidden="true">Omochi<span>X</span></span>';
+        omochix_editorial_visual($fallback, '', $priority);
     }
+}
+
+/** Decorative section art: post thumbnails always take priority in article cards. */
+function omochix_editorial_visual($name, $class = '', $priority = false) {
+    if (!in_array($name, ['feature', 'news', 'prompts', 'learn', 'tools'], true)) { return; }
+    printf('<img class="%s" src="%s" width="1672" height="940" alt="" loading="%s" decoding="async">', esc_attr($class), esc_url(get_theme_file_uri('/assets/img/editorial/' . $name . '-v1.webp')), $priority ? 'eager' : 'lazy');
 }
 
 function omochix_editorial_category($post) {

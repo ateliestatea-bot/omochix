@@ -36,8 +36,8 @@ $about_url = omochix_get_published_page_url('about');
     </section>
 
     <?php if ($ed['feature']) : $feature = $ed['feature'][0]; ?>
-        <section class="ed-feature<?php echo has_post_thumbnail($feature) ? '' : ' ed-feature--text-only'; ?>" aria-labelledby="ed-feature-title">
-            <?php if (has_post_thumbnail($feature)) : ?><a class="ed-media ed-feature-media" href="<?php echo esc_url(get_permalink($feature)); ?>" tabindex="-1" aria-hidden="true"><?php omochix_editorial_media($feature, 'full', true); ?></a><?php endif; ?>
+        <section class="ed-feature" aria-labelledby="ed-feature-title">
+            <a class="ed-media ed-feature-media" href="<?php echo esc_url(get_permalink($feature)); ?>" tabindex="-1" aria-hidden="true"><?php omochix_editorial_media($feature, 'full', true, 'feature'); ?></a>
             <div class="ed-feature-copy">
                 <p class="ed-feature-kicker"><?php esc_html_e('FEATURED STORY', 'omochix'); ?></p>
                 <p class="ed-meta"><?php echo esc_html(omochix_editorial_category($feature)); ?> <span aria-hidden="true">·</span> <time datetime="<?php echo esc_attr(get_the_date(DATE_W3C, $feature)); ?>"><?php echo esc_html(get_the_date('', $feature)); ?></time></p>
@@ -53,8 +53,8 @@ $about_url = omochix_get_published_page_url('about');
         <?php if ($ed['latest']) : ?>
             <div class="ed-stories">
                 <?php foreach ($ed['latest'] as $story) : ?>
-                    <article class="ed-story<?php echo has_post_thumbnail($story) ? '' : ' ed-story--text-only'; ?>"><a href="<?php echo esc_url(get_permalink($story)); ?>">
-                        <?php if (has_post_thumbnail($story)) : ?><div class="ed-media"><?php omochix_editorial_media($story); ?></div><?php endif; ?>
+                    <article class="ed-story"><a href="<?php echo esc_url(get_permalink($story)); ?>">
+                        <div class="ed-media"><?php omochix_editorial_media($story); ?></div>
                         <div><p class="ed-meta"><?php echo esc_html(omochix_editorial_category($story)); ?> <span aria-hidden="true">·</span> <time datetime="<?php echo esc_attr(get_the_date(DATE_W3C, $story)); ?>"><?php echo esc_html(get_the_date('', $story)); ?></time></p>
                         <h3><?php echo esc_html(get_the_title($story)); ?></h3></div>
                     </a></article>
@@ -67,6 +67,7 @@ $about_url = omochix_get_published_page_url('about');
         <div class="ed-section-heading"><h2 id="ed-try-title"><?php esc_html_e('使ってみる', 'omochix'); ?></h2></div>
         <div class="ed-practice">
             <article class="ed-practice-card" data-prompt-copy-scope>
+                <?php omochix_editorial_visual('prompts', 'ed-practice-visual'); ?>
                 <p class="ed-kicker"><?php echo omochix_editorial_icon('prompt'); ?> Prompts</p>
                 <?php if ($ed['prompt']) : $prompt = $ed['prompt']; ?>
                     <h3><a href="<?php echo esc_url(get_permalink($prompt)); ?>"><?php echo esc_html(get_the_title($prompt)); ?></a></h3>
@@ -77,6 +78,7 @@ $about_url = omochix_get_published_page_url('about');
                 <?php if ($prompts_url) : ?><a class="ed-text-link" href="<?php echo esc_url($prompts_url); ?>"><?php esc_html_e('プロンプトを探す', 'omochix'); ?> ↗</a><?php endif; ?>
             </article>
             <article class="ed-practice-card ed-learn">
+                <?php omochix_editorial_visual('learn', 'ed-practice-visual'); ?>
                 <p class="ed-kicker"><?php echo omochix_editorial_icon('learn'); ?> Learn</p>
                 <h3><?php esc_html_e('AIの基本を、ひとつずつ。', 'omochix'); ?></h3>
                 <p><?php esc_html_e('はじめての人にも、もう一度学びたい人にも。AIの基礎と使い方を、自分のペースで。', 'omochix'); ?></p>
@@ -88,6 +90,7 @@ $about_url = omochix_get_published_page_url('about');
     <section class="ed-section" aria-labelledby="ed-tools-title">
         <div class="ed-section-heading"><h2 id="ed-tools-title"><?php esc_html_e('AIツールを探す', 'omochix'); ?></h2><?php if ($tools_url) : ?><a href="<?php echo esc_url($tools_url); ?>"><?php esc_html_e('すべて見る', 'omochix'); ?> ↗</a><?php endif; ?></div>
         <?php
+        omochix_editorial_visual('tools', 'ed-tools-visual');
         $purpose_links = [];
         foreach (['writing' => __('文章', 'omochix'), 'research' => __('調査', 'omochix'), 'image-generation' => __('画像', 'omochix'), 'programming' => __('開発', 'omochix')] as $slug => $label) {
             $term = taxonomy_exists('ai_tool_category') ? get_term_by('slug', $slug, 'ai_tool_category') : null;
@@ -115,6 +118,6 @@ $about_url = omochix_get_published_page_url('about');
         <?php if (!$ed['tools']) : ?><p class="ed-empty"><?php esc_html_e('AIツールの情報を準備しています。', 'omochix'); ?></p><?php endif; ?>
     </section>
 
-    <section class="ed-about" aria-labelledby="ed-about-title"><h2 id="ed-about-title"><?php esc_html_e('知る。その先の、できるへ。', 'omochix'); ?></h2><p><?php esc_html_e('AIと出会い、学び、使いこなす。そんな一歩を、OmochiXと。', 'omochix'); ?></p><?php if ($about_url) : ?><a href="<?php echo esc_url($about_url); ?>"><?php esc_html_e('OmochiXについて', 'omochix'); ?> ↗</a><?php endif; ?></section>
+    <section class="ed-about" aria-labelledby="ed-about-title"><?php omochix_editorial_visual('learn', 'ed-about-visual'); ?><h2 id="ed-about-title"><?php esc_html_e('知る。その先の、できるへ。', 'omochix'); ?></h2><p><?php esc_html_e('AIと出会い、学び、使いこなす。そんな一歩を、OmochiXと。', 'omochix'); ?></p><?php if ($about_url) : ?><a href="<?php echo esc_url($about_url); ?>"><?php esc_html_e('OmochiXについて', 'omochix'); ?> ↗</a><?php endif; ?></section>
 </main>
 <?php get_footer('editorial'); ?>

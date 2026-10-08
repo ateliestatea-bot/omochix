@@ -94,10 +94,11 @@ body.omx-editorial {
 .ed-footer { --color-bg: #19181d; --color-text: #f5f5f7; --color-muted: #b9b7c1; background: #19181d; color: #f5f5f7; padding: 38px clamp(22px, 4vw, 56px) 24px; margin-top: 0; }
 .ed-footer-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .ed-footer-top img { display: block; width: 120px; height: auto; }
-.ed-footer .social-links { display: flex; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.ed-footer .social-links { display: flex; gap: 16px; padding: 0; margin: 0; list-style: none; }
 .ed-footer .social-links a { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: white; }
 .ed-footer .social-links a:hover { color: #d5baff; }
-.ed-footer .social-links svg { width: 20px; height: 20px; fill: currentColor; }
+.ed-footer .social-links a[aria-label*="YouTube"] svg { width: 26px; }
+.ed-footer .social-links svg { width: 22px; height: 22px; fill: currentColor; }
 .ed-footer .social-links span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .ed-footer-nav { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 22px; }
 .ed-footer-nav a { min-height: 44px; display: flex; align-items: center; font-size: 13px; }
@@ -174,4 +175,18 @@ body.omx-editorial {
 @media (prefers-reduced-motion: reduce) {
     body.omx-editorial, body.omx-editorial * { transition: none; }
     .omx-editorial a { transition: none; }
+}
+
+/* Section imagery from the approved visual concept. */
+.ed-practice-visual { display:block; width:calc(100% + 64px); max-width:none; height:220px; object-fit:cover; margin:-32px -32px 28px; border-radius:12px 12px 0 0; }
+.ed-learn { justify-content:flex-start; }
+.ed-tools-visual { display:block; width:100%; height:260px; object-fit:cover; object-position:center 58%; border-radius:12px; margin:0 0 28px; }
+.ed-about-visual { width:38%; height:auto; max-height:240px; float:right; aspect-ratio:16/10; object-fit:cover; border-radius:10px; margin-left:40px; }
+.ed-about { min-height:260px; display:flow-root; }
+.ed-about h2 { padding-top:30px; }
+@media(max-width:600px) {
+    .ed-practice-visual { width:calc(100% + 44px); margin:-22px -22px 24px; height:180px; }
+    .ed-tools-visual { height:180px; }
+    .ed-about-visual { float:none; width:100%; margin:0 0 24px; max-height:180px; }
+    .ed-about h2 { padding-top:0; }
 }
