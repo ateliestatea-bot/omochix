@@ -1,0 +1,18 @@
+PASS one lead story
+PASS sticky story selected
+PASS lead not duplicated in latest
+PASS draft excluded
+PASS password protected excluded
+PASS development does not leak into news
+PASS real active tools fill three positions
+PASS discontinued excluded
+PASS draft tool excluded
+PASS prompt code retained verbatim
+PASS destination AIニュース
+PASS destination AIツール
+PASS destination AI開発
+PASS destination Learn
+PASS destination Prompts
+PASS isolated test database
+PASS no fabricated starter tools when empty
+PASS missing news category fails closed

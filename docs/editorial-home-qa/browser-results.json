@@ -1,0 +1,125 @@
+{
+  "results": [
+    {
+      "width": 320,
+      "theme": "light",
+      "textColor": "rgb(32, 32, 35)",
+      "overflow": false,
+      "h1": 1,
+      "header": 320,
+      "heroBottom": 398,
+      "copy": true
+    },
+    {
+      "width": 320,
+      "theme": "dark",
+      "textColor": "rgb(245, 245, 247)",
+      "overflow": false,
+      "h1": 1,
+      "header": 320,
+      "heroBottom": 398,
+      "copy": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "textColor": "rgb(32, 32, 35)",
+      "overflow": false,
+      "h1": 1,
+      "header": 390,
+      "heroBottom": 393,
+      "copy": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "textColor": "rgb(245, 245, 247)",
+      "overflow": false,
+      "h1": 1,
+      "header": 390,
+      "heroBottom": 393,
+      "copy": true
+    },
+    {
+      "width": 768,
+      "theme": "light",
+      "textColor": "rgb(32, 32, 35)",
+      "overflow": false,
+      "h1": 1,
+      "header": 768,
+      "heroBottom": 492,
+      "copy": true
+    },
+    {
+      "width": 768,
+      "theme": "dark",
+      "textColor": "rgb(245, 245, 247)",
+      "overflow": false,
+      "h1": 1,
+      "header": 768,
+      "heroBottom": 492,
+      "copy": true
+    },
+    {
+      "width": 1080,
+      "theme": "light",
+      "textColor": "rgb(32, 32, 35)",
+      "overflow": false,
+      "h1": 1,
+      "header": 1080,
+      "heroBottom": 492,
+      "copy": true
+    },
+    {
+      "width": 1080,
+      "theme": "dark",
+      "textColor": "rgb(245, 245, 247)",
+      "overflow": false,
+      "h1": 1,
+      "header": 1080,
+      "heroBottom": 492,
+      "copy": true
+    },
+    {
+      "width": 1081,
+      "theme": "light",
+      "textColor": "rgb(32, 32, 35)",
+      "overflow": false,
+      "h1": 1,
+      "header": 194,
+      "heroBottom": 460,
+      "copy": true
+    },
+    {
+      "width": 1081,
+      "theme": "dark",
+      "textColor": "rgb(245, 245, 247)",
+      "overflow": false,
+      "h1": 1,
+      "header": 194,
+      "heroBottom": 460,
+      "copy": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "textColor": "rgb(32, 32, 35)",
+      "overflow": false,
+      "h1": 1,
+      "header": 194,
+      "heroBottom": 460,
+      "copy": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "textColor": "rgb(245, 245, 247)",
+      "overflow": false,
+      "h1": 1,
+      "header": 194,
+      "heroBottom": 460,
+      "copy": true
+    }
+  ],
+  "errors": []
+}
