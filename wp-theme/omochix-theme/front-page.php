@@ -36,8 +36,8 @@ $about_url = omochix_get_published_page_url('about');
     </section>
 
     <?php if ($ed['feature']) : $feature = $ed['feature'][0]; ?>
-        <section class="ed-feature" aria-labelledby="ed-feature-title">
-            <a class="ed-media ed-feature-media" href="<?php echo esc_url(get_permalink($feature)); ?>" tabindex="-1" aria-hidden="true"><?php omochix_editorial_media($feature, 'full', true); ?></a>
+        <section class="ed-feature<?php echo has_post_thumbnail($feature) ? '' : ' ed-feature--text-only'; ?>" aria-labelledby="ed-feature-title">
+            <?php if (has_post_thumbnail($feature)) : ?><a class="ed-media ed-feature-media" href="<?php echo esc_url(get_permalink($feature)); ?>" tabindex="-1" aria-hidden="true"><?php omochix_editorial_media($feature, 'full', true); ?></a><?php endif; ?>
             <div class="ed-feature-copy">
                 <p class="ed-feature-kicker"><?php esc_html_e('FEATURED STORY', 'omochix'); ?></p>
                 <p class="ed-meta"><?php echo esc_html(omochix_editorial_category($feature)); ?> <span aria-hidden="true">·</span> <time datetime="<?php echo esc_attr(get_the_date(DATE_W3C, $feature)); ?>"><?php echo esc_html(get_the_date('', $feature)); ?></time></p>
@@ -53,8 +53,8 @@ $about_url = omochix_get_published_page_url('about');
         <?php if ($ed['latest']) : ?>
             <div class="ed-stories">
                 <?php foreach ($ed['latest'] as $story) : ?>
-                    <article class="ed-story"><a href="<?php echo esc_url(get_permalink($story)); ?>">
-                        <div class="ed-media"><?php omochix_editorial_media($story); ?></div>
+                    <article class="ed-story<?php echo has_post_thumbnail($story) ? '' : ' ed-story--text-only'; ?>"><a href="<?php echo esc_url(get_permalink($story)); ?>">
+                        <?php if (has_post_thumbnail($story)) : ?><div class="ed-media"><?php omochix_editorial_media($story); ?></div><?php endif; ?>
                         <div><p class="ed-meta"><?php echo esc_html(omochix_editorial_category($story)); ?> <span aria-hidden="true">·</span> <time datetime="<?php echo esc_attr(get_the_date(DATE_W3C, $story)); ?>"><?php echo esc_html(get_the_date('', $story)); ?></time></p>
                         <h3><?php echo esc_html(get_the_title($story)); ?></h3></div>
                     </a></article>

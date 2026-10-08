@@ -6855,16 +6855,16 @@ body.omx-editorial {
 .omx-editorial .site-header__actions { display: flex; }
 .omx-editorial .site-logo__image { width: 118px; }
 .omx-editorial .site-header .icon-button { color: var(--ed-text); min-width: 44px; min-height: 44px; }
-.ed-main { color: var(--ed-text); max-width: 1220px; margin: 0 auto; padding: 0 clamp(22px, 4vw, 56px); }
+.ed-main { color: var(--ed-text); max-width: 1180px; margin: 0 auto; padding: 0 clamp(22px, 4vw, 56px); }
 .ed-main h1, .ed-main h2, .ed-main h3, .ed-main p { margin: 0; }
 .ed-main a:hover { text-decoration: underline; text-underline-offset: .22em; }
 .ed-main .ed-icon { width: 24px; height: 24px; flex: 0 0 auto; }
-.ed-hero { position: relative; max-width: none; margin: 34px auto 0; padding: clamp(30px, 4vw, 58px) clamp(26px, 5vw, 70px) 28px; background: radial-gradient(circle at 81% 18%, rgba(129,78,215,.12), transparent 36%), var(--ed-lilac); border-radius: 18px; overflow: hidden; }
-.ed-hero-heading { display: grid; grid-template-columns: minmax(0, 1fr) 230px; align-items: end; gap: 32px; padding: 0; }
+.ed-hero { position: relative; max-width: none; margin: 0 auto; padding: 72px 0 42px; background: radial-gradient(ellipse at 83% 35%, rgba(136, 88, 226, .12), transparent 29%); border-bottom: 1px solid var(--ed-line); }
+.ed-hero-heading { display: grid; grid-template-columns: minmax(0, 1fr) 250px; align-items: center; gap: 32px; padding: 0; }
 .ed-hero h1 { font-size: clamp(36px, 4.3vw, 58px); line-height: 1.28; font-weight: 650; letter-spacing: -.04em; overflow-wrap: anywhere; padding-bottom: 22px; }
 .ed-eyebrow { font-size: 11px; letter-spacing: .17em; color: var(--ed-accent); font-weight: 700; margin-bottom: 24px !important; }
-.ed-mascot { display: block; width: 230px; height: 215px; object-fit: contain; object-position: bottom; }
-.ed-search { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 6px 7px 6px 20px; background: var(--ed-bg); border: 1px solid var(--ed-line); border-radius: 14px; box-shadow: 0 9px 30px rgba(48,25,79,.06); }
+.ed-mascot { display: block; width: 250px; height: 250px; object-fit: contain; object-position: bottom; }
+.ed-search { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 6px 7px 6px 20px; background: var(--ed-surface); border: 1px solid var(--ed-line); border-radius: 18px; }
 .ed-search:focus-within { border-color: var(--ed-accent); }
 .ed-search > svg { color: var(--ed-muted); width: 20px; }
 .ed-search input { flex: 1; min-width: 0; width: 100%; background: transparent; border: 0; color: var(--ed-text); font-size: 16px; padding: 8px 0; }
@@ -6894,8 +6894,10 @@ body.omx-editorial {
 .ed-stories { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 .ed-story h3 { font-size: 18px; line-height: 1.65; font-weight: 570; overflow-wrap: anywhere; }
 .ed-story a { display: block; }
-.ed-practice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
-.ed-practice-card { background: var(--ed-surface); border-radius: 12px; padding: 32px; min-width: 0; }
+.ed-practice { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 22px; }
+.ed-practice-card { background: var(--ed-surface); border-radius: 12px; padding: 32px; min-width: 0; border: 1px solid var(--ed-line); }
+.ed-learn { background: var(--ed-lilac); border-color: transparent; display: flex; flex-direction: column; justify-content: center; }
+.ed-learn h3 { font-size: 27px; }
 .ed-kicker { display: flex; align-items: center; gap: 10px; font-size: 13px; margin-bottom: 20px !important; }
 .ed-practice h3 { font-size: 21px; line-height: 1.55; font-weight: 560; margin-bottom: 16px; }
 .ed-practice p:not(.ed-kicker):not(.sr-only) { font-size: 15px; line-height: 1.9; color: var(--ed-muted); }
@@ -6913,7 +6915,7 @@ body.omx-editorial {
 .ed-tool-initial { background: var(--ed-surface); width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; font-weight: 600; }
 .ed-tool > .ed-icon { width: 18px; }
 .ed-empty { color: var(--ed-muted); padding: 32px 0; line-height: 1.8; }
-.ed-about { text-align: center; padding: 72px 20px; margin-top: 64px; background: var(--ed-lilac); border-radius: 16px; }
+.ed-about { text-align: left; padding: 62px 0; margin-top: 48px; border-top: 1px solid var(--ed-line); background: transparent; }
 .ed-about h2 { font-size: clamp(23px, 3vw, 32px); font-weight: 550; letter-spacing: -.04em; }
 .ed-about p { font-size: 14px; color: var(--ed-muted); line-height: 1.8; margin: 16px 0; }
 .ed-about a { display: inline-block; padding: 12px 20px; border: 1px solid var(--ed-line); border-radius: 24px; font-size: 14px; }
@@ -6931,6 +6933,14 @@ body.omx-editorial {
 .ed-footer-future small { margin-left: 6px; font-size: 10px; }
 .ed-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-top: 22px; border-top: 1px solid #39363f; color: #b9b7c1; font-size: 11px; }
 .ed-footer-bottom > div { display: flex; flex-wrap: wrap; gap: 18px; }
+.ed-feature--text-only { display: block; padding-block: 40px; }
+.ed-feature--text-only .ed-feature-copy { max-width: 760px; }
+.ed-feature--text-only h2 { font-size: clamp(28px, 3.2vw, 44px); }
+.ed-story--text-only { border-top: 2px solid var(--ed-line); padding-top: 16px; }
+.ed-story--text-only .ed-meta { margin-top: 0 !important; }
+.ed-story--text-only h3 { font-size: 22px; }
+.ed-story--text-only > a { min-height: 130px; }
+.ed-feature-link span, .ed-text-link { color: var(--ed-accent); }
 @media (min-width: 1081px) {
     .omx-editorial { padding-left: 194px; }
     .omx-editorial .site-header { position: fixed; inset: 0 auto 0 0; width: 194px; height: 100dvh; border: 0; border-right: 1px solid var(--ed-line); }
@@ -6946,20 +6956,20 @@ body.omx-editorial {
 @media (max-width: 1080px) {
     .omx-editorial .site-header__actions { display: flex; margin-right: 44px; }
     .omx-editorial .primary-nav { top: 76px; }
-    .ed-hero { margin-top: 24px; }
+    .ed-hero { padding-top: 42px; }
     .ed-feature { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 @media (max-width: 600px) {
     .ed-main { padding-inline: 22px; }
-    .ed-hero { margin: 14px -8px 0; padding: 28px 20px 22px; border-radius: 16px; }
+    .ed-hero { margin: 0; padding: 28px 0 26px; background: radial-gradient(ellipse at 85% 35%, rgba(136,88,226,.12), transparent 45%); }
     .ed-feature { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 32px 0; }
     .ed-feature-media { aspect-ratio: 16 / 9; }
     .ed-feature-copy { padding-top: 18px; }
     .ed-feature-kicker { font-size: 10px; }
-    .ed-hero-heading { grid-template-columns: minmax(0, 1fr) 112px; gap: 6px; padding: 0; }
+    .ed-hero-heading { grid-template-columns: minmax(0, 1fr) 124px; gap: 6px; padding: 0; }
     .ed-eyebrow { font-size: 9px; margin-bottom: 16px !important; }
     .ed-hero h1 { font-size: clamp(25px, 6.6vw, 32px); line-height: 1.38; padding-bottom: 20px; }
-    .ed-mascot { width: 112px; height: 146px; }
+    .ed-mascot { width: 124px; height: 158px; }
     .ed-search { min-height: 54px; padding-left: 14px; gap: 8px; }
     .ed-categories { margin-top: 18px; gap: 0; }
     .ed-categories > * { font-size: 11px; gap: 8px; padding-inline: 1px; min-height: 66px; }
@@ -6972,15 +6982,17 @@ body.omx-editorial {
     .ed-feature h2 { font-size: 24px; }
     .ed-excerpt { font-size: 14px; }
     .ed-stories { display: flex; flex-direction: column; gap: 22px; }
-    .ed-story:not(:first-child) > a { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: start; gap: 16px; }
+    .ed-story:not(.ed-story--text-only):not(:first-child) > a { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: start; gap: 16px; }
     .ed-story:not(:first-child) .ed-meta { margin-top: 0 !important; }
     .ed-story h3 { font-size: 17px; }
+    .ed-story--text-only > a { min-height: 0; padding-bottom: 14px; }
+    .ed-story--text-only h3 { font-size: 22px; }
     .ed-practice { grid-template-columns: 1fr; gap: 16px; }
     .ed-practice-card { padding: 22px; }
     .ed-practice h3 { font-size: 20px; }
     .ed-tools { grid-template-columns: 1fr; gap: 0; }
     .ed-tool { padding-block: 18px; }
-    .ed-about { margin-top: 44px; padding: 40px 18px; }
+    .ed-about { margin-top: 38px; padding: 38px 0; }
     .ed-footer { padding-top: 30px; }
     .ed-footer-top { flex-direction: column; align-items: flex-start; gap: 18px; }
     .ed-footer .social-links { margin-left: -12px; gap: 10px; }
@@ -7085,9 +7097,8 @@ body.omx-editorial {
                                     </nav>
     </section>
 
-            <section class="ed-feature" aria-labelledby="ed-feature-title">
-            <a class="ed-media ed-feature-media" href="#preview-only" tabindex="-1" aria-hidden="true"><span class="ed-media-fallback" aria-hidden="true">Omochi<span>X</span></span></a>
-            <div class="ed-feature-copy">
+            <section class="ed-feature ed-feature--text-only" aria-labelledby="ed-feature-title">
+                        <div class="ed-feature-copy">
                 <p class="ed-feature-kicker">FEATURED STORY</p>
                 <p class="ed-meta">AIニュース <span aria-hidden="true">·</span> <time datetime="2026-10-07T09:00:00+00:00">October 7, 2026</time></p>
                 <h2 id="ed-feature-title"><a href="#preview-only">AIで、日常の可能性を広げる。</a></h2>
@@ -7099,19 +7110,16 @@ body.omx-editorial {
     <section class="ed-section" aria-labelledby="ed-latest-title">
         <div class="ed-section-heading"><h2 id="ed-latest-title">最新のAIニュース</h2><a href="#preview-only">すべて見る <span aria-hidden="true">↗</span></a></div>
                     <div class="ed-stories">
-                                    <article class="ed-story"><a href="#preview-only">
-                        <div class="ed-media"><span class="ed-media-fallback" aria-hidden="true">Omochi<span>X</span></span></div>
-                        <div><p class="ed-meta">AIニュース <span aria-hidden="true">·</span> <time datetime="2026-10-06T09:00:00+00:00">October 6, 2026</time></p>
+                                    <article class="ed-story ed-story--text-only"><a href="#preview-only">
+                                                <div><p class="ed-meta">AIニュース <span aria-hidden="true">·</span> <time datetime="2026-10-06T09:00:00+00:00">October 6, 2026</time></p>
                         <h3>AIの今を、わかりやすく。</h3></div>
                     </a></article>
-                                    <article class="ed-story"><a href="#preview-only">
-                        <div class="ed-media"><span class="ed-media-fallback" aria-hidden="true">Omochi<span>X</span></span></div>
-                        <div><p class="ed-meta">AIニュース <span aria-hidden="true">·</span> <time datetime="2026-10-05T09:00:00+00:00">October 5, 2026</time></p>
+                                    <article class="ed-story ed-story--text-only"><a href="#preview-only">
+                                                <div><p class="ed-meta">AIニュース <span aria-hidden="true">·</span> <time datetime="2026-10-05T09:00:00+00:00">October 5, 2026</time></p>
                         <h3>自分に合うAIを見つけよう。</h3></div>
                     </a></article>
-                                    <article class="ed-story"><a href="#preview-only">
-                        <div class="ed-media"><span class="ed-media-fallback" aria-hidden="true">Omochi<span>X</span></span></div>
-                        <div><p class="ed-meta">AIニュース <span aria-hidden="true">·</span> <time datetime="2026-10-04T09:00:00+00:00">October 4, 2026</time></p>
+                                    <article class="ed-story ed-story--text-only"><a href="#preview-only">
+                                                <div><p class="ed-meta">AIニュース <span aria-hidden="true">·</span> <time datetime="2026-10-04T09:00:00+00:00">October 4, 2026</time></p>
                         <h3>文章作成の流れを、AIと考える。</h3></div>
                     </a></article>
                             </div>
