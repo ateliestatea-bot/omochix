@@ -13,7 +13,7 @@ $about_url = omochix_get_published_page_url('about');
 <main class="ed-main" id="main-content">
     <section class="ed-hero" aria-labelledby="ed-title">
         <div class="ed-hero-heading">
-            <div><p class="ed-eyebrow">YOUR DAILY AI COMPANION</p><h1 id="ed-title"><?php esc_html_e('今日は、', 'omochix'); ?><br><?php esc_html_e('どんなAIに出会う？', 'omochix'); ?></h1></div>
+            <div><p class="ed-eyebrow">YOUR DAILY AI COMPANION</p><h1 id="ed-title"><?php esc_html_e('今日は、', 'omochix'); ?><br><?php esc_html_e('AIと何をする？', 'omochix'); ?></h1></div>
             <?php if (file_exists(get_theme_file_path('/assets/img/omochi-hero.webp'))) : ?>
                 <img class="ed-mascot" src="<?php echo esc_url(get_theme_file_uri('/assets/img/omochi-hero.webp')); ?>" width="200" height="240" alt="<?php esc_attr_e('紫のパーカーを着た、おもち', 'omochix'); ?>" fetchpriority="high" decoding="async">
             <?php endif; ?>
@@ -38,9 +38,13 @@ $about_url = omochix_get_published_page_url('about');
     <?php if ($ed['feature']) : $feature = $ed['feature'][0]; ?>
         <section class="ed-feature" aria-labelledby="ed-feature-title">
             <a class="ed-media ed-feature-media" href="<?php echo esc_url(get_permalink($feature)); ?>" tabindex="-1" aria-hidden="true"><?php omochix_editorial_media($feature, 'full', true); ?></a>
-            <p class="ed-meta"><?php echo esc_html(omochix_editorial_category($feature)); ?> <span aria-hidden="true">·</span> <time datetime="<?php echo esc_attr(get_the_date(DATE_W3C, $feature)); ?>"><?php echo esc_html(get_the_date('', $feature)); ?></time></p>
-            <h2 id="ed-feature-title"><a href="<?php echo esc_url(get_permalink($feature)); ?>"><?php echo esc_html(get_the_title($feature)); ?></a></h2>
-            <p class="ed-excerpt"><?php echo esc_html(wp_trim_words(wp_strip_all_tags(get_the_excerpt($feature)), 70, '…')); ?></p>
+            <div class="ed-feature-copy">
+                <p class="ed-feature-kicker"><?php esc_html_e('FEATURED STORY', 'omochix'); ?></p>
+                <p class="ed-meta"><?php echo esc_html(omochix_editorial_category($feature)); ?> <span aria-hidden="true">·</span> <time datetime="<?php echo esc_attr(get_the_date(DATE_W3C, $feature)); ?>"><?php echo esc_html(get_the_date('', $feature)); ?></time></p>
+                <h2 id="ed-feature-title"><a href="<?php echo esc_url(get_permalink($feature)); ?>"><?php echo esc_html(get_the_title($feature)); ?></a></h2>
+                <p class="ed-excerpt"><?php echo esc_html(wp_trim_words(wp_strip_all_tags(get_the_excerpt($feature)), 70, '…')); ?></p>
+                <a class="ed-feature-link" href="<?php echo esc_url(get_permalink($feature)); ?>"><?php esc_html_e('記事を読む', 'omochix'); ?> <span aria-hidden="true">↗</span></a>
+            </div>
         </section>
     <?php endif; ?>
 
