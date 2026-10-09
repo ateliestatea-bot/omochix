@@ -30,7 +30,10 @@ body.omx-shell .search-post-card__meta span,
 body.omx-shell .search-post-card__media > div,
 body.omx-shell .search-tool-card__logo,
 body.omx-shell .static-page__editor-content a:hover,
-body.omx-shell .site-footer__group a:hover { color: var(--shell-accent); }
+body.omx-shell .site-footer__group a:hover,
+body.omx-shell .news-index__eyebrow,
+body.omx-shell .news-list-card__meta > span:first-child,
+body.omx-shell .news-card__category { color: var(--shell-accent); }
 /* Admin bar: fixed (32px) from 783px, 46px between 601-782px, scrolls away at 600px and below. */
 @media (min-width: 783px) { body.omx-shell.admin-bar { --shell-adminbar: 32px; } }
 @media (min-width: 601px) and (max-width: 782px) { body.omx-shell.admin-bar { --shell-adminbar: 46px; } }
