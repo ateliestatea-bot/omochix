@@ -39,6 +39,11 @@ body.omx-shell .tool-archive__eyebrow,
 body.omx-shell .prompt-archive__eyebrow,
 body.omx-shell .tool-list-card__more,
 body.omx-shell .prompt-card__more,
+body.omx-shell .learn-hub__eyebrow,
+body.omx-shell .learn-path__number,
+body.omx-shell .learn-article__category,
+body.omx-shell .learn-article__badge:not(.learn-article__badge--intermediate):not(.learn-article__badge--advanced),
+body.omx-shell.error404 .not-found-hero__layout h1 > span,
 body.omx-shell .article-header__category,
 body.omx-shell .related-card__meta span,
 body.omx-shell .tool-detail-section-header > p,
@@ -51,6 +56,8 @@ body.omx-shell .prompt-archive__cross-link span,
 body.omx-shell .prompt-card__badge:not(.prompt-card__badge--intermediate):not(.prompt-card__badge--advanced) { color: var(--shell-accent); }
 :root[data-theme="dark"] body.omx-shell .prompt-card__badge--intermediate { color: #f5a455; }
 :root[data-theme="dark"] body.omx-shell .prompt-card__badge--advanced { color: #f78c8c; }
+:root[data-theme="dark"] body.omx-shell .learn-article__badge--intermediate { color: #f5a455; }
+:root[data-theme="dark"] body.omx-shell .learn-article__badge--advanced { color: #f78c8c; }
 /* Admin bar: fixed (32px) from 783px, 46px between 601-782px, scrolls away at 600px and below. */
 @media (min-width: 783px) { body.omx-shell.admin-bar { --shell-adminbar: 32px; } }
 @media (min-width: 601px) and (max-width: 782px) { body.omx-shell.admin-bar { --shell-adminbar: 46px; } }
