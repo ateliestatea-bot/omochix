@@ -14,6 +14,7 @@ require_once get_theme_file_path('/inc/contact-form.php');
 require_once get_theme_file_path('/inc/learn.php');
 require_once get_theme_file_path('/inc/ai-tool-detail.php');
 require_once get_theme_file_path('/inc/editorial-home.php');
+require_once get_theme_file_path('/inc/shell.php');
 
 function omochix_setup() {
     add_theme_support('title-tag');
