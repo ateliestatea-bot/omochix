@@ -3,6 +3,7 @@ body.omx-shell {
     --shell-sidebar: 194px;
     --shell-adminbar: 0px;
     --shell-bar: 64px;
+    --shell-sticky-top: calc(var(--shell-adminbar) + var(--shell-bar)); /* where sticky page elements start below the top bar */
     --color-bg: #fff;
     --color-bg-rgb: 255, 255, 255;
     --color-surface: #f6f5f8;
@@ -38,6 +39,13 @@ body.omx-shell .tool-archive__eyebrow,
 body.omx-shell .prompt-archive__eyebrow,
 body.omx-shell .tool-list-card__more,
 body.omx-shell .prompt-card__more,
+body.omx-shell .article-header__category,
+body.omx-shell .related-card__meta span,
+body.omx-shell .tool-detail-section-header > p,
+body.omx-shell .tool-editor-rating p:not([class]),
+body.omx-shell .tool-editor-rating__score strong,
+body.omx-shell .tool-detail__placeholder span,
+body.omx-shell :is(.tool-detail-cta, .article-cta, .prompt-detail-cta) p:not([class]),
 body.omx-shell .prompt-archive__cross-link,
 body.omx-shell .prompt-archive__cross-link span,
 body.omx-shell .prompt-card__badge:not(.prompt-card__badge--intermediate):not(.prompt-card__badge--advanced) { color: var(--shell-accent); }
@@ -73,7 +81,7 @@ body.omx-shell .site-header__actions { display: flex; }
 
 /* Sidebar (1081px and above). */
 @media (min-width: 1081px) {
-    body.omx-shell { padding-left: var(--shell-sidebar); }
+    body.omx-shell { padding-left: var(--shell-sidebar); --shell-sticky-top: var(--shell-adminbar); /* sidebar mode: no top bar to clear */ }
     body.omx-shell .site-header,
     body.omx-shell .site-header.is-scrolled {
         position: fixed;
@@ -110,3 +118,29 @@ body.omx-shell .site-header__actions { display: flex; }
 @media (min-width: 1260px) and (max-width: 1319px) {
     body.omx-shell .prompt-results__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/*
+ * Detail pages (prompt / AI tool / article). Sticky offsets are set here per page instead of changing --header-height.
+ * Inner two-column layouts (body + 280px aside) assume the full viewport; with the sidebar they only fit from about
+ * 1240px, so between 1081 and 1239px they stack and the aside moves below the body.
+ */
+body.omx-shell .article-sidebar { top: calc(var(--shell-sticky-top) + 32px); }
+/* The tool page's sticky tab bar is ~59px tall; keep the sticky aside clear of it. */
+body.omx-shell .tool-detail__sidebar { top: calc(var(--shell-sticky-top) + 84px); }
+body.omx-shell .tool-detail__tabs { top: var(--shell-sticky-top); }
+body.omx-shell .article-content :is(h2, h3, h4) { scroll-margin-top: calc(var(--shell-sticky-top) + 32px); }
+body.omx-shell :is(#tool-details, #tool-rating, #tool-view, #tool-updates, #tool-changelog, #tool-hub, #related-tools-title) { scroll-margin-top: calc(var(--shell-sticky-top) + 70px); }
+@media (min-width: 1081px) and (max-width: 1239px) {
+    body.omx-shell .prompt-detail__layout,
+    body.omx-shell .tool-detail__layout,
+    body.omx-shell .article-layout { grid-template-columns: minmax(0, 1fr); }
+    body.omx-shell .tool-detail__sidebar,
+    body.omx-shell .article-sidebar { position: static; }
+}
+/* Long unbreakable content (URLs, code) must not widen the single-column grid track and cause sideways scrolling. */
+body.omx-shell :is(.prompt-detail__layout, .tool-detail__layout, .article-layout) > * { min-width: 0; }
+@media (max-width: 1023px) {
+    body.omx-shell :is(.prompt-detail__layout, .tool-detail__layout, .article-layout) { grid-template-columns: minmax(0, 1fr); }
+}
+body.omx-shell .prompt-detail__main { grid-template-columns: minmax(0, 1fr); }
+body.omx-shell .prompt-detail__panel { overflow-wrap: anywhere; }

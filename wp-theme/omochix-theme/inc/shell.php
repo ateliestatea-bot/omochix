@@ -5,7 +5,8 @@ if (!defined('ABSPATH')) { exit; }
 /** Pages that currently use the shell. Extend this list as more templates are migrated. */
 function omochix_shell_enabled() {
     return !is_front_page() && (is_search() || is_home() || is_category() || is_tag() || is_page(['about', 'contact'])
-        || is_post_type_archive(['ai_tool', 'prompt']) || is_tax(['ai_tool_category', 'prompt_category', 'prompt_model']));
+        || is_post_type_archive(['ai_tool', 'prompt']) || is_tax(['ai_tool_category', 'prompt_category', 'prompt_model'])
+        || is_singular(['prompt', 'ai_tool', 'post']));
 }
 
 add_filter('body_class', static function ($classes) {
