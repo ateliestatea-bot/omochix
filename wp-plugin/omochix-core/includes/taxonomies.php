@@ -197,3 +197,54 @@ function omochix_core_insert_initial_terms() {
 		}
 	}
 }
+
+/**
+ * Return the ai_tool_platform term slugs that describe where a tool runs.
+ *
+ * Other platform terms (API, browser extensions, chat apps) are kept for
+ * backward compatibility but are not shown as environments, used as filter
+ * options, or emitted as an operating system.
+ *
+ * @return string[]
+ */
+function omochix_core_get_environment_platform_slugs() {
+	return array( 'web', 'ios', 'android', 'macos', 'windows', 'linux' );
+}
+
+/**
+ * Return the platform term slugs that are operating systems.
+ *
+ * "Web" is an environment but not an operating system, so it is excluded.
+ *
+ * @return string[]
+ */
+function omochix_core_get_operating_system_platform_slugs() {
+	return array( 'ios', 'android', 'macos', 'windows', 'linux' );
+}
+
+/**
+ * Keep only platform terms whose slug is in the given allowlist.
+ *
+ * Terms are matched by their stable slug, never by display name, and the
+ * input order is preserved.
+ *
+ * @param WP_Term[]|mixed $terms         Terms from get_the_terms() or get_terms().
+ * @param string[]|null   $allowed_slugs Allowed slugs. Defaults to environment slugs.
+ * @return WP_Term[]
+ */
+function omochix_core_filter_platform_terms( $terms, $allowed_slugs = null ) {
+	if ( ! is_array( $terms ) ) {
+		return array();
+	}
+
+	$allowed_slugs = null === $allowed_slugs ? omochix_core_get_environment_platform_slugs() : $allowed_slugs;
+
+	return array_values(
+		array_filter(
+			$terms,
+			static function ( $term ) use ( $allowed_slugs ) {
+				return $term instanceof WP_Term && in_array( $term->slug, $allowed_slugs, true );
+			}
+		)
+	);
+}

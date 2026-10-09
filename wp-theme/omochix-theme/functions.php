@@ -157,6 +157,10 @@ add_action('pre_get_posts', 'omochix_prepare_ai_tool_category_archive');
 /**
  * Extend front-end search with the two MVP tool meta fields and tool terms.
  *
+ * AI tools also match their integrations meta (a serialized array of
+ * connected services such as Slack or WhatsApp). Empty arrays, and terms that
+ * are not words, are skipped so they cannot match serialization syntax.
+ *
  * EXISTS subqueries avoid duplicate rows and apply only to the main public
  * search query. Standard title, excerpt and content matching is retained.
  *
@@ -185,14 +189,20 @@ function omochix_extend_site_search_sql($search, $query) {
     $groups = [];
     foreach ($terms as $term) {
         $like = '%' . $wpdb->esc_like($term) . '%';
+        // integrations is stored as a serialized array (a:1:{i:0;s:5:"Slack";}),
+        // so single characters, digits and terms containing : ; { } " would
+        // match its syntax instead of a service name. Only search it for words.
+        $search_integrations = mb_strlen($term) >= 2 && preg_match('/\p{L}/u', $term) && !preg_match('/[:;{}"]/', $term) ? 1 : 0;
         // Prompt rows additionally match prompt body/usage and prompt terms;
         // the clause is scoped to post_type = 'prompt', so post and ai_tool
         // matching is unchanged.
         $groups[] = '(' . $wpdb->prepare(
-            "({$wpdb->posts}.post_title LIKE %s OR {$wpdb->posts}.post_excerpt LIKE %s OR {$wpdb->posts}.post_content LIKE %s OR ({$wpdb->posts}.post_type = 'ai_tool' AND (EXISTS (SELECT 1 FROM {$wpdb->postmeta} omx_search_pm WHERE omx_search_pm.post_id = {$wpdb->posts}.ID AND omx_search_pm.meta_key IN ('company_name', 'short_description') AND omx_search_pm.meta_value LIKE %s) OR EXISTS (SELECT 1 FROM {$wpdb->term_relationships} omx_search_tr INNER JOIN {$wpdb->term_taxonomy} omx_search_tt ON omx_search_tt.term_taxonomy_id = omx_search_tr.term_taxonomy_id INNER JOIN {$wpdb->terms} omx_search_t ON omx_search_t.term_id = omx_search_tt.term_id WHERE omx_search_tr.object_id = {$wpdb->posts}.ID AND omx_search_tt.taxonomy IN ('ai_tool_category', 'ai_tool_feature', 'ai_tool_tag', 'ai_tool_platform') AND omx_search_t.name LIKE %s))))",
+            "({$wpdb->posts}.post_title LIKE %s OR {$wpdb->posts}.post_excerpt LIKE %s OR {$wpdb->posts}.post_content LIKE %s OR ({$wpdb->posts}.post_type = 'ai_tool' AND (EXISTS (SELECT 1 FROM {$wpdb->postmeta} omx_search_pm WHERE omx_search_pm.post_id = {$wpdb->posts}.ID AND omx_search_pm.meta_key IN ('company_name', 'short_description') AND omx_search_pm.meta_value LIKE %s) OR EXISTS (SELECT 1 FROM {$wpdb->postmeta} omx_search_im WHERE omx_search_im.post_id = {$wpdb->posts}.ID AND omx_search_im.meta_key = 'integrations' AND %d = 1 AND omx_search_im.meta_value NOT IN ('', 'a:0:{}') AND omx_search_im.meta_value LIKE %s) OR EXISTS (SELECT 1 FROM {$wpdb->term_relationships} omx_search_tr INNER JOIN {$wpdb->term_taxonomy} omx_search_tt ON omx_search_tt.term_taxonomy_id = omx_search_tr.term_taxonomy_id INNER JOIN {$wpdb->terms} omx_search_t ON omx_search_t.term_id = omx_search_tt.term_id WHERE omx_search_tr.object_id = {$wpdb->posts}.ID AND omx_search_tt.taxonomy IN ('ai_tool_category', 'ai_tool_feature', 'ai_tool_tag', 'ai_tool_platform') AND omx_search_t.name LIKE %s))))",
             $like,
             $like,
             $like,
+            $like,
+            $search_integrations,
             $like,
             $like
         ) . ' OR ' . omochix_get_prompt_search_sql($like) . ')';

@@ -58,6 +58,35 @@ function omochix_core_get_schema_term_names( $post_id, $taxonomy ) {
 }
 
 /**
+ * Return the operating system names for a tool's SoftwareApplication schema.
+ *
+ * @param int $post_id AI tool ID.
+ * @return string[]
+ */
+function omochix_core_get_schema_operating_systems( $post_id ) {
+	$terms = omochix_core_filter_platform_terms(
+		get_the_terms( $post_id, 'ai_tool_platform' ),
+		omochix_core_get_operating_system_platform_slugs()
+	);
+
+	usort(
+		$terms,
+		static function ( $left, $right ) {
+			return (int) $left->term_id <=> (int) $right->term_id;
+		}
+	);
+
+	$names = array_map(
+		static function ( $term ) {
+			return sanitize_text_field( wp_strip_all_tags( $term->name ) );
+		},
+		$terms
+	);
+
+	return array_values( array_filter( array_unique( $names ) ) );
+}
+
+/**
  * Build a SoftwareApplication node from verified Core data only.
  *
  * @return array<string, mixed>
@@ -104,7 +133,9 @@ function omochix_core_get_software_application_schema() {
 		$schema['applicationCategory'] = reset( $categories );
 	}
 
-	$platforms = omochix_core_get_schema_term_names( $post->ID, 'ai_tool_platform' );
+	// Only real operating systems (matched by slug) belong in operatingSystem;
+	// Web, API and other platform terms are omitted.
+	$platforms = omochix_core_get_schema_operating_systems( $post->ID );
 	if ( $platforms ) {
 		$schema['operatingSystem'] = $platforms;
 	}
