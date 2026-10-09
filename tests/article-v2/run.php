@@ -193,6 +193,49 @@ foreach (['unclosed <pre> x20000' => '<pre>x', 'unterminated tag x20000' => '<p 
 }
 $long = $wr . '<p class="' . str_repeat('a ', 250000) . '">x</p></div>';
 check('perf: a 500 KB attribute value stays under 250 ms', max($time(fn() => omochix_article_v2_detect($long)), $time(fn() => omochix_article_v2_prepare($long))) < 0.25);
+// ------------------------------------------------ hardening (independent review of PR #16)
+$wrap = '<div class="omx2-article">';
+foreach (['tiny tags <b>' => '<b>', 'tiny tags <i/>' => '<i/>', 'comments <!---->' => '<!---->', 'closers </b>' => '</b>'] as $label => $unit) {
+    $flood = $wrap . str_repeat($unit, (int) floor((OMOCHIX_ARTICLE_V2_MAX_BYTES - 40) / strlen($unit))) . '</div>';
+    $res = [];
+    foreach (['detect', 'prepare', 'lead'] as $fn) {
+        memory_reset_peak_usage(); $base = memory_get_usage();
+        $t0 = microtime(true); $r = ('omochix_article_v2_' . $fn)($flood); $dt = microtime(true) - $t0;
+        $res[$fn] = [$r, memory_get_peak_usage() - $base, $dt];
+    }
+    $peakMb = max(array_map(static fn($x) => $x[1], $res)) / 1048576;
+    echo sprintf("INFO %s %d KB: peak +%.1f MB, worst %.1f ms\n", $label, strlen($flood) / 1024, $peakMb, max(array_map(static fn($x) => $x[2], $res)) * 1000);
+    check("memory: $label flood of ~1 MB stays under +16 MB (was ~+76 MB)", $peakMb < 16);
+    check("memory: $label flood is refused safely (detect false, prepare original, lead empty)", false === $res['detect'][0] && $flood === $res['prepare'][0] && '' === $res['lead'][0]);
+}
+$many = $wrap . str_repeat('<p>x</p>', 9000) . '</div>'; // 18,000 tokens: below the limit
+check('token limit: 18,000 tokens (15x a long real article) are still processed', omochix_article_v2_detect($many) && $many !== omochix_article_v2_prepare($wrap . '<h1>T</h1>' . str_repeat('<p>x</p>', 9000) . '</div>'));
+check('token limit: just above the limit is refused', !omochix_article_v2_detect($wrap . str_repeat('<p>x</p>', OMOCHIX_ARTICLE_V2_MAX_TOKENS / 2 + 5) . '</div>'));
+
+$bad = '<div class="omx2-article"><p><code>oops</p><h1>T</h1><h2>後続</h2></div>';
+check('unclosed <code>: not v2, prepare returns the text untouched, nothing is lost', !omochix_article_v2_detect($bad) && $bad === omochix_article_v2_prepare($bad));
+check('unclosed <code> before the wrapper: not v2', !omochix_article_v2_detect('<p><code>x</p>' . $wrap . '<h1>T</h1></div>'));
+check('unclosed <code> via the_content path: text is unchanged', $bad === omochix_article_v2_prepare(omochix_article_v2_prepare($bad)));
+check('closed <code> still works: headings after it are corrected', 1 === preg_match('/<h2 id="section-1">T<\/h2>/', omochix_article_v2_prepare($wrap . '<p><code>ok</code></p><h1>T</h1></div>')));
+check('extra </code> without an opening one is harmless', omochix_article_v2_detect($wrap . '</code><h1>T</h1></div>'));
+foreach (['<pre>' => '<pre>x', '<script>' => '<script>x', '<style>' => '<style>x', '<textarea>' => '<textarea>x'] as $label => $unit) {
+    $h = $wrap . '<h1>T</h1>' . $unit . '</div>';
+    check("unterminated $label: refused safely (not v2, prepare original, lead empty)", !omochix_article_v2_detect($h) && $h === omochix_article_v2_prepare($h) && '' === omochix_article_v2_lead($h));
+}
+check('terminated <pre> keeps working', omochix_article_v2_detect($wrap . '<pre>x</pre><h1>T</h1></div>'));
+
+check('stray slash: <div / class="omx2-article"> is detected like a browser reads it', omochix_article_v2_detect('<div / class="omx2-article"><h1>T</h1></div>'));
+check('stray slash: several slashes and spaces between attributes', omochix_article_v2_detect('<div id="a" // /  class="x omx2-article" / data-brand="google"></div>'));
+check('stray slash: id after a slash is read (h2 keeps its id)', ($wrap . '<h2 / id="ok">A</h2></div>') === omochix_article_v2_prepare($wrap . '<h2 / id="ok">A</h2></div>'));
+check('self-closing and trailing slash tags unchanged: <br/>, <img src="a" />, <hr />', omochix_article_v2_detect($wrap . '<br/><img src="a" /><hr /></div>') && ($wrap . '<br/><img src="a" /><hr /></div>') === omochix_article_v2_prepare($wrap . '<br/><img src="a" /><hr /></div>'));
+check('unquoted value ending in a slash is not split: <a href=x/y>', 'x/y' === omochix_article_v2_attrs('<a href=x/y>')[0][1]);
+
+$stray = $wrap . '<p>a</p></h1><h2>B</h2></div>';
+check('stray </h1> without an opening <h1> is not rewritten', false !== strpos(omochix_article_v2_prepare($stray), '</h1>') && 1 === preg_match('/<h2 id="section-1">B<\/h2>/', omochix_article_v2_prepare($stray)));
+check('matching <h1>…</h1> is still turned into h2', 1 === preg_match('/<h2 id="section-1">T<\/h2>/', omochix_article_v2_prepare($wrap . '<h1>T</h1></div>')));
+check('stray </h1> before and a real h1 after: only the real pair is changed', 1 === preg_match('/<\/h1><h2 id="section-1">T<\/h2>/', omochix_article_v2_prepare($wrap . '</h1><h1>T</h1></div>')));
+check('prepare stays idempotent with a stray </h1>', omochix_article_v2_prepare($stray) === omochix_article_v2_prepare(omochix_article_v2_prepare($stray)));
+
 check('no PHP warnings, notices or deprecations in any test above', 0 === count($PHPMSGS));
 
 // ------------------------------------------------ contract: fixtures + CSS

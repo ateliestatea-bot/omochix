@@ -23,6 +23,13 @@ if (!defined('ABSPATH')) { exit; }
 /** Bodies larger than this are treated as legacy (typical articles are 30-200 KB; see tests for measurements). */
 const OMOCHIX_ARTICLE_V2_MAX_BYTES = 1048576;
 
+/**
+ * Upper bound for the number of tokens (tags and comments) the scanner will build. Every token is an array of roughly
+ * 230 bytes, so without a bound 1 MB of tiny tags costs ~76 MB. The longest of the 100 real articles has 1,169 tokens
+ * (52 KB); the limit leaves a ~17x margin and keeps the worst case near 5 MB.
+ */
+const OMOCHIX_ARTICLE_V2_MAX_TOKENS = 20000;
+
 /** Values accepted by data-brand on the .omx2-article wrapper (CSS falls back to "generic" for anything else). */
 function omochix_article_v2_brands() {
     return ['openai', 'anthropic', 'google', 'meta', 'nvidia', 'microsoft', 'mistral', 'xai', 'generic'];
@@ -40,6 +47,8 @@ function omochix_article_v2_match($pattern, $subject, &$m, $offset) {
  * Token: [type, start, end, name]; type is c (comment), o (open tag), x (close tag) or r (raw/inert element: its whole
  * span, e.g. <pre>…</pre>, <script>…</script>). Open tokens also carry [4] = self-closing flag.
  * Text between tokens is implicit. Unterminated constructs are consumed once and never rescanned.
+ * Throws (callers treat that as "do not touch this text") when the token limit is exceeded or when a raw element such
+ * as <pre> or <script> is never closed: browsers and this scanner would disagree about everything after it.
  */
 function omochix_article_v2_scan($html) {
     $len = strlen($html);
@@ -49,6 +58,7 @@ function omochix_article_v2_scan($html) {
     $open = '/<([a-zA-Z][a-zA-Z0-9:-]*+)((?:\s++|[^\s"\'<>\/=]++(?:\s*+=\s*+(?:"[^"]*+"|\'[^\']*+\'|[^\s"\'<>=`]++))?|\/(?!>))*+)(\/?)>/A';
     $close = '/<\/([a-zA-Z][a-zA-Z0-9:-]*+)[^>]*+>/A';
     while ($pos < $len) {
+        if (count($tokens) >= OMOCHIX_ARTICLE_V2_MAX_TOKENS) { throw new RuntimeException('too many tokens'); }
         $lt = strpos($html, '<', $pos);
         if (false === $lt) { break; }
         if ('<!--' === substr($html, $lt, 4)) {
@@ -72,12 +82,13 @@ function omochix_article_v2_scan($html) {
         $self = '/' === $m[3][0];
         if (isset($raw[$name]) && !$self) {
             $from = $end;
-            $stop = $len;
+            $stop = null;
             while (false !== ($c = stripos($html, '</' . $name, $from))) {
                 $after = $html[$c + 2 + strlen($name)] ?? '>';
-                if ('>' === $after || '/' === $after || ctype_space($after)) { $gt = strpos($html, '>', $c); $stop = false === $gt ? $len : $gt + 1; break; }
+                if ('>' === $after || '/' === $after || ctype_space($after)) { $gt = strpos($html, '>', $c); $stop = false === $gt ? null : $gt + 1; break; }
                 $from = $c + 2;
             }
+            if (null === $stop) { throw new RuntimeException('unterminated <' . $name . '>'); }
             $tokens[] = ['r', $lt, $stop, $name];
             $pos = $stop;
             continue;
@@ -94,7 +105,7 @@ function omochix_article_v2_attrs($tag) {
     $pos = 1;
     $len = strlen($tag);
     while ($pos < $len && !ctype_space($tag[$pos]) && '/' !== $tag[$pos] && '>' !== $tag[$pos]) { $pos++; } // skip "<name"
-    $re = '/\s*+([^\s"\'<>\/=]++)(?:\s*+=\s*+(?:"([^"]*+)"|\'([^\']*+)\'|([^\s"\'<>=`]++)))?/A';
+    $re = '/(?:\s++|\/)*+([^\s"\'<>\/=]++)(?:\s*+=\s*+(?:"([^"]*+)"|\'([^\']*+)\'|([^\s"\'<>=`]++)))?/A';
     while ($pos < $len && omochix_article_v2_match($re, $tag, $m, $pos)) {
         $value = null;
         foreach ([2, 3, 4] as $g) { if (isset($m[$g]) && $m[$g][1] >= 0) { $value = $m[$g][0]; break; } }
@@ -116,18 +127,18 @@ function omochix_article_v2_classes($tag) {
 function omochix_article_v2_detect($html) {
     if (!is_string($html) || '' === $html || strlen($html) > OMOCHIX_ARTICLE_V2_MAX_BYTES || false === stripos($html, 'omx2-article')) { return false; }
     try {
-        $code = 0; $svg = 0;
+        $code = 0; $svg = 0; $found = false;
         foreach (omochix_article_v2_scan($html) as $t) {
             if ('c' === $t[0] || 'r' === $t[0]) { continue; }
             if ('code' === $t[3]) { $code = max(0, $code + ('o' === $t[0] ? ($t[4] ? 0 : 1) : -1)); continue; }
             if ('svg' === $t[3]) { $svg = max(0, $svg + ('o' === $t[0] ? ($t[4] ? 0 : 1) : -1)); continue; }
-            if ('o' !== $t[0] || $code > 0 || $svg > 0 || !in_array($t[3], ['div', 'section', 'article'], true)) { continue; }
-            if (in_array('omx2-article', omochix_article_v2_classes(substr($html, $t[1], $t[2] - $t[1])), true)) { return true; }
+            if ($found || 'o' !== $t[0] || $code > 0 || $svg > 0 || !in_array($t[3], ['div', 'section', 'article'], true)) { continue; }
+            if (in_array('omx2-article', omochix_article_v2_classes(substr($html, $t[1], $t[2] - $t[1])), true)) { $found = true; }
         }
+        return $found && 0 === $code; // an unclosed <code> hides the rest of the text from the correction: not v2
     } catch (Throwable $e) {
         return false; // fail safe: treat as legacy
     }
-    return false;
 }
 
 /** Whether a post uses v2 (posts only, cached for the request). */
@@ -162,10 +173,11 @@ function omochix_article_v2_prepare($html) {
             if ('o' !== $t[0] || $code > 0 || 'h1' === $t[3] || 'h2' === $t[3]) { continue; }
             foreach (omochix_article_v2_attrs(substr($html, $t[1], $t[2] - $t[1])) as $a) { if ('id' === $a[0] && null !== $a[1]) { $used[$a[1]] = true; } }
         }
+        if ($code > 0) { return $html; } // unclosed <code>: browsers read the rest differently from this scanner, so touch nothing
         $out = '';
         $cursor = 0;
         $next = 1;
-        $code = 0; $svg = 0;
+        $code = 0; $svg = 0; $h1 = 0;
         foreach ($tokens as $t) { // pass 2: edits, in document order
             [$type, $start, $end, $name] = $t;
             if ('code' === $name) { $code = max(0, $code + ('o' === $type ? ($t[4] ? 0 : 1) : -1)); continue; }
@@ -175,9 +187,12 @@ function omochix_article_v2_prepare($html) {
                 $out .= substr($html, $cursor, $start - $cursor);
                 $cursor = $end;
             } elseif ('x' === $type && 'h1' === $name) {
+                if ($h1 < 1) { continue; } // a closing tag without an opening <h1> is not ours to rewrite
+                $h1--;
                 $out .= substr($html, $cursor, $start - $cursor) . '</h2' . substr($html, $start + 4, $end - $start - 4);
                 $cursor = $end;
             } elseif ('o' === $type && ('h1' === $name || 'h2' === $name)) {
+                if ('h1' === $name) { $h1++; }
                 $tag = substr($html, $start, $end - $start);
                 $idAttr = null;
                 foreach (omochix_article_v2_attrs($tag) as $a) { if ('id' === $a[0]) { $idAttr = $a; break; } }
