@@ -1,0 +1,186 @@
+/* Shared shell for migrated templates only (body.omx-shell). Loaded after style.css; never touches the front page. */
+body.omx-shell {
+    --shell-sidebar: 194px;
+    --shell-adminbar: 0px;
+    --shell-bar: 64px;
+    --shell-sticky-top: calc(var(--shell-adminbar) + var(--shell-bar)); /* where sticky page elements start below the top bar */
+    --color-bg: #fff;
+    --color-bg-rgb: 255, 255, 255;
+    --color-surface: #f6f5f8;
+    --color-text: #202023;
+    --color-muted: #65656e;
+    --color-line: #e9e9ec;
+    --color-primary: #6735c7;
+    --color-primary-hover: #5527ab;
+    --shell-accent: #6735c7; /* text accent; --color-primary stays a fill colour for white-on-purple buttons */
+    --color-hover: rgba(32, 32, 35, 0.06);
+}
+:root[data-theme="dark"] body.omx-shell {
+    --color-bg: #171719;
+    --color-bg-rgb: 23, 23, 25;
+    --color-surface: #242329;
+    --color-text: #f5f5f7;
+    --color-muted: #b4b4bd;
+    --color-line: #37373d;
+    --color-hover: rgba(255, 255, 255, 0.08);
+    --shell-accent: #bf9afa;
+}
+/* Text-only uses of the accent on the migrated pages (light text on dark needs a lighter purple). */
+body.omx-shell .search-page__eyebrow,
+body.omx-shell .search-post-card__meta span,
+body.omx-shell .search-post-card__media > div,
+body.omx-shell .search-tool-card__logo,
+body.omx-shell .static-page__editor-content a:hover,
+body.omx-shell .site-footer__group a:hover,
+body.omx-shell .news-index__eyebrow,
+body.omx-shell .news-list-card__meta > span:first-child,
+body.omx-shell .news-card__category,
+body.omx-shell .tool-archive__eyebrow,
+body.omx-shell .prompt-archive__eyebrow,
+body.omx-shell .tool-list-card__more,
+body.omx-shell .prompt-card__more,
+body.omx-shell .learn-hub__eyebrow,
+body.omx-shell .learn-path__number,
+body.omx-shell .learn-article__category,
+body.omx-shell .learn-article__badge:not(.learn-article__badge--intermediate):not(.learn-article__badge--advanced),
+body.omx-shell.error404 .not-found-hero__layout h1 > span,
+body.omx-shell .article-header__category,
+body.omx-shell .related-card__meta span,
+body.omx-shell .tool-detail-section-header > p,
+body.omx-shell .tool-editor-rating p:not([class]),
+body.omx-shell .tool-editor-rating__score strong,
+body.omx-shell .tool-detail__placeholder span,
+body.omx-shell :is(.tool-detail-cta, .article-cta, .prompt-detail-cta) p:not([class]),
+body.omx-shell .prompt-archive__cross-link,
+body.omx-shell .prompt-archive__cross-link span,
+body.omx-shell .prompt-card__badge:not(.prompt-card__badge--intermediate):not(.prompt-card__badge--advanced) { color: var(--shell-accent); }
+:root[data-theme="dark"] body.omx-shell .prompt-card__badge--intermediate { color: #f5a455; }
+:root[data-theme="dark"] body.omx-shell .prompt-card__badge--advanced { color: #f78c8c; }
+:root[data-theme="dark"] body.omx-shell .learn-article__badge--intermediate { color: #f5a455; }
+:root[data-theme="dark"] body.omx-shell .learn-article__badge--advanced { color: #f78c8c; }
+/* Admin bar: fixed (32px) from 783px, 46px between 601-782px, scrolls away at 600px and below. */
+@media (min-width: 783px) { body.omx-shell.admin-bar { --shell-adminbar: 32px; } }
+@media (min-width: 601px) and (max-width: 782px) { body.omx-shell.admin-bar { --shell-adminbar: 46px; } }
+
+/* Top bar (1080px and below): same compact header as the front page; existing menu panel and JS are reused. */
+body.omx-shell .site-header,
+body.omx-shell .site-header.is-scrolled {
+    top: var(--shell-adminbar);
+    height: var(--shell-bar);
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-line);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    color: var(--color-text);
+}
+body.omx-shell .site-header__inner { height: var(--shell-bar); min-height: 0; padding-inline: 22px; }
+body.omx-shell .site-logo__image { width: 118px; }
+body.omx-shell .site-header .icon-button { color: var(--color-text); min-width: 44px; min-height: 44px; }
+body.omx-shell .site-header__actions { display: flex; }
+
+@media (max-width: 1080px) {
+    body.omx-shell .site-header__actions { margin-right: 44px; }
+    body.omx-shell .primary-nav { top: calc(var(--shell-adminbar) + 76px); }
+    /* style.css draws the open button as white-on-#151515; keep the X visible against the icon-button colour above. */
+    body.omx-shell.has-open-menu .site-header .site-header__menu-button { color: #fff; }
+}
+
+/* Sidebar (1081px and above). */
+@media (min-width: 1081px) {
+    body.omx-shell { padding-left: var(--shell-sidebar); --shell-sticky-top: var(--shell-adminbar); /* sidebar mode: no top bar to clear */ }
+    body.omx-shell .site-header,
+    body.omx-shell .site-header.is-scrolled {
+        position: fixed;
+        inset: var(--shell-adminbar) auto 0 0;
+        width: var(--shell-sidebar);
+        height: calc(100dvh - var(--shell-adminbar));
+        border: 0;
+        border-right: 1px solid var(--color-line);
+    }
+    body.omx-shell .site-header__inner { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; width: 100%; height: 100%; padding: 32px 20px 22px; gap: 32px; margin: 0; }
+    body.omx-shell .primary-nav { position: static; flex: 1; overflow-y: auto; }
+    body.omx-shell .primary-nav__list { display: flex; flex-direction: column; align-items: stretch; gap: 5px; padding: 0; }
+    body.omx-shell .primary-nav a { display: block; font-size: 14px; padding: 13px 10px; font-weight: 450; border-radius: 6px; color: var(--color-text); letter-spacing: normal; }
+    body.omx-shell .primary-nav__item--unavailable { display: list-item; color: var(--color-muted); font-size: 13px; padding: 13px 10px; }
+    body.omx-shell .primary-nav__item--unavailable small { display: block; font-size: 10px; margin-top: 3px; }
+    body.omx-shell .site-header__actions { justify-content: flex-start; margin: 0; }
+}
+
+/*
+ * Archive grids (AI tools / prompts). style.css switches columns on the viewport width, but from 1081px the
+ * 194px sidebar takes space away, so the same breakpoints would leave cards and filters too narrow.
+ * These overrides only shift those switches by roughly the sidebar width, for the shell pages only.
+ */
+@media (min-width: 1081px) and (max-width: 1279px) {
+    body.omx-shell .tool-filter__form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    body.omx-shell .tool-filter__submit { grid-column: 1 / -1; }
+}
+@media (min-width: 1081px) and (max-width: 1375px) {
+    body.omx-shell .tool-results__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1081px) and (max-width: 1259px) {
+    body.omx-shell .prompt-archive__layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 1260px) and (max-width: 1319px) {
+    body.omx-shell .prompt-results__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/*
+ * Detail pages (prompt / AI tool / article). Sticky offsets are set here per page instead of changing --header-height.
+ * Inner two-column layouts (body + 280px aside) assume the full viewport; with the sidebar they only fit from about
+ * 1240px, so between 1081 and 1239px they stack and the aside moves below the body.
+ */
+body.omx-shell .article-sidebar { top: calc(var(--shell-sticky-top) + 32px); }
+/* The tool page's sticky tab bar is ~59px tall; keep the sticky aside clear of it. */
+body.omx-shell .tool-detail__sidebar { top: calc(var(--shell-sticky-top) + 84px); }
+body.omx-shell .tool-detail__tabs { top: var(--shell-sticky-top); }
+body.omx-shell .article-content :is(h2, h3, h4) { scroll-margin-top: calc(var(--shell-sticky-top) + 32px); }
+body.omx-shell :is(#tool-details, #tool-rating, #tool-view, #tool-updates, #tool-changelog, #tool-hub, #related-tools-title) { scroll-margin-top: calc(var(--shell-sticky-top) + 70px); }
+@media (min-width: 1081px) and (max-width: 1239px) {
+    body.omx-shell .prompt-detail__layout,
+    body.omx-shell .tool-detail__layout,
+    body.omx-shell .article-layout { grid-template-columns: minmax(0, 1fr); }
+    body.omx-shell .tool-detail__sidebar,
+    body.omx-shell .article-sidebar { position: static; }
+}
+/* Long unbreakable content (URLs, code) must not widen the single-column grid track and cause sideways scrolling. */
+body.omx-shell :is(.prompt-detail__layout, .tool-detail__layout, .article-layout) > * { min-width: 0; }
+@media (max-width: 1023px) {
+    body.omx-shell :is(.prompt-detail__layout, .tool-detail__layout, .article-layout) { grid-template-columns: minmax(0, 1fr); }
+}
+body.omx-shell .prompt-detail__main { grid-template-columns: minmax(0, 1fr); }
+body.omx-shell .prompt-detail__panel { overflow-wrap: anywhere; }
+
+/*
+ * Shared footer. editorial-home.css only loads on the front page, so the footer rules are mirrored here for shell pages.
+ * Values match the approved front-page footer; the front page itself is untouched.
+ */
+body.omx-shell .ed-footer { --color-bg: #19181d; --color-text: #f5f5f7; --color-muted: #b9b7c1; background: #19181d; color: #f5f5f7; padding: 38px clamp(22px, 4vw, 56px) 24px; margin-top: 0; }
+body.omx-shell .ed-footer a { text-decoration: none; }
+body.omx-shell .ed-footer a:hover { text-decoration: underline; text-underline-offset: .22em; }
+body.omx-shell .ed-footer :where(a, button):focus-visible { outline: 2px solid #d5baff; outline-offset: 4px; }
+body.omx-shell .ed-footer-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+body.omx-shell .ed-footer-top img { display: block; width: 120px; height: auto; }
+body.omx-shell .ed-footer .social-links { display: flex; gap: 16px; padding: 0; margin: 0; list-style: none; }
+body.omx-shell .ed-footer .social-links a { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: white; }
+body.omx-shell .ed-footer .social-links a:hover { color: #d5baff; text-decoration: none; }
+body.omx-shell .ed-footer .social-links a[aria-label*="YouTube"] svg { width: 26px; }
+body.omx-shell .ed-footer .social-links svg { width: 22px; height: 22px; fill: currentColor; }
+body.omx-shell .ed-footer .social-links span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+body.omx-shell .ed-footer-nav { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 22px; }
+body.omx-shell .ed-footer-nav a { min-height: 44px; display: flex; align-items: center; font-size: 13px; }
+body.omx-shell .ed-footer-future { display: flex; gap: 24px; font-size: 12px; color: #b9b7c1; margin-block: 16px 24px; }
+body.omx-shell .ed-footer-future small { margin-left: 6px; font-size: 10px; }
+body.omx-shell .ed-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-top: 22px; border-top: 1px solid #39363f; color: #b9b7c1; font-size: 11px; }
+body.omx-shell .ed-footer-bottom > div { display: flex; flex-wrap: wrap; gap: 18px; }
+/* Easier tap targets for the legal links (the front page keeps its approved sizing). */
+body.omx-shell .ed-footer-bottom a { display: inline-flex; align-items: center; min-height: 44px; }
+body.omx-shell .ed-footer-top > a { display: inline-flex; align-items: center; min-height: 44px; }
+@media (max-width: 600px) {
+    body.omx-shell .ed-footer { padding-top: 30px; }
+    body.omx-shell .ed-footer-top { flex-direction: column; align-items: flex-start; gap: 18px; }
+    body.omx-shell .ed-footer .social-links { margin-left: -12px; gap: 10px; }
+    body.omx-shell .ed-footer-nav { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; }
+    body.omx-shell .ed-footer-bottom { line-height: 1.8; }
+}
