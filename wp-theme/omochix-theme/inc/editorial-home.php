@@ -31,6 +31,58 @@ function omochix_editorial_posts($args = []) {
     ], $args)))->posts;
 }
 
+/** display_order ascending; missing/non-numeric last; ties: newest date, then highest ID. */
+function omochix_editorial_sort_tools(array $tools) {
+    $keyed = [];
+    foreach ($tools as $tool) {
+        $order = get_post_meta($tool->ID, 'display_order', true);
+        $keyed[] = [is_numeric($order) ? (float) $order : INF, (string) $tool->post_date, (int) $tool->ID, $tool];
+    }
+    usort($keyed, static function ($a, $b) {
+        return [$a[0], $b[1], $b[2]] <=> [$b[0], $a[1], $a[2]];
+    });
+    return array_column($keyed, 3);
+}
+
+/** Featured tools are fetched in full, sorted, then cut, so display_order is never lost to a query LIMIT. */
+function omochix_editorial_tools($limit = 3) {
+    $tools = omochix_editorial_sort_tools(omochix_editorial_posts([
+        'post_type' => 'ai_tool', 'posts_per_page' => -1,
+        'meta_query' => ['relation' => 'AND', omochix_get_active_ai_tool_meta_query(), ['key' => 'is_featured', 'value' => ['1', 'true', 'yes'], 'compare' => 'IN']],
+    ]));
+    $tools = array_slice($tools, 0, $limit);
+    if (count($tools) < $limit) {
+        $fill = omochix_editorial_posts([
+            'post_type' => 'ai_tool', 'posts_per_page' => $limit - count($tools),
+            'post__not_in' => wp_list_pluck($tools, 'ID'), 'meta_query' => omochix_get_active_ai_tool_meta_query(),
+        ]);
+        $tools = array_merge($tools, $fill);
+    }
+    return $tools;
+}
+
+/** True when the body has at least one visible character (not only Unicode spaces, controls or zero-width marks). */
+function omochix_editorial_has_prompt_body($body) {
+    if (!is_string($body)) { return false; }
+    $visible = @preg_match('/[^\p{Z}\p{C}]/u', $body);
+    return $visible === false ? trim($body) !== '' : $visible === 1;
+}
+
+/** Newest public prompt with a usable body; pages through results so blank bodies cannot hide valid ones. */
+function omochix_editorial_prompt() {
+    $batch = 20;
+    for ($paged = 1;; $paged++) {
+        $posts = omochix_editorial_posts([
+            'post_type' => 'prompt', 'posts_per_page' => $batch, 'paged' => $paged,
+            'meta_query' => [['key' => 'prompt_body', 'value' => '', 'compare' => '!=']],
+        ]);
+        foreach ($posts as $post) {
+            if (omochix_editorial_has_prompt_body(get_post_meta($post->ID, 'prompt_body', true))) { return $post; }
+        }
+        if (count($posts) < $batch) { return null; }
+    }
+}
+
 function omochix_editorial_selection() {
     $sticky = array_values(array_filter(array_map('absint', (array) get_option('sticky_posts', []))));
     $feature = $sticky ? omochix_editorial_posts(['post__in' => $sticky, 'posts_per_page' => 1]) : [];
@@ -40,29 +92,9 @@ function omochix_editorial_selection() {
     }
     $exclude = wp_list_pluck($feature, 'ID');
     $latest = $news instanceof WP_Term ? omochix_editorial_posts(['cat' => $news->term_id, 'post__not_in' => $exclude]) : [];
-    $tools = [];
-    if (post_type_exists('ai_tool')) {
-        $tools = omochix_editorial_posts([
-            'post_type' => 'ai_tool',
-            'meta_query' => ['relation' => 'AND', omochix_get_active_ai_tool_meta_query(), ['key' => 'is_featured', 'value' => ['1', 'true', 'yes'], 'compare' => 'IN']],
-        ]);
-        usort($tools, static function ($a, $b) {
-            $a_order = get_post_meta($a->ID, 'display_order', true);
-            $b_order = get_post_meta($b->ID, 'display_order', true);
-            return (is_numeric($a_order) ? (int) $a_order : PHP_INT_MAX) <=> (is_numeric($b_order) ? (int) $b_order : PHP_INT_MAX);
-        });
-        if (count($tools) < 3) {
-            $tools = array_merge($tools, omochix_editorial_posts([
-                'post_type' => 'ai_tool', 'posts_per_page' => 3 - count($tools),
-                'post__not_in' => wp_list_pluck($tools, 'ID'), 'meta_query' => omochix_get_active_ai_tool_meta_query(),
-            ]));
-        }
-    }
-    $prompts = post_type_exists('prompt') ? omochix_editorial_posts([
-        'post_type' => 'prompt', 'posts_per_page' => 1,
-        'meta_query' => [['key' => 'prompt_body', 'value' => '', 'compare' => '!=']],
-    ]) : [];
-    return ['feature' => $feature, 'latest' => $latest, 'tools' => $tools, 'prompt' => $prompts ? $prompts[0] : null];
+    $tools = post_type_exists('ai_tool') ? omochix_editorial_tools(3) : [];
+    $prompt = post_type_exists('prompt') ? omochix_editorial_prompt() : null;
+    return ['feature' => $feature, 'latest' => $latest, 'tools' => $tools, 'prompt' => $prompt];
 }
 
 function omochix_editorial_media($post, $size = 'large', $priority = false, $fallback = 'news') {
