@@ -33,7 +33,16 @@ body.omx-shell .static-page__editor-content a:hover,
 body.omx-shell .site-footer__group a:hover,
 body.omx-shell .news-index__eyebrow,
 body.omx-shell .news-list-card__meta > span:first-child,
-body.omx-shell .news-card__category { color: var(--shell-accent); }
+body.omx-shell .news-card__category,
+body.omx-shell .tool-archive__eyebrow,
+body.omx-shell .prompt-archive__eyebrow,
+body.omx-shell .tool-list-card__more,
+body.omx-shell .prompt-card__more,
+body.omx-shell .prompt-archive__cross-link,
+body.omx-shell .prompt-archive__cross-link span,
+body.omx-shell .prompt-card__badge:not(.prompt-card__badge--intermediate):not(.prompt-card__badge--advanced) { color: var(--shell-accent); }
+:root[data-theme="dark"] body.omx-shell .prompt-card__badge--intermediate { color: #f5a455; }
+:root[data-theme="dark"] body.omx-shell .prompt-card__badge--advanced { color: #f78c8c; }
 /* Admin bar: fixed (32px) from 783px, 46px between 601-782px, scrolls away at 600px and below. */
 @media (min-width: 783px) { body.omx-shell.admin-bar { --shell-adminbar: 32px; } }
 @media (min-width: 601px) and (max-width: 782px) { body.omx-shell.admin-bar { --shell-adminbar: 46px; } }
@@ -81,4 +90,23 @@ body.omx-shell .site-header__actions { display: flex; }
     body.omx-shell .primary-nav__item--unavailable { display: list-item; color: var(--color-muted); font-size: 13px; padding: 13px 10px; }
     body.omx-shell .primary-nav__item--unavailable small { display: block; font-size: 10px; margin-top: 3px; }
     body.omx-shell .site-header__actions { justify-content: flex-start; margin: 0; }
+}
+
+/*
+ * Archive grids (AI tools / prompts). style.css switches columns on the viewport width, but from 1081px the
+ * 194px sidebar takes space away, so the same breakpoints would leave cards and filters too narrow.
+ * These overrides only shift those switches by roughly the sidebar width, for the shell pages only.
+ */
+@media (min-width: 1081px) and (max-width: 1279px) {
+    body.omx-shell .tool-filter__form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    body.omx-shell .tool-filter__submit { grid-column: 1 / -1; }
+}
+@media (min-width: 1081px) and (max-width: 1375px) {
+    body.omx-shell .tool-results__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1081px) and (max-width: 1259px) {
+    body.omx-shell .prompt-archive__layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 1260px) and (max-width: 1319px) {
+    body.omx-shell .prompt-results__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
