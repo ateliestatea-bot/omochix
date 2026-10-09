@@ -9,6 +9,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Pages on the shared shell use the same footer as the front page.
+if (function_exists('omochix_shell_enabled') && omochix_shell_enabled()) {
+    locate_template('footer-editorial.php', true, false);
+    return;
+}
+
 $omochix_footer_posts_page_id  = (int) get_option('page_for_posts');
 $omochix_footer_posts_page     = $omochix_footer_posts_page_id ? get_post($omochix_footer_posts_page_id) : null;
 $omochix_footer_ai_dev_category = get_category_by_slug('ai-development');

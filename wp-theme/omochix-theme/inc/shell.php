@@ -38,3 +38,19 @@ add_action('wp_enqueue_scripts', static function () {
     if (!omochix_shell_enabled()) { return; }
     wp_enqueue_style('omochix-shell', get_theme_file_uri('/assets/css/shell.css'), ['omochix-style'], (string) filemtime(get_theme_file_path('/assets/css/shell.css')));
 });
+
+/** Keep the old footer's "カテゴリー" link (only when that page is published) on the shared footer. */
+add_filter('omochix_editorial_footer_links', static function ($links) {
+    if (!omochix_shell_enabled()) { return $links; }
+    $url = omochix_get_published_page_url('category');
+    if (!$url) { return $links; }
+    $item = ['label' => __('カテゴリー', 'omochix'), 'icon' => '', 'url' => $url];
+    foreach ($links as $i => $link) {
+        if (isset($link['label']) && 'About' === $link['label']) {
+            array_splice($links, $i, 0, [$item]);
+            return $links;
+        }
+    }
+    $links[] = $item;
+    return $links;
+});

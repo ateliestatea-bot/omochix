@@ -5,6 +5,8 @@ $links = omochix_editorial_destinations();
 foreach (['about' => 'About', 'contact' => __('お問い合わせ', 'omochix')] as $slug => $label) {
     $links[] = ['label' => $label, 'url' => omochix_get_published_page_url($slug)];
 }
+/** Lets other templates add links (used by the shared shell for the legacy "カテゴリー" page link). */
+$links = apply_filters('omochix_editorial_footer_links', $links);
 $legal = [__('プライバシーポリシー', 'omochix') => get_privacy_policy_url() ?: omochix_get_published_page_url('privacy-policy'), __('利用規約', 'omochix') => omochix_get_published_page_url('terms'), __('運営者情報', 'omochix') => omochix_get_published_page_url('company')];
 ?>
 <footer class="ed-footer">
