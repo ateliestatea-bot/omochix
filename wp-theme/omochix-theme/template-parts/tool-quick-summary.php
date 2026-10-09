@@ -17,10 +17,7 @@ if (!defined('ABSPATH')) {
     <div><dt><span class="omx-icon omx-icon--globe" aria-hidden="true"></span><?php esc_html_e('日本語対応', 'omochix'); ?></dt><dd><?php echo esc_html($omochix_japanese_label); ?></dd></div>
     <div><dt><span class="omx-icon omx-icon--bolt" aria-hidden="true"></span><?php esc_html_e('API', 'omochix'); ?></dt><dd><?php echo esc_html($omochix_api_label); ?></dd></div>
     <div><dt><span class="omx-icon omx-icon--shield" aria-hidden="true"></span><?php esc_html_e('商用利用', 'omochix'); ?></dt><dd><?php echo esc_html($omochix_commercial_label); ?></dd></div>
-    <div><dt><span class="omx-icon omx-icon--monitor" aria-hidden="true"></span><?php esc_html_e('対応環境', 'omochix'); ?></dt><dd><?php echo esc_html($omochix_platform_label); ?></dd></div>
-    <?php if (!empty($omochix_supported_devices)) : ?>
-        <div><dt><span class="omx-icon omx-icon--monitor" aria-hidden="true"></span><?php esc_html_e('対応デバイス', 'omochix'); ?></dt><dd><?php echo esc_html(implode('、', $omochix_supported_devices)); ?></dd></div>
-    <?php endif; ?>
+    <div><dt><span class="omx-icon omx-icon--monitor" aria-hidden="true"></span><?php esc_html_e('対応環境', 'omochix'); ?></dt><dd><?php echo esc_html($omochix_environment_label); ?></dd></div>
     <?php if (!empty($omochix_supported_models)) : ?>
         <div><dt><span class="omx-icon omx-icon--flask" aria-hidden="true"></span><?php esc_html_e('対応モデル', 'omochix'); ?></dt><dd><?php echo esc_html(implode('、', $omochix_supported_models)); ?></dd></div>
     <?php endif; ?>

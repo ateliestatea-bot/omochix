@@ -87,6 +87,9 @@ if (have_posts()) :
         $omochix_features   = is_array($omochix_features) ? $omochix_features : [];
         $omochix_tags       = is_array($omochix_tags) ? $omochix_tags : [];
         $omochix_platforms  = is_array($omochix_platforms) ? $omochix_platforms : [];
+        // Only environment terms (Web/iOS/Android/macOS/Windows/Linux) are shown;
+        // legacy terms such as API or Chrome拡張 are ignored by the template.
+        $omochix_platforms  = function_exists('omochix_core_filter_platform_terms') ? omochix_core_filter_platform_terms($omochix_platforms) : $omochix_platforms;
 
         $omochix_pricing_labels = [
             'free' => __('無料', 'omochix'), 'freemium' => __('無料プランあり', 'omochix'),
@@ -125,9 +128,15 @@ if (have_posts()) :
         $omochix_free_plan_label = !$omochix_has_free_meta
             ? __('未確認', 'omochix')
             : (in_array($omochix_free_plan, [true, 1, '1', 'true', 'yes', 'on'], true) ? __('あり', 'omochix') : __('なし', 'omochix'));
-        $omochix_platform_label = $omochix_platforms
-            ? implode('、', wp_list_pluck($omochix_platforms, 'name'))
-            : __('未確認', 'omochix');
+        // 対応環境: supported_devices is the researched source; the normalized
+        // platform terms are the fallback when it is empty.
+        if ($omochix_supported_devices) {
+            $omochix_environment_label = implode('、', $omochix_supported_devices);
+        } elseif ($omochix_platforms) {
+            $omochix_environment_label = implode('、', wp_list_pluck($omochix_platforms, 'name'));
+        } else {
+            $omochix_environment_label = __('未確認', 'omochix');
+        }
 
         $omochix_structured_sections = [
             'key_features'          => ['title' => __('主な特徴', 'omochix'), 'class' => 'features'],
@@ -434,7 +443,7 @@ if (have_posts()) :
                             'notes'            => ['title' => __('注意点', 'omochix'), 'text' => $omochix_notes],
                         ];
                         $omochix_has_detail_text = array_filter(wp_list_pluck($omochix_detail_items, 'text'));
-                        $omochix_has_detail_section = $omochix_has_detail_text || $omochix_integrations || $omochix_supported_devices || $omochix_supported_models;
+                        $omochix_has_detail_section = $omochix_has_detail_text || $omochix_integrations || $omochix_supported_models;
                         ?>
                         <?php if ($omochix_has_detail_section) : ?>
                             <section class="tool-detail-info" id="tool-details" aria-labelledby="tool-detail-info-title">
@@ -442,9 +451,6 @@ if (have_posts()) :
                                 <div class="tool-detail-info__grid">
                                     <?php if ($omochix_supported_models) : ?>
                                         <div class="tool-detail-info__block"><h3><?php esc_html_e('対応モデル', 'omochix'); ?></h3><ul><?php foreach ($omochix_supported_models as $omochix_model) : ?><li><?php echo esc_html($omochix_model); ?></li><?php endforeach; ?></ul></div>
-                                    <?php endif; ?>
-                                    <?php if ($omochix_supported_devices) : ?>
-                                        <div class="tool-detail-info__block"><h3><?php esc_html_e('対応デバイス', 'omochix'); ?></h3><ul><?php foreach ($omochix_supported_devices as $omochix_device) : ?><li><?php echo esc_html($omochix_device); ?></li><?php endforeach; ?></ul></div>
                                     <?php endif; ?>
                                     <?php if ($omochix_integrations) : ?>
                                         <div class="tool-detail-info__block"><h3><?php esc_html_e('連携サービス', 'omochix'); ?></h3><ul><?php foreach ($omochix_integrations as $omochix_integration) : ?><li><?php echo esc_html($omochix_integration); ?></li><?php endforeach; ?></ul></div>
