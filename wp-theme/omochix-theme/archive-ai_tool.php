@@ -75,6 +75,19 @@ $omochix_platforms = get_terms([
 ]);
 $omochix_categories = is_array($omochix_categories) ? $omochix_categories : [];
 $omochix_platforms  = is_array($omochix_platforms) ? $omochix_platforms : [];
+// Offer only environment terms as filter options. Any existing ?platform=
+// slug still filters the query below, so old filter URLs keep working.
+if (function_exists('omochix_core_filter_platform_terms')) {
+    $omochix_platforms = omochix_core_filter_platform_terms($omochix_platforms);
+    // Keep the currently requested legacy term selectable so the form state
+    // matches the filtered results.
+    if ($omochix_platform && !in_array($omochix_platform, wp_list_pluck($omochix_platforms, 'slug'), true)) {
+        $omochix_requested_platform = get_term_by('slug', $omochix_platform, 'ai_tool_platform');
+        if ($omochix_requested_platform instanceof WP_Term) {
+            $omochix_platforms[] = $omochix_requested_platform;
+        }
+    }
+}
 
 $omochix_tax_query = [];
 if ($omochix_category && term_exists($omochix_category, 'ai_tool_category')) {
@@ -317,7 +330,7 @@ $omochix_compare_hub_post = $omochix_compare_hub_posts ? $omochix_compare_hub_po
                     </select>
                 </div>
                 <div class="tool-filter__field">
-                    <label for="tool-platform"><?php esc_html_e('対応OS', 'omochix'); ?></label>
+                    <label for="tool-platform"><?php esc_html_e('対応環境', 'omochix'); ?></label>
                     <select id="tool-platform" name="platform">
                         <option value=""><?php esc_html_e('すべて', 'omochix'); ?></option>
                         <?php foreach ($omochix_platforms as $omochix_term) : ?>
