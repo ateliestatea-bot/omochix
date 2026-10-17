@@ -12,6 +12,7 @@ if (!defined('ABSPATH')) {
 require_once get_theme_file_path('/inc/seo.php');
 require_once get_theme_file_path('/inc/contact-form.php');
 require_once get_theme_file_path('/inc/learn.php');
+require_once get_theme_file_path('/inc/learn-gallery.php');
 require_once get_theme_file_path('/inc/ai-tool-detail.php');
 require_once get_theme_file_path('/inc/editorial-home.php');
 require_once get_theme_file_path('/inc/shell.php');

@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omochix.com/schemas/learn-motion-catalog-v1.json",
+  "title": "OmochiX Learn Motion Gallery catalog",
+  "description": "Theme-shipped catalog of motion samples shown under /learn/motion/. The PHP validator in inc/learn-gallery.php mirrors the required/enum rules below; keep both in sync.",
+  "type": "object",
+  "required": ["version", "updated", "stage", "categories", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "updated": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "stage": {
+      "type": "object",
+      "required": ["width", "height"],
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "integer", "minimum": 120, "maximum": 1920 },
+        "height": { "type": "integer", "minimum": 80, "maximum": 1080 }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["slug", "name", "description", "order"],
+        "additionalProperties": false,
+        "properties": {
+          "slug": { "$ref": "#/definitions/slug" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "description": { "type": "string", "maxLength": 200 },
+          "order": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/item" }
+    }
+  },
+  "definitions": {
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 60 },
+    "item": {
+      "type": "object",
+      "required": ["id", "slug", "category", "name", "summary", "description", "level", "tech", "tags", "preview", "prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[0-9]{3}$" },
+        "slug": { "$ref": "#/definitions/slug" },
+        "category": { "$ref": "#/definitions/slug" },
+        "name": {
+          "type": "object",
+          "required": ["ja", "en"],
+          "additionalProperties": false,
+          "properties": {
+            "ja": { "type": "string", "minLength": 1, "maxLength": 40 },
+            "en": { "type": "string", "minLength": 1, "maxLength": 60 }
+          }
+        },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "level": { "type": "string", "enum": ["beginner", "intermediate", "advanced"] },
+        "tech": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "enum": ["css", "js"] } },
+        "tags": { "type": "array", "maxItems": 12, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 30 } },
+        "featured": { "type": "boolean" },
+        "preview": {
+          "type": "object",
+          "required": ["html", "css"],
+          "additionalProperties": false,
+          "properties": {
+            "html": { "type": "string", "minLength": 1, "maxLength": 8000 },
+            "css": { "type": "string", "maxLength": 12000 },
+            "js": { "type": "string", "maxLength": 12000 }
+          }
+        },
+        "prompt": {
+          "type": "object",
+          "required": ["ask", "spec", "use"],
+          "additionalProperties": false,
+          "properties": {
+            "ask": { "type": "string", "minLength": 1, "maxLength": 300 },
+            "spec": { "type": "array", "minItems": 1, "maxItems": 10, "items": { "type": "string", "minLength": 1, "maxLength": 300 } },
+            "use": { "type": "string", "minLength": 1, "maxLength": 300 }
+          }
+        },
+        "related": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "prompts": { "type": "array", "items": { "$ref": "#/definitions/slug" } },
+            "tools": { "type": "array", "items": { "$ref": "#/definitions/slug" } },
+            "learn": { "type": "array", "items": { "type": "string", "pattern": "^learn(?:/[a-z0-9-]+)+$" } }
+          }
+        },
+        "playground": {
+          "description": "Reserved for Phase 2 (editable parameters). Validated for shape only.",
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "params": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["key", "label", "type", "default"],
+                "additionalProperties": false,
+                "properties": {
+                  "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+                  "label": { "type": "string" },
+                  "type": { "type": "string", "enum": ["range", "color", "select", "text"] },
+                  "min": { "type": "number" },
+                  "max": { "type": "number" },
+                  "step": { "type": "number" },
+                  "options": { "type": "array", "items": { "type": "string" } },
+                  "default": {},
+                  "unit": { "type": "string" },
+                  "css_var": { "type": "string", "pattern": "^--[a-z0-9-]+$" }
+                }
+              }
+            }
+          }
+        },
+        "video": {
+          "description": "Reserved for OmochiX Video integration. Validated for shape only.",
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "provider": { "type": "string", "enum": ["youtube"] },
+            "id": { "type": "string" },
+            "start": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    }
+  }
+}
