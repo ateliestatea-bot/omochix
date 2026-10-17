@@ -94,17 +94,41 @@
         previews.forEach(apply);
     }
 
+    /**
+     * Assemble a sample's preview document from the shared template and
+     * runtime (both sent once in the catalog JSON) plus the sample's own
+     * fragment. Mirrors omochix_learn_gallery_preview_document() in PHP.
+     */
+    function buildDoc(data) {
+        if (data.doc) return data.doc;
+        if (!catalog.template || !catalog.runtime) return '';
+        var values = {
+            '{{stage_w}}': String(catalog.stage.width),
+            '{{stage_h}}': String(catalog.stage.height),
+            '{{title}}': data.title || '',
+            '{{runtime_css}}': catalog.runtime.css || '',
+            '{{css}}': data.css || '',
+            '{{html}}': data.html || '',
+            '{{runtime_js}}': catalog.runtime.js || '',
+            '{{js}}': data.js ? '<script>' + data.js + '</script>' : ''
+        };
+        return catalog.template.replace(/\{\{[a-z_]+\}\}/g, function (token) {
+            return Object.prototype.hasOwnProperty.call(values, token) ? values[token] : token;
+        });
+    }
+
     function mount(preview) {
         if (preview.mounted || !preview.frame) return;
         var data = catalog.items[preview.slug];
-        if (!data || !data.doc) return;
+        var doc = data ? buildDoc(data) : '';
+        if (!doc) return;
         var iframe = document.createElement('iframe');
         iframe.className = 'motion-preview__iframe';
         iframe.setAttribute('sandbox', 'allow-scripts');
         iframe.setAttribute('title', data.label || preview.label);
         iframe.setAttribute('loading', 'lazy');
         iframe.tabIndex = -1;
-        iframe.srcdoc = data.doc;
+        iframe.srcdoc = doc;
         preview.frame.appendChild(iframe);
         preview.iframe = iframe;
         preview.mounted = true;

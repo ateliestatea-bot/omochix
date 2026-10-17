@@ -439,6 +439,14 @@ a.motion-chip--tag:hover { color: var(--color-text); }
 .motion-expand__stage { width: min(100%, calc((100dvh - 160px) * var(--stage-w, 16) / var(--stage-h, 9))); margin: 24px auto 0; }
 .motion-expand__caption { margin: 14px 0 0; color: var(--color-muted); font-size: 13px; font-weight: 650; text-align: center; }
 
+/* --- Prompt detail: related motion samples ----------------------------- */
+.prompt-detail-related-motion { padding-block: var(--section-space); border-top: 1px solid var(--color-line); }
+.prompt-detail-related-motion .tool-detail-section-header { margin-bottom: 24px; }
+.prompt-detail-related-motion__more { margin: 24px 0 0; }
+.prompt-detail-related-motion__more a { display: inline-flex; align-items: center; gap: 6px; color: var(--color-primary); font-size: 13px; font-weight: 700; text-decoration: none; }
+.prompt-detail-related-motion__more a:hover { text-decoration: underline; }
+body.omx-shell .prompt-detail-related-motion__more a { color: var(--shell-accent); }
+
 /* --- Learn hub v2 ------------------------------------------------------ */
 .learn-hub-v2 .learn-hub__hero { padding-bottom: clamp(36px, 6vw, 56px); }
 .learn-hub__cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }

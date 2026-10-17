@@ -123,7 +123,7 @@
         ],
         "use": "ヒーローの見出しやセクションタイトルを印象的に見せたいとき。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["video-text-to-video-shot-prompts"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -153,7 +153,7 @@
         ],
         "use": "ヒーローのキャッチコピー、ターミナル風の演出、AIが返事をしている表現。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["video-text-to-video-shot-prompts"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -240,7 +240,7 @@
         ],
         "use": "サービスの価値を複数の言葉で見せるヒーロー見出し。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["video-text-to-video-shot-prompts"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -356,7 +356,7 @@
         ],
         "use": "一覧・カード・プロフィールなど、読み込みに1秒以上かかる画面。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["development-web-performance-investigation"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -444,7 +444,7 @@
         ],
         "use": "長文記事・ドキュメント・チュートリアルの読了感。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["development-web-performance-investigation"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -473,7 +473,7 @@
         ],
         "use": "ヒーロー背景、ブランドサイトの装飾、ストーリーテリング型LP。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -503,7 +503,7 @@
         ],
         "use": "ヒーロー背景、CTAエリア、ブランドカラーを印象づけたいカード。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -532,7 +532,7 @@
         ],
         "use": "セクション背景、ログイン画面、空状態（エンプティステート）の装飾。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -561,7 +561,7 @@
         ],
         "use": "料金プラン、プレミアムバッジ、キャンペーンのカード。"
       },
-      "related": { "prompts": [], "tools": [], "learn": [] },
+      "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": [], "learn": [] },
       "playground": null,
       "video": null
     },
@@ -591,7 +591,7 @@
         ],
         "use": "ヒーロー背景、ローディング画面、祝福（完了）画面の演出。"
       },
-      "related": { "prompts": [], "tools": ["cursor", "claude"], "learn": ["learn/development"] },
+      "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": ["cursor", "claude"], "learn": ["learn/development"] },
       "playground": null,
       "video": null
     }

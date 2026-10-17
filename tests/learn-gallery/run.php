@@ -18,7 +18,12 @@ $GLOBALS['pages'] = []; $GLOBALS['query_vars'] = []; $GLOBALS['ctx'] = ['is_page
 function add_action() {} function add_filter() {}
 function __($t) { return $t; }
 function esc_html($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); }
+function esc_url($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); }
 function get_theme_file_path($f) { global $THEME; return $THEME . $f; }
+function get_theme_file_uri($f) { return 'https://example.test/wp-content/themes/omochix-theme' . $f; }
+function untrailingslashit($s) { return rtrim($s, '/'); }
+function is_singular($t = '') { return $GLOBALS['ctx']['singular'] ?? false; }
+function get_queried_object() { return $GLOBALS['ctx']['queried_post'] ?? null; }
 function wp_json_encode($d, $f = 0) { return json_encode($d, $f); }
 function wp_unslash($v) { return is_string($v) ? stripslashes($v) : $v; }
 function sanitize_title($t) { $t = strtolower(trim((string) $t)); $t = preg_replace('/[^a-z0-9-]+/', '-', $t); return trim($t, '-'); }
@@ -106,6 +111,23 @@ $n = omochix_learn_gallery_get_neighbors(omochix_learn_gallery_get_item('mask-re
 check('neighbors: last in category has no next', 'stagger' === $n['prev']['slug'] && null === $n['next']);
 check('search text: lower-cased and includes id/en/tags', str_contains(omochix_learn_gallery_search_text(omochix_learn_gallery_get_item('pop-in')), '#001 001 pop-in ポップイン pop-in'));
 check('level label: fallback to beginner', '初級' === omochix_learn_gallery_level_label('nope') && '上級' === omochix_learn_gallery_level_label('advanced'));
+check('items for prompt: reverse lookup by related.prompts, id order', ['parallax', 'gradient-shift', 'floating-blobs', 'light-sweep', 'particles'] === array_keys(omochix_learn_gallery_items_for_prompt('video-image-to-video-motion-direction')));
+check('items for prompt: unknown or empty slug is empty', [] === omochix_learn_gallery_items_for_prompt('nope') && [] === omochix_learn_gallery_items_for_prompt(''));
+check('catalog: every related prompt slug is a valid slug', !array_filter(omochix_learn_gallery_get_catalog()['items'], static fn($i) => array_filter($i['related']['prompts'], static fn($s) => !omochix_learn_gallery_is_slug($s))));
+
+// ------------------------------------------------------------- breadcrumbs
+$trail = [['url' => 'https://example.test/', 'text' => 'ホーム'], ['url' => 'https://example.test/learn/', 'text' => 'Learn']];
+$crumbItem = omochix_learn_gallery_get_item('pop-in');
+$crumbs = omochix_learn_gallery_breadcrumb_links($trail, $crumbItem, 'https://example.test/learn/motion/', '動く見本');
+check('breadcrumbs: gallery list appended as a link before the sample', 3 === count($crumbs) && ['url' => 'https://example.test/learn/motion/', 'text' => '動く見本'] === $crumbs[2]);
+check('breadcrumbs: not duplicated when the list is already the last link', 3 === count(omochix_learn_gallery_breadcrumb_links($crumbs, $crumbItem, 'https://example.test/learn/motion', '動く見本')));
+check('breadcrumbs: untouched when the gallery has no url', $trail === omochix_learn_gallery_breadcrumb_links($trail, $crumbItem, '', '動く見本'));
+
+// --------------------------------------------------- prompt page asset gate
+$GLOBALS['ctx']['singular'] = true;
+$GLOBALS['ctx']['queried_post'] = new WP_Post(['ID' => 500, 'post_type' => 'prompt', 'post_name' => 'video-image-to-video-motion-direction']);
+check('prompt gate: no gallery page published -> no assets', !omochix_learn_gallery_is_prompt_with_samples());
+$GLOBALS['ctx']['singular'] = false;
 
 // ---------------------------------------------------------------- filters
 $f = omochix_learn_gallery_sanitize_filters(['cat' => 'ui', 'level' => 'advanced', 'tech' => 'js', 'q' => '  pop  ']);
@@ -132,16 +154,21 @@ check('code: js sample includes shim before sample js', str_contains($jsCode, '<
 
 $doc = omochix_learn_gallery_preview_document($item);
 check('doc: html document with stage size and theme', str_starts_with($doc, '<!doctype html><html lang="ja" data-theme="light" data-stage-w="320" data-stage-h="180">') && str_ends_with($doc, '</body></html>'));
-check('doc: runtime css and js inlined', str_contains($doc, '.omx-stage') && str_contains($doc, 'omx:ready') && str_contains($doc, 'data-paused'));
+check('doc: runtime css and js inlined (sandbox frames cannot fetch theme files everywhere)', str_contains($doc, '.omx-stage') && str_contains($doc, 'omx:ready') && str_contains($doc, 'data-paused'));
 check('doc: sample css/html inlined inside stage', str_contains($doc, '<style>' . $item['preview']['css'] . '</style>') && str_contains($doc, '<div class="omx-stage">' . $item['preview']['html'] . '</div>'));
-check('doc: css-only sample has exactly one script', 1 === substr_count($doc, '<script>'));
-check('doc: js sample has two scripts, sample last', 2 === substr_count(omochix_learn_gallery_preview_document($jsItem), '<script>') && str_contains(omochix_learn_gallery_preview_document($jsItem), $jsItem['preview']['js'] . '</script></body>'));
+check('doc: css-only sample has exactly one script (the runtime)', 1 === substr_count($doc, '<script>'));
+check('doc: js sample has two scripts, runtime first and sample last', 2 === substr_count(omochix_learn_gallery_preview_document($jsItem), '<script>') && str_contains(omochix_learn_gallery_preview_document($jsItem), $jsItem['preview']['js'] . '</script></body>') && strpos(omochix_learn_gallery_preview_document($jsItem), 'omx:ready') < strpos(omochix_learn_gallery_preview_document($jsItem), $jsItem['preview']['js']));
+check('doc: no placeholder left unfilled', !preg_match('/\{\{[a-z_]+\}\}/', $doc) && !preg_match('/\{\{[a-z_]+\}\}/', omochix_learn_gallery_preview_document($jsItem)));
+$template = omochix_learn_gallery_preview_template();
+check('template: carries every placeholder exactly once', !array_filter(['{{stage_w}}', '{{stage_h}}', '{{title}}', '{{runtime_css}}', '{{css}}', '{{html}}', '{{runtime_js}}', '{{js}}'], static fn($p) => 1 !== substr_count($template, $p)));
+check('template: assembling it like the browser does reproduces the PHP document', strtr($template, ['{{stage_w}}' => '320', '{{stage_h}}' => '180', '{{title}}' => esc_html($item['name']['ja']), '{{runtime_css}}' => omochix_learn_gallery_runtime('css'), '{{css}}' => $item['preview']['css'], '{{html}}' => $item['preview']['html'], '{{runtime_js}}' => omochix_learn_gallery_runtime('js'), '{{js}}' => '']) === $doc);
 check('doc: custom stage size', str_contains(omochix_learn_gallery_preview_document($item, ['width' => 640, 'height' => 360]), 'data-stage-w="640" data-stage-h="360"'));
 $evil = $item; $evil['name']['ja'] = '<x>&';
 check('doc: title is escaped', str_contains(omochix_learn_gallery_preview_document($evil), '<title>&lt;x&gt;&amp;</title>'));
 
-$json = omochix_learn_gallery_client_json(['pop-in' => $item]);
-check('client json: decodes and carries doc + label', ($d = json_decode($json, true)) && isset($d['items']['pop-in']['doc']) && 'ポップインのプレビュー' === $d['items']['pop-in']['label'] && 320 === $d['stage']['width']);
+$json = omochix_learn_gallery_client_json(['pop-in' => $item, 'count-up' => $jsItem]);
+check('client json: decodes and carries fragments + label, runtime and template once', ($d = json_decode($json, true)) && isset($d['items']['pop-in']['html'], $d['items']['pop-in']['css'], $d['items']['pop-in']['title']) && !isset($d['items']['pop-in']['doc']) && 'ポップインのプレビュー' === $d['items']['pop-in']['label'] && 320 === $d['stage']['width'] && $d['template'] === omochix_learn_gallery_preview_template() && str_contains($d['runtime']['js'], 'omx:ready') && 1 === substr_count($json, 'omx:ready'));
+check('client json: two items cost far less than two full documents', strlen($json) < strlen(omochix_learn_gallery_preview_document($item)) + strlen(omochix_learn_gallery_preview_document($jsItem)));
 check('client json: no raw angle brackets (safe inside <script>)', !str_contains($json, '<') && !str_contains($json, '>'));
 check('client json: unicode kept readable', str_contains($json, 'ポップイン'));
 check('registry: stores by slug', isset(omochix_learn_gallery_registry($item)['pop-in']) && 1 === count(omochix_learn_gallery_registry()));

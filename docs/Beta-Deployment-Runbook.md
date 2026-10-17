@@ -65,6 +65,16 @@
 2. 未確定ページは公開リンクへ出さない。
 3. 本番会社情報や法務文面を推測して補完しない。
 
+### 8b. Learn v2（動く見本）ページ
+
+テーマ1.18.0以降。詳細は`docs/Learn-v2-Spec.md`。
+
+1. 固定ページ`Learn`（slug `learn`）が公開済みであることを確認する。
+2. その子ページとしてタイトル「動く見本」、slug `motion`（パス `learn/motion`）を作成し、抜粋に一覧のリード文を入れて公開する。本文は空でよい。
+3. 公開後に`/learn/motion/`と`/learn/motion/pop-in/`が200、`/learn/motion/nope/`が404になることを確認する。詳細URLはテーマが初回に自動で書き換えルールを反映するが、404になる場合は12のパーマリンクflushを行う。
+4. `/learn/`のヒーローに「動く見本を見る」が出ること、未公開の間は出ないことを確認する。
+5. 見本とPromptの関連（`assets/data/motion/catalog.json`の`related.prompts`）は公開済みPromptのslugにだけ効く。本番のslugと照合し、一致しないものは外すか差し替える。
+
 ### 9. Home / 投稿ページ設定
 
 1. 表示設定を固定フロントページへ切り替える。
@@ -87,6 +97,7 @@
 
 1. 管理画面のパーマリンク設定を開き、内容を変えずに保存する。
 2. `/ai-tools/`、AI Tool詳細、taxonomy URLを確認する。
+3. `/learn/motion/{slug}/`（例：`/learn/motion/pop-in/`）が200で見本の詳細を返すことを確認する。
 
 ### 13. Header / Footer menu
 

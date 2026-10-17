@@ -468,6 +468,27 @@ function omochix_learn_gallery_get_featured($limit = 3) {
 }
 
 /**
+ * Items that list a Prompt Library entry in related.prompts (reverse lookup
+ * used by single-prompt.php), id order.
+ *
+ * @param string $prompt_slug Prompt post_name.
+ * @return array<string, array<string, mixed>>
+ */
+function omochix_learn_gallery_items_for_prompt($prompt_slug) {
+    $prompt_slug = (string) $prompt_slug;
+    if ('' === $prompt_slug) {
+        return [];
+    }
+    $matches = [];
+    foreach (omochix_learn_gallery_get_catalog()['items'] as $slug => $item) {
+        if (in_array($prompt_slug, $item['related']['prompts'], true)) {
+            $matches[$slug] = $item;
+        }
+    }
+    return $matches;
+}
+
+/**
  * Previous and next items within the same category (id order).
  *
  * @param array<string, mixed> $item Catalog item.
@@ -592,7 +613,15 @@ function omochix_learn_gallery_code_text(array $item, $url = '') {
  * ---------------------------------------------------------------------- */
 
 /**
- * Runtime CSS and JS inlined into every preview document, read once.
+ * Runtime CSS and JS every preview document carries, read once per request.
+ *
+ * Inlined rather than linked: a sandboxed srcdoc frame has an opaque origin,
+ * and fetching theme files from it is refused in some setups (local-network
+ * access checks, strict CSP), while inline script always runs. To avoid
+ * repeating the runtime in each of the 20+ documents the list embeds, the
+ * client JSON carries the runtime once plus the document template, and
+ * learn-gallery.js assembles each document from them (see
+ * omochix_learn_gallery_preview_template()).
  *
  * @param string $kind "css" or "js".
  * @return string
@@ -605,6 +634,28 @@ function omochix_learn_gallery_runtime($kind) {
         $cache[$kind] = is_readable($path) ? (string) file_get_contents($path) : '';
     }
     return $cache[$kind];
+}
+
+/**
+ * The single definition of a preview document's structure, with
+ * placeholders. PHP fills it for the no-JS iframe on the detail page and
+ * learn-gallery.js fills the same template in the browser, so the two can
+ * never drift apart.
+ *
+ * Placeholders: {{stage_w}} {{stage_h}} {{title}} (already HTML-escaped)
+ * {{runtime_css}} {{css}} {{html}} {{runtime_js}} {{js}} (a complete
+ * "<script>…</script>" element or an empty string).
+ *
+ * @return string
+ */
+function omochix_learn_gallery_preview_template() {
+    return '<!doctype html><html lang="ja" data-theme="light" data-stage-w="{{stage_w}}" data-stage-h="{{stage_h}}">'
+        . '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>{{title}}</title>'
+        . '<style>{{runtime_css}}</style>'
+        . '<style>{{css}}</style>'
+        . '</head><body><div class="omx-stage">{{html}}</div>'
+        . '<script>{{runtime_js}}</script>{{js}}</body></html>';
 }
 
 /**
@@ -621,18 +672,18 @@ function omochix_learn_gallery_runtime($kind) {
  * @return string
  */
 function omochix_learn_gallery_preview_document(array $item, ?array $stage = null) {
-    $stage = $stage ?: omochix_learn_gallery_get_stage();
-    $html  = '<!doctype html><html lang="ja" data-theme="light" data-stage-w="' . (int) $stage['width'] . '" data-stage-h="' . (int) $stage['height'] . '">'
-        . '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        . '<title>' . esc_html($item['name']['ja']) . '</title>'
-        . '<style>' . omochix_learn_gallery_runtime('css') . '</style>'
-        . '<style>' . $item['preview']['css'] . '</style>'
-        . '</head><body><div class="omx-stage">' . $item['preview']['html'] . '</div>'
-        . '<script>' . omochix_learn_gallery_runtime('js') . '</script>';
-    if ('' !== $item['preview']['js']) {
-        $html .= '<script>' . $item['preview']['js'] . '</script>';
-    }
-    return $html . '</body></html>';
+    $stage  = $stage ?: omochix_learn_gallery_get_stage();
+    $values = [
+        '{{stage_w}}'     => (string) (int) $stage['width'],
+        '{{stage_h}}'     => (string) (int) $stage['height'],
+        '{{title}}'       => esc_html($item['name']['ja']),
+        '{{runtime_css}}' => omochix_learn_gallery_runtime('css'),
+        '{{css}}'         => $item['preview']['css'],
+        '{{html}}'        => $item['preview']['html'],
+        '{{runtime_js}}'  => omochix_learn_gallery_runtime('js'),
+        '{{js}}'          => '' !== $item['preview']['js'] ? '<script>' . $item['preview']['js'] . '</script>' : '',
+    ];
+    return strtr(omochix_learn_gallery_preview_template(), $values);
 }
 
 /**
@@ -651,21 +702,32 @@ function omochix_learn_gallery_registry($item = null) {
 }
 
 /**
- * JSON for the client: only what learn-gallery.js needs. JSON_HEX_TAG keeps
- * a literal "</script>" inside a sample from ending the embedding element.
+ * JSON for the client: only what learn-gallery.js needs. The runtime and the
+ * document template appear once; each item carries just its own fragment
+ * (title, html, css, js) and the browser assembles the document. JSON_HEX_TAG
+ * keeps a literal "</script>" inside a sample from ending the embedding
+ * element.
  *
  * @param array<string, array<string, mixed>> $items Registered items.
  * @return string
  */
 function omochix_learn_gallery_client_json(array $items) {
     $stage = omochix_learn_gallery_get_stage();
-    $out   = ['stage' => $stage, 'items' => []];
+    $out   = [
+        'stage'    => $stage,
+        'template' => omochix_learn_gallery_preview_template(),
+        'runtime'  => ['css' => omochix_learn_gallery_runtime('css'), 'js' => omochix_learn_gallery_runtime('js')],
+        'items'    => [],
+    ];
     foreach ($items as $slug => $item) {
         $out['items'][$slug] = [
             'id'    => $item['id'],
             'name'  => $item['name'],
             'label' => sprintf(__('%sのプレビュー', 'omochix'), $item['name']['ja']),
-            'doc'   => omochix_learn_gallery_preview_document($item, $stage),
+            'title' => esc_html($item['name']['ja']),
+            'html'  => $item['preview']['html'],
+            'css'   => $item['preview']['css'],
+            'js'    => $item['preview']['js'],
         ];
     }
     return (string) wp_json_encode($out, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -830,8 +892,20 @@ add_filter('template_include', 'omochix_learn_gallery_template_include', 9);
  * Assets
  * ---------------------------------------------------------------------- */
 
+/**
+ * Whether the current prompt detail page shows related motion samples (and
+ * therefore needs the gallery assets).
+ */
+function omochix_learn_gallery_is_prompt_with_samples() {
+    if (!is_singular('prompt') || !omochix_learn_gallery_page_id()) {
+        return false;
+    }
+    $post = get_queried_object();
+    return $post instanceof WP_Post && [] !== omochix_learn_gallery_items_for_prompt($post->post_name);
+}
+
 function omochix_learn_gallery_enqueue_assets() {
-    if (!omochix_learn_gallery_is_request() && !omochix_learn_gallery_is_hub_request()) {
+    if (!omochix_learn_gallery_is_request() && !omochix_learn_gallery_is_hub_request() && !omochix_learn_gallery_is_prompt_with_samples()) {
         return;
     }
     $theme = wp_get_theme();
@@ -915,6 +989,41 @@ add_filter('slim_seo_canonical_url', static function ($url) {
 add_filter('slim_seo_robots_index', static function ($indexed) {
     return omochix_learn_gallery_is_filtered_list() ? false : $indexed;
 });
+
+/**
+ * Breadcrumb trail for a sample detail: the gallery list becomes a link and
+ * the sample name becomes the current page (Slim SEO builds its visible
+ * breadcrumb and the BreadcrumbList schema from these two values).
+ *
+ * @param array<int, array{url: string, text: string}> $links Trail so far (home … gallery page's ancestors).
+ * @param array<string, mixed>                         $item  Sample being viewed.
+ * @param string                                       $list_url Gallery list URL.
+ * @param string                                       $list_title Gallery page title.
+ * @return array<int, array{url: string, text: string}>
+ */
+function omochix_learn_gallery_breadcrumb_links(array $links, array $item, $list_url, $list_title) {
+    unset($item);
+    $last = $links ? end($links) : null;
+    if (!$list_url || ($last && isset($last['url']) && untrailingslashit($last['url']) === untrailingslashit($list_url))) {
+        return $links;
+    }
+    $links[] = ['url' => $list_url, 'text' => $list_title];
+    return $links;
+}
+add_filter('slim_seo_breadcrumbs_links', static function ($links) {
+    $item = omochix_learn_gallery_current_item();
+    if (!$item || !is_array($links)) {
+        return $links;
+    }
+    return omochix_learn_gallery_breadcrumb_links($links, $item, omochix_learn_gallery_url(), get_the_title(omochix_learn_gallery_page_id()));
+});
+add_filter('single_post_title', static function ($title, $post) {
+    $item = omochix_learn_gallery_current_item();
+    if ($item && $post instanceof WP_Post && (int) $post->ID === omochix_learn_gallery_page_id()) {
+        return $item['name']['ja'];
+    }
+    return $title;
+}, 10, 2);
 add_filter('wp_robots', static function ($robots) {
     if (omochix_learn_gallery_is_filtered_list()) {
         $robots['noindex'] = true;

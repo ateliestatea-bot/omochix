@@ -166,6 +166,19 @@ Learnを「読む学習ページ＋プロンプト集」から、**見て・試�
 
 未検証（WordPress実環境が必要）：固定ページ `learn/motion` 作成後の rewrite rule 反映と `/learn/motion/{slug}/` の解決、Slim SEO の title／description／canonical／robots フィルターの実出力、共通シェルのサイドバー（1081px以上）との同時表示、`get_template_part` の `$args` 受け渡し（WP 5.5+）、実際の Prompt／AI Tool／Learn 記事との関連リンク解決、キャッシュプラグインとの相性、実機 iOS Safari／Android Chrome、Lighthouse。
 
+## 8.2 Phase 1C（2026年10月18日）
+
+| 項目 | 実装 |
+|---|---|
+| Prompt詳細からの関連見本 | `omochix_learn_gallery_items_for_prompt()` が `related.prompts` を逆引きし、`single-prompt.php` に「このプロンプトと組み合わせる動く見本」セクション（カード＋プレビュー）を追加。該当する見本があり、かつ `/learn/motion/` が公開されているときだけ表示し、そのときだけ `learn-v2.css` / `learn-gallery.js` を読み込む。カタログ側に暫定リンク10件（`video-image-to-video-motion-direction` ×5、`video-text-to-video-shot-prompts` ×3、`development-web-performance-investigation` ×2）を設定。公開済みのPromptにしか効かないので、本番の slug と照合して確定する |
+| 見出し階層 | 詳細パートの見出しをコンテキストで切替（単体ページ h1 > h2 > h3、ダイアログ内 h2 > h3 > h4）。見出し飛びなし |
+| パンくず schema | `slim_seo_breadcrumbs_links` で一覧ページをリンクとして追加し、`single_post_title` で現在ページ名を見本名に差し替え。schema は「ホーム > Learn > 動く見本 > 見本名」の4階層 |
+| カタログJSONの重複 | ランタイムCSS/JSとドキュメントテンプレートをページに1回だけ埋め込み、`learn-gallery.js` が各見本の断片（title/html/css/js）からテンプレートを埋めて `srcdoc` を組み立てる。PHP側は同じテンプレートで noscript 用の完全ドキュメントを生成（単一定義）。一覧HTML 231KB→127KB、カタログJSON 131KB→27KB |
+
+試した上で採用しなかった案：ランタイムを外部ファイル参照（`<script src>`）にする方式。sandbox（不透明オリジン）の iframe からの読み込みが、Local の `.local` ドメイン（ループバック）環境で Chromium のローカルネットワークアクセス制限により失敗した。公開HTTPSでは通る可能性が高いが、環境依存を避けるためインライン方式を維持。
+
+Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細の関連見本5件の再生とリンク、関連のないPromptではセクション・アセットとも出ないこと、詳細ページの見出し列 `h1 h2 h3 h3 h2 h2`、ダイアログ断片 `h2 h3 h4 h4 h3 h3`、BreadcrumbList 4階層、`debug.log` にエラーなし。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。

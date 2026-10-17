@@ -22,7 +22,11 @@ if (!$omochix_item) {
 }
 $omochix_context  = isset($args['context']) && 'dialog' === $args['context'] ? 'dialog' : 'page';
 $omochix_is_page  = 'page' === $omochix_context;
+// Heading levels follow the context so the outline never skips a level:
+// standalone page h1 > h2 > h3, inside the list's dialog h2 > h3 > h4.
 $omochix_heading  = $omochix_is_page ? 'h1' : 'h2';
+$omochix_h_panel  = $omochix_is_page ? 'h2' : 'h3';
+$omochix_h_sub    = $omochix_is_page ? 'h3' : 'h4';
 $omochix_url      = omochix_learn_gallery_url($omochix_item);
 $omochix_list_url = omochix_learn_gallery_url();
 $omochix_category = omochix_learn_gallery_get_category($omochix_item['category']);
@@ -77,15 +81,15 @@ $omochix_hub_url  = function_exists('omochix_get_published_page_url') ? omochix_
     <div class="motion-detail__layout">
         <section class="motion-panel" aria-labelledby="<?php echo esc_attr($omochix_uid); ?>-prompt">
             <div class="motion-panel__header">
-                <h3 class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-prompt"><?php esc_html_e('AIへの頼み方', 'omochix'); ?></h3>
+                <<?php echo $omochix_h_panel; ?> class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-prompt"><?php esc_html_e('AIへの頼み方', 'omochix'); ?></<?php echo $omochix_h_panel; ?>>
                 <button type="button" class="motion-copy" data-omx-copy data-omx-copy-target="<?php echo esc_attr($omochix_uid); ?>-prompt-text"><?php esc_html_e('プロンプトをコピー', 'omochix'); ?></button>
             </div>
             <blockquote class="motion-detail__ask"><?php echo esc_html($omochix_item['prompt']['ask']); ?></blockquote>
-            <h4 class="motion-panel__subtitle"><?php esc_html_e('動きの仕様', 'omochix'); ?></h4>
+            <<?php echo $omochix_h_sub; ?> class="motion-panel__subtitle"><?php esc_html_e('動きの仕様', 'omochix'); ?></<?php echo $omochix_h_sub; ?>>
             <ul class="motion-detail__spec">
                 <?php foreach ($omochix_item['prompt']['spec'] as $omochix_spec) : ?><li><?php echo esc_html($omochix_spec); ?></li><?php endforeach; ?>
             </ul>
-            <h4 class="motion-panel__subtitle"><?php esc_html_e('使いどころ', 'omochix'); ?></h4>
+            <<?php echo $omochix_h_sub; ?> class="motion-panel__subtitle"><?php esc_html_e('使いどころ', 'omochix'); ?></<?php echo $omochix_h_sub; ?>>
             <p class="motion-detail__use"><?php echo esc_html($omochix_item['prompt']['use']); ?></p>
             <details class="motion-code">
                 <summary><?php esc_html_e('コピーされるプロンプト全文を見る', 'omochix'); ?></summary>
@@ -96,7 +100,7 @@ $omochix_hub_url  = function_exists('omochix_get_published_page_url') ? omochix_
 
         <section class="motion-panel" aria-labelledby="<?php echo esc_attr($omochix_uid); ?>-code">
             <div class="motion-panel__header">
-                <h3 class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-code"><?php esc_html_e('コード', 'omochix'); ?></h3>
+                <<?php echo $omochix_h_panel; ?> class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-code"><?php esc_html_e('コード', 'omochix'); ?></<?php echo $omochix_h_panel; ?>>
                 <button type="button" class="motion-copy" data-omx-copy data-omx-copy-target="<?php echo esc_attr($omochix_uid); ?>-code-text"><?php esc_html_e('コードをコピー', 'omochix'); ?></button>
             </div>
             <p class="motion-panel__note"><?php esc_html_e('プレビューで動いているものと同じコードです。HTMLに貼り付ければそのまま動きます。', 'omochix'); ?></p>
@@ -110,7 +114,7 @@ $omochix_hub_url  = function_exists('omochix_get_published_page_url') ? omochix_
 
     <?php if ($omochix_prompts || $omochix_tools || $omochix_learn) : ?>
         <section class="motion-detail__related" aria-labelledby="<?php echo esc_attr($omochix_uid); ?>-related">
-            <h3 class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-related"><?php esc_html_e('あわせて使う', 'omochix'); ?></h3>
+            <<?php echo $omochix_h_panel; ?> class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-related"><?php esc_html_e('あわせて使う', 'omochix'); ?></<?php echo $omochix_h_panel; ?>>
             <div class="motion-related__grid">
                 <?php foreach ($omochix_prompts as $omochix_prompt_post) : ?>
                     <a class="motion-related-card" href="<?php echo esc_url(get_permalink($omochix_prompt_post)); ?>">
