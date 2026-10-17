@@ -6711,6 +6711,14 @@ a.learn-path__step:hover {
 .tool-detail-info__block--pricing { position: relative; border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-line)); }
 .tool-detail-info__block-icon { display: block; width: 22px; height: 22px; margin-bottom: 12px; color: var(--color-primary); }
 
+/* Supported models (supported_models meta): the block spans the full detail
+   grid row so a long list never stretches its neighbours, and each stored
+   entry is one chip that wraps onto as many lines as it needs. */
+.tool-detail-info__block--models { grid-column: 1 / -1; }
+.tool-detail-info__block .tool-model-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
+.tool-detail-info__block .tool-model-chips li { max-width: 100%; padding: 7px 12px; color: var(--color-text); background: color-mix(in srgb, var(--color-primary) 7%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-line)); border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.tool-detail-info__block .tool-model-chips li::before { content: none; }
+
 /* Sticky / collapsible table of contents, built from post_content h2s. */
 .tool-toc--mobile { margin-bottom: 40px; padding: 16px 18px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
 .tool-toc--mobile summary { cursor: pointer; color: var(--color-text); font-size: 13px; font-weight: 700; list-style: none; }

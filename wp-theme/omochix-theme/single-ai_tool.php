@@ -37,7 +37,12 @@ if (have_posts()) :
         $omochix_supported_devices = get_post_meta($omochix_tool_id, 'supported_devices', true);
         $omochix_supported_devices = is_array($omochix_supported_devices) ? array_filter($omochix_supported_devices) : [];
         $omochix_supported_models  = get_post_meta($omochix_tool_id, 'supported_models', true);
-        $omochix_supported_models  = is_array($omochix_supported_models) ? array_filter($omochix_supported_models) : [];
+        // Each stored entry is one editorial line (one textarea row) and is
+        // shown as one chip as-is: entries such as "Image 4・Image 4 Ultra" are
+        // never split on separators, only trimmed and de-duplicated.
+        $omochix_supported_models  = is_array($omochix_supported_models) ? array_values(array_unique(array_filter(array_map(static function ($model) {
+            return is_scalar($model) ? trim((string) $model) : '';
+        }, $omochix_supported_models), 'strlen'))) : [];
 
         // v2 detail fields. Every one is optional; the section that reads it
         // below only renders when it is non-empty.
@@ -450,7 +455,7 @@ if (have_posts()) :
                                 <header><p><?php esc_html_e('MORE DETAILS', 'omochix'); ?></p><h2 id="tool-detail-info-title"><?php esc_html_e('詳細情報', 'omochix'); ?></h2></header>
                                 <div class="tool-detail-info__grid">
                                     <?php if ($omochix_supported_models) : ?>
-                                        <div class="tool-detail-info__block"><h3><?php esc_html_e('対応モデル', 'omochix'); ?></h3><ul><?php foreach ($omochix_supported_models as $omochix_model) : ?><li><?php echo esc_html($omochix_model); ?></li><?php endforeach; ?></ul></div>
+                                        <div class="tool-detail-info__block tool-detail-info__block--models"><h3><?php esc_html_e('対応モデル', 'omochix'); ?></h3><ul class="tool-model-chips" role="list"><?php foreach ($omochix_supported_models as $omochix_model) : ?><li><?php echo esc_html($omochix_model); ?></li><?php endforeach; ?></ul></div>
                                     <?php endif; ?>
                                     <?php if ($omochix_integrations) : ?>
                                         <div class="tool-detail-info__block"><h3><?php esc_html_e('連携サービス', 'omochix'); ?></h3><ul><?php foreach ($omochix_integrations as $omochix_integration) : ?><li><?php echo esc_html($omochix_integration); ?></li><?php endforeach; ?></ul></div>
