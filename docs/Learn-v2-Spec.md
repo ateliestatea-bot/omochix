@@ -261,6 +261,19 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 未確認：prefers-reduced-motion での挙動（Local では OS 設定の切り替えが必要。ランタイムは値変更で再生状態を変えないので設計上は変わらない）、実機スマホでの Web Share シートと `input type="color"` の使い勝手、Lighthouse。確認作業上の注意：パネルの描画は `requestAnimationFrame` でまとめているため、バックグラウンドのタブでは入力イベントだけでは更新されない（ユーザー操作では起きない）。
 
+### 8.3.5 一覧ページの埋め込み JSON の軽量化（2026年10月18日、`feature/learn-gallery-slim-json`）
+
+本番 1.21.0 の計測で、一覧 `/learn/motion/` の HTML 259.5KB のうち埋め込みカタログ JSON が 103.1KB（40%）、その半分がパネルのある場面でしか使わないコピー用テンプレート（`codeTemplate` 22.2KB、`promptTemplate` 29.3KB）だった。
+
+| 変更 | 内容 |
+|---|---|
+| PHP | `omochix_learn_gallery_client_json()` からテンプレートを外す（`params` は残す）。新規 `omochix_learn_gallery_item_json($item, $url)` が1見本分の `{codeTemplate, promptTemplate}` を `JSON_HEX_TAG` 付きで返す（params なしなら空文字） |
+| テンプレート | `playground.php` がパネルの直後に `<script type="application/json" id="motion-<slug>-pg-templates" data-omx-item-templates>` を出す。ページでもダイアログのフラグメントでも同じ経路 |
+| JS | `learn-playground.js` の `bind()` は `[data-motion-detail]` 内のその script を `JSON.parse` して使う。無い／壊れている場合はプレビュー・ハッシュ・既定に戻す・共有は動かし、コード／プロンプトの書き換えと「（調整済み）」は行わない |
+| テスト | `run.php` 134件（client JSON にテンプレートが無いこと、`item_json` のプレースホルダーと `<\/script>` エスケープ、params なしで空）。parity fixture は `item_json` からテンプレートを取る（1760件） |
+
+効果（スタブサーバー、JSON は本番と同一構造）：埋め込み JSON 103.1KB → 47.5KB（−54%）、gzip 後 20.0KB → 11.3KB。詳細ページは当該1件のテンプレート（約 2.4KB）が JSON から script タグへ移るだけで総量は同じ。ダイアログのフラグメントは 14.2KB → 16.1KB（gzip 3.7KB → 3.8KB）。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。

@@ -6,7 +6,8 @@
  *   item    (array)  Catalog item. Required; renders nothing without params.
  *   heading (string) Heading tag for the panel title ("h2" on the page, "h3" in the dialog).
  *
- * The panel is server-rendered with the sample's defaults. learn-gallery.js
+ * The panel is server-rendered with the sample's defaults, followed by a
+ * JSON script with the sample's copy templates. learn-playground.js
  * binds the inputs: changes are sanitized, sent to the preview iframe(s) of
  * this sample as CSS custom properties / window.omxParams, mirrored into
  * the copy targets (prompt and code) and into the URL hash (#p=…). Without
@@ -64,3 +65,4 @@ $omochix_values  = omochix_learn_gallery_sanitize_params($omochix_item);
         <p class="sr-only" data-omx-copy-status aria-live="polite"></p>
     </div>
 </section>
+<script type="application/json" id="<?php echo esc_attr($omochix_uid); ?>-templates" data-omx-item-templates><?php echo omochix_learn_gallery_item_json($omochix_item, omochix_learn_gallery_url($omochix_item)); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON built with JSON_HEX_TAG by omochix_learn_gallery_item_json(). ?></script>

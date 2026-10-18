@@ -1089,7 +1089,8 @@ function omochix_learn_gallery_registry($item = null) {
 }
 
 /**
- * JSON for the client: only what learn-gallery.js needs. The runtime and the
+ * JSON for the client: only what learn-gallery.js needs (copy templates travel
+ * with the panel, see omochix_learn_gallery_item_json()). The runtime and the
  * document template appear once; each item carries just its own fragment
  * (title, html, css, js) and the browser assembles the document. JSON_HEX_TAG
  * keeps a literal "</script>" inside a sample from ending the embedding
@@ -1117,14 +1118,30 @@ function omochix_learn_gallery_client_json(array $items) {
             'js'     => $item['preview']['js'],
             'params' => $item['params'],
         ];
-        if ($item['params']) {
-            // Only adjustable samples need the copy templates client-side.
-            $url = omochix_learn_gallery_url($item);
-            $out['items'][$slug]['codeTemplate']   = omochix_learn_gallery_code_template($item, $url);
-            $out['items'][$slug]['promptTemplate'] = omochix_learn_gallery_prompt_template($item, $url);
-        }
     }
     return (string) wp_json_encode($out, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+/**
+ * The copy templates of one adjustable sample, as JSON for the playground
+ * script. Printed next to the panel (template-parts/learn-gallery/
+ * playground.php) on the detail page and inside the dialog fragment, so the
+ * list page's catalog JSON does not carry twenty samples' worth of
+ * templates that only a shown panel can use. Empty string for a sample
+ * without params.
+ *
+ * @param array<string, mixed> $item Catalog item.
+ * @param string               $url  Canonical detail URL (goes into the templates).
+ * @return string
+ */
+function omochix_learn_gallery_item_json(array $item, $url = '') {
+    if (!$item['params']) {
+        return '';
+    }
+    return (string) wp_json_encode([
+        'codeTemplate'   => omochix_learn_gallery_code_template($item, $url),
+        'promptTemplate' => omochix_learn_gallery_prompt_template($item, $url),
+    ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
 
 /** Print the registered previews for learn-gallery.js (runs late in wp_footer). */
