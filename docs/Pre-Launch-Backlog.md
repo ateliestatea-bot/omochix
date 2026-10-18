@@ -70,9 +70,18 @@
 | Production robots | P0 | 未着手 | 本番公開 | 本番後 | Sitemapとcrawl方針 |
 | Index確認 | P0 | 未着手 | crawler反映 | 本番後 | index/noindex方針を照合 |
 
+## Learn v2（Motion Gallery）
+
+| 項目 | Priority | Status | Blocker | 時期 | 備考 |
+|---|---:|---|---|---|---|
+| 固定ページ `learn/motion` 作成・公開 | P1 | 未着手 | テーマ1.18.0反映 | 本番反映時 | 親=Learn、slug=motion。未公開の間はLearnトップに出ない（`docs/Beta-Deployment-Runbook.md` 8b） |
+| 見本↔Prompt関連の確定 | P1 | 要確認 | Prompt本番slug | 本番反映時 | `catalog.json` の `related.prompts` は暫定10件。公開済みPromptにのみ表示される |
+| 見本の詳細OGP画像 | P2 | 未着手 | 正式デザイン | 公開後 | 現状はDefault OGP |
+| Playground / OmochiX Video連携 | P2 | 未着手 | 仕様 | 公開後 | `playground` / `video` は予約フィールドのみ |
+
 ## 集計
 
-- 全項目：41件
+- 全項目：45件
 - P0：22件
-- P1：18件
-- P2：1件
+- P1：20件
+- P2：3件

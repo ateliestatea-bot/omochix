@@ -1,0 +1,49 @@
+/* Preview runtime (inlined into every sandboxed preview document by inc/learn-gallery.php).
+   Token values mirror style.css so a sample reads the same inside and outside the frame. */
+:root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --text: #101010;
+    --muted: #666663;
+    --line: rgba(16, 16, 16, 0.12);
+    --primary: #6e4bff;
+    --blue: #2563eb;
+    --amber: #d97706;
+    color-scheme: light;
+}
+:root[data-theme="dark"] {
+    --bg: #171719;
+    --surface: #242329;
+    --text: #f5f5f1;
+    --muted: #a3a39e;
+    --line: rgba(255, 255, 255, 0.14);
+    --primary: #9b84ff;
+    --blue: #60a5fa;
+    --amber: #f5a455;
+    color-scheme: dark;
+}
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+.omx-stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--omx-w, 320px);
+    height: var(--omx-h, 180px);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    transform: translate(-50%, -50%) scale(var(--omx-scale, 1));
+    transform-origin: center;
+}
+/* Paused: every CSS animation and transition freezes where it is. JS samples stop their own loop. */
+:root[data-paused] *, :root[data-paused] *::before, :root[data-paused] *::after {
+    animation-play-state: paused !important;
+}

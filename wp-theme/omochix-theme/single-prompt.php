@@ -167,6 +167,29 @@ if (have_posts()) :
                     </section>
                 <?php endif; ?>
 
+                <?php
+                // Learn v2: motion samples whose catalog entry lists this prompt
+                // (related.prompts). Rendered only when the gallery page is
+                // published and at least one sample references this prompt;
+                // inc/learn-gallery.php enqueues the gallery assets for that case.
+                $omochix_related_samples = function_exists('omochix_learn_gallery_items_for_prompt') && function_exists('omochix_learn_gallery_url') && omochix_learn_gallery_url()
+                    ? omochix_learn_gallery_items_for_prompt(get_post_field('post_name', $omochix_prompt_id))
+                    : [];
+                ?>
+                <?php if ($omochix_related_samples) : ?>
+                    <section class="prompt-detail-related-motion" aria-labelledby="related-motion-title">
+                        <div class="prompt-detail__container">
+                            <header class="tool-detail-section-header"><p><?php esc_html_e('MOTION GALLERY', 'omochix'); ?></p><h2 id="related-motion-title"><?php esc_html_e('このプロンプトと組み合わせる動く見本', 'omochix'); ?></h2></header>
+                            <div class="motion-grid">
+                                <?php foreach ($omochix_related_samples as $omochix_sample) : ?>
+                                    <?php get_template_part('template-parts/learn-gallery/card', null, ['item' => $omochix_sample]); ?>
+                                <?php endforeach; ?>
+                            </div>
+                            <p class="prompt-detail-related-motion__more"><a href="<?php echo esc_url(omochix_learn_gallery_url()); ?>"><?php esc_html_e('すべての見本を見る', 'omochix'); ?><span aria-hidden="true">→</span></a></p>
+                        </div>
+                    </section>
+                <?php endif; ?>
+
                 <?php if ($omochix_related_prompts && $omochix_related_prompts->have_posts()) : ?>
                     <section class="prompt-detail-related" aria-labelledby="related-prompts-title">
                         <div class="prompt-detail__container">
