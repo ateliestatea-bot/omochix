@@ -73,16 +73,23 @@ $omochix_hub_url  = function_exists('omochix_get_published_page_url') ? omochix_
         </div>
     </header>
 
+    <?php $omochix_adjustable = !empty($omochix_item['params']); ?>
+    <?php if ($omochix_adjustable) : ?><div class="motion-detail__studio"><div class="motion-detail__stage"><?php endif; ?>
     <div class="motion-detail__preview">
         <?php get_template_part('template-parts/learn-gallery/preview', null, ['item' => $omochix_item, 'size' => 'detail', 'static' => $omochix_is_page]); ?>
     </div>
     <p class="motion-detail__description"><?php echo esc_html($omochix_item['description']); ?></p>
+    <?php if ($omochix_adjustable) : ?>
+        </div>
+        <?php get_template_part('template-parts/learn-gallery/playground', null, ['item' => $omochix_item, 'heading' => $omochix_h_panel]); ?>
+    </div>
+    <?php endif; ?>
 
     <div class="motion-detail__layout">
         <section class="motion-panel" aria-labelledby="<?php echo esc_attr($omochix_uid); ?>-prompt">
             <div class="motion-panel__header">
                 <<?php echo $omochix_h_panel; ?> class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-prompt"><?php esc_html_e('AIへの頼み方', 'omochix'); ?></<?php echo $omochix_h_panel; ?>>
-                <button type="button" class="motion-copy" data-omx-copy data-omx-copy-target="<?php echo esc_attr($omochix_uid); ?>-prompt-text"><?php esc_html_e('プロンプトをコピー', 'omochix'); ?></button>
+                <button type="button" class="motion-copy" data-omx-copy data-omx-copy-target="<?php echo esc_attr($omochix_uid); ?>-prompt-text"><span data-omx-label><?php esc_html_e('プロンプトをコピー', 'omochix'); ?></span><span class="motion-copy__state" data-omx-modified hidden><?php esc_html_e('（調整済み）', 'omochix'); ?></span></button>
             </div>
             <blockquote class="motion-detail__ask"><?php echo esc_html($omochix_item['prompt']['ask']); ?></blockquote>
             <<?php echo $omochix_h_sub; ?> class="motion-panel__subtitle"><?php esc_html_e('動きの仕様', 'omochix'); ?></<?php echo $omochix_h_sub; ?>>
@@ -101,7 +108,7 @@ $omochix_hub_url  = function_exists('omochix_get_published_page_url') ? omochix_
         <section class="motion-panel" aria-labelledby="<?php echo esc_attr($omochix_uid); ?>-code">
             <div class="motion-panel__header">
                 <<?php echo $omochix_h_panel; ?> class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-code"><?php esc_html_e('コード', 'omochix'); ?></<?php echo $omochix_h_panel; ?>>
-                <button type="button" class="motion-copy" data-omx-copy data-omx-copy-target="<?php echo esc_attr($omochix_uid); ?>-code-text"><?php esc_html_e('コードをコピー', 'omochix'); ?></button>
+                <button type="button" class="motion-copy" data-omx-copy data-omx-copy-target="<?php echo esc_attr($omochix_uid); ?>-code-text"><span data-omx-label><?php esc_html_e('コードをコピー', 'omochix'); ?></span><span class="motion-copy__state" data-omx-modified hidden><?php esc_html_e('（調整済み）', 'omochix'); ?></span></button>
             </div>
             <p class="motion-panel__note"><?php esc_html_e('プレビューで動いているものと同じコードです。HTMLに貼り付ければそのまま動きます。', 'omochix'); ?></p>
             <details class="motion-code" open>

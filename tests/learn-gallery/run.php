@@ -9,37 +9,7 @@
  * filter sanitization. Browser and layout checks are done separately in an
  * isolated WordPress (see docs/Learn-v2-Spec.md §8).
  */
-define('ABSPATH', '/');
-define('OBJECT', 'OBJECT');
-$THEME = realpath(__DIR__ . '/../../wp-theme/omochix-theme');
-
-class WP_Post { public $ID, $post_type = 'page', $post_status = 'publish', $post_name = ''; function __construct($a) { foreach ($a as $k => $v) { $this->$k = $v; } } }
-$GLOBALS['pages'] = []; $GLOBALS['query_vars'] = []; $GLOBALS['ctx'] = ['is_page' => false, 'queried' => 0];
-function add_action() {} function add_filter() {}
-function __($t) { return $t; }
-function esc_html($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); }
-function esc_url($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); }
-function get_theme_file_path($f) { global $THEME; return $THEME . $f; }
-function get_theme_file_uri($f) { return 'https://example.test/wp-content/themes/omochix-theme' . $f; }
-function untrailingslashit($s) { return rtrim($s, '/'); }
-function is_singular($t = '') { return $GLOBALS['ctx']['singular'] ?? false; }
-function get_queried_object() { return $GLOBALS['ctx']['queried_post'] ?? null; }
-function wp_json_encode($d, $f = 0) { return json_encode($d, $f); }
-function wp_unslash($v) { return is_string($v) ? stripslashes($v) : $v; }
-function sanitize_title($t) { $t = strtolower(trim((string) $t)); $t = preg_replace('/[^a-z0-9-]+/', '-', $t); return trim($t, '-'); }
-function sanitize_key($t) { return preg_replace('/[^a-z0-9_-]/', '', strtolower((string) $t)); }
-function sanitize_text_field($t) { return trim(strip_tags((string) $t)); }
-function get_page_by_path($path, $o = null, $type = 'page') { return $GLOBALS['pages'][$path] ?? null; }
-function get_permalink($p) { return 'https://example.test/' . ($p instanceof WP_Post ? $p->post_name : $GLOBALS['pages_by_id'][$p]) . '/'; }
-function trailingslashit($s) { return rtrim($s, '/') . '/'; }
-function user_trailingslashit($s) { return trailingslashit($s); }
-function add_query_arg($args, $url) { return $url . '?' . http_build_query($args); }
-function get_query_var($k, $d = '') { return $GLOBALS['query_vars'][$k] ?? $d; }
-function is_page() { return $GLOBALS['ctx']['is_page']; }
-function get_queried_object_id() { return $GLOBALS['ctx']['queried']; }
-function post_type_exists($t) { return false; }
-function get_the_title($p) { return 'Title'; }
-require $THEME . '/inc/learn-gallery.php';
+require __DIR__ . '/stub.php';
 
 $pass = 0; $fail = 0;
 function check($name, $cond) { global $pass, $fail; if ($cond) { $pass++; echo "PASS $name\n"; } else { $fail++; echo "FAIL $name\n"; } }
@@ -146,29 +116,111 @@ check('prompt: ask, every spec line, use and url', str_contains($prompt, $item['
 check('prompt: tech names and reduced-motion condition', str_contains($prompt, 'CSS') && str_contains($prompt, 'prefers-reduced-motion'));
 check('prompt: no url line when url empty', !str_contains(omochix_learn_gallery_prompt_text($item), '見本（動くプレビュー'));
 $code = omochix_learn_gallery_code_text($item, 'https://example.test/x/');
-check('code: css-only sample has style + html and no script', str_contains($code, "<style>\n" . $item['preview']['css']) && str_contains($code, $item['preview']['html']) && !str_contains($code, '<script>'));
+$plainItem = omochix_learn_gallery_get_item('fade-up');
+$plainItem['params'] = []; // every shipped sample is adjustable since Phase 2D; this stands in for one that is not
+$sVals = ['cycle' => 4.0, 'overshoot' => 'soft', 'color' => '#ff0000', 'badge_delay' => 0.35]; // pop-in with two values changed
+$plainCode = omochix_learn_gallery_code_text($plainItem, 'https://example.test/x/');
+check('code: sample without params has style + html and no script (unchanged shape)', str_contains($plainCode, "<style>\n" . $plainItem['preview']['css']) && str_contains($plainCode, $plainItem['preview']['html']) && !str_contains($plainCode, '<script>') && !str_contains($plainCode, ':root{'));
+check('code: adjustable css-only sample at its defaults has no :root block (fallbacks carry the look)', str_contains($code, "<style>\n" . $item['preview']['css']) && !str_contains($code, ':root{') && !str_contains($code, '<script>'));
+check('code: adjusted css-only sample carries the changed values in a :root block first and no script', str_contains(omochix_learn_gallery_code_text($item, 'https://example.test/x/', $sVals), "<style>\n:root{--p-cycle:4s;--p-color:#ff0000;--p-badge-delay:0.35s}\n" . $item['preview']['css']) && !str_contains(omochix_learn_gallery_code_text($item, 'https://example.test/x/', $sVals), '<script>'));
 check('code: header comment names the sample', str_starts_with($code, '<!-- ポップイン (Pop-in) | OmochiX Learn 動く見本 #001 | https://example.test/x/ -->'));
 $jsItem = omochix_learn_gallery_get_item('count-up');
 $jsCode = omochix_learn_gallery_code_text($jsItem);
-check('code: js sample includes shim before sample js', str_contains($jsCode, '<script>') && strpos($jsCode, 'omx.animate') > strpos($jsCode, 'var omx = window.omx') && str_contains($jsCode, $jsItem['preview']['js']));
+$jsVals = ['target' => 500.0, 'duration' => 2.2, 'easing' => 'out', 'size' => 56.0];
+$jsCodeS = omochix_learn_gallery_code_text($jsItem, '', $jsVals);
+check('code: adjusted js sample includes shim, then window.omxParams with the changed value, then sample js', str_contains($jsCodeS, '<script>') && strpos($jsCodeS, 'var omx = window.omx') < strpos($jsCodeS, 'window.omxParams={"target":500};') && strpos($jsCodeS, 'window.omxParams={"target":500};') < strpos($jsCodeS, $jsItem['preview']['js']));
+check('code: js sample at its defaults has the shim and the sample js but no window.omxParams', str_contains($jsCode, 'var omx = window.omx') && str_contains($jsCode, $jsItem['preview']['js']) && !str_contains($jsCode, 'window.omxParams='));
+check('code: shim provides param() and onParams()', str_contains(omochix_learn_gallery_js_shim(), 'param: function') && str_contains(omochix_learn_gallery_js_shim(), 'onParams: function'));
 
 $doc = omochix_learn_gallery_preview_document($item);
 check('doc: html document with stage size and theme', str_starts_with($doc, '<!doctype html><html lang="ja" data-theme="light" data-stage-w="320" data-stage-h="180">') && str_ends_with($doc, '</body></html>'));
 check('doc: runtime css and js inlined (sandbox frames cannot fetch theme files everywhere)', str_contains($doc, '.omx-stage') && str_contains($doc, 'omx:ready') && str_contains($doc, 'data-paused'));
 check('doc: sample css/html inlined inside stage', str_contains($doc, '<style>' . $item['preview']['css'] . '</style>') && str_contains($doc, '<div class="omx-stage">' . $item['preview']['html'] . '</div>'));
 check('doc: css-only sample has exactly one script (the runtime)', 1 === substr_count($doc, '<script>'));
-check('doc: js sample has two scripts, runtime first and sample last', 2 === substr_count(omochix_learn_gallery_preview_document($jsItem), '<script>') && str_contains(omochix_learn_gallery_preview_document($jsItem), $jsItem['preview']['js'] . '</script></body>') && strpos(omochix_learn_gallery_preview_document($jsItem), 'omx:ready') < strpos(omochix_learn_gallery_preview_document($jsItem), $jsItem['preview']['js']));
-check('doc: no placeholder left unfilled', !preg_match('/\{\{[a-z_]+\}\}/', $doc) && !preg_match('/\{\{[a-z_]+\}\}/', omochix_learn_gallery_preview_document($jsItem)));
+$jsDoc = omochix_learn_gallery_preview_document($jsItem, null, $jsVals);
+check('doc: js sample at its defaults has runtime and sample scripts only', 2 === substr_count(omochix_learn_gallery_preview_document($jsItem), '<script>'));
+check('doc: adjusted js sample has runtime, params and sample scripts in that order', 3 === substr_count($jsDoc, '<script>') && str_contains($jsDoc, $jsItem['preview']['js'] . '</script></body>') && strpos($jsDoc, 'omx:ready') < strpos($jsDoc, '<script>window.omxParams=') && strpos($jsDoc, '<script>window.omxParams=') < strpos($jsDoc, $jsItem['preview']['js']));
+check('doc: params style is empty at the defaults and carries the changed values otherwise', str_contains($doc, '<style id="omx-params"></style>') && str_contains(omochix_learn_gallery_preview_document($item, null, $sVals), '<style id="omx-params">:root{--p-cycle:4s;--p-color:#ff0000;--p-badge-delay:0.35s}</style>') && str_contains(omochix_learn_gallery_preview_document($plainItem), '<style id="omx-params"></style>'));
+check('doc: no placeholder left unfilled', !preg_match('/\{\{[a-z_]+\}\}/', $doc) && !preg_match('/\{\{[a-z_]+\}\}/', $jsDoc));
 $template = omochix_learn_gallery_preview_template();
-check('template: carries every placeholder exactly once', !array_filter(['{{stage_w}}', '{{stage_h}}', '{{title}}', '{{runtime_css}}', '{{css}}', '{{html}}', '{{runtime_js}}', '{{js}}'], static fn($p) => 1 !== substr_count($template, $p)));
-check('template: assembling it like the browser does reproduces the PHP document', strtr($template, ['{{stage_w}}' => '320', '{{stage_h}}' => '180', '{{title}}' => esc_html($item['name']['ja']), '{{runtime_css}}' => omochix_learn_gallery_runtime('css'), '{{css}}' => $item['preview']['css'], '{{html}}' => $item['preview']['html'], '{{runtime_js}}' => omochix_learn_gallery_runtime('js'), '{{js}}' => '']) === $doc);
+check('template: carries every placeholder exactly once', !array_filter(['{{stage_w}}', '{{stage_h}}', '{{title}}', '{{runtime_css}}', '{{params_css}}', '{{css}}', '{{html}}', '{{runtime_js}}', '{{params_js}}', '{{js}}'], static fn($p) => 1 !== substr_count($template, $p)));
+$blocks = omochix_learn_gallery_params_blocks($item, omochix_learn_gallery_sanitize_params($item));
+check('template: assembling it like the browser does reproduces the PHP document', strtr($template, ['{{stage_w}}' => '320', '{{stage_h}}' => '180', '{{title}}' => esc_html($item['name']['ja']), '{{runtime_css}}' => omochix_learn_gallery_runtime('css'), '{{params_css}}' => $blocks['css'], '{{css}}' => $item['preview']['css'], '{{html}}' => $item['preview']['html'], '{{runtime_js}}' => omochix_learn_gallery_runtime('js'), '{{params_js}}' => '', '{{js}}' => '']) === $doc);
+
+// ------------------------------------------------------------- playground
+check('params: normalized definitions for the three prototypes', ['cycle', 'overshoot', 'color', 'badge_delay'] === array_column($item['params'], 'key') && ['target', 'duration', 'easing', 'size'] === array_column($jsItem['params'], 'key') && 5 === count(omochix_learn_gallery_get_item('gradient-shift')['params']));
+check('params: every range reaches max and default from min in whole steps (native <input type=range> snaps the same way)', [] === array_filter(array_merge(...array_map(static fn($i) => array_map(static fn($d) => [$i['slug'], $d], $i['params']), array_values(omochix_learn_gallery_get_items()))), static function ($pair) { $d = $pair[1]; if ('range' !== $d['type']) { return false; } $n = ($d['max'] - $d['min']) / $d['step']; $m = ($d['default'] - $d['min']) / $d['step']; return abs($n - round($n)) > 1e-6 || abs($m - round($m)) > 1e-6; }));
+check('params: every shipped sample is adjustable with 3 to 5 controls', [] === array_filter(omochix_learn_gallery_get_items(), static fn($i) => count($i['params']) < 3 || count($i['params']) > 5) && 20 === count(array_filter(omochix_learn_gallery_get_items(), static fn($i) => [] !== $i['params'])));
+// Defaults preserve the shipped look: every var(--p-x, fallback) in a sample's CSS
+// must fall back to the default's own value (or to a theme variable for colours).
+$fallbackIssues = [];
+foreach (omochix_learn_gallery_get_items() as $fbSlug => $fbItem) {
+    foreach ($fbItem['params'] as $def) {
+        if ('js' === $def['target']) { continue; }
+        $css = $fbItem['preview']['css'];
+        $pos = 0;
+        $seen = 0;
+        while (false !== ($at = strpos($css, 'var(' . $def['css_var'], $pos))) {
+            $pos = $at + 4;
+            $depth = 1; $i = $at + 4; $start = null;
+            for (; $i < strlen($css) && $depth > 0; $i++) {
+                $ch = $css[$i];
+                if ('(' === $ch) { $depth++; }
+                elseif (')' === $ch) { $depth--; }
+                elseif (',' === $ch && 1 === $depth && null === $start) { $start = $i + 1; }
+            }
+            $seen++;
+            $fallback = null === $start ? '' : substr($css, $start, $i - 1 - $start);
+            if ('color' === $def['type']) { $ok = $fallback === $def['default'] || str_starts_with($fallback, 'var(--'); }
+            elseif ('select' === $def['type']) { $ok = $fallback === array_values(array_filter($def['options'], static fn($o) => $o['value'] === $def['default']))[0]['css']; }
+            else { $ok = '' !== $fallback && (float) $fallback === (float) $def['default'] && ($def['unit'] === preg_replace('/^[0-9.-]+/', '', $fallback)); }
+            if (!$ok) { $fallbackIssues[] = "$fbSlug {$def['css_var']}: '$fallback'"; }
+        }
+        if (0 === $seen) { $fallbackIssues[] = "$fbSlug {$def['css_var']}: never read"; }
+    }
+}
+check('params: every var(--p-x, fallback) in sample CSS falls back to the default value' . ($fallbackIssues ? ' [' . implode('; ', $fallbackIssues) . ']' : ''), [] === $fallbackIssues);
+check('params: every default equals the shipped look (sanitize of nothing = defaults)', ['cycle' => 2.4, 'overshoot' => 'soft', 'color' => '#6e4bff', 'badge_delay' => 0.25] === omochix_learn_gallery_sanitize_params($item));
+$s = omochix_learn_gallery_sanitize_params($item, ['cycle' => '99', 'overshoot' => 'huge', 'color' => 'FF0000', 'badge_delay' => 0.33, 'unknown' => 'x']);
+check('params: sanitize clamps, snaps to step, accepts bare hex, rejects unknown option and drops unknown keys', ['cycle' => 4.0, 'overshoot' => 'soft', 'color' => '#ff0000', 'badge_delay' => 0.35] === $s);
+check('params: sanitize rejects garbage', ['cycle' => 2.4, 'overshoot' => 'soft', 'color' => '#6e4bff', 'badge_delay' => 0.0] === omochix_learn_gallery_sanitize_params($item, ['cycle' => 'abc', 'color' => 'red', 'badge_delay' => -5]));
+check('params: blocks are compact, deterministic and omit values equal to the default', ':root{--p-cycle:4s;--p-color:#ff0000;--p-badge-delay:0.35s}' === omochix_learn_gallery_params_blocks($item, $s)['css'] && '' === omochix_learn_gallery_params_blocks($item, $s)['js'] && '' === omochix_learn_gallery_params_blocks($item, omochix_learn_gallery_sanitize_params($item))['css']);
+check('params: js blocks only for js targets, css block only for changed css params', 'window.omxParams={"target":500,"duration":1,"easing":"linear"};' === omochix_learn_gallery_params_blocks($jsItem, omochix_learn_gallery_sanitize_params($jsItem, ['target' => 512, 'duration' => 0.5, 'easing' => 'linear']))['js'] && '' === omochix_learn_gallery_params_blocks($jsItem, omochix_learn_gallery_sanitize_params($jsItem))['css'] && ':root{--p-size:72px}' === omochix_learn_gallery_params_blocks($jsItem, omochix_learn_gallery_sanitize_params($jsItem, ['size' => 72]))['css']);
+check('params: number formatting has no trailing zeros', '0.25' === omochix_learn_gallery_format_number(0.25) && '400' === omochix_learn_gallery_format_number(400.0) && '0' === omochix_learn_gallery_format_number(0.00001));
+check('params: code with values differs from the default code only by the inserted :root block', preg_replace('/<style>\n/', "<style>\n:root{--p-cycle:4s;--p-color:#ff0000;--p-badge-delay:0.35s}\n", $code, 1) === omochix_learn_gallery_code_text($item, 'https://example.test/x/', $s));
+check('params: preview document with values carries the same :root block as the code', str_contains(omochix_learn_gallery_preview_document($item, null, $s), '<style id="omx-params">:root{--p-cycle:4s;'));
+$ptext = omochix_learn_gallery_prompt_text($item, '', $s);
+check('params: prompt lists adjusted values with labels, units and （既定） markers', str_contains($ptext, "調整した値:\n- 登場から退場までの1周期は4s\n- 行き過ぎ（オーバーシュート）は「少し」（既定）\n- アイコンの色: #ff0000\n- バッジは0.35s遅らせて出す\n") && !str_contains(omochix_learn_gallery_prompt_text($plainItem), '調整した値'));
+check('params: prompt with defaults marks every line as 既定', 4 === substr_count(omochix_learn_gallery_prompt_text($item), '（既定）'));
+$pj = json_decode(omochix_learn_gallery_client_json(['pop-in' => $item, 'fade-up' => $plainItem]), true);
+check('client json: params and copy templates only for adjustable samples', 4 === count($pj['items']['pop-in']['params']) && str_contains($pj['items']['pop-in']['codeTemplate'], '{{params_css}}') && str_contains($pj['items']['pop-in']['promptTemplate'], '{{params_text}}') && [] === $pj['items']['fade-up']['params'] && !isset($pj['items']['fade-up']['codeTemplate']));
+check('template: preview template exposes the params slots', str_contains($pj['template'], '<style id="omx-params">{{params_css}}</style>') && str_contains($pj['template'], '{{params_js}}{{js}}'));
+// Validator: every rule the schema states.
+$pv = static function (array $params, $css = 'x{a:var(--p-a) var(--p-b)}') { return omochix_learn_gallery_validate_params($params, ['css' => $css]); };
+$good = ['key' => 'a', 'label' => 'A', 'type' => 'range', 'min' => 0, 'max' => 10, 'step' => 1, 'default' => 5, 'unit' => 'px', 'css_var' => '--p-a'];
+check('validate params: a valid range passes', [] === $pv([$good]));
+check('validate params: bad key', has_error($pv([['key' => 'Bad'] + $good]), 'invalid key'));
+check('validate params: duplicate key', has_error($pv([$good, $good]), 'duplicate key'));
+check('validate params: min >= max', has_error($pv([['min' => 10] + $good]), 'min must be below max'));
+check('validate params: default outside range', has_error($pv([['default' => 11] + $good]), 'within min..max'));
+check('validate params: step must be positive', has_error($pv([['step' => 0] + $good]), 'step must be positive'));
+check('validate params: css_var pattern', has_error($pv([['css_var' => '--x'] + $good]), 'css_var must match'));
+check('validate params: css_var must be read by the preview css', has_error($pv([['css_var' => '--p-zzz'] + $good]), 'never reads var(--p-zzz)'));
+check('validate params: js target must not declare css_var', has_error($pv([['target' => 'js'] + $good]), 'must not declare css_var'));
+check('validate params: unsupported unit', has_error($pv([['unit' => 'pt'] + $good]), 'unsupported unit'));
+check('validate params: color default must be hex', has_error($pv([['key' => 'c', 'label' => 'C', 'type' => 'color', 'default' => 'red', 'css_var' => '--p-b']]), '#rrggbb'));
+check('validate params: select needs options with plain css and a default among them', has_error($pv([['key' => 'c', 'label' => 'C', 'type' => 'select', 'options' => [['value' => 'a', 'label' => 'A', 'css' => 'url(x)'], ['value' => 'b', 'label' => 'B', 'css' => 'ease']], 'default' => 'zz', 'css_var' => '--p-b']]), 'css must be a plain CSS value') && has_error($pv([['key' => 'c', 'label' => 'C', 'type' => 'select', 'options' => [['value' => 'a', 'label' => 'A', 'css' => 'ease'], ['value' => 'b', 'label' => 'B', 'css' => 'linear']], 'default' => 'zz', 'css_var' => '--p-b']]), 'default must be one of'));
+check('validate params: text type is not accepted', has_error($pv([['key' => 't', 'label' => 'T', 'type' => 'text', 'default' => 'x']]), 'type must be one of'));
+check('validate params: at most 8', has_error($pv(array_map(static fn($i) => ['key' => 'k' . $i, 'css_var' => '--p-a'] + $good, range(1, 9))), 'at most 8'));
+check('validate params: prompt must contain {value}', has_error($pv([['prompt' => 'no placeholder'] + $good]), 'containing {value}'));
+check('validate catalog: shipped prototypes pass the full validator', [] === omochix_learn_gallery_validate_catalog(json_decode(file_get_contents(omochix_learn_gallery_catalog_file()), true)));
 check('doc: custom stage size', str_contains(omochix_learn_gallery_preview_document($item, ['width' => 640, 'height' => 360]), 'data-stage-w="640" data-stage-h="360"'));
 $evil = $item; $evil['name']['ja'] = '<x>&';
 check('doc: title is escaped', str_contains(omochix_learn_gallery_preview_document($evil), '<title>&lt;x&gt;&amp;</title>'));
 
 $json = omochix_learn_gallery_client_json(['pop-in' => $item, 'count-up' => $jsItem]);
 check('client json: decodes and carries fragments + label, runtime and template once', ($d = json_decode($json, true)) && isset($d['items']['pop-in']['html'], $d['items']['pop-in']['css'], $d['items']['pop-in']['title']) && !isset($d['items']['pop-in']['doc']) && 'ポップインのプレビュー' === $d['items']['pop-in']['label'] && 320 === $d['stage']['width'] && $d['template'] === omochix_learn_gallery_preview_template() && str_contains($d['runtime']['js'], 'omx:ready') && 1 === substr_count($json, 'omx:ready'));
-check('client json: two items cost far less than two full documents', strlen($json) < strlen(omochix_learn_gallery_preview_document($item)) + strlen(omochix_learn_gallery_preview_document($jsItem)));
+check('client json: runtime appears once even with several items', 1 === substr_count(omochix_learn_gallery_client_json(['pop-in' => $item, 'count-up' => $jsItem, 'fade-up' => $plainItem]), 'omx:ready'));
 check('client json: no raw angle brackets (safe inside <script>)', !str_contains($json, '<') && !str_contains($json, '>'));
 check('client json: unicode kept readable', str_contains($json, 'ポップイン'));
 check('registry: stores by slug', isset(omochix_learn_gallery_registry($item)['pop-in']) && 1 === count(omochix_learn_gallery_registry()));

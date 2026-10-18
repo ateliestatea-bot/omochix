@@ -93,7 +93,7 @@ function get_header() { global $post;
 }
 function get_footer() { echo '<footer class="site-footer" style="padding:40px 0;text-align:center;color:var(--color-muted);font-size:12px">preview footer</footer>';
     do_action_stub('wp_footer');
-    echo '<script src="/wp-theme/omochix-theme/assets/js/header.js"></script><script>window.omochixLearnGallery=' . json_encode(['listUrl' => omochix_learn_gallery_url(), 'partialParam' => 'omx_partial', 'strings' => ['play' => '再生', 'pause' => '一時停止', 'pauseAll' => 'すべて一時停止', 'playAll' => 'すべて再生', 'copied' => 'コピーしました', 'copyFailed' => 'コピーできませんでした', 'count' => '%s件の見本', 'noResults' => '条件に合う見本がありません', 'loadFailed' => '読み込めませんでした']], JSON_UNESCAPED_UNICODE) . ';</script><script src="/wp-theme/omochix-theme/assets/js/learn-gallery.js"></script></body></html>';
+    echo '<script src="/wp-theme/omochix-theme/assets/js/header.js"></script><script>window.omochixLearnGallery=' . json_encode(['listUrl' => omochix_learn_gallery_url(), 'partialParam' => 'omx_partial', 'strings' => ['play' => '再生', 'pause' => '一時停止', 'pauseAll' => 'すべて一時停止', 'playAll' => 'すべて再生', 'copied' => 'コピーしました', 'copyFailed' => 'コピーできませんでした', 'count' => '%s件の見本', 'noResults' => '条件に合う見本がありません', 'loadFailed' => '読み込めませんでした', 'linkCopied' => 'リンクをコピーしました', 'resetDone' => '既定の値に戻しました']], JSON_UNESCAPED_UNICODE) . ';</script><script src="/wp-theme/omochix-theme/assets/js/learn-params.js"></script><script src="/wp-theme/omochix-theme/assets/js/learn-gallery.js"></script><script src="/wp-theme/omochix-theme/assets/js/learn-playground.js"></script></body></html>';
 }
 
 // Local fixtures (not real content).

@@ -15,6 +15,12 @@
  *    <dialog>, with the URL pushed so Back closes it and the link can be
  *    shared. Any failure falls back to normal navigation.
  *  - Expanded preview dialog and copy buttons (prompt / code).
+ *
+ * Playground parameters live in two sibling files: learn-params.js (pure
+ * helpers, loaded first) and learn-playground.js (the "調整する" panel,
+ * loaded after this one). This file only carries a sample's current
+ * values into its preview documents and exposes window.omochixMotionGallery
+ * plus the "omx:motion:detail" event for the panel script.
  */
 (function () {
     'use strict';
@@ -94,33 +100,63 @@
         previews.forEach(apply);
     }
 
+    /* ------------------------------------------------------------------ */
+    /* Playground parameters                                               */
+    /* ------------------------------------------------------------------ */
+
+    // Shared helpers (learn-params.js, mirrored in inc/learn-gallery.php).
+    // Without them previews still render at their defaults: sample CSS uses
+    // var(--p-x, fallback) and JS samples read omx.param(key, fallback).
+    var paramsApi = window.omochixMotionParams || null;
+    var EMPTY_BLOCKS = { cssVars: {}, js: {}, css: '', jsBlock: '' };
+
+    /** The CSS / JS blocks for a sample at the given (or default) values. */
+    function blocksFor(data, values) {
+        if (!paramsApi || !data.params || !data.params.length) return EMPTY_BLOCKS;
+        return paramsApi.blocks(data.params, values || paramsApi.defaults(data.params));
+    }
+
+    function fillTemplate(template, map) {
+        return String(template).replace(/\{\{[a-z_]+\}\}/g, function (token) {
+            return Object.prototype.hasOwnProperty.call(map, token) ? map[token] : token;
+        });
+    }
+
     /**
      * Assemble a sample's preview document from the shared template and
      * runtime (both sent once in the catalog JSON) plus the sample's own
-     * fragment. Mirrors omochix_learn_gallery_preview_document() in PHP.
+     * fragment and parameter values. Mirrors
+     * omochix_learn_gallery_preview_document() in PHP.
      */
-    function buildDoc(data) {
+    function buildDoc(data, values) {
         if (data.doc) return data.doc;
         if (!catalog.template || !catalog.runtime) return '';
-        var values = {
+        var blocks = blocksFor(data, values);
+        return fillTemplate(catalog.template, {
             '{{stage_w}}': String(catalog.stage.width),
             '{{stage_h}}': String(catalog.stage.height),
             '{{title}}': data.title || '',
             '{{runtime_css}}': catalog.runtime.css || '',
+            '{{params_css}}': blocks.css,
             '{{css}}': data.css || '',
             '{{html}}': data.html || '',
             '{{runtime_js}}': catalog.runtime.js || '',
+            '{{params_js}}': blocks.jsBlock ? '<script>' + blocks.jsBlock + '</script>' : '',
             '{{js}}': data.js ? '<script>' + data.js + '</script>' : ''
-        };
-        return catalog.template.replace(/\{\{[a-z_]+\}\}/g, function (token) {
-            return Object.prototype.hasOwnProperty.call(values, token) ? values[token] : token;
         });
+    }
+
+    function sendParams(preview) {
+        var data = catalog.items[preview.slug];
+        if (!data || !data.params || !data.params.length || !preview.ready) return;
+        var blocks = blocksFor(data, preview.params);
+        send(preview, { type: 'omx:params', cssVars: blocks.cssVars, js: blocks.js });
     }
 
     function mount(preview) {
         if (preview.mounted || !preview.frame) return;
         var data = catalog.items[preview.slug];
-        var doc = data ? buildDoc(data) : '';
+        var doc = data ? buildDoc(data, preview.params) : '';
         if (!doc) return;
         var iframe = document.createElement('iframe');
         iframe.className = 'motion-preview__iframe';
@@ -211,6 +247,7 @@
                 preview.ready = true;
                 preview.playing = !!data.playing;
                 send(preview, { type: 'omx:theme', theme: currentTheme() });
+                if (preview.params) sendParams(preview);
                 apply(preview);
                 return;
             }
@@ -385,17 +422,21 @@
                     dialog.showModal();
                 }
                 dialog.scrollTop = 0;
-                registerWithin(dialogBody);
-                refreshAll();
                 if (push) {
                     // One history entry per dialog session: moving between
                     // samples inside the open dialog replaces it, so Back
                     // (or Escape) always returns to the list in one step.
+                    // Done before the panel binds: the playground reads the
+                    // URL hash (#p=…) and must not inherit the previous
+                    // sample's values.
                     var state = { omxDialog: true, url: url };
                     if (wasOpen && dialogPushed) window.history.replaceState(state, '', url);
                     else window.history.pushState(state, '', url);
                     dialogPushed = true;
                 }
+                registerWithin(dialogBody);
+                announceDetail(dialogBody);
+                refreshAll();
                 var heading = dialogBody.querySelector('.motion-detail__title');
                 if (heading) { heading.tabIndex = -1; heading.focus(); }
             })
@@ -467,6 +508,7 @@
         expand.showModal();
         var expanded = register(clone);
         expanded.user = preview.user;
+        expanded.params = preview.params; // keep the viewer's adjustments in the big view
         refreshAll();
         var toggle = clone.querySelector('[data-motion-toggle]');
         if (toggle) toggle.focus();
@@ -515,15 +557,16 @@
     }
 
     function flash(button, label, ok) {
-        if (!button.dataset.omxLabel) button.dataset.omxLabel = button.textContent;
-        button.textContent = label;
+        var text = button.querySelector('[data-omx-label]') || button; // keep sibling spans such as "（調整済み）"
+        if (!button.dataset.omxLabel) button.dataset.omxLabel = text.textContent;
+        text.textContent = label;
         button.classList.toggle('is-done', ok);
         var scope = button.closest('.motion-panel') || button.closest('[data-motion-detail]');
         var live = scope ? scope.querySelector('[data-omx-copy-status]') : null;
         if (live) live.textContent = label;
         window.clearTimeout(button.omxTimer);
         button.omxTimer = window.setTimeout(function () {
-            button.textContent = button.dataset.omxLabel;
+            text.textContent = button.dataset.omxLabel;
             button.classList.remove('is-done');
         }, 2000);
     }
@@ -539,6 +582,38 @@
             flash(button, strings.copyFailed || 'Copy failed', false);
         });
     });
+
+    /* ------------------------------------------------------------------ */
+    /* Hooks for learn-playground.js                                       */
+    /* ------------------------------------------------------------------ */
+
+    /** Live previews of one sample (list card, detail, dialog, expanded view). */
+    function previewsOf(slug) {
+        return previews.filter(function (preview) { return preview.slug === slug; });
+    }
+
+    /** Tell the panel script that a detail fragment was rendered into `container`. */
+    function announceDetail(container) {
+        var event;
+        try {
+            event = new window.CustomEvent('omx:motion:detail', { detail: { container: container } });
+        } catch (error) {
+            event = document.createEvent('CustomEvent');
+            event.initCustomEvent('omx:motion:detail', false, false, { container: container });
+        }
+        document.dispatchEvent(event);
+    }
+
+    window.omochixMotionGallery = {
+        catalog: catalog,
+        strings: strings,
+        expand: expand,
+        previewsOf: previewsOf,
+        mount: mount,
+        sendParams: sendParams,
+        copyText: copyText,
+        flash: flash
+    };
 
     /* ------------------------------------------------------------------ */
 

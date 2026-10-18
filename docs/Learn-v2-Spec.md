@@ -179,6 +179,88 @@ Learnを「読む学習ページ＋プロンプト集」から、**見て・試�
 
 Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細の関連見本5件の再生とリンク、関連のないPromptではセクション・アセットとも出ないこと、詳細ページの見出し列 `h1 h2 h3 h3 h2 h2`、ダイアログ断片 `h2 h3 h4 h4 h3 h3`、BreadcrumbList 4階層、`debug.log` にエラーなし。
 
+## 8.3 Phase 2B — Interactive Playground 試作（2026年10月18日、`feature/learn-playground-v1`）
+
+見本の詳細（単体ページとダイアログの両方）に「調整する」パネルを追加し、パラメータを変えるとプレビュー・「コードをコピー」・「プロンプトをコピー」の内容がその場で更新されます。クライアントサイドだけで完結し、DB・URL構造・omochix-core は変更しません。
+
+| 要素 | 実装 |
+|---|---|
+| データ | `playground.params[]` を正式化（`catalog.schema.json`）。型は `range` / `color` / `select` の3種（`text` は不採用）。`css_var`（`--p-*`）か `target: "js"` のどちらかに束縛し、既定値は従来の見た目と同じ。PHP の `omochix_learn_gallery_validate_params()` が key 一意・範囲整合・css_var 命名・プレビューCSSでの参照・select の CSS 値（`url(` 等は不可）を検証 |
+| 値の正規化 | `omochix_learn_gallery_sanitize_params()`（PHP）と `sanitizeParams()`（JS）が同じ規則：range はクランプ＋step に丸め、color は `#rrggbb` のみ、select は許可値のみ、未知キーは破棄 |
+| 生成ブロック | `omochix_learn_gallery_params_blocks()` / `paramBlocks()` が `:root{--p-a:…;--p-b:…}` と `window.omxParams={…};` を決定的な書式で生成。プレビュー文書テンプレートに `{{params_css}}`（`<style id="omx-params">`）と `{{params_js}}` を追加し、コピー用コードのテンプレート（`{{params_css}}` / `{{params_js}}`）とプロンプトのテンプレート（`{{params_text}}`）も PHP が定義して JSON で渡す。**プレビューと生成コードは同じブロックを同じテンプレートに差し込むため定義上一致** |
+| iframe ランタイム | `omx:params` メッセージで `#omx-params` の内容を書き換え（親から来た値も名前・値の文法を再検証、`url(` 拒否）、`window.omxParams` を更新して `omx.onParams()` のリスナーを呼ぶ。見本側 API は `omx.param(key, fallback)` / `omx.onParams(fn)`。コピー用 shim も同じ API を提供 |
+| UI | `template-parts/learn-gallery/playground.php`（ネイティブ range / color / select、`<output>` の現在値、既定に戻す、調整状態のリンクをコピー）。変更中は詳細記事に `is-modified` が付き、コピーボタンに「（調整済み）」を表示。状態は URL ハッシュ `#p=key:value,…` に `replaceState` で保持（クロール対象URLを増やさない）。`hashchange` にも追従し、拡大表示には現在値を引き継ぐ |
+| 試作3件 | 001 ポップイン（1回の長さ・行き過ぎ・アイコン色・バッジの遅れ）、006 カウントアップ（目標値・長さ・進み方＝JS、数字の大きさ＝CSS）、017 流れるグラデーション（色×3・往復の長さ・角度） |
+| テスト | `tests/learn-gallery/run.php` 126件（検証器の各規則、正規化、ブロック書式、PHP/JS テンプレート整合、コピー文の差分が `:root` ブロックだけであること、クライアントJSON） |
+
+確認済み（スタブサーバー）：値変更がプレビューに反映（アイコン色・周期、カウントアップの目標値と文字サイズ）、ハッシュからの復元、既定に戻す、ダイアログ内のパネル、他の見本（17件）にはパネルが出ないこと。残課題：`learn-gallery.js` が 830 行を超えたため 2C で `learn-playground.js` への分割を検討、reduced-motion 時の挙動（値変更後も自動再生しない）の実機確認、スマホでの color 入力の使い勝手。
+
+### 8.3.1 Phase 2C — 磨き込み・共有リンク・JS分割（2026年10月18日）
+
+| 項目 | 内容 |
+|---|---|
+| JS分割 | `assets/js/learn-params.js`（純粋関数：正規化・ブロック生成・ハッシュ直列化・テンプレート充填。DOM に触れず Node からも読める）→ `learn-gallery.js`（プレビュー・フィルタ・ダイアログ・コピー、618行）→ `learn-playground.js`（「調整する」パネル）の順に `wp_enqueue_script` の依存で読み込む。gallery は `window.omochixMotionGallery`（`catalog` / `previewsOf(slug)` / `mount` / `sendParams` / `copyText` / `flash` / `expand`）を公開し、ダイアログに詳細を描画したあと `document` に `omx:motion:detail` イベント（`detail.container`）を送る。params ファイルが読めなくてもプレビューは既定値で描画される（CSS の `var(--p-x, 既定)` と `omx.param(key, 既定)` のフォールバック） |
+| 一覧カード | 調整できる見本に「調整できる」バッジ（`.motion-card__adjustable`）。※ 2D で全見本が調整できるようになったため撤去 |
+| 詳細レイアウト | 調整できる見本だけ `.motion-detail__studio` で囲み、1024px 以上ではプレビュー＋説明（`.motion-detail__stage`）とパネルを 3:2 の2カラムに並べる。※ 当初 stage を sticky にしたが、2E の実機確認で両カラムの高さがほぼ同じで sticky が効かない（効く余地がない）と分かり撤去。調整できない見本の DOM は変更なし |
+| 「（調整済み）」 | CSS の `::after` をやめ、コピーボタン内の `<span data-omx-modified hidden>` を JS で表示切替（`flash()` はボタン内の `[data-omx-label]` だけを書き換える）。range には `aria-valuetext`（例「1.5s」）、既定に戻すとパネルのライブリージョンに「既定の値に戻しました」 |
+| 共有リンク | `[data-motion-detail]` の `data-url`（見本の正規URL）＋ `#p=…` を組み立てる（一覧URLや `?omx_partial` を含めない）。`navigator.share` がある端末は共有シート、キャンセル（AbortError）は無視、失敗時や非対応はクリップボードへコピーして「リンクをコピーしました」 |
+| テスト | WordPress スタブを `tests/learn-gallery/stub.php` に共通化。`node tests/learn-gallery/params-parity.js` が `params-fixture.php`（PHP 側の正規化・ブロック・プロンプト行・コピー用コード/プロンプト全文）と `learn-params.js` の出力を 3見本 × 11ケース（範囲外・文字列・空・余計なキー・`url(` など）で全比較し、ハッシュの往復も確認（264件） |
+
+確認済み（スタブサーバー、1280px と 375px）：ページとダイアログでパネルが束縛される（イベント経由）、2カラム／sticky、スマホでは縦積みで横スクロールなし、共有URLが正規URL＋ハッシュ、拡大表示に値を引き継ぐ、ダイアログを閉じると一覧URLに戻る、コンソールエラーなし。既知の制約：共有リンクのハッシュはサーバーに届かないため、OGP 画像や初期HTMLは既定の見た目のまま（JS 実行後に調整値が反映される）。
+
+### 8.3.2 Phase 2D — 全20見本にパラメータを展開（2026年10月18日）
+
+**2D-0 既定値の省略**：`omochix_learn_gallery_params_blocks()` と `learn-params.js` の `blocks()` は、既定値と同じパラメータを `:root{…}` / `window.omxParams` に書かない。見本の CSS は `var(--p-x, 既定)`、JS 見本は `omx.param(key, 既定)` で既定を持つので、触っていない見本は Phase 1 と同じ見た目（ダークテーマの `--primary` 等もそのまま）になり、コピーするコードには変えた値だけが入る。プロンプトの「調整した値」一覧は従来どおり全件を（既定）付きで出す。iframe ランタイムは `omx:params` のたびに `window.omxParams` を丸ごと置き換える（既定に戻した値は消える）。
+
+**命名の統一**：`cycle`（1周期・片道の長さ）、`ease`（動き方：なめらか／やわらか／弾む など見本ごとの3択）、`distance`（移動量）、`stagger`（ずらし）、`color`（主色）、`size`（文字の大きさ）。倍率は単位なし（`press` 0.95 など）。色の既定はライトテーマの値（`#6e4bff` / `#2563eb` / `#d97706`）で、フォールバックはテーマ変数。
+
+| # | 見本 | パラメータ |
+|---|---|---|
+| 002 | フェードアップ | cycle, distance, ease |
+| 003 | スタガー | stagger, cycle, color, ease |
+| 004 | マスクリビール | cycle, color, bar（バーの太さ） |
+| 005 | タイプライター | cycle, blink（点滅）, color, size |
+| 007 | マーカー線 | color, thick（太さ %）, cycle, ease ※ `color-mix()` で透明度を保つ |
+| 008 | ワードスワップ | cycle, color, size, ease |
+| 009 | トグルスイッチ | cycle, color（ON）, bounce |
+| 010 | ボタンの押し込み | press（倍率）, ripple（倍率）, color, cycle |
+| 011 | トースト通知 | cycle, distance, color（アイコン）, ease |
+| 012 | スケルトン | shine（光の速さ）, cycle, glow（光の強さ） |
+| 013 | スクロールでフェードイン | distance, stagger, cycle, ease |
+| 014 | 追従ヘッダー | cycle, compact（縮んだ高さ）, shadow, color |
+| 015 | 読了プログレスバー | color, thick, cycle |
+| 016 | パララックス | cycle, depth（倍率）, sun, near |
+| 018 | ふわふわブロブ | cycle（+1s/+2s で3つをずらす）, blur, c1, c2, c3 |
+| 019 | ライトスイープ | cycle, glow, band（帯の幅 %）, angle, color（バッジ） |
+| 020 | パーティクル | count / speed / size（JS、`omx.onParams` で粒を作り直す）, color（CSS の `color` を canvas が読む） |
+
+合計 65 パラメータ（3件の試作と合わせて 78）。カタログは手書き整形を保つため文字列置換スクリプトで編集した（差分は各見本の `preview.css`（particles は `js` も）と `playground` の行だけ）。全見本が調整できるようになったので、2C で付けたカードの「調整できる」バッジは外し、ギャラリーのリード文（抜粋未設定時の既定文）に一言足した。
+
+**テスト**：`run.php` に「全20見本が 3〜5 個のパラメータを持つ」「CSS の `var(--p-x, fallback)` のフォールバックが既定値と一致する（色はテーマ変数も可）」を追加（131件）。parity テストは 20見本 × 11ケース＝1760件。
+
+### 8.3.3 Phase 2E — Local 複製環境での実機確認（2026年10月18日）
+
+環境：Local の `omochix-learn-v2`（複製サイト、WP_DEBUG 有効）。テーマ symlink だけを `~/Documents/omochix-playground-v1/wp-theme/omochix-theme`（`feature/learn-playground-v1`、テーマ 1.20.0 ベース）に向け替え、プラグイン側は変更なし。symlink 切り替え直後は PHP opcache が旧パス解決を保持して `inc/learn-gallery.php` だけが古いまま配信されたため、サイトを停止→起動して解消（`opcache.revalidate_path` 既定値の挙動。本番の symlink デプロイでも同じ注意が要る）。
+
+| 観点 | 結果 |
+|---|---|
+| 到達・PHP | `/learn/motion/`、各詳細、`?omx_partial=1`（`X-Robots-Tag: noindex`）、`/learn/`、`?cat=ui`、`/prompts/` がすべて 200、PHP notice / deprecated なし。スクリプトは params → gallery → playground の順で ver=1.20.0 |
+| 一覧 | 20件、バッジなし。リード文は複製側の固定ページに抜粋が設定されているため抜粋（旧既定文）が出る＝仕様どおり |
+| ダイアログ | カードから開いてパネルが束縛される。値変更でプレビュー srcdoc / コード / プロンプト / ハッシュ / 「（調整済み）」が更新、拡大表示に値を引き継ぐ、Esc で閉じると一覧URLに戻りカードにフォーカスが戻る |
+| 単体ページ | 1280px で 3:2 の2カラム（571px / 381px）、375px では縦積みで横スクロールなし。`#p=…` 付きURLの直接オープンで入力・srcdoc・コードが復元 |
+| 2D-0 | ダークテーマで既定のままの pop-in が `#omx-params` 空のままテーマ色（`#9b84ff`）で描画される。変更した値だけが `:root{…}` に入る |
+| 20見本の総当たり | 各見本の全パラメータを端の値（range は max、color は `#ff0000`、select は最後の選択肢）にして、入力・srcdoc のブロック・コード・プロンプト（「（既定）」なし）・調整済み表示が一致。count-up の `target` は max 999999 が step 100 の格子に乗らず、ネイティブ range が 999900 に丸めて値がずれたため max を 1000000 に修正し、「(max−min)/step と (default−min)/step が整数」の検査を `run.php` に追加 |
+| キーボード | Tab 順：1回の長さ → 行き過ぎ → アイコンの色 → バッジの遅れ → 共有 → プロンプトをコピー。range の → キーで 0.1 ずつ増え、`aria-valuetext`・表示値・ハッシュが追従。既定に戻すは既定時 disabled |
+| 共有リンク | 正規URL＋ハッシュがクリップボード API に渡る（Local は http のため非セキュアコンテキスト→ `execCommand` 経路。Web Share は実機スマホ未確認） |
+| コンソール | テーマ由来のエラーなし（唯一の 404 は確認作業で `?s=1` を付けて検索ページを開いた際のもの） |
+| sticky | 2C で stage を sticky にしていたが、プレビュー列とパネル列の高さがほぼ同じで sticky が効く余地がなく撤去（表示に変化なし） |
+
+スクリーンショット：`docs/learn-v2-qa/phase2-gallery-list-1280-light.jpg`、`phase2-dialog-gradient-shift-1280-light.jpg`、`phase2-detail-pop-in-1280-dark.jpg`、`phase2-detail-toast-375-light.jpg`。
+
+**PR #25 レビュー後の修正**：(1) ダイアログ内で次／前の見本へ移るとき、履歴の push / replace をパネル束縛より前に行い、前の見本の `#p=` を引き継がないようにした。(2) パネルごとの `hashchange` リスナーは、パネルが文書から外れたら自分で解除する。(3) `#p=` 以外のアンカー（例 `#motion-pop-in-code`）は既定値のままでは消さない（値を変えると `#p=` に置き換わる）。(4) マーカー線は `color-mix()` 非対応ブラウザ向けに従来の `rgba()` 版 `background` を先に置き、既定の見た目を保つ（その環境では色の調整だけ効かない）。
+
+未確認：prefers-reduced-motion での挙動（Local では OS 設定の切り替えが必要。ランタイムは値変更で再生状態を変えないので設計上は変わらない）、実機スマホでの Web Share シートと `input type="color"` の使い勝手、Lighthouse。確認作業上の注意：パネルの描画は `requestAnimationFrame` でまとめているため、バックグラウンドのタブでは入力イベントだけでは更新されない（ユーザー操作では起きない）。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。
