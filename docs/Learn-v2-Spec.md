@@ -201,7 +201,7 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 |---|---|
 | JS分割 | `assets/js/learn-params.js`（純粋関数：正規化・ブロック生成・ハッシュ直列化・テンプレート充填。DOM に触れず Node からも読める）→ `learn-gallery.js`（プレビュー・フィルタ・ダイアログ・コピー、618行）→ `learn-playground.js`（「調整する」パネル）の順に `wp_enqueue_script` の依存で読み込む。gallery は `window.omochixMotionGallery`（`catalog` / `previewsOf(slug)` / `mount` / `sendParams` / `copyText` / `flash` / `expand`）を公開し、ダイアログに詳細を描画したあと `document` に `omx:motion:detail` イベント（`detail.container`）を送る。params ファイルが読めなくてもプレビューは既定値で描画される（CSS の `var(--p-x, 既定)` と `omx.param(key, 既定)` のフォールバック） |
 | 一覧カード | 調整できる見本に「調整できる」バッジ（`.motion-card__adjustable`）。※ 2D で全見本が調整できるようになったため撤去 |
-| 詳細レイアウト | 調整できる見本だけ `.motion-detail__studio` で囲み、1024px 以上ではプレビュー＋説明（`.motion-detail__stage`、sticky）とパネルを 3:2 の2カラムに並べる。ページでは `--shell-sticky-top`（shell）または `--header-height` を基準に、ダイアログ内は `top: 0`。調整できない見本の DOM は変更なし |
+| 詳細レイアウト | 調整できる見本だけ `.motion-detail__studio` で囲み、1024px 以上ではプレビュー＋説明（`.motion-detail__stage`）とパネルを 3:2 の2カラムに並べる。※ 当初 stage を sticky にしたが、2E の実機確認で両カラムの高さがほぼ同じで sticky が効かない（効く余地がない）と分かり撤去。調整できない見本の DOM は変更なし |
 | 「（調整済み）」 | CSS の `::after` をやめ、コピーボタン内の `<span data-omx-modified hidden>` を JS で表示切替（`flash()` はボタン内の `[data-omx-label]` だけを書き換える）。range には `aria-valuetext`（例「1.5s」）、既定に戻すとパネルのライブリージョンに「既定の値に戻しました」 |
 | 共有リンク | `[data-motion-detail]` の `data-url`（見本の正規URL）＋ `#p=…` を組み立てる（一覧URLや `?omx_partial` を含めない）。`navigator.share` がある端末は共有シート、キャンセル（AbortError）は無視、失敗時や非対応はクリップボードへコピーして「リンクをコピーしました」 |
 | テスト | WordPress スタブを `tests/learn-gallery/stub.php` に共通化。`node tests/learn-gallery/params-parity.js` が `params-fixture.php`（PHP 側の正規化・ブロック・プロンプト行・コピー用コード/プロンプト全文）と `learn-params.js` の出力を 3見本 × 11ケース（範囲外・文字列・空・余計なキー・`url(` など）で全比較し、ハッシュの往復も確認（264件） |
@@ -237,6 +237,27 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 合計 65 パラメータ（3件の試作と合わせて 78）。カタログは手書き整形を保つため文字列置換スクリプトで編集した（差分は各見本の `preview.css`（particles は `js` も）と `playground` の行だけ）。全見本が調整できるようになったので、2C で付けたカードの「調整できる」バッジは外し、ギャラリーのリード文（抜粋未設定時の既定文）に一言足した。
 
 **テスト**：`run.php` に「全20見本が 3〜5 個のパラメータを持つ」「CSS の `var(--p-x, fallback)` のフォールバックが既定値と一致する（色はテーマ変数も可）」を追加（131件）。parity テストは 20見本 × 11ケース＝1760件。
+
+### 8.3.3 Phase 2E — Local 複製環境での実機確認（2026年10月18日）
+
+環境：Local の `omochix-learn-v2`（複製サイト、WP_DEBUG 有効）。テーマ symlink だけを `~/Documents/omochix-playground-v1/wp-theme/omochix-theme`（`feature/learn-playground-v1`、テーマ 1.20.0 ベース）に向け替え、プラグイン側は変更なし。symlink 切り替え直後は PHP opcache が旧パス解決を保持して `inc/learn-gallery.php` だけが古いまま配信されたため、サイトを停止→起動して解消（`opcache.revalidate_path` 既定値の挙動。本番の symlink デプロイでも同じ注意が要る）。
+
+| 観点 | 結果 |
+|---|---|
+| 到達・PHP | `/learn/motion/`、各詳細、`?omx_partial=1`（`X-Robots-Tag: noindex`）、`/learn/`、`?cat=ui`、`/prompts/` がすべて 200、PHP notice / deprecated なし。スクリプトは params → gallery → playground の順で ver=1.20.0 |
+| 一覧 | 20件、バッジなし。リード文は複製側の固定ページに抜粋が設定されているため抜粋（旧既定文）が出る＝仕様どおり |
+| ダイアログ | カードから開いてパネルが束縛される。値変更でプレビュー srcdoc / コード / プロンプト / ハッシュ / 「（調整済み）」が更新、拡大表示に値を引き継ぐ、Esc で閉じると一覧URLに戻りカードにフォーカスが戻る |
+| 単体ページ | 1280px で 3:2 の2カラム（571px / 381px）、375px では縦積みで横スクロールなし。`#p=…` 付きURLの直接オープンで入力・srcdoc・コードが復元 |
+| 2D-0 | ダークテーマで既定のままの pop-in が `#omx-params` 空のままテーマ色（`#9b84ff`）で描画される。変更した値だけが `:root{…}` に入る |
+| 20見本の総当たり | 各見本の全パラメータを端の値（range は max、color は `#ff0000`、select は最後の選択肢）にして、入力・srcdoc のブロック・コード・プロンプト（「（既定）」なし）・調整済み表示が一致。count-up の `target` は max 999999 が step 100 の格子に乗らず、ネイティブ range が 999900 に丸めて値がずれたため max を 1000000 に修正し、「(max−min)/step と (default−min)/step が整数」の検査を `run.php` に追加 |
+| キーボード | Tab 順：1回の長さ → 行き過ぎ → アイコンの色 → バッジの遅れ → 共有 → プロンプトをコピー。range の → キーで 0.1 ずつ増え、`aria-valuetext`・表示値・ハッシュが追従。既定に戻すは既定時 disabled |
+| 共有リンク | 正規URL＋ハッシュがクリップボード API に渡る（Local は http のため非セキュアコンテキスト→ `execCommand` 経路。Web Share は実機スマホ未確認） |
+| コンソール | テーマ由来のエラーなし（唯一の 404 は確認作業で `?s=1` を付けて検索ページを開いた際のもの） |
+| sticky | 2C で stage を sticky にしていたが、プレビュー列とパネル列の高さがほぼ同じで sticky が効く余地がなく撤去（表示に変化なし） |
+
+スクリーンショット：`docs/learn-v2-qa/phase2-gallery-list-1280-light.jpg`、`phase2-dialog-gradient-shift-1280-light.jpg`、`phase2-detail-pop-in-1280-dark.jpg`、`phase2-detail-toast-375-light.jpg`。
+
+未確認：prefers-reduced-motion での挙動（Local では OS 設定の切り替えが必要。ランタイムは値変更で再生状態を変えないので設計上は変わらない）、実機スマホでの Web Share シートと `input type="color"` の使い勝手、Lighthouse。確認作業上の注意：パネルの描画は `requestAnimationFrame` でまとめているため、バックグラウンドのタブでは入力イベントだけでは更新されない（ユーザー操作では起きない）。
 
 ## 9. 未決定事項・運用上の注意
 

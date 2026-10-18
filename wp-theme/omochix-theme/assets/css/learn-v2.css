@@ -476,7 +476,8 @@ a.motion-chip--tag:hover { color: var(--color-text); }
 .motion-copy--ghost:hover { background: var(--color-hover); }
 /* Copy buttons announce that the adjusted version is what gets copied. */
 .motion-copy__state { font-weight: 500; }
-/* Adjustable sample: preview and panel side by side on wide screens (page and dialog). */
+/* Adjustable sample: preview and panel side by side on wide screens (page and dialog).
+   Both columns are about the same height, so no sticky positioning is needed to keep them in view together. */
 .motion-detail__studio { display: grid; gap: 0; align-items: start; margin-bottom: 32px; }
 .motion-detail__stage { min-width: 0; }
 .motion-detail__studio .motion-detail__description { margin-bottom: 24px; }
@@ -575,9 +576,6 @@ body.omx-shell .motion-badge:not(.motion-badge--intermediate):not(.motion-badge-
     .motion-grid, .learn-hub-v2__featured, .learn-hub-v2__prompts, .motion-related__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .motion-detail__layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .motion-detail__studio { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 28px; }
-    .motion-detail__stage { position: sticky; top: calc(var(--header-height, 72px) + 16px); }
-    body.omx-shell .motion-detail__stage { top: calc(var(--shell-sticky-top, var(--header-height, 72px)) + 16px); }
-    .motion-dialog .motion-detail__stage, body.omx-shell .motion-dialog .motion-detail__stage { top: 0; }
     .motion-filter__row { grid-template-columns: minmax(0, 1fr) 160px 160px auto auto auto; }
     .motion-filter__pause { grid-column: auto; }
 }

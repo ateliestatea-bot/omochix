@@ -149,6 +149,7 @@ check('template: assembling it like the browser does reproduces the PHP document
 
 // ------------------------------------------------------------- playground
 check('params: normalized definitions for the three prototypes', ['cycle', 'overshoot', 'color', 'badge_delay'] === array_column($item['params'], 'key') && ['target', 'duration', 'easing', 'size'] === array_column($jsItem['params'], 'key') && 5 === count(omochix_learn_gallery_get_item('gradient-shift')['params']));
+check('params: every range reaches max and default from min in whole steps (native <input type=range> snaps the same way)', [] === array_filter(array_merge(...array_map(static fn($i) => array_map(static fn($d) => [$i['slug'], $d], $i['params']), array_values(omochix_learn_gallery_get_items()))), static function ($pair) { $d = $pair[1]; if ('range' !== $d['type']) { return false; } $n = ($d['max'] - $d['min']) / $d['step']; $m = ($d['default'] - $d['min']) / $d['step']; return abs($n - round($n)) > 1e-6 || abs($m - round($m)) > 1e-6; }));
 check('params: every shipped sample is adjustable with 3 to 5 controls', [] === array_filter(omochix_learn_gallery_get_items(), static fn($i) => count($i['params']) < 3 || count($i['params']) > 5) && 20 === count(array_filter(omochix_learn_gallery_get_items(), static fn($i) => [] !== $i['params'])));
 // Defaults preserve the shipped look: every var(--p-x, fallback) in a sample's CSS
 // must fall back to the default's own value (or to a theme variable for colours).
