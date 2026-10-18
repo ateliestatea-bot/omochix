@@ -1294,7 +1294,11 @@ function omochix_learn_gallery_enqueue_assets() {
     // After shell.css when the shared shell is on this page, so the shell's token overrides win.
     $deps = wp_style_is('omochix-shell', 'enqueued') ? ['omochix-style', 'omochix-shell'] : ['omochix-style'];
     wp_enqueue_style('omochix-learn-v2', get_theme_file_uri('/assets/css/learn-v2.css'), $deps, (string) filemtime(get_theme_file_path('/assets/css/learn-v2.css')));
-    wp_enqueue_script('omochix-learn-gallery', get_theme_file_uri('/assets/js/learn-gallery.js'), [], $theme->get('Version'), true);
+    // Three scripts, in dependency order: parameter helpers (pure, shared with
+    // the tests), the gallery (previews, filters, dialog) and the playground panel.
+    wp_enqueue_script('omochix-learn-params', get_theme_file_uri('/assets/js/learn-params.js'), [], $theme->get('Version'), true);
+    wp_enqueue_script('omochix-learn-gallery', get_theme_file_uri('/assets/js/learn-gallery.js'), ['omochix-learn-params'], $theme->get('Version'), true);
+    wp_enqueue_script('omochix-learn-playground', get_theme_file_uri('/assets/js/learn-playground.js'), ['omochix-learn-gallery'], $theme->get('Version'), true);
     wp_add_inline_script('omochix-learn-gallery', 'window.omochixLearnGallery = ' . wp_json_encode([
         'listUrl' => omochix_learn_gallery_url(),
         'partialParam' => OMOCHIX_LEARN_GALLERY_PARTIAL_VAR,
@@ -1308,6 +1312,8 @@ function omochix_learn_gallery_enqueue_assets() {
             'count'       => __('%s件の見本', 'omochix'),
             'noResults'   => __('条件に合う見本がありません', 'omochix'),
             'loadFailed'  => __('読み込めませんでした。ページを開きます。', 'omochix'),
+            'linkCopied'  => __('リンクをコピーしました', 'omochix'),
+            'resetDone'   => __('既定の値に戻しました', 'omochix'),
         ],
     ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ';', 'before');
 }

@@ -15,6 +15,12 @@
  *    <dialog>, with the URL pushed so Back closes it and the link can be
  *    shared. Any failure falls back to normal navigation.
  *  - Expanded preview dialog and copy buttons (prompt / code).
+ *
+ * Playground parameters live in two sibling files: learn-params.js (pure
+ * helpers, loaded first) and learn-playground.js (the "調整する" panel,
+ * loaded after this one). This file only carries a sample's current
+ * values into its preview documents and exposes window.omochixMotionGallery
+ * plus the "omx:motion:detail" event for the panel script.
  */
 (function () {
     'use strict';
@@ -94,109 +100,20 @@
         previews.forEach(apply);
     }
 
-    /**
-     * Assemble a sample's preview document from the shared template and
-     * runtime (both sent once in the catalog JSON) plus the sample's own
-     * fragment. Mirrors omochix_learn_gallery_preview_document() in PHP.
-     */
     /* ------------------------------------------------------------------ */
-    /* Playground parameters (pure helpers, mirrored in inc/learn-gallery.php) */
+    /* Playground parameters                                               */
     /* ------------------------------------------------------------------ */
 
-    var COLOR_RE = /^#[0-9a-f]{6}$/i;
+    // Shared helpers (learn-params.js, mirrored in inc/learn-gallery.php).
+    // Without them previews still render at their defaults: sample CSS uses
+    // var(--p-x, fallback) and JS samples read omx.param(key, fallback).
+    var paramsApi = window.omochixMotionParams || null;
+    var EMPTY_BLOCKS = { cssVars: {}, js: {}, css: '', jsBlock: '' };
 
-    /** Number formatting shared with PHP: up to 4 decimals, no trailing zeros. */
-    function formatNumber(n) {
-        var s = (Math.round(Number(n) * 10000) / 10000).toFixed(4).replace(/\.?0+$/, '');
-        return s === '' || s === '-0' ? '0' : s;
-    }
-
-    function paramDefaults(defs) {
-        var values = {};
-        (defs || []).forEach(function (def) { values[def.key] = def['default']; });
-        return values;
-    }
-
-    /** Coerce raw values into valid ones: clamp/snap ranges, hex colours, allowed select values. */
-    function sanitizeParams(defs, raw) {
-        var values = {};
-        raw = raw || {};
-        (defs || []).forEach(function (def) {
-            var v = Object.prototype.hasOwnProperty.call(raw, def.key) ? raw[def.key] : null;
-            if (def.type === 'range') {
-                var n = typeof v === 'string' && v.trim() !== '' ? Number(v) : v;
-                if (typeof n !== 'number' || !isFinite(n)) n = def['default'];
-                n = Math.max(def.min, Math.min(def.max, n));
-                n = def.min + Math.round((n - def.min) / def.step) * def.step;
-                n = Math.max(def.min, Math.min(def.max, n));
-                values[def.key] = Number(formatNumber(n));
-            } else if (def.type === 'color') {
-                var c = typeof v === 'string' ? v.trim().toLowerCase() : '';
-                if (/^[0-9a-f]{6}$/.test(c)) c = '#' + c;
-                values[def.key] = COLOR_RE.test(c) ? c : def['default'];
-            } else {
-                var allowed = (def.options || []).map(function (o) { return o.value; });
-                values[def.key] = typeof v === 'string' && allowed.indexOf(v) > -1 ? v : def['default'];
-            }
-        });
-        return values;
-    }
-
-    function paramDisplay(def, v) {
-        if (def.type === 'range') return formatNumber(v) + (def.unit || '');
-        if (def.type === 'select') {
-            for (var i = 0; i < (def.options || []).length; i++) if (def.options[i].value === v) return def.options[i].label;
-        }
-        return String(v);
-    }
-
-    /** {cssVars:{'--p-x':'400ms'}, js:{target:12800}} plus the serialized blocks the templates take. */
-    function paramBlocks(defs, values) {
-        var cssVars = {};
-        var cssList = [];
-        var js = {};
-        var hasJs = false;
-        (defs || []).forEach(function (def) {
-            var v = Object.prototype.hasOwnProperty.call(values, def.key) ? values[def.key] : def['default'];
-            var cssValue = '';
-            var jsValue = v;
-            if (def.type === 'select') {
-                (def.options || []).forEach(function (o) { if (o.value === v) cssValue = o.css || ''; });
-            } else if (def.type === 'color') {
-                cssValue = v;
-            } else {
-                cssValue = formatNumber(v) + (def.unit || '');
-                jsValue = Number(formatNumber(v));
-            }
-            if (def.target === 'js') { js[def.key] = jsValue; hasJs = true; }
-            else if (cssValue !== '') { cssVars[def.css_var] = cssValue; cssList.push(def.css_var + ':' + cssValue); }
-        });
-        return {
-            cssVars: cssVars,
-            js: js,
-            css: cssList.length ? ':root{' + cssList.join(';') + '}' : '',
-            jsBlock: hasJs ? 'window.omxParams=' + JSON.stringify(js) + ';' : ''
-        };
-    }
-
-    function paramsText(defs, values) {
-        if (!defs || !defs.length) return '';
-        var lines = ['調整した値:'];
-        defs.forEach(function (def) {
-            var v = Object.prototype.hasOwnProperty.call(values, def.key) ? values[def.key] : def['default'];
-            var display = paramDisplay(def, v);
-            var line = def.prompt ? def.prompt.replace('{value}', display) : def.label + ': ' + display;
-            var same = def.type === 'range' ? Number(v) === Number(def['default']) : v === def['default'];
-            lines.push('- ' + line + (same ? '（既定）' : ''));
-        });
-        return lines.join('\n') + '\n';
-    }
-
-    function isDefault(defs, values) {
-        return (defs || []).every(function (def) {
-            var v = values[def.key];
-            return def.type === 'range' ? Number(v) === Number(def['default']) : v === def['default'];
-        });
+    /** The CSS / JS blocks for a sample at the given (or default) values. */
+    function blocksFor(data, values) {
+        if (!paramsApi || !data.params || !data.params.length) return EMPTY_BLOCKS;
+        return paramsApi.blocks(data.params, values || paramsApi.defaults(data.params));
     }
 
     function fillTemplate(template, map) {
@@ -211,10 +128,10 @@
      * fragment and parameter values. Mirrors
      * omochix_learn_gallery_preview_document() in PHP.
      */
-    function buildDoc(data, params) {
+    function buildDoc(data, values) {
         if (data.doc) return data.doc;
         if (!catalog.template || !catalog.runtime) return '';
-        var blocks = paramBlocks(data.params, params || paramDefaults(data.params));
+        var blocks = blocksFor(data, values);
         return fillTemplate(catalog.template, {
             '{{stage_w}}': String(catalog.stage.width),
             '{{stage_h}}': String(catalog.stage.height),
@@ -232,7 +149,7 @@
     function sendParams(preview) {
         var data = catalog.items[preview.slug];
         if (!data || !data.params || !data.params.length || !preview.ready) return;
-        var blocks = paramBlocks(data.params, preview.params || paramDefaults(data.params));
+        var blocks = blocksFor(data, preview.params);
         send(preview, { type: 'omx:params', cssVars: blocks.cssVars, js: blocks.js });
     }
 
@@ -506,7 +423,7 @@
                 }
                 dialog.scrollTop = 0;
                 registerWithin(dialogBody);
-                bindPlaygroundWithin(dialogBody);
+                announceDetail(dialogBody);
                 refreshAll();
                 if (push) {
                     // One history entry per dialog session: moving between
@@ -637,15 +554,16 @@
     }
 
     function flash(button, label, ok) {
-        if (!button.dataset.omxLabel) button.dataset.omxLabel = button.textContent;
-        button.textContent = label;
+        var text = button.querySelector('[data-omx-label]') || button; // keep sibling spans such as "（調整済み）"
+        if (!button.dataset.omxLabel) button.dataset.omxLabel = text.textContent;
+        text.textContent = label;
         button.classList.toggle('is-done', ok);
         var scope = button.closest('.motion-panel') || button.closest('[data-motion-detail]');
         var live = scope ? scope.querySelector('[data-omx-copy-status]') : null;
         if (live) live.textContent = label;
         window.clearTimeout(button.omxTimer);
         button.omxTimer = window.setTimeout(function () {
-            button.textContent = button.dataset.omxLabel;
+            text.textContent = button.dataset.omxLabel;
             button.classList.remove('is-done');
         }, 2000);
     }
@@ -663,169 +581,38 @@
     });
 
     /* ------------------------------------------------------------------ */
-    /* Playground panel                                                    */
+    /* Hooks for learn-playground.js                                       */
     /* ------------------------------------------------------------------ */
 
-    var HASH_KEY = 'p';
-
-    function readHashParams() {
-        var hash = window.location.hash.replace(/^#/, '');
-        if (!hash) return null;
-        var raw = null;
-        hash.split('&').forEach(function (part) {
-            var eq = part.indexOf('=');
-            if (eq < 0 || part.slice(0, eq) !== HASH_KEY) return;
-            raw = {};
-            decodeURIComponent(part.slice(eq + 1)).split(',').slice(0, 20).forEach(function (pair) {
-                var colon = pair.indexOf(':');
-                if (colon < 1) return;
-                var key = pair.slice(0, colon);
-                var value = pair.slice(colon + 1, colon + 65);
-                if (/^[a-z][a-z0-9_]{0,23}$/.test(key)) raw[key] = value;
-            });
-        });
-        return raw;
+    /** Live previews of one sample (list card, detail, dialog, expanded view). */
+    function previewsOf(slug) {
+        return previews.filter(function (preview) { return preview.slug === slug; });
     }
 
-    function writeHashParams(defs, values) {
-        var base = window.location.pathname + window.location.search;
-        if (isDefault(defs, values)) {
-            if (window.location.hash) window.history.replaceState(window.history.state, '', base);
-            return;
+    /** Tell the panel script that a detail fragment was rendered into `container`. */
+    function announceDetail(container) {
+        var event;
+        try {
+            event = new window.CustomEvent('omx:motion:detail', { detail: { container: container } });
+        } catch (error) {
+            event = document.createEvent('CustomEvent');
+            event.initCustomEvent('omx:motion:detail', false, false, { container: container });
         }
-        var pairs = defs.map(function (def) {
-            var v = values[def.key];
-            return def.key + ':' + (def.type === 'color' ? String(v).replace('#', '') : def.type === 'range' ? formatNumber(v) : v);
-        });
-        window.history.replaceState(window.history.state, '', base + '#' + HASH_KEY + '=' + pairs.join(','));
+        document.dispatchEvent(event);
     }
 
-    function bindPlayground(panel) {
-        var slug = panel.dataset.slug || '';
-        var data = catalog.items[slug];
-        var defs = data && data.params;
-        if (!defs || !defs.length) return;
-        var detail = panel.closest('[data-motion-detail]') || panel.parentNode;
-        var inputs = Array.prototype.slice.call(panel.querySelectorAll('[data-omx-param]'));
-        var outputs = {};
-        Array.prototype.forEach.call(panel.querySelectorAll('[data-omx-output]'), function (o) { outputs[o.dataset.omxOutput] = o; });
-        var resetButton = panel.querySelector('[data-omx-reset]');
-        var shareButton = panel.querySelector('[data-omx-share]');
-        var promptPre = document.getElementById('motion-' + slug + '-prompt-text');
-        var codePre = document.getElementById('motion-' + slug + '-code-text');
-        var frameId = 0;
-        var values = paramDefaults(defs);
-
-        function readInputs() {
-            var raw = {};
-            inputs.forEach(function (input) { raw[input.dataset.omxParam] = input.value; });
-            return sanitizeParams(defs, raw);
-        }
-
-        function writeInputs() {
-            inputs.forEach(function (input) {
-                var def = null;
-                defs.forEach(function (d) { if (d.key === input.dataset.omxParam) def = d; });
-                if (!def) return;
-                var v = values[def.key];
-                input.value = def.type === 'range' ? formatNumber(v) : String(v);
-            });
-        }
-
-        function previewsOfSample() {
-            return previews.filter(function (p) {
-                return p.slug === slug && (detail.contains(p.el) || (expand && expand.open && expand.contains(p.el)));
-            });
-        }
-
-        function render() {
-            var modified = !isDefault(defs, values);
-            defs.forEach(function (def) {
-                if (outputs[def.key]) outputs[def.key].textContent = paramDisplay(def, values[def.key]);
-            });
-            if (resetButton) resetButton.disabled = !modified;
-            if (shareButton) shareButton.hidden = !modified;
-            detail.classList.toggle('is-modified', modified);
-            previewsOfSample().forEach(function (preview) {
-                preview.params = values;
-                if (preview.ready) sendParams(preview);
-                else if (!preview.mounted && preview.inView) mount(preview);
-            });
-            var blocks = paramBlocks(defs, values);
-            if (codePre && data.codeTemplate) {
-                codePre.textContent = fillTemplate(data.codeTemplate, {
-                    '{{params_css}}': blocks.css ? blocks.css + '\n' : '',
-                    '{{params_js}}': blocks.jsBlock ? blocks.jsBlock + '\n' : ''
-                });
-            }
-            if (promptPre && data.promptTemplate) {
-                promptPre.textContent = fillTemplate(data.promptTemplate, { '{{params_text}}': paramsText(defs, values) });
-            }
-            writeHashParams(defs, values);
-        }
-
-        function scheduleRender() {
-            if (frameId) return;
-            frameId = window.requestAnimationFrame(function () { frameId = 0; render(); });
-        }
-
-        inputs.forEach(function (input) {
-            var eventName = input.tagName === 'SELECT' ? 'change' : 'input';
-            input.addEventListener(eventName, function () {
-                values = readInputs();
-                scheduleRender();
-            });
-            input.addEventListener('change', function () {
-                values = readInputs();
-                writeInputs(); // snap the control to the sanitized value
-                scheduleRender();
-            });
-        });
-        if (resetButton) {
-            resetButton.addEventListener('click', function () {
-                values = paramDefaults(defs);
-                writeInputs();
-                render();
-                if (inputs[0]) inputs[0].focus();
-            });
-        }
-        if (shareButton) {
-            shareButton.addEventListener('click', function () {
-                copyText(window.location.href).then(function () {
-                    flash(shareButton, strings.copied || 'Copied', true);
-                }).catch(function () {
-                    flash(shareButton, strings.copyFailed || 'Copy failed', false);
-                });
-            });
-        }
-
-        function applyHash() {
-            var fromHash = readHashParams();
-            if (!fromHash) return false;
-            values = sanitizeParams(defs, fromHash);
-            writeInputs();
-            return true;
-        }
-
-        // In-page navigation to a shared link (#p=…) while this panel is open.
-        window.addEventListener('hashchange', function () {
-            if (!document.body.contains(panel)) return;
-            if (applyHash()) render();
-        });
-
-        applyHash();
-        panel.omxBound = true;
-        render();
-    }
-
-    function bindPlaygroundWithin(container) {
-        Array.prototype.forEach.call(container.querySelectorAll('[data-motion-playground]'), function (panel) {
-            if (!panel.omxBound) bindPlayground(panel);
-        });
-    }
+    window.omochixMotionGallery = {
+        catalog: catalog,
+        strings: strings,
+        expand: expand,
+        previewsOf: previewsOf,
+        mount: mount,
+        sendParams: sendParams,
+        copyText: copyText,
+        flash: flash
+    };
 
     /* ------------------------------------------------------------------ */
 
     registerWithin(document);
-    bindPlaygroundWithin(document);
 }());

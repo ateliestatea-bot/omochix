@@ -195,6 +195,19 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 確認済み（スタブサーバー）：値変更がプレビューに反映（アイコン色・周期、カウントアップの目標値と文字サイズ）、ハッシュからの復元、既定に戻す、ダイアログ内のパネル、他の見本（17件）にはパネルが出ないこと。残課題：`learn-gallery.js` が 830 行を超えたため 2C で `learn-playground.js` への分割を検討、reduced-motion 時の挙動（値変更後も自動再生しない）の実機確認、スマホでの color 入力の使い勝手。
 
+### 8.3.1 Phase 2C — 磨き込み・共有リンク・JS分割（2026年10月18日）
+
+| 項目 | 内容 |
+|---|---|
+| JS分割 | `assets/js/learn-params.js`（純粋関数：正規化・ブロック生成・ハッシュ直列化・テンプレート充填。DOM に触れず Node からも読める）→ `learn-gallery.js`（プレビュー・フィルタ・ダイアログ・コピー、618行）→ `learn-playground.js`（「調整する」パネル）の順に `wp_enqueue_script` の依存で読み込む。gallery は `window.omochixMotionGallery`（`catalog` / `previewsOf(slug)` / `mount` / `sendParams` / `copyText` / `flash` / `expand`）を公開し、ダイアログに詳細を描画したあと `document` に `omx:motion:detail` イベント（`detail.container`）を送る。params ファイルが読めなくてもプレビューは既定値で描画される（CSS の `var(--p-x, 既定)` と `omx.param(key, 既定)` のフォールバック） |
+| 一覧カード | 調整できる見本に「調整できる」バッジ（`.motion-card__adjustable`、`params` が空でない項目だけ） |
+| 詳細レイアウト | 調整できる見本だけ `.motion-detail__studio` で囲み、1024px 以上ではプレビュー＋説明（`.motion-detail__stage`、sticky）とパネルを 3:2 の2カラムに並べる。ページでは `--shell-sticky-top`（shell）または `--header-height` を基準に、ダイアログ内は `top: 0`。調整できない見本の DOM は変更なし |
+| 「（調整済み）」 | CSS の `::after` をやめ、コピーボタン内の `<span data-omx-modified hidden>` を JS で表示切替（`flash()` はボタン内の `[data-omx-label]` だけを書き換える）。range には `aria-valuetext`（例「1.5s」）、既定に戻すとパネルのライブリージョンに「既定の値に戻しました」 |
+| 共有リンク | `[data-motion-detail]` の `data-url`（見本の正規URL）＋ `#p=…` を組み立てる（一覧URLや `?omx_partial` を含めない）。`navigator.share` がある端末は共有シート、キャンセル（AbortError）は無視、失敗時や非対応はクリップボードへコピーして「リンクをコピーしました」 |
+| テスト | WordPress スタブを `tests/learn-gallery/stub.php` に共通化。`node tests/learn-gallery/params-parity.js` が `params-fixture.php`（PHP 側の正規化・ブロック・プロンプト行・コピー用コード/プロンプト全文）と `learn-params.js` の出力を 3見本 × 11ケース（範囲外・文字列・空・余計なキー・`url(` など）で全比較し、ハッシュの往復も確認（264件） |
+
+確認済み（スタブサーバー、1280px と 375px）：ページとダイアログでパネルが束縛される（イベント経由）、2カラム／sticky、スマホでは縦積みで横スクロールなし、共有URLが正規URL＋ハッシュ、拡大表示に値を引き継ぐ、ダイアログを閉じると一覧URLに戻る、コンソールエラーなし。既知の制約：共有リンクのハッシュはサーバーに届かないため、OGP 画像や初期HTMLは既定の見た目のまま（JS 実行後に調整値が反映される）。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。
