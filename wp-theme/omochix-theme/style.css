@@ -5455,6 +5455,19 @@ button:active,
 .tool-summary__list > div {
     gap: 6px;
     padding: 12px;
+    /* A touch lighter than the summary panel so each item reads as its own card. */
+    background: color-mix(in srgb, var(--color-surface) 30%, #fff);
+    border-color: var(--color-line);
+}
+
+:root[data-theme="dark"] .tool-summary__list > div {
+    background: color-mix(in srgb, var(--color-surface) 88%, #fff);
+    border-color: color-mix(in srgb, var(--color-text) 14%, transparent);
+}
+
+/* The fill purple is too dark on the dark cards; use the shell's light text accent. */
+:root[data-theme="dark"] .tool-summary__list dt .omx-icon {
+    color: var(--shell-accent, #bf9afa);
 }
 
 .tool-summary__list dt,
@@ -5619,11 +5632,7 @@ button:active,
 @media (min-width: 640px) {
     .tool-summary--mobile .tool-summary__list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0 24px;
-    }
-
-    .tool-summary--mobile .tool-summary__list > div:nth-last-child(-n + 2) {
-        border-bottom: 0;
+        gap: 14px;
     }
 }
 
