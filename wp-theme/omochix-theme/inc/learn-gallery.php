@@ -235,8 +235,14 @@ function omochix_learn_gallery_validate_catalog($data) {
                 }
             }
         }
-        if (array_key_exists('playground', $item) && null !== $item['playground'] && !is_array($item['playground'])) {
-            $errors[] = "$where: playground must be an object or null";
+        if (array_key_exists('playground', $item) && null !== $item['playground']) {
+            if (!is_array($item['playground'])) {
+                $errors[] = "$where: playground must be an object or null";
+            } else {
+                foreach (omochix_learn_gallery_validate_params($item['playground']['params'] ?? [], is_array($item['preview'] ?? null) ? $item['preview'] : []) as $error) {
+                    $errors[] = "$where: $error";
+                }
+            }
         }
         if (array_key_exists('video', $item) && null !== $item['video'] && !is_array($item['video'])) {
             $errors[] = "$where: video must be an object or null";
@@ -244,6 +250,334 @@ function omochix_learn_gallery_validate_catalog($data) {
     }
 
     return $errors;
+}
+
+/* -------------------------------------------------------------------------
+ * Playground parameters (Phase 2): definitions, values, generated blocks
+ *
+ * A sample may declare editable parameters. Each parameter is typed
+ * (range / color / select), has a default equal to the sample's shipped
+ * look, and is bound either to a CSS custom property (--p-*) that the
+ * sample's CSS reads with a fallback, or to `window.omxParams` for JS
+ * samples. Values only ever enter CSS/JS after
+ * omochix_learn_gallery_sanitize_params() (mirrored in learn-gallery.js and
+ * the preview runtime), and are emitted through fixed formats (number+unit,
+ * #rrggbb, catalog-declared CSS for selects), never as free text.
+ * ---------------------------------------------------------------------- */
+
+const OMOCHIX_LEARN_GALLERY_MAX_PARAMS       = 8;
+const OMOCHIX_LEARN_GALLERY_PARAM_KEY_RE     = '/^[a-z][a-z0-9_]{0,23}$/';
+const OMOCHIX_LEARN_GALLERY_PARAM_CSS_VAR_RE = '/^--p-[a-z0-9-]{1,30}$/';
+const OMOCHIX_LEARN_GALLERY_PARAM_CSS_VAL_RE = '/^[a-z0-9 .,()%#-]{1,80}$/i';
+const OMOCHIX_LEARN_GALLERY_PARAM_UNIT_RE    = '/^(|ms|s|px|deg|%|em|rem|vw|vh)$/';
+const OMOCHIX_LEARN_GALLERY_COLOR_RE         = '/^#[0-9a-f]{6}$/i';
+
+/** Parameter types the playground renders (free text is intentionally absent). */
+function omochix_learn_gallery_param_types() {
+    return ['range', 'color', 'select'];
+}
+
+/**
+ * Validate a sample's playground.params list (mirrors catalog.schema.json).
+ *
+ * @param mixed                $params  Raw list from the catalog.
+ * @param array<string, mixed> $preview Sample preview (to check css_var usage).
+ * @return string[] errors
+ */
+function omochix_learn_gallery_validate_params($params, array $preview) {
+    $errors = [];
+    if (!is_array($params)) {
+        return ['playground.params must be an array'];
+    }
+    if (count($params) > OMOCHIX_LEARN_GALLERY_MAX_PARAMS) {
+        $errors[] = 'playground.params: at most ' . OMOCHIX_LEARN_GALLERY_MAX_PARAMS . ' parameters';
+    }
+    $keys = [];
+    $vars = [];
+    foreach ($params as $index => $p) {
+        $w = "playground.params[$index]";
+        if (!is_array($p)) {
+            $errors[] = "$w: must be an object";
+            continue;
+        }
+        $key = $p['key'] ?? null;
+        if (!is_string($key) || !preg_match(OMOCHIX_LEARN_GALLERY_PARAM_KEY_RE, $key)) {
+            $errors[] = "$w: invalid key";
+        } elseif (isset($keys[$key])) {
+            $errors[] = "$w: duplicate key $key";
+        } else {
+            $keys[$key] = true;
+        }
+        if (!is_string($p['label'] ?? null) || '' === $p['label'] || mb_strlen($p['label']) > 30) {
+            $errors[] = "$w: label must be 1-30 characters";
+        }
+        $type = $p['type'] ?? null;
+        if (!in_array($type, omochix_learn_gallery_param_types(), true)) {
+            $errors[] = "$w: type must be one of " . implode('|', omochix_learn_gallery_param_types());
+            continue;
+        }
+        $target = $p['target'] ?? 'css';
+        if (!in_array($target, ['css', 'js'], true)) {
+            $errors[] = "$w: target must be css or js";
+        }
+        if ('css' === $target) {
+            $var = $p['css_var'] ?? null;
+            if (!is_string($var) || !preg_match(OMOCHIX_LEARN_GALLERY_PARAM_CSS_VAR_RE, $var)) {
+                $errors[] = "$w: css_var must match --p-[a-z0-9-]";
+            } elseif (isset($vars[$var])) {
+                $errors[] = "$w: duplicate css_var $var";
+            } else {
+                $vars[$var] = true;
+                if (false === strpos((string) ($preview['css'] ?? ''), 'var(' . $var)) {
+                    $errors[] = "$w: preview.css never reads var($var)";
+                }
+            }
+        } elseif (array_key_exists('css_var', $p)) {
+            $errors[] = "$w: js parameters must not declare css_var";
+        }
+        if (array_key_exists('unit', $p) && (!is_string($p['unit']) || !preg_match(OMOCHIX_LEARN_GALLERY_PARAM_UNIT_RE, $p['unit']))) {
+            $errors[] = "$w: unsupported unit";
+        }
+        if (array_key_exists('prompt', $p) && (!is_string($p['prompt']) || mb_strlen($p['prompt']) > 120 || false === strpos($p['prompt'], '{value}'))) {
+            $errors[] = "$w: prompt must be a string up to 120 characters containing {value}";
+        }
+        switch ($type) {
+            case 'range':
+                $numeric = true;
+                foreach (['min', 'max', 'step', 'default'] as $k) {
+                    if (!isset($p[$k]) || !is_numeric($p[$k]) || !is_finite((float) $p[$k])) {
+                        $errors[] = "$w: range needs numeric $k";
+                        $numeric  = false;
+                    }
+                }
+                if (!$numeric) {
+                    break;
+                }
+                if ((float) $p['min'] >= (float) $p['max']) {
+                    $errors[] = "$w: min must be below max";
+                }
+                if ((float) $p['step'] <= 0) {
+                    $errors[] = "$w: step must be positive";
+                }
+                if ((float) $p['default'] < (float) $p['min'] || (float) $p['default'] > (float) $p['max']) {
+                    $errors[] = "$w: default must lie within min..max";
+                }
+                break;
+            case 'color':
+                if (!is_string($p['default'] ?? null) || !preg_match(OMOCHIX_LEARN_GALLERY_COLOR_RE, $p['default'])) {
+                    $errors[] = "$w: color default must be #rrggbb";
+                }
+                if (array_key_exists('unit', $p)) {
+                    $errors[] = "$w: color parameters take no unit";
+                }
+                break;
+            case 'select':
+                $options = $p['options'] ?? null;
+                if (!is_array($options) || count($options) < 2 || count($options) > 8) {
+                    $errors[] = "$w: select needs 2-8 options";
+                    break;
+                }
+                $values = [];
+                foreach ($options as $oi => $o) {
+                    if (!is_array($o) || !is_string($o['value'] ?? null) || !preg_match('/^[a-z0-9_-]{1,24}$/', $o['value'])) {
+                        $errors[] = "$w: options[$oi] needs a slug-like value";
+                        continue;
+                    }
+                    if (isset($values[$o['value']])) {
+                        $errors[] = "$w: duplicate option value {$o['value']}";
+                    }
+                    $values[$o['value']] = true;
+                    if (!is_string($o['label'] ?? null) || '' === $o['label'] || mb_strlen($o['label']) > 30) {
+                        $errors[] = "$w: options[$oi] label must be 1-30 characters";
+                    }
+                    if ('css' === $target && (!is_string($o['css'] ?? null) || !preg_match(OMOCHIX_LEARN_GALLERY_PARAM_CSS_VAL_RE, $o['css']) || preg_match('/url\s*\(/i', $o['css']))) {
+                        // Plain values only: numbers, keywords, timing functions. No url(), quotes, slashes or braces.
+                        $errors[] = "$w: options[$oi] css must be a plain CSS value";
+                    }
+                }
+                if (!isset($values[$p['default'] ?? ''])) {
+                    $errors[] = "$w: default must be one of the option values";
+                }
+                break;
+        }
+    }
+    return $errors;
+}
+
+/**
+ * Normalized parameter definitions of an item (empty when none).
+ *
+ * @param mixed $playground Raw playground block (already validated).
+ * @return array<int, array<string, mixed>>
+ */
+function omochix_learn_gallery_normalize_params($playground) {
+    $out = [];
+    foreach ((array) ($playground['params'] ?? []) as $p) {
+        $def = [
+            'key'     => $p['key'],
+            'label'   => $p['label'],
+            'type'    => $p['type'],
+            'target'  => $p['target'] ?? 'css',
+            'default' => $p['default'],
+            'unit'    => (string) ($p['unit'] ?? ''),
+            'css_var' => (string) ($p['css_var'] ?? ''),
+            'prompt'  => (string) ($p['prompt'] ?? ''),
+        ];
+        if ('range' === $p['type']) {
+            $def['min']     = (float) $p['min'];
+            $def['max']     = (float) $p['max'];
+            $def['step']    = (float) $p['step'];
+            $def['default'] = (float) $p['default'];
+        } elseif ('color' === $p['type']) {
+            $def['default'] = strtolower($p['default']);
+        } else {
+            $def['options'] = array_map(static function ($o) {
+                return ['value' => $o['value'], 'label' => $o['label'], 'css' => (string) ($o['css'] ?? '')];
+            }, $p['options']);
+        }
+        $out[] = $def;
+    }
+    return $out;
+}
+
+/**
+ * Format a number the way the browser does for the generated CSS/JS, so PHP
+ * and JS output are byte-identical: up to 4 decimals, trailing zeros removed.
+ *
+ * @param float $n Number.
+ * @return string
+ */
+function omochix_learn_gallery_format_number($n) {
+    $s = number_format((float) $n, 4, '.', '');
+    $s = rtrim(rtrim($s, '0'), '.');
+    return '' === $s || '-0' === $s ? '0' : $s;
+}
+
+/**
+ * Coerce raw values (from the URL hash, a form, or defaults) into valid
+ * parameter values for an item. Unknown keys are dropped; missing or invalid
+ * values fall back to the default. Mirrored by sanitizeParams() in
+ * learn-gallery.js.
+ *
+ * @param array<string, mixed> $item Catalog item.
+ * @param array<string, mixed> $raw  Raw values keyed by parameter key.
+ * @return array<string, float|string>
+ */
+function omochix_learn_gallery_sanitize_params(array $item, array $raw = []) {
+    $values = [];
+    foreach ($item['params'] as $def) {
+        $v = $raw[$def['key']] ?? null;
+        switch ($def['type']) {
+            case 'range':
+                if (!is_numeric($v) || !is_finite((float) $v)) {
+                    $v = $def['default'];
+                }
+                $v = max($def['min'], min($def['max'], (float) $v));
+                $v = $def['min'] + round(($v - $def['min']) / $def['step']) * $def['step'];
+                $v = max($def['min'], min($def['max'], $v));
+                $values[$def['key']] = (float) omochix_learn_gallery_format_number($v);
+                break;
+            case 'color':
+                $v = is_string($v) ? strtolower(trim($v)) : '';
+                if (preg_match('/^[0-9a-f]{6}$/', $v)) {
+                    $v = '#' . $v;
+                }
+                $values[$def['key']] = preg_match(OMOCHIX_LEARN_GALLERY_COLOR_RE, $v) ? $v : $def['default'];
+                break;
+            default:
+                $allowed = array_column($def['options'], 'value');
+                $values[$def['key']] = is_string($v) && in_array($v, $allowed, true) ? $v : $def['default'];
+        }
+    }
+    return $values;
+}
+
+/**
+ * The CSS and JS blocks that carry parameter values into a preview document
+ * and into the copied code. Deterministic formatting shared with
+ * paramBlocks() in learn-gallery.js:
+ *   css: ":root{--p-a:400ms;--p-b:#6e4bff}"      (or "" when no CSS params)
+ *   js:  "window.omxParams={\"target\":12800};"  (or "" when no JS params)
+ *
+ * @param array<string, mixed>        $item   Catalog item.
+ * @param array<string, float|string> $values Sanitized values.
+ * @return array{css: string, js: string}
+ */
+function omochix_learn_gallery_params_blocks(array $item, array $values) {
+    $css = [];
+    $js  = [];
+    foreach ($item['params'] as $def) {
+        $v = $values[$def['key']] ?? $def['default'];
+        if ('select' === $def['type']) {
+            $cssValue = '';
+            foreach ($def['options'] as $o) {
+                if ($o['value'] === $v) {
+                    $cssValue = $o['css'];
+                }
+            }
+            $jsValue = $v;
+        } elseif ('color' === $def['type']) {
+            $cssValue = $v;
+            $jsValue  = $v;
+        } else {
+            $cssValue = omochix_learn_gallery_format_number($v) . $def['unit'];
+            $jsValue  = (float) omochix_learn_gallery_format_number($v);
+        }
+        if ('js' === $def['target']) {
+            $js[$def['key']] = $jsValue;
+        } elseif ('' !== $cssValue) {
+            $css[] = $def['css_var'] . ':' . $cssValue;
+        }
+    }
+    return [
+        'css' => $css ? ':root{' . implode(';', $css) . '}' : '',
+        'js'  => $js ? 'window.omxParams=' . wp_json_encode($js, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ';' : '',
+    ];
+}
+
+/**
+ * Display form of a value: "400ms", "#6e4bff", or an option label.
+ *
+ * @param array<string, mixed> $def Parameter definition.
+ * @param float|string         $v   Sanitized value.
+ * @return string
+ */
+function omochix_learn_gallery_param_display(array $def, $v) {
+    if ('range' === $def['type']) {
+        return omochix_learn_gallery_format_number($v) . $def['unit'];
+    }
+    if ('select' === $def['type']) {
+        foreach ($def['options'] as $o) {
+            if ($o['value'] === $v) {
+                return $o['label'];
+            }
+        }
+    }
+    return (string) $v;
+}
+
+/**
+ * Human-readable list of the current parameter values for the prompt text
+ * (empty when the item has no parameters). Mirrored by paramsText() in
+ * learn-gallery.js.
+ *
+ * @param array<string, mixed>        $item   Catalog item.
+ * @param array<string, float|string> $values Sanitized values.
+ * @return string
+ */
+function omochix_learn_gallery_params_text(array $item, array $values) {
+    if (!$item['params']) {
+        return '';
+    }
+    $lines = ['調整した値:'];
+    foreach ($item['params'] as $def) {
+        $v       = $values[$def['key']] ?? $def['default'];
+        $display = omochix_learn_gallery_param_display($def, $v);
+        $line    = '' !== $def['prompt'] ? str_replace('{value}', $display, $def['prompt']) : $def['label'] . ': ' . $display;
+        $same    = 'range' === $def['type'] ? (float) $v === (float) $def['default'] : $v === $def['default'];
+        $lines[] = '- ' . $line . ($same ? '（既定）' : '');
+    }
+    return implode("\n", $lines) . "\n";
 }
 
 /**
@@ -297,6 +631,7 @@ function omochix_learn_gallery_normalize_catalog(array $data) {
                 'tools'   => array_values((array) ($related['tools'] ?? [])),
                 'learn'   => array_values((array) ($related['learn'] ?? [])),
             ],
+            'params'      => omochix_learn_gallery_normalize_params($item['playground'] ?? null),
             'playground'  => $item['playground'] ?? null,
             'video'       => $item['video'] ?? null,
         ];
@@ -548,7 +883,21 @@ function omochix_learn_gallery_sanitize_filters(array $source) {
  * @param string               $url  Public detail URL (may be empty).
  * @return string
  */
-function omochix_learn_gallery_prompt_text(array $item, $url = '') {
+function omochix_learn_gallery_prompt_text(array $item, $url = '', ?array $values = null) {
+    $values = null === $values ? omochix_learn_gallery_sanitize_params($item) : $values;
+    return str_replace('{{params_text}}', omochix_learn_gallery_params_text($item, $values), omochix_learn_gallery_prompt_template($item, $url));
+}
+
+/**
+ * Prompt text with a {{params_text}} placeholder (filled by PHP for the
+ * server-rendered copy and by learn-gallery.js after the viewer adjusts
+ * parameters). Everything else is fixed per item.
+ *
+ * @param array<string, mixed> $item Catalog item.
+ * @param string               $url  Public detail URL (may be empty).
+ * @return string
+ */
+function omochix_learn_gallery_prompt_template(array $item, $url = '') {
     $category = omochix_learn_gallery_get_category($item['category']);
     $lines    = [];
     $lines[]  = sprintf('「%s（%s）」の動きを実装してください。', $item['name']['ja'], $item['name']['en']);
@@ -562,7 +911,7 @@ function omochix_learn_gallery_prompt_text(array $item, $url = '') {
         $lines[] = '- ' . $spec;
     }
     $lines[] = '使いどころ: ' . $item['prompt']['use'];
-    $lines[] = '';
+    $lines[] = '{{params_text}}';
     $lines[] = '実装の条件:';
     $lines[] = '- HTML / CSS（必要なら素のJavaScript）で、外部ライブラリは使わない';
     $lines[] = '- 見本の形・タイミング・イージングの数値はそのまま使い、文字・色・素材だけ今作っているものに合わせる';
@@ -584,26 +933,45 @@ function omochix_learn_gallery_prompt_text(array $item, $url = '') {
  * @return string
  */
 function omochix_learn_gallery_js_shim() {
-    return "var omx = window.omx || { animate: function (fn) { var start = performance.now(); (function frame(now) { fn((now - start) / 1000); requestAnimationFrame(frame); }(start)); } };";
+    return "var omx = window.omx || { animate: function (fn) { var start = performance.now(); (function frame(now) { fn((now - start) / 1000); requestAnimationFrame(frame); }(start)); }, param: function (key, fallback) { var p = window.omxParams || {}; return Object.prototype.hasOwnProperty.call(p, key) ? p[key] : fallback; }, onParams: function () {} };";
 }
 
 /**
  * The text "コードをコピー" puts on the clipboard: one self-contained HTML
- * fragment that reproduces the preview.
+ * fragment that reproduces the preview with the given parameter values.
+ *
+ * @param array<string, mixed>             $item   Catalog item.
+ * @param string                           $url    Public detail URL (may be empty).
+ * @param array<string, float|string>|null $values Sanitized parameter values (defaults when null).
+ * @return string
+ */
+function omochix_learn_gallery_code_text(array $item, $url = '', ?array $values = null) {
+    $values = null === $values ? omochix_learn_gallery_sanitize_params($item) : $values;
+    $blocks = omochix_learn_gallery_params_blocks($item, $values);
+    return strtr(omochix_learn_gallery_code_template($item, $url), [
+        '{{params_css}}' => '' !== $blocks['css'] ? $blocks['css'] . "\n" : '',
+        '{{params_js}}'  => '' !== $blocks['js'] ? $blocks['js'] . "\n" : '',
+    ]);
+}
+
+/**
+ * Copied-code template with {{params_css}} / {{params_js}} placeholders
+ * (each becomes either an empty string or a block followed by a newline).
+ * Shared with learn-gallery.js so adjusted code is assembled identically.
  *
  * @param array<string, mixed> $item Catalog item.
  * @param string               $url  Public detail URL (may be empty).
  * @return string
  */
-function omochix_learn_gallery_code_text(array $item, $url = '') {
+function omochix_learn_gallery_code_template(array $item, $url = '') {
     $parts   = [];
     $parts[] = sprintf('<!-- %s (%s) | OmochiX Learn 動く見本 #%s%s -->', $item['name']['ja'], $item['name']['en'], $item['id'], $url ? ' | ' . $url : '');
-    if ('' !== $item['preview']['css']) {
-        $parts[] = "<style>\n" . $item['preview']['css'] . "\n</style>";
+    if ('' !== $item['preview']['css'] || $item['params']) {
+        $parts[] = "<style>\n{{params_css}}" . $item['preview']['css'] . "\n</style>";
     }
     $parts[] = $item['preview']['html'];
     if ('' !== $item['preview']['js']) {
-        $parts[] = "<script>\n" . omochix_learn_gallery_js_shim() . "\n" . $item['preview']['js'] . "\n</script>";
+        $parts[] = "<script>\n" . omochix_learn_gallery_js_shim() . "\n{{params_js}}" . $item['preview']['js'] . "\n</script>";
     }
     return implode("\n\n", $parts);
 }
@@ -643,8 +1011,10 @@ function omochix_learn_gallery_runtime($kind) {
  * never drift apart.
  *
  * Placeholders: {{stage_w}} {{stage_h}} {{title}} (already HTML-escaped)
- * {{runtime_css}} {{css}} {{html}} {{runtime_js}} {{js}} (a complete
- * "<script>…</script>" element or an empty string).
+ * {{runtime_css}} {{params_css}} (":root{…}" or empty) {{css}} {{html}}
+ * {{runtime_js}} {{params_js}} ("<script>window.omxParams=…</script>" or
+ * empty) {{js}} (a complete "<script>…</script>" element or an empty
+ * string).
  *
  * @return string
  */
@@ -653,9 +1023,10 @@ function omochix_learn_gallery_preview_template() {
         . '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
         . '<title>{{title}}</title>'
         . '<style>{{runtime_css}}</style>'
+        . '<style id="omx-params">{{params_css}}</style>'
         . '<style>{{css}}</style>'
         . '</head><body><div class="omx-stage">{{html}}</div>'
-        . '<script>{{runtime_js}}</script>{{js}}</body></html>';
+        . '<script>{{runtime_js}}</script>{{params_js}}{{js}}</body></html>';
 }
 
 /**
@@ -671,16 +1042,20 @@ function omochix_learn_gallery_preview_template() {
  * @param array<string, int>   $stage Stage size.
  * @return string
  */
-function omochix_learn_gallery_preview_document(array $item, ?array $stage = null) {
+function omochix_learn_gallery_preview_document(array $item, ?array $stage = null, ?array $params = null) {
     $stage  = $stage ?: omochix_learn_gallery_get_stage();
+    $params = null === $params ? omochix_learn_gallery_sanitize_params($item) : $params;
+    $blocks = omochix_learn_gallery_params_blocks($item, $params);
     $values = [
         '{{stage_w}}'     => (string) (int) $stage['width'],
         '{{stage_h}}'     => (string) (int) $stage['height'],
         '{{title}}'       => esc_html($item['name']['ja']),
         '{{runtime_css}}' => omochix_learn_gallery_runtime('css'),
+        '{{params_css}}'  => $blocks['css'],
         '{{css}}'         => $item['preview']['css'],
         '{{html}}'        => $item['preview']['html'],
         '{{runtime_js}}'  => omochix_learn_gallery_runtime('js'),
+        '{{params_js}}'   => '' !== $blocks['js'] ? '<script>' . $blocks['js'] . '</script>' : '',
         '{{js}}'          => '' !== $item['preview']['js'] ? '<script>' . $item['preview']['js'] . '</script>' : '',
     ];
     return strtr(omochix_learn_gallery_preview_template(), $values);
@@ -721,14 +1096,21 @@ function omochix_learn_gallery_client_json(array $items) {
     ];
     foreach ($items as $slug => $item) {
         $out['items'][$slug] = [
-            'id'    => $item['id'],
-            'name'  => $item['name'],
-            'label' => sprintf(__('%sのプレビュー', 'omochix'), $item['name']['ja']),
-            'title' => esc_html($item['name']['ja']),
-            'html'  => $item['preview']['html'],
-            'css'   => $item['preview']['css'],
-            'js'    => $item['preview']['js'],
+            'id'     => $item['id'],
+            'name'   => $item['name'],
+            'label'  => sprintf(__('%sのプレビュー', 'omochix'), $item['name']['ja']),
+            'title'  => esc_html($item['name']['ja']),
+            'html'   => $item['preview']['html'],
+            'css'    => $item['preview']['css'],
+            'js'     => $item['preview']['js'],
+            'params' => $item['params'],
         ];
+        if ($item['params']) {
+            // Only adjustable samples need the copy templates client-side.
+            $url = omochix_learn_gallery_url($item);
+            $out['items'][$slug]['codeTemplate']   = omochix_learn_gallery_code_template($item, $url);
+            $out['items'][$slug]['promptTemplate'] = omochix_learn_gallery_prompt_template($item, $url);
+        }
     }
     return (string) wp_json_encode($out, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }

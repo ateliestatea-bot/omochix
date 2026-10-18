@@ -99,28 +99,147 @@
      * runtime (both sent once in the catalog JSON) plus the sample's own
      * fragment. Mirrors omochix_learn_gallery_preview_document() in PHP.
      */
-    function buildDoc(data) {
+    /* ------------------------------------------------------------------ */
+    /* Playground parameters (pure helpers, mirrored in inc/learn-gallery.php) */
+    /* ------------------------------------------------------------------ */
+
+    var COLOR_RE = /^#[0-9a-f]{6}$/i;
+
+    /** Number formatting shared with PHP: up to 4 decimals, no trailing zeros. */
+    function formatNumber(n) {
+        var s = (Math.round(Number(n) * 10000) / 10000).toFixed(4).replace(/\.?0+$/, '');
+        return s === '' || s === '-0' ? '0' : s;
+    }
+
+    function paramDefaults(defs) {
+        var values = {};
+        (defs || []).forEach(function (def) { values[def.key] = def['default']; });
+        return values;
+    }
+
+    /** Coerce raw values into valid ones: clamp/snap ranges, hex colours, allowed select values. */
+    function sanitizeParams(defs, raw) {
+        var values = {};
+        raw = raw || {};
+        (defs || []).forEach(function (def) {
+            var v = Object.prototype.hasOwnProperty.call(raw, def.key) ? raw[def.key] : null;
+            if (def.type === 'range') {
+                var n = typeof v === 'string' && v.trim() !== '' ? Number(v) : v;
+                if (typeof n !== 'number' || !isFinite(n)) n = def['default'];
+                n = Math.max(def.min, Math.min(def.max, n));
+                n = def.min + Math.round((n - def.min) / def.step) * def.step;
+                n = Math.max(def.min, Math.min(def.max, n));
+                values[def.key] = Number(formatNumber(n));
+            } else if (def.type === 'color') {
+                var c = typeof v === 'string' ? v.trim().toLowerCase() : '';
+                if (/^[0-9a-f]{6}$/.test(c)) c = '#' + c;
+                values[def.key] = COLOR_RE.test(c) ? c : def['default'];
+            } else {
+                var allowed = (def.options || []).map(function (o) { return o.value; });
+                values[def.key] = typeof v === 'string' && allowed.indexOf(v) > -1 ? v : def['default'];
+            }
+        });
+        return values;
+    }
+
+    function paramDisplay(def, v) {
+        if (def.type === 'range') return formatNumber(v) + (def.unit || '');
+        if (def.type === 'select') {
+            for (var i = 0; i < (def.options || []).length; i++) if (def.options[i].value === v) return def.options[i].label;
+        }
+        return String(v);
+    }
+
+    /** {cssVars:{'--p-x':'400ms'}, js:{target:12800}} plus the serialized blocks the templates take. */
+    function paramBlocks(defs, values) {
+        var cssVars = {};
+        var cssList = [];
+        var js = {};
+        var hasJs = false;
+        (defs || []).forEach(function (def) {
+            var v = Object.prototype.hasOwnProperty.call(values, def.key) ? values[def.key] : def['default'];
+            var cssValue = '';
+            var jsValue = v;
+            if (def.type === 'select') {
+                (def.options || []).forEach(function (o) { if (o.value === v) cssValue = o.css || ''; });
+            } else if (def.type === 'color') {
+                cssValue = v;
+            } else {
+                cssValue = formatNumber(v) + (def.unit || '');
+                jsValue = Number(formatNumber(v));
+            }
+            if (def.target === 'js') { js[def.key] = jsValue; hasJs = true; }
+            else if (cssValue !== '') { cssVars[def.css_var] = cssValue; cssList.push(def.css_var + ':' + cssValue); }
+        });
+        return {
+            cssVars: cssVars,
+            js: js,
+            css: cssList.length ? ':root{' + cssList.join(';') + '}' : '',
+            jsBlock: hasJs ? 'window.omxParams=' + JSON.stringify(js) + ';' : ''
+        };
+    }
+
+    function paramsText(defs, values) {
+        if (!defs || !defs.length) return '';
+        var lines = ['調整した値:'];
+        defs.forEach(function (def) {
+            var v = Object.prototype.hasOwnProperty.call(values, def.key) ? values[def.key] : def['default'];
+            var display = paramDisplay(def, v);
+            var line = def.prompt ? def.prompt.replace('{value}', display) : def.label + ': ' + display;
+            var same = def.type === 'range' ? Number(v) === Number(def['default']) : v === def['default'];
+            lines.push('- ' + line + (same ? '（既定）' : ''));
+        });
+        return lines.join('\n') + '\n';
+    }
+
+    function isDefault(defs, values) {
+        return (defs || []).every(function (def) {
+            var v = values[def.key];
+            return def.type === 'range' ? Number(v) === Number(def['default']) : v === def['default'];
+        });
+    }
+
+    function fillTemplate(template, map) {
+        return String(template).replace(/\{\{[a-z_]+\}\}/g, function (token) {
+            return Object.prototype.hasOwnProperty.call(map, token) ? map[token] : token;
+        });
+    }
+
+    /**
+     * Assemble a sample's preview document from the shared template and
+     * runtime (both sent once in the catalog JSON) plus the sample's own
+     * fragment and parameter values. Mirrors
+     * omochix_learn_gallery_preview_document() in PHP.
+     */
+    function buildDoc(data, params) {
         if (data.doc) return data.doc;
         if (!catalog.template || !catalog.runtime) return '';
-        var values = {
+        var blocks = paramBlocks(data.params, params || paramDefaults(data.params));
+        return fillTemplate(catalog.template, {
             '{{stage_w}}': String(catalog.stage.width),
             '{{stage_h}}': String(catalog.stage.height),
             '{{title}}': data.title || '',
             '{{runtime_css}}': catalog.runtime.css || '',
+            '{{params_css}}': blocks.css,
             '{{css}}': data.css || '',
             '{{html}}': data.html || '',
             '{{runtime_js}}': catalog.runtime.js || '',
+            '{{params_js}}': blocks.jsBlock ? '<script>' + blocks.jsBlock + '</script>' : '',
             '{{js}}': data.js ? '<script>' + data.js + '</script>' : ''
-        };
-        return catalog.template.replace(/\{\{[a-z_]+\}\}/g, function (token) {
-            return Object.prototype.hasOwnProperty.call(values, token) ? values[token] : token;
         });
+    }
+
+    function sendParams(preview) {
+        var data = catalog.items[preview.slug];
+        if (!data || !data.params || !data.params.length || !preview.ready) return;
+        var blocks = paramBlocks(data.params, preview.params || paramDefaults(data.params));
+        send(preview, { type: 'omx:params', cssVars: blocks.cssVars, js: blocks.js });
     }
 
     function mount(preview) {
         if (preview.mounted || !preview.frame) return;
         var data = catalog.items[preview.slug];
-        var doc = data ? buildDoc(data) : '';
+        var doc = data ? buildDoc(data, preview.params) : '';
         if (!doc) return;
         var iframe = document.createElement('iframe');
         iframe.className = 'motion-preview__iframe';
@@ -211,6 +330,7 @@
                 preview.ready = true;
                 preview.playing = !!data.playing;
                 send(preview, { type: 'omx:theme', theme: currentTheme() });
+                if (preview.params) sendParams(preview);
                 apply(preview);
                 return;
             }
@@ -386,6 +506,7 @@
                 }
                 dialog.scrollTop = 0;
                 registerWithin(dialogBody);
+                bindPlaygroundWithin(dialogBody);
                 refreshAll();
                 if (push) {
                     // One history entry per dialog session: moving between
@@ -467,6 +588,7 @@
         expand.showModal();
         var expanded = register(clone);
         expanded.user = preview.user;
+        expanded.params = preview.params; // keep the viewer's adjustments in the big view
         refreshAll();
         var toggle = clone.querySelector('[data-motion-toggle]');
         if (toggle) toggle.focus();
@@ -541,6 +663,169 @@
     });
 
     /* ------------------------------------------------------------------ */
+    /* Playground panel                                                    */
+    /* ------------------------------------------------------------------ */
+
+    var HASH_KEY = 'p';
+
+    function readHashParams() {
+        var hash = window.location.hash.replace(/^#/, '');
+        if (!hash) return null;
+        var raw = null;
+        hash.split('&').forEach(function (part) {
+            var eq = part.indexOf('=');
+            if (eq < 0 || part.slice(0, eq) !== HASH_KEY) return;
+            raw = {};
+            decodeURIComponent(part.slice(eq + 1)).split(',').slice(0, 20).forEach(function (pair) {
+                var colon = pair.indexOf(':');
+                if (colon < 1) return;
+                var key = pair.slice(0, colon);
+                var value = pair.slice(colon + 1, colon + 65);
+                if (/^[a-z][a-z0-9_]{0,23}$/.test(key)) raw[key] = value;
+            });
+        });
+        return raw;
+    }
+
+    function writeHashParams(defs, values) {
+        var base = window.location.pathname + window.location.search;
+        if (isDefault(defs, values)) {
+            if (window.location.hash) window.history.replaceState(window.history.state, '', base);
+            return;
+        }
+        var pairs = defs.map(function (def) {
+            var v = values[def.key];
+            return def.key + ':' + (def.type === 'color' ? String(v).replace('#', '') : def.type === 'range' ? formatNumber(v) : v);
+        });
+        window.history.replaceState(window.history.state, '', base + '#' + HASH_KEY + '=' + pairs.join(','));
+    }
+
+    function bindPlayground(panel) {
+        var slug = panel.dataset.slug || '';
+        var data = catalog.items[slug];
+        var defs = data && data.params;
+        if (!defs || !defs.length) return;
+        var detail = panel.closest('[data-motion-detail]') || panel.parentNode;
+        var inputs = Array.prototype.slice.call(panel.querySelectorAll('[data-omx-param]'));
+        var outputs = {};
+        Array.prototype.forEach.call(panel.querySelectorAll('[data-omx-output]'), function (o) { outputs[o.dataset.omxOutput] = o; });
+        var resetButton = panel.querySelector('[data-omx-reset]');
+        var shareButton = panel.querySelector('[data-omx-share]');
+        var promptPre = document.getElementById('motion-' + slug + '-prompt-text');
+        var codePre = document.getElementById('motion-' + slug + '-code-text');
+        var frameId = 0;
+        var values = paramDefaults(defs);
+
+        function readInputs() {
+            var raw = {};
+            inputs.forEach(function (input) { raw[input.dataset.omxParam] = input.value; });
+            return sanitizeParams(defs, raw);
+        }
+
+        function writeInputs() {
+            inputs.forEach(function (input) {
+                var def = null;
+                defs.forEach(function (d) { if (d.key === input.dataset.omxParam) def = d; });
+                if (!def) return;
+                var v = values[def.key];
+                input.value = def.type === 'range' ? formatNumber(v) : String(v);
+            });
+        }
+
+        function previewsOfSample() {
+            return previews.filter(function (p) {
+                return p.slug === slug && (detail.contains(p.el) || (expand && expand.open && expand.contains(p.el)));
+            });
+        }
+
+        function render() {
+            var modified = !isDefault(defs, values);
+            defs.forEach(function (def) {
+                if (outputs[def.key]) outputs[def.key].textContent = paramDisplay(def, values[def.key]);
+            });
+            if (resetButton) resetButton.disabled = !modified;
+            if (shareButton) shareButton.hidden = !modified;
+            detail.classList.toggle('is-modified', modified);
+            previewsOfSample().forEach(function (preview) {
+                preview.params = values;
+                if (preview.ready) sendParams(preview);
+                else if (!preview.mounted && preview.inView) mount(preview);
+            });
+            var blocks = paramBlocks(defs, values);
+            if (codePre && data.codeTemplate) {
+                codePre.textContent = fillTemplate(data.codeTemplate, {
+                    '{{params_css}}': blocks.css ? blocks.css + '\n' : '',
+                    '{{params_js}}': blocks.jsBlock ? blocks.jsBlock + '\n' : ''
+                });
+            }
+            if (promptPre && data.promptTemplate) {
+                promptPre.textContent = fillTemplate(data.promptTemplate, { '{{params_text}}': paramsText(defs, values) });
+            }
+            writeHashParams(defs, values);
+        }
+
+        function scheduleRender() {
+            if (frameId) return;
+            frameId = window.requestAnimationFrame(function () { frameId = 0; render(); });
+        }
+
+        inputs.forEach(function (input) {
+            var eventName = input.tagName === 'SELECT' ? 'change' : 'input';
+            input.addEventListener(eventName, function () {
+                values = readInputs();
+                scheduleRender();
+            });
+            input.addEventListener('change', function () {
+                values = readInputs();
+                writeInputs(); // snap the control to the sanitized value
+                scheduleRender();
+            });
+        });
+        if (resetButton) {
+            resetButton.addEventListener('click', function () {
+                values = paramDefaults(defs);
+                writeInputs();
+                render();
+                if (inputs[0]) inputs[0].focus();
+            });
+        }
+        if (shareButton) {
+            shareButton.addEventListener('click', function () {
+                copyText(window.location.href).then(function () {
+                    flash(shareButton, strings.copied || 'Copied', true);
+                }).catch(function () {
+                    flash(shareButton, strings.copyFailed || 'Copy failed', false);
+                });
+            });
+        }
+
+        function applyHash() {
+            var fromHash = readHashParams();
+            if (!fromHash) return false;
+            values = sanitizeParams(defs, fromHash);
+            writeInputs();
+            return true;
+        }
+
+        // In-page navigation to a shared link (#p=…) while this panel is open.
+        window.addEventListener('hashchange', function () {
+            if (!document.body.contains(panel)) return;
+            if (applyHash()) render();
+        });
+
+        applyHash();
+        panel.omxBound = true;
+        render();
+    }
+
+    function bindPlaygroundWithin(container) {
+        Array.prototype.forEach.call(container.querySelectorAll('[data-motion-playground]'), function (panel) {
+            if (!panel.omxBound) bindPlayground(panel);
+        });
+    }
+
+    /* ------------------------------------------------------------------ */
 
     registerWithin(document);
+    bindPlaygroundWithin(document);
 }());

@@ -179,6 +179,22 @@ Learnを「読む学習ページ＋プロンプト集」から、**見て・試�
 
 Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細の関連見本5件の再生とリンク、関連のないPromptではセクション・アセットとも出ないこと、詳細ページの見出し列 `h1 h2 h3 h3 h2 h2`、ダイアログ断片 `h2 h3 h4 h4 h3 h3`、BreadcrumbList 4階層、`debug.log` にエラーなし。
 
+## 8.3 Phase 2B — Interactive Playground 試作（2026年10月18日、`feature/learn-playground-v1`）
+
+見本の詳細（単体ページとダイアログの両方）に「調整する」パネルを追加し、パラメータを変えるとプレビュー・「コードをコピー」・「プロンプトをコピー」の内容がその場で更新されます。クライアントサイドだけで完結し、DB・URL構造・omochix-core は変更しません。
+
+| 要素 | 実装 |
+|---|---|
+| データ | `playground.params[]` を正式化（`catalog.schema.json`）。型は `range` / `color` / `select` の3種（`text` は不採用）。`css_var`（`--p-*`）か `target: "js"` のどちらかに束縛し、既定値は従来の見た目と同じ。PHP の `omochix_learn_gallery_validate_params()` が key 一意・範囲整合・css_var 命名・プレビューCSSでの参照・select の CSS 値（`url(` 等は不可）を検証 |
+| 値の正規化 | `omochix_learn_gallery_sanitize_params()`（PHP）と `sanitizeParams()`（JS）が同じ規則：range はクランプ＋step に丸め、color は `#rrggbb` のみ、select は許可値のみ、未知キーは破棄 |
+| 生成ブロック | `omochix_learn_gallery_params_blocks()` / `paramBlocks()` が `:root{--p-a:…;--p-b:…}` と `window.omxParams={…};` を決定的な書式で生成。プレビュー文書テンプレートに `{{params_css}}`（`<style id="omx-params">`）と `{{params_js}}` を追加し、コピー用コードのテンプレート（`{{params_css}}` / `{{params_js}}`）とプロンプトのテンプレート（`{{params_text}}`）も PHP が定義して JSON で渡す。**プレビューと生成コードは同じブロックを同じテンプレートに差し込むため定義上一致** |
+| iframe ランタイム | `omx:params` メッセージで `#omx-params` の内容を書き換え（親から来た値も名前・値の文法を再検証、`url(` 拒否）、`window.omxParams` を更新して `omx.onParams()` のリスナーを呼ぶ。見本側 API は `omx.param(key, fallback)` / `omx.onParams(fn)`。コピー用 shim も同じ API を提供 |
+| UI | `template-parts/learn-gallery/playground.php`（ネイティブ range / color / select、`<output>` の現在値、既定に戻す、調整状態のリンクをコピー）。変更中は詳細記事に `is-modified` が付き、コピーボタンに「（調整済み）」を表示。状態は URL ハッシュ `#p=key:value,…` に `replaceState` で保持（クロール対象URLを増やさない）。`hashchange` にも追従し、拡大表示には現在値を引き継ぐ |
+| 試作3件 | 001 ポップイン（1回の長さ・行き過ぎ・アイコン色・バッジの遅れ）、006 カウントアップ（目標値・長さ・進み方＝JS、数字の大きさ＝CSS）、017 流れるグラデーション（色×3・往復の長さ・角度） |
+| テスト | `tests/learn-gallery/run.php` 126件（検証器の各規則、正規化、ブロック書式、PHP/JS テンプレート整合、コピー文の差分が `:root` ブロックだけであること、クライアントJSON） |
+
+確認済み（スタブサーバー）：値変更がプレビューに反映（アイコン色・周期、カウントアップの目標値と文字サイズ）、ハッシュからの復元、既定に戻す、ダイアログ内のパネル、他の見本（17件）にはパネルが出ないこと。残課題：`learn-gallery.js` が 830 行を超えたため 2C で `learn-playground.js` への分割を検討、reduced-motion 時の挙動（値変更後も自動再生しない）の実機確認、スマホでの color 入力の使い勝手。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。

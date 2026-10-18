@@ -94,27 +94,44 @@
           }
         },
         "playground": {
-          "description": "Reserved for Phase 2 (editable parameters). Validated for shape only.",
+          "description": "Playground parameters (Phase 2). Each parameter is typed, has a default equal to the shipped look, and binds to a --p-* CSS custom property that the sample's CSS reads with a fallback (target css), or to window.omxParams for JS samples (target js). The PHP validator in inc/learn-gallery.php mirrors these rules.",
           "type": ["object", "null"],
           "additionalProperties": false,
           "properties": {
             "params": {
               "type": "array",
+              "maxItems": 8,
               "items": {
                 "type": "object",
                 "required": ["key", "label", "type", "default"],
                 "additionalProperties": false,
                 "properties": {
-                  "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-                  "label": { "type": "string" },
-                  "type": { "type": "string", "enum": ["range", "color", "select", "text"] },
+                  "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,23}$" },
+                  "label": { "type": "string", "minLength": 1, "maxLength": 30 },
+                  "type": { "type": "string", "enum": ["range", "color", "select"] },
+                  "target": { "type": "string", "enum": ["css", "js"], "default": "css" },
                   "min": { "type": "number" },
                   "max": { "type": "number" },
-                  "step": { "type": "number" },
-                  "options": { "type": "array", "items": { "type": "string" } },
+                  "step": { "type": "number", "exclusiveMinimum": 0 },
+                  "options": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 8,
+                    "items": {
+                      "type": "object",
+                      "required": ["value", "label"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "value": { "type": "string", "pattern": "^[a-z0-9_-]{1,24}$" },
+                        "label": { "type": "string", "minLength": 1, "maxLength": 30 },
+                        "css": { "type": "string", "pattern": "^[A-Za-z0-9 .,()%#-]{1,80}$" }
+                      }
+                    }
+                  },
                   "default": {},
-                  "unit": { "type": "string" },
-                  "css_var": { "type": "string", "pattern": "^--[a-z0-9-]+$" }
+                  "unit": { "type": "string", "enum": ["", "ms", "s", "px", "deg", "%", "em", "rem", "vw", "vh"] },
+                  "css_var": { "type": "string", "pattern": "^--p-[a-z0-9-]{1,30}$" },
+                  "prompt": { "type": "string", "maxLength": 120, "pattern": "\\{value\\}" }
                 }
               }
             }

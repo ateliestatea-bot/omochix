@@ -78,6 +78,8 @@ $omochix_hub_url  = function_exists('omochix_get_published_page_url') ? omochix_
     </div>
     <p class="motion-detail__description"><?php echo esc_html($omochix_item['description']); ?></p>
 
+    <?php get_template_part('template-parts/learn-gallery/playground', null, ['item' => $omochix_item, 'heading' => $omochix_h_panel]); ?>
+
     <div class="motion-detail__layout">
         <section class="motion-panel" aria-labelledby="<?php echo esc_attr($omochix_uid); ?>-prompt">
             <div class="motion-panel__header">

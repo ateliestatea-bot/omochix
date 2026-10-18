@@ -23,7 +23,7 @@
       "featured": true,
       "preview": {
         "html": "<div class=\"pop\"><div class=\"pop__icon\">★</div><div class=\"pop__badge\">1</div></div>",
-        "css": ".pop{position:relative;width:96px;height:96px}\n.pop__icon{width:96px;height:96px;border-radius:26px;background:var(--primary);color:#fff;font-size:44px;display:grid;place-items:center;animation:pop-in 2.4s cubic-bezier(.34,1.56,.64,1) infinite}\n.pop__badge{position:absolute;top:-10px;right:-10px;width:30px;height:30px;border-radius:50%;background:var(--amber);color:#fff;font:700 14px/30px system-ui,sans-serif;text-align:center;animation:pop-in 2.4s cubic-bezier(.34,1.56,.64,1) .25s infinite}\n@keyframes pop-in{0%{transform:scale(0) rotate(-20deg);opacity:0}18%{transform:scale(1) rotate(0);opacity:1}72%{transform:scale(1);opacity:1}86%,100%{transform:scale(0);opacity:0}}",
+        "css": ".pop{position:relative;width:96px;height:96px}\n.pop__icon{width:96px;height:96px;border-radius:26px;background:var(--p-color,var(--primary));color:#fff;font-size:44px;display:grid;place-items:center;animation:pop-in var(--p-cycle,2.4s) var(--p-ease,cubic-bezier(.34,1.56,.64,1)) infinite}\n.pop__badge{position:absolute;top:-10px;right:-10px;width:30px;height:30px;border-radius:50%;background:var(--amber);color:#fff;font:700 14px/30px system-ui,sans-serif;text-align:center;animation:pop-in var(--p-cycle,2.4s) var(--p-ease,cubic-bezier(.34,1.56,.64,1)) var(--p-badge-delay,.25s) infinite}\n@keyframes pop-in{0%{transform:scale(0) rotate(-20deg);opacity:0}18%{transform:scale(1) rotate(0);opacity:1}72%{transform:scale(1);opacity:1}86%,100%{transform:scale(0);opacity:0}}",
         "js": ""
       },
       "prompt": {
@@ -37,7 +37,7 @@
         "use": "アイコン・ボタン・バッジなど、小さな要素を軽く目立たせて出したいとき。"
       },
       "related": { "prompts": [], "tools": ["cursor", "claude"], "learn": ["learn/development"] },
-      "playground": { "params": [ { "key": "duration", "label": "長さ", "type": "range", "min": 200, "max": 1200, "step": 50, "default": 400, "unit": "ms", "css_var": "--d" } ] },
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 1.2, "max": 4, "step": 0.1, "default": 2.4, "unit": "s", "css_var": "--p-cycle", "prompt": "登場から退場までの1周期は{value}"}, {"key": "overshoot", "label": "行き過ぎ", "type": "select", "options": [{"value": "none", "label": "なし", "css": "ease-out"}, {"value": "soft", "label": "少し", "css": "cubic-bezier(.34,1.56,.64,1)"}, {"value": "big", "label": "大きめ", "css": "cubic-bezier(.34,2.2,.64,1)"}], "default": "soft", "css_var": "--p-ease", "prompt": "行き過ぎ（オーバーシュート）は「{value}」"}, {"key": "color", "label": "アイコンの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}, {"key": "badge_delay", "label": "バッジの遅れ", "type": "range", "min": 0, "max": 0.8, "step": 0.05, "default": 0.25, "unit": "s", "css_var": "--p-badge-delay", "prompt": "バッジは{value}遅らせて出す"}]},
       "video": null
     },
     {
@@ -169,8 +169,8 @@
       "tags": ["数字", "実績", "イージング", "JavaScript"],
       "preview": {
         "html": "<p class=\"cu\"><span class=\"cu__n\" data-target=\"12800\">0</span><span class=\"cu__u\">users</span></p>",
-        "css": ".cu{display:flex;align-items:baseline;gap:10px;margin:0;color:var(--text)}\n.cu__n{font:800 56px/1 system-ui,sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;min-width:4.2em;text-align:right}\n.cu__u{font:600 16px/1 system-ui,sans-serif;color:var(--muted)}",
-        "js": "var el=document.querySelector('.cu__n');var target=Number(el.getAttribute('data-target'));var duration=2.2,loop=3.4;omx.animate(function(t){var p=Math.min((t%loop)/duration,1);var e=1-Math.pow(1-p,3);el.textContent=Math.round(e*target).toLocaleString('ja-JP');});"
+        "css": ".cu{display:flex;align-items:baseline;gap:10px;margin:0;color:var(--text)}\n.cu__n{font:800 var(--p-size,56px)/1 system-ui,sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;min-width:4.2em;text-align:right}\n.cu__u{font:600 16px/1 system-ui,sans-serif;color:var(--muted)}",
+        "js": "var el=document.querySelector('.cu__n');var loopGap=1.2;var base=0;var lastT=0;function ease(p,kind){if(kind==='linear')return p;if(kind==='inout')return p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;return 1-Math.pow(1-p,3);}omx.onParams(function(){base=lastT;});omx.animate(function(t){lastT=t;var target=Number(omx.param('target',12800));var duration=Number(omx.param('duration',2.2));var kind=omx.param('easing','out');var loop=duration+loopGap;var p=Math.min(((t-base)%loop)/duration,1);el.textContent=Math.round(ease(p,kind)*target).toLocaleString('ja-JP');});"
       },
       "prompt": {
         "ask": "実績の数字をカウントアップで見せて。2秒で、最後はゆっくり止まる感じ。",
@@ -183,7 +183,7 @@
         "use": "導入実績・利用者数・達成率など、数字を印象づけたいとき。"
       },
       "related": { "prompts": [], "tools": ["cursor"], "learn": ["learn/development"] },
-      "playground": null,
+      "playground": {"params": [{"key": "target", "label": "目標値", "type": "range", "min": 100, "max": 999999, "step": 100, "default": 12800, "unit": "", "target": "js", "prompt": "目標値は{value}"}, {"key": "duration", "label": "長さ", "type": "range", "min": 1, "max": 4, "step": 0.1, "default": 2.2, "unit": "s", "target": "js", "prompt": "0から目標値まで{value}で増やす"}, {"key": "easing", "label": "進み方", "type": "select", "options": [{"value": "out", "label": "最後にゆっくり"}, {"value": "linear", "label": "一定"}, {"value": "inout", "label": "ゆっくり始まりゆっくり終わる"}], "default": "out", "target": "js", "prompt": "進み方は「{value}」"}, {"key": "size", "label": "数字の大きさ", "type": "range", "min": 32, "max": 72, "step": 2, "default": 56, "unit": "px", "css_var": "--p-size"}]},
       "video": null
     },
     {
@@ -490,7 +490,7 @@
       "featured": true,
       "preview": {
         "html": "<div class=\"gs\"><span>OmochiX</span></div>",
-        "css": ".gs{display:grid;place-items:center;width:260px;height:130px;border-radius:18px;background:linear-gradient(120deg,var(--primary),var(--blue),var(--amber),var(--primary));background-size:300% 300%;animation:gs 7s ease-in-out infinite alternate}\n.gs span{font:800 28px/1 system-ui,sans-serif;letter-spacing:-.04em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.2)}\n@keyframes gs{from{background-position:0% 50%}to{background-position:100% 50%}}",
+        "css": ".gs{display:grid;place-items:center;width:260px;height:130px;border-radius:18px;background:linear-gradient(var(--p-angle,120deg),var(--p-c1,#6e4bff),var(--p-c2,#2563eb),var(--p-c3,#d97706),var(--p-c1,#6e4bff));background-size:300% 300%;animation:gs var(--p-cycle,7s) ease-in-out infinite alternate}\n.gs span{font:800 28px/1 system-ui,sans-serif;letter-spacing:-.04em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.2)}\n@keyframes gs{from{background-position:0% 50%}to{background-position:100% 50%}}",
         "js": ""
       },
       "prompt": {
@@ -504,7 +504,7 @@
         "use": "ヒーロー背景、CTAエリア、ブランドカラーを印象づけたいカード。"
       },
       "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "c1", "label": "色1", "type": "color", "default": "#6e4bff", "css_var": "--p-c1"}, {"key": "c2", "label": "色2", "type": "color", "default": "#2563eb", "css_var": "--p-c2"}, {"key": "c3", "label": "色3", "type": "color", "default": "#d97706", "css_var": "--p-c3"}, {"key": "cycle", "label": "往復の長さ", "type": "range", "min": 3, "max": 15, "step": 0.5, "default": 7, "unit": "s", "css_var": "--p-cycle", "prompt": "往復に{value}かける"}, {"key": "angle", "label": "角度", "type": "range", "min": 0, "max": 360, "step": 5, "default": 120, "unit": "deg", "css_var": "--p-angle", "prompt": "グラデーションの角度は{value}"}]},
       "video": null
     },
     {
