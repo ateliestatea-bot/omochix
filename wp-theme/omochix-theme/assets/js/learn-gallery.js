@@ -422,18 +422,21 @@
                     dialog.showModal();
                 }
                 dialog.scrollTop = 0;
-                registerWithin(dialogBody);
-                announceDetail(dialogBody);
-                refreshAll();
                 if (push) {
                     // One history entry per dialog session: moving between
                     // samples inside the open dialog replaces it, so Back
                     // (or Escape) always returns to the list in one step.
+                    // Done before the panel binds: the playground reads the
+                    // URL hash (#p=…) and must not inherit the previous
+                    // sample's values.
                     var state = { omxDialog: true, url: url };
                     if (wasOpen && dialogPushed) window.history.replaceState(state, '', url);
                     else window.history.pushState(state, '', url);
                     dialogPushed = true;
                 }
+                registerWithin(dialogBody);
+                announceDetail(dialogBody);
+                refreshAll();
                 var heading = dialogBody.querySelector('.motion-detail__title');
                 if (heading) { heading.tabIndex = -1; heading.focus(); }
             })

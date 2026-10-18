@@ -198,7 +198,7 @@
       "tags": ["テキスト", "強調", "背景", "インライン"],
       "preview": {
         "html": "<p class=\"mk\">大事なところに<span>マーカー</span>を引く</p>",
-        "css": ".mk{margin:0;font:600 22px/1.6 system-ui,sans-serif;color:var(--text)}\n.mk span{background:linear-gradient(transparent calc(100% - var(--p-thick,45%)),color-mix(in srgb,var(--p-color,#f5a455) 65%,transparent) 0) no-repeat 0 0 / 0% 100%;padding:0 .1em;animation:mk var(--p-cycle,3s) var(--p-ease,ease-in-out) infinite}\n@keyframes mk{0%,15%{background-size:0% 100%}40%,80%{background-size:100% 100%}95%,100%{background-size:0% 100%}}",
+        "css": ".mk{margin:0;font:600 22px/1.6 system-ui,sans-serif;color:var(--text)}\n.mk span{background:linear-gradient(transparent calc(100% - var(--p-thick,45%)),rgba(245,164,85,.65) 0) no-repeat 0 0 / 0% 100%;background:linear-gradient(transparent calc(100% - var(--p-thick,45%)),color-mix(in srgb,var(--p-color,#f5a455) 65%,transparent) 0) no-repeat 0 0 / 0% 100%;padding:0 .1em;animation:mk var(--p-cycle,3s) var(--p-ease,ease-in-out) infinite}\n@keyframes mk{0%,15%{background-size:0% 100%}40%,80%{background-size:100% 100%}95%,100%{background-size:0% 100%}}",
         "js": ""
       },
       "prompt": {

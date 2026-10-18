@@ -257,6 +257,8 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 スクリーンショット：`docs/learn-v2-qa/phase2-gallery-list-1280-light.jpg`、`phase2-dialog-gradient-shift-1280-light.jpg`、`phase2-detail-pop-in-1280-dark.jpg`、`phase2-detail-toast-375-light.jpg`。
 
+**PR #25 レビュー後の修正**：(1) ダイアログ内で次／前の見本へ移るとき、履歴の push / replace をパネル束縛より前に行い、前の見本の `#p=` を引き継がないようにした。(2) パネルごとの `hashchange` リスナーは、パネルが文書から外れたら自分で解除する。(3) `#p=` 以外のアンカー（例 `#motion-pop-in-code`）は既定値のままでは消さない（値を変えると `#p=` に置き換わる）。(4) マーカー線は `color-mix()` 非対応ブラウザ向けに従来の `rgba()` 版 `background` を先に置き、既定の見た目を保つ（その環境では色の調整だけ効かない）。
+
 未確認：prefers-reduced-motion での挙動（Local では OS 設定の切り替えが必要。ランタイムは値変更で再生状態を変えないので設計上は変わらない）、実機スマホでの Web Share シートと `input type="color"` の使い勝手、Lighthouse。確認作業上の注意：パネルの描画は `requestAnimationFrame` でまとめているため、バックグラウンドのタブでは入力イベントだけでは更新されない（ユーザー操作では起きない）。
 
 ## 9. 未決定事項・運用上の注意

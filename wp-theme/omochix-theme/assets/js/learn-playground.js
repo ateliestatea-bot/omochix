@@ -47,10 +47,22 @@
         return payload ? '#' + HASH_KEY + '=' + payload : '';
     }
 
+    /** True when the current hash is ours (or empty) and may be rewritten; an unrelated anchor is left alone. */
+    function hashIsOurs() {
+        var current = window.location.hash;
+        return !current || current.indexOf('#' + HASH_KEY + '=') === 0;
+    }
+
     function writeHash(defs, values) {
         var base = window.location.pathname + window.location.search;
         var hash = hashFor(defs, values);
-        if (!hash && !window.location.hash) return;
+        if (!hashIsOurs()) {
+            // Keep an in-page anchor such as #motion-pop-in-code; only our
+            // own #p=… is replaced or removed.
+            if (!hash) return;
+        } else if (!hash && !window.location.hash) {
+            return;
+        }
         window.history.replaceState(window.history.state, '', base + hash);
     }
 
@@ -205,10 +217,16 @@
         }
 
         // In-page navigation to a shared link (#p=…) while this panel is open.
-        window.addEventListener('hashchange', function () {
-            if (!document.body.contains(panel)) return;
+        // Dialog panels are re-rendered on every open, so the listener
+        // unregisters itself once its panel has left the document.
+        function onHashChange() {
+            if (!document.body.contains(panel)) {
+                window.removeEventListener('hashchange', onHashChange);
+                return;
+            }
             if (applyHash()) render();
-        });
+        }
+        window.addEventListener('hashchange', onHashChange);
 
         applyHash();
         panel.omxBound = true;
