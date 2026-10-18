@@ -34,9 +34,6 @@ $omochix_url     = omochix_learn_gallery_url($omochix_item);
             <?php foreach ($omochix_item['tech'] as $omochix_tech) : ?>
                 <span class="motion-card__tech"><?php echo esc_html(omochix_learn_gallery_techs()[$omochix_tech] ?? $omochix_tech); ?></span>
             <?php endforeach; ?>
-            <?php if (!empty($omochix_item['params'])) : ?>
-                <span class="motion-card__adjustable"><?php esc_html_e('調整できる', 'omochix'); ?></span>
-            <?php endif; ?>
         </div>
         <h3 class="motion-card__title">
             <a class="motion-card__link" href="<?php echo esc_url($omochix_url); ?>" data-motion-open>

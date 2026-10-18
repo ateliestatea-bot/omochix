@@ -80,14 +80,13 @@
         var style = document.getElementById('omx-params');
         if (style) style.textContent = css.length ? ':root{' + css.join(';') + '}' : '';
         var clean = {};
-        var any = false;
         Object.keys(jsValues).forEach(function (key) {
             var value = jsValues[key];
             if (!JS_KEY_RE.test(key)) return;
-            if (typeof value === 'number' && isFinite(value)) { clean[key] = value; any = true; }
-            else if (typeof value === 'string' && JS_STR_RE.test(value)) { clean[key] = value; any = true; }
+            if (typeof value === 'number' && isFinite(value)) clean[key] = value;
+            else if (typeof value === 'string' && JS_STR_RE.test(value)) clean[key] = value;
         });
-        if (any || !window.omxParams) window.omxParams = clean;
+        window.omxParams = clean; // keys at their default are absent: omx.param() falls back
         for (var i = 0; i < paramListeners.length; i++) {
             try { paramListeners[i](window.omxParams); } catch (error) { /* keep other listeners alive */ }
         }

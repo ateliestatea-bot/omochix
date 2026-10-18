@@ -492,12 +492,21 @@ function omochix_learn_gallery_sanitize_params(array $item, array $raw = []) {
     return $values;
 }
 
+/** True when a (sanitized) value equals the definition's default. */
+function omochix_learn_gallery_param_is_default(array $def, $v) {
+    return 'range' === $def['type'] ? (float) $v === (float) $def['default'] : $v === $def['default'];
+}
+
 /**
  * The CSS and JS blocks that carry parameter values into a preview document
- * and into the copied code. Deterministic formatting shared with
- * paramBlocks() in learn-gallery.js:
+ * and into the copied code. Deterministic formatting shared with blocks()
+ * in learn-params.js:
  *   css: ":root{--p-a:400ms;--p-b:#6e4bff}"      (or "" when no CSS params)
  *   js:  "window.omxParams={\"target\":12800};"  (or "" when no JS params)
+ * Values equal to the default are left out: the sample's own CSS carries
+ * the default as a var() fallback (and JS samples as the omx.param()
+ * fallback), so an untouched sample renders exactly as shipped, theme
+ * variables included, and the copied code only lists what was changed.
  *
  * @param array<string, mixed>        $item   Catalog item.
  * @param array<string, float|string> $values Sanitized values.
@@ -508,6 +517,9 @@ function omochix_learn_gallery_params_blocks(array $item, array $values) {
     $js  = [];
     foreach ($item['params'] as $def) {
         $v = $values[$def['key']] ?? $def['default'];
+        if (omochix_learn_gallery_param_is_default($def, $v)) {
+            continue;
+        }
         if ('select' === $def['type']) {
             $cssValue = '';
             foreach ($def['options'] as $o) {
@@ -574,7 +586,7 @@ function omochix_learn_gallery_params_text(array $item, array $values) {
         $v       = $values[$def['key']] ?? $def['default'];
         $display = omochix_learn_gallery_param_display($def, $v);
         $line    = '' !== $def['prompt'] ? str_replace('{value}', $display, $def['prompt']) : $def['label'] . ': ' . $display;
-        $same    = 'range' === $def['type'] ? (float) $v === (float) $def['default'] : $v === $def['default'];
+        $same    = omochix_learn_gallery_param_is_default($def, $v);
         $lines[] = '- ' . $line . ($same ? '（既定）' : '');
     }
     return implode("\n", $lines) . "\n";

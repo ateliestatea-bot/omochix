@@ -200,13 +200,43 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 | 項目 | 内容 |
 |---|---|
 | JS分割 | `assets/js/learn-params.js`（純粋関数：正規化・ブロック生成・ハッシュ直列化・テンプレート充填。DOM に触れず Node からも読める）→ `learn-gallery.js`（プレビュー・フィルタ・ダイアログ・コピー、618行）→ `learn-playground.js`（「調整する」パネル）の順に `wp_enqueue_script` の依存で読み込む。gallery は `window.omochixMotionGallery`（`catalog` / `previewsOf(slug)` / `mount` / `sendParams` / `copyText` / `flash` / `expand`）を公開し、ダイアログに詳細を描画したあと `document` に `omx:motion:detail` イベント（`detail.container`）を送る。params ファイルが読めなくてもプレビューは既定値で描画される（CSS の `var(--p-x, 既定)` と `omx.param(key, 既定)` のフォールバック） |
-| 一覧カード | 調整できる見本に「調整できる」バッジ（`.motion-card__adjustable`、`params` が空でない項目だけ） |
+| 一覧カード | 調整できる見本に「調整できる」バッジ（`.motion-card__adjustable`）。※ 2D で全見本が調整できるようになったため撤去 |
 | 詳細レイアウト | 調整できる見本だけ `.motion-detail__studio` で囲み、1024px 以上ではプレビュー＋説明（`.motion-detail__stage`、sticky）とパネルを 3:2 の2カラムに並べる。ページでは `--shell-sticky-top`（shell）または `--header-height` を基準に、ダイアログ内は `top: 0`。調整できない見本の DOM は変更なし |
 | 「（調整済み）」 | CSS の `::after` をやめ、コピーボタン内の `<span data-omx-modified hidden>` を JS で表示切替（`flash()` はボタン内の `[data-omx-label]` だけを書き換える）。range には `aria-valuetext`（例「1.5s」）、既定に戻すとパネルのライブリージョンに「既定の値に戻しました」 |
 | 共有リンク | `[data-motion-detail]` の `data-url`（見本の正規URL）＋ `#p=…` を組み立てる（一覧URLや `?omx_partial` を含めない）。`navigator.share` がある端末は共有シート、キャンセル（AbortError）は無視、失敗時や非対応はクリップボードへコピーして「リンクをコピーしました」 |
 | テスト | WordPress スタブを `tests/learn-gallery/stub.php` に共通化。`node tests/learn-gallery/params-parity.js` が `params-fixture.php`（PHP 側の正規化・ブロック・プロンプト行・コピー用コード/プロンプト全文）と `learn-params.js` の出力を 3見本 × 11ケース（範囲外・文字列・空・余計なキー・`url(` など）で全比較し、ハッシュの往復も確認（264件） |
 
 確認済み（スタブサーバー、1280px と 375px）：ページとダイアログでパネルが束縛される（イベント経由）、2カラム／sticky、スマホでは縦積みで横スクロールなし、共有URLが正規URL＋ハッシュ、拡大表示に値を引き継ぐ、ダイアログを閉じると一覧URLに戻る、コンソールエラーなし。既知の制約：共有リンクのハッシュはサーバーに届かないため、OGP 画像や初期HTMLは既定の見た目のまま（JS 実行後に調整値が反映される）。
+
+### 8.3.2 Phase 2D — 全20見本にパラメータを展開（2026年10月18日）
+
+**2D-0 既定値の省略**：`omochix_learn_gallery_params_blocks()` と `learn-params.js` の `blocks()` は、既定値と同じパラメータを `:root{…}` / `window.omxParams` に書かない。見本の CSS は `var(--p-x, 既定)`、JS 見本は `omx.param(key, 既定)` で既定を持つので、触っていない見本は Phase 1 と同じ見た目（ダークテーマの `--primary` 等もそのまま）になり、コピーするコードには変えた値だけが入る。プロンプトの「調整した値」一覧は従来どおり全件を（既定）付きで出す。iframe ランタイムは `omx:params` のたびに `window.omxParams` を丸ごと置き換える（既定に戻した値は消える）。
+
+**命名の統一**：`cycle`（1周期・片道の長さ）、`ease`（動き方：なめらか／やわらか／弾む など見本ごとの3択）、`distance`（移動量）、`stagger`（ずらし）、`color`（主色）、`size`（文字の大きさ）。倍率は単位なし（`press` 0.95 など）。色の既定はライトテーマの値（`#6e4bff` / `#2563eb` / `#d97706`）で、フォールバックはテーマ変数。
+
+| # | 見本 | パラメータ |
+|---|---|---|
+| 002 | フェードアップ | cycle, distance, ease |
+| 003 | スタガー | stagger, cycle, color, ease |
+| 004 | マスクリビール | cycle, color, bar（バーの太さ） |
+| 005 | タイプライター | cycle, blink（点滅）, color, size |
+| 007 | マーカー線 | color, thick（太さ %）, cycle, ease ※ `color-mix()` で透明度を保つ |
+| 008 | ワードスワップ | cycle, color, size, ease |
+| 009 | トグルスイッチ | cycle, color（ON）, bounce |
+| 010 | ボタンの押し込み | press（倍率）, ripple（倍率）, color, cycle |
+| 011 | トースト通知 | cycle, distance, color（アイコン）, ease |
+| 012 | スケルトン | shine（光の速さ）, cycle, glow（光の強さ） |
+| 013 | スクロールでフェードイン | distance, stagger, cycle, ease |
+| 014 | 追従ヘッダー | cycle, compact（縮んだ高さ）, shadow, color |
+| 015 | 読了プログレスバー | color, thick, cycle |
+| 016 | パララックス | cycle, depth（倍率）, sun, near |
+| 018 | ふわふわブロブ | cycle（+1s/+2s で3つをずらす）, blur, c1, c2, c3 |
+| 019 | ライトスイープ | cycle, glow, band（帯の幅 %）, angle, color（バッジ） |
+| 020 | パーティクル | count / speed / size（JS、`omx.onParams` で粒を作り直す）, color（CSS の `color` を canvas が読む） |
+
+合計 65 パラメータ（3件の試作と合わせて 78）。カタログは手書き整形を保つため文字列置換スクリプトで編集した（差分は各見本の `preview.css`（particles は `js` も）と `playground` の行だけ）。全見本が調整できるようになったので、2C で付けたカードの「調整できる」バッジは外し、ギャラリーのリード文（抜粋未設定時の既定文）に一言足した。
+
+**テスト**：`run.php` に「全20見本が 3〜5 個のパラメータを持つ」「CSS の `var(--p-x, fallback)` のフォールバックが既定値と一致する（色はテーマ変数も可）」を追加（131件）。parity テストは 20見本 × 11ケース＝1760件。
 
 ## 9. 未決定事項・運用上の注意
 

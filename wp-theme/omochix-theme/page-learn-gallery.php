@@ -36,7 +36,7 @@ while (have_posts()) :
         $omochix_categories = omochix_learn_gallery_get_categories();
         $omochix_items      = omochix_learn_gallery_get_items();
         $omochix_matching   = omochix_learn_gallery_get_items($omochix_filters);
-        $omochix_lead       = has_excerpt() ? trim(wp_strip_all_tags(get_the_excerpt())) : __('動きの「名前」を、動く見本つきで並べました。気に入ったものはプロンプトとコードをコピーして、そのままAIに頼めます。', 'omochix');
+        $omochix_lead       = has_excerpt() ? trim(wp_strip_all_tags(get_the_excerpt())) : __('動きの「名前」を、動く見本つきで並べました。どの見本も色や長さを調整でき、気に入ったものはプロンプトとコードをコピーして、そのままAIに頼めます。', 'omochix');
         $omochix_content    = trim((string) get_the_content());
         ?>
         <main class="motion-gallery" id="main-content" data-motion-root data-motion-gallery>

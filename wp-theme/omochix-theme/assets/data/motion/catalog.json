@@ -52,7 +52,7 @@
       "tags": ["登場", "フェード", "カード"],
       "preview": {
         "html": "<article class=\"fu\"><div class=\"fu__img\"></div><div class=\"fu__t\"></div><div class=\"fu__t fu__t--s\"></div></article>",
-        "css": ".fu{width:200px;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.08);animation:fade-up 3s ease-out infinite}\n.fu__img{height:64px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--blue))}\n.fu__t{height:10px;margin-top:12px;border-radius:5px;background:var(--line)}\n.fu__t--s{width:60%;margin-top:8px}\n@keyframes fade-up{0%{opacity:0;transform:translateY(24px)}20%,78%{opacity:1;transform:translateY(0)}92%,100%{opacity:0;transform:translateY(-10px)}}",
+        "css": ".fu{width:200px;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.08);animation:fade-up var(--p-cycle,3s) var(--p-ease,ease-out) infinite}\n.fu__img{height:64px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--blue))}\n.fu__t{height:10px;margin-top:12px;border-radius:5px;background:var(--line)}\n.fu__t--s{width:60%;margin-top:8px}\n@keyframes fade-up{0%{opacity:0;transform:translateY(var(--p-distance,24px))}20%,78%{opacity:1;transform:translateY(0)}92%,100%{opacity:0;transform:translateY(-10px)}}",
         "js": ""
       },
       "prompt": {
@@ -66,7 +66,7 @@
         "use": "カード・セクション・見出しなど、ページの中で順番に見せたいもの全般。"
       },
       "related": { "prompts": [], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 1.5, "max": 6, "step": 0.1, "default": 3, "unit": "s", "css_var": "--p-cycle", "prompt": "登場から退場までの1周期は{value}"}, {"key": "distance", "label": "移動量", "type": "range", "min": 8, "max": 60, "step": 2, "default": 24, "unit": "px", "css_var": "--p-distance", "prompt": "下からの移動量は{value}"}, {"key": "ease", "label": "動き方", "type": "select", "options": [{"value": "smooth", "label": "なめらか", "css": "ease-out"}, {"value": "soft", "label": "やわらか", "css": "cubic-bezier(.22,1,.36,1)"}, {"value": "bounce", "label": "弾む", "css": "cubic-bezier(.34,1.56,.64,1)"}], "default": "smooth", "css_var": "--p-ease", "prompt": "動き方は「{value}」"}]},
       "video": null
     },
     {
@@ -81,7 +81,7 @@
       "tags": ["登場", "時間差", "リスト", "グラフ"],
       "preview": {
         "html": "<ul class=\"stg\"><li style=\"--i:0\"></li><li style=\"--i:1\"></li><li style=\"--i:2\"></li><li style=\"--i:3\"></li><li style=\"--i:4\"></li></ul>",
-        "css": ".stg{display:flex;align-items:flex-end;gap:12px;height:110px;margin:0;padding:0;list-style:none}\n.stg li{width:28px;height:calc(50px + var(--i) * 14px);border-radius:8px 8px 3px 3px;background:var(--primary);transform-origin:bottom;animation:stg 2.8s cubic-bezier(.22,1,.36,1) calc(var(--i) * 120ms) infinite}\n@keyframes stg{0%{transform:scaleY(0);opacity:0}22%,70%{transform:scaleY(1);opacity:1}82%,100%{transform:scaleY(0);opacity:0}}",
+        "css": ".stg{display:flex;align-items:flex-end;gap:12px;height:110px;margin:0;padding:0;list-style:none}\n.stg li{width:28px;height:calc(50px + var(--i) * 14px);border-radius:8px 8px 3px 3px;background:var(--p-color,var(--primary));transform-origin:bottom;animation:stg var(--p-cycle,2.8s) var(--p-ease,cubic-bezier(.22,1,.36,1)) calc(var(--i) * var(--p-stagger,120ms)) infinite}\n@keyframes stg{0%{transform:scaleY(0);opacity:0}22%,70%{transform:scaleY(1);opacity:1}82%,100%{transform:scaleY(0);opacity:0}}",
         "js": ""
       },
       "prompt": {
@@ -95,7 +95,7 @@
         "use": "リスト・グラフの棒・カードの並びなど、同じ形のものが複数あるとき。"
       },
       "related": { "prompts": [], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "stagger", "label": "ずらし", "type": "range", "min": 40, "max": 300, "step": 10, "default": 120, "unit": "ms", "css_var": "--p-stagger", "prompt": "要素ごとに{value}ずつ遅らせる"}, {"key": "cycle", "label": "1回の長さ", "type": "range", "min": 1.5, "max": 5, "step": 0.1, "default": 2.8, "unit": "s", "css_var": "--p-cycle", "prompt": "登場から退場までの1周期は{value}"}, {"key": "color", "label": "バーの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}, {"key": "ease", "label": "動き方", "type": "select", "options": [{"value": "smooth", "label": "なめらか", "css": "ease-out"}, {"value": "soft", "label": "やわらか", "css": "cubic-bezier(.22,1,.36,1)"}, {"value": "bounce", "label": "弾む", "css": "cubic-bezier(.34,1.56,.64,1)"}], "default": "soft", "css_var": "--p-ease", "prompt": "動き方は「{value}」"}]},
       "video": null
     },
     {
@@ -110,7 +110,7 @@
       "tags": ["登場", "マスク", "見出し", "clip-path"],
       "preview": {
         "html": "<div class=\"mr\"><span class=\"mr__text\">OmochiX</span><span class=\"mr__bar\"></span></div>",
-        "css": ".mr{position:relative;padding:8px 12px;overflow:hidden}\n.mr__text{display:block;font:800 44px/1 system-ui,sans-serif;letter-spacing:-.04em;color:var(--text);clip-path:inset(0 100% 0 0);animation:mr-text 3s cubic-bezier(.65,0,.35,1) infinite}\n.mr__bar{position:absolute;inset:0 auto 0 0;width:18px;background:var(--primary);transform:translateX(-30px);animation:mr-bar 3s cubic-bezier(.65,0,.35,1) infinite}\n@keyframes mr-text{0%,8%{clip-path:inset(0 100% 0 0)}40%,80%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 100% 0 0)}}\n@keyframes mr-bar{0%,8%{transform:translateX(-30px)}40%{transform:translateX(230px)}41%,100%{transform:translateX(-30px)}}",
+        "css": ".mr{position:relative;padding:8px 12px;overflow:hidden}\n.mr__text{display:block;font:800 44px/1 system-ui,sans-serif;letter-spacing:-.04em;color:var(--text);clip-path:inset(0 100% 0 0);animation:mr-text var(--p-cycle,3s) cubic-bezier(.65,0,.35,1) infinite}\n.mr__bar{position:absolute;inset:0 auto 0 0;width:var(--p-bar,18px);background:var(--p-color,var(--primary));transform:translateX(-30px);animation:mr-bar var(--p-cycle,3s) cubic-bezier(.65,0,.35,1) infinite}\n@keyframes mr-text{0%,8%{clip-path:inset(0 100% 0 0)}40%,80%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 100% 0 0)}}\n@keyframes mr-bar{0%,8%{transform:translateX(-30px)}40%{transform:translateX(230px)}41%,100%{transform:translateX(-30px)}}",
         "js": ""
       },
       "prompt": {
@@ -124,7 +124,7 @@
         "use": "ヒーローの見出しやセクションタイトルを印象的に見せたいとき。"
       },
       "related": { "prompts": ["video-text-to-video-shot-prompts"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 1.5, "max": 6, "step": 0.1, "default": 3, "unit": "s", "css_var": "--p-cycle", "prompt": "隠れた状態から見えて、また隠れるまでの1周期は{value}"}, {"key": "color", "label": "バーの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}, {"key": "bar", "label": "バーの太さ", "type": "range", "min": 6, "max": 40, "step": 2, "default": 18, "unit": "px", "css_var": "--p-bar", "prompt": "バーの太さは{value}"}]},
       "video": null
     },
     {
@@ -140,7 +140,7 @@
       "featured": true,
       "preview": {
         "html": "<p class=\"tw\">Hello, OmochiX</p>",
-        "css": ".tw{margin:0;font:600 26px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text);white-space:nowrap;overflow:hidden;width:14ch;border-right:3px solid var(--primary);animation:tw-type 3.2s steps(14) infinite,tw-caret .7s step-end infinite}\n@keyframes tw-type{0%{width:0}60%,100%{width:14ch}}\n@keyframes tw-caret{50%{border-color:transparent}}",
+        "css": ".tw{margin:0;font:600 var(--p-size,26px)/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text);white-space:nowrap;overflow:hidden;width:14ch;border-right:3px solid var(--p-color,var(--primary));animation:tw-type var(--p-cycle,3.2s) steps(14) infinite,tw-caret var(--p-blink,.7s) step-end infinite}\n@keyframes tw-type{0%{width:0}60%,100%{width:14ch}}\n@keyframes tw-caret{50%{border-color:transparent}}",
         "js": ""
       },
       "prompt": {
@@ -154,7 +154,7 @@
         "use": "ヒーローのキャッチコピー、ターミナル風の演出、AIが返事をしている表現。"
       },
       "related": { "prompts": ["video-text-to-video-shot-prompts"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 2, "max": 6, "step": 0.1, "default": 3.2, "unit": "s", "css_var": "--p-cycle", "prompt": "打ち始めから次の周に入るまでの1周期は{value}"}, {"key": "blink", "label": "カーソルの点滅", "type": "range", "min": 0.3, "max": 1.5, "step": 0.1, "default": 0.7, "unit": "s", "css_var": "--p-blink", "prompt": "カーソルは{value}ごとに点滅する"}, {"key": "color", "label": "カーソルの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}, {"key": "size", "label": "文字の大きさ", "type": "range", "min": 16, "max": 40, "step": 2, "default": 26, "unit": "px", "css_var": "--p-size", "prompt": "文字の大きさは{value}"}]},
       "video": null
     },
     {
@@ -198,7 +198,7 @@
       "tags": ["テキスト", "強調", "背景", "インライン"],
       "preview": {
         "html": "<p class=\"mk\">大事なところに<span>マーカー</span>を引く</p>",
-        "css": ".mk{margin:0;font:600 22px/1.6 system-ui,sans-serif;color:var(--text)}\n.mk span{background:linear-gradient(transparent 55%,rgba(245,164,85,.65) 55%) no-repeat 0 0 / 0% 100%;padding:0 .1em;animation:mk 3s ease-in-out infinite}\n@keyframes mk{0%,15%{background-size:0% 100%}40%,80%{background-size:100% 100%}95%,100%{background-size:0% 100%}}",
+        "css": ".mk{margin:0;font:600 22px/1.6 system-ui,sans-serif;color:var(--text)}\n.mk span{background:linear-gradient(transparent calc(100% - var(--p-thick,45%)),color-mix(in srgb,var(--p-color,#f5a455) 65%,transparent) 0) no-repeat 0 0 / 0% 100%;padding:0 .1em;animation:mk var(--p-cycle,3s) var(--p-ease,ease-in-out) infinite}\n@keyframes mk{0%,15%{background-size:0% 100%}40%,80%{background-size:100% 100%}95%,100%{background-size:0% 100%}}",
         "js": ""
       },
       "prompt": {
@@ -212,7 +212,7 @@
         "use": "本文中のキーワード、セクションのサブタイトルの強調。"
       },
       "related": { "prompts": [], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "color", "label": "マーカーの色", "type": "color", "default": "#f5a455", "css_var": "--p-color"}, {"key": "thick", "label": "線の太さ", "type": "range", "min": 20, "max": 70, "step": 5, "default": 45, "unit": "%", "css_var": "--p-thick", "prompt": "線の太さは文字の高さの{value}"}, {"key": "cycle", "label": "1回の長さ", "type": "range", "min": 1.5, "max": 6, "step": 0.1, "default": 3, "unit": "s", "css_var": "--p-cycle", "prompt": "引いて消えるまでの1周期は{value}"}, {"key": "ease", "label": "動き方", "type": "select", "options": [{"value": "smooth", "label": "なめらか", "css": "ease-in-out"}, {"value": "linear", "label": "一定", "css": "linear"}, {"value": "sharp", "label": "ゆっくり→速く", "css": "cubic-bezier(.65,0,.35,1)"}], "default": "smooth", "css_var": "--p-ease", "prompt": "動き方は「{value}」"}]},
       "video": null
     },
     {
@@ -227,7 +227,7 @@
       "tags": ["テキスト", "キネティック", "見出し", "切り替え"],
       "preview": {
         "html": "<p class=\"kw\">AIで<span class=\"kw__roll\"><span class=\"kw__list\"><span>書く</span><span>作る</span><span>公開する</span><span>書く</span></span></span></p>",
-        "css": ".kw{display:flex;gap:.3em;margin:0;font:800 34px/1.3 system-ui,sans-serif;letter-spacing:-.03em;color:var(--text)}\n.kw__roll{display:inline-block;height:1.3em;overflow:hidden;color:var(--primary)}\n.kw__list{display:flex;flex-direction:column;animation:kw 4.5s cubic-bezier(.65,0,.35,1) infinite}\n.kw__list span{height:1.3em}\n@keyframes kw{0%,25%{transform:translateY(0)}33%,58%{transform:translateY(-1.3em)}66%,91%{transform:translateY(-2.6em)}100%{transform:translateY(-3.9em)}}",
+        "css": ".kw{display:flex;gap:.3em;margin:0;font:800 var(--p-size,34px)/1.3 system-ui,sans-serif;letter-spacing:-.03em;color:var(--text)}\n.kw__roll{display:inline-block;height:1.3em;overflow:hidden;color:var(--p-color,var(--primary))}\n.kw__list{display:flex;flex-direction:column;animation:kw var(--p-cycle,4.5s) var(--p-ease,cubic-bezier(.65,0,.35,1)) infinite}\n.kw__list span{height:1.3em}\n@keyframes kw{0%,25%{transform:translateY(0)}33%,58%{transform:translateY(-1.3em)}66%,91%{transform:translateY(-2.6em)}100%{transform:translateY(-3.9em)}}",
         "js": ""
       },
       "prompt": {
@@ -241,7 +241,7 @@
         "use": "サービスの価値を複数の言葉で見せるヒーロー見出し。"
       },
       "related": { "prompts": ["video-text-to-video-shot-prompts"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 2, "max": 8, "step": 0.1, "default": 4.5, "unit": "s", "css_var": "--p-cycle", "prompt": "4語が1周するのに{value}"}, {"key": "color", "label": "入れ替わる語の色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}, {"key": "size", "label": "文字の大きさ", "type": "range", "min": 20, "max": 48, "step": 2, "default": 34, "unit": "px", "css_var": "--p-size", "prompt": "文字の大きさは{value}"}, {"key": "ease", "label": "動き方", "type": "select", "options": [{"value": "smooth", "label": "なめらか", "css": "cubic-bezier(.65,0,.35,1)"}, {"value": "out", "label": "ゆるやか", "css": "ease-out"}, {"value": "bounce", "label": "弾む", "css": "cubic-bezier(.34,1.56,.64,1)"}], "default": "smooth", "css_var": "--p-ease", "prompt": "動き方は「{value}」"}]},
       "video": null
     },
     {
@@ -256,7 +256,7 @@
       "tags": ["UI", "スイッチ", "状態", "フォーム"],
       "preview": {
         "html": "<div class=\"tg\" role=\"img\" aria-label=\"トグルスイッチ\"><span class=\"tg__knob\"></span></div>",
-        "css": ".tg{position:relative;width:84px;height:46px;border-radius:23px;background:var(--line);animation:tg-track 3.2s ease-in-out infinite}\n.tg__knob{position:absolute;top:4px;left:4px;width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);animation:tg-knob 3.2s cubic-bezier(.34,1.4,.64,1) infinite}\n@keyframes tg-track{0%,40%{background:var(--line)}50%,90%{background:var(--primary)}100%{background:var(--line)}}\n@keyframes tg-knob{0%,40%{transform:translateX(0)}50%,90%{transform:translateX(38px)}100%{transform:translateX(0)}}",
+        "css": ".tg{position:relative;width:84px;height:46px;border-radius:23px;background:var(--line);animation:tg-track var(--p-cycle,3.2s) ease-in-out infinite}\n.tg__knob{position:absolute;top:4px;left:4px;width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);animation:tg-knob var(--p-cycle,3.2s) var(--p-bounce,cubic-bezier(.34,1.4,.64,1)) infinite}\n@keyframes tg-track{0%,40%{background:var(--line)}50%,90%{background:var(--p-color,var(--primary))}100%{background:var(--line)}}\n@keyframes tg-knob{0%,40%{transform:translateX(0)}50%,90%{transform:translateX(38px)}100%{transform:translateX(0)}}",
         "js": ""
       },
       "prompt": {
@@ -270,7 +270,7 @@
         "use": "設定のON/OFF、通知の切り替え、ダークモードスイッチ。"
       },
       "related": { "prompts": [], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 1.5, "max": 6, "step": 0.1, "default": 3.2, "unit": "s", "css_var": "--p-cycle", "prompt": "OFF→ON→OFFの1周期は{value}"}, {"key": "color", "label": "ONの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}, {"key": "bounce", "label": "ノブの弾み", "type": "select", "options": [{"value": "none", "label": "なし", "css": "ease-in-out"}, {"value": "soft", "label": "少し", "css": "cubic-bezier(.34,1.4,.64,1)"}, {"value": "big", "label": "大きめ", "css": "cubic-bezier(.34,2,.64,1)"}], "default": "soft", "css_var": "--p-bounce", "prompt": "ノブの弾み方は「{value}」"}]},
       "video": null
     },
     {
@@ -285,7 +285,7 @@
       "tags": ["UI", "ボタン", "リップル", "フィードバック"],
       "preview": {
         "html": "<button type=\"button\" class=\"bp\" tabindex=\"-1\">送信する<span class=\"bp__ripple\"></span></button>",
-        "css": ".bp{position:relative;overflow:hidden;padding:16px 36px;border:0;border-radius:999px;background:var(--primary);color:#fff;font:700 18px/1 system-ui,sans-serif;animation:bp-press 2.4s ease-out infinite}\n.bp__ripple{position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:bp-ripple 2.4s ease-out infinite}\n@keyframes bp-press{0%,28%{transform:scale(1)}34%{transform:scale(.95)}44%,100%{transform:scale(1)}}\n@keyframes bp-ripple{0%,30%{transform:scale(0);opacity:1}70%,100%{transform:scale(14);opacity:0}}",
+        "css": ".bp{position:relative;overflow:hidden;padding:16px 36px;border:0;border-radius:999px;background:var(--p-color,var(--primary));color:#fff;font:700 18px/1 system-ui,sans-serif;animation:bp-press var(--p-cycle,2.4s) ease-out infinite}\n.bp__ripple{position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:bp-ripple var(--p-cycle,2.4s) ease-out infinite}\n@keyframes bp-press{0%,28%{transform:scale(1)}34%{transform:scale(var(--p-press,.95))}44%,100%{transform:scale(1)}}\n@keyframes bp-ripple{0%,30%{transform:scale(0);opacity:1}70%,100%{transform:scale(var(--p-ripple,14));opacity:0}}",
         "js": ""
       },
       "prompt": {
@@ -299,7 +299,7 @@
         "use": "送信・購入・保存など、押したことを確かに伝えたい主要ボタン。"
       },
       "related": { "prompts": [], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "press", "label": "押し込みの深さ（倍率）", "type": "range", "min": 0.8, "max": 1, "step": 0.01, "default": 0.95, "unit": "", "css_var": "--p-press", "prompt": "押したときの縮みは{value}倍"}, {"key": "ripple", "label": "波紋の広がり（倍率）", "type": "range", "min": 6, "max": 24, "step": 1, "default": 14, "unit": "", "css_var": "--p-ripple", "prompt": "波紋は{value}倍まで広がる"}, {"key": "color", "label": "ボタンの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}, {"key": "cycle", "label": "1回の長さ", "type": "range", "min": 1.5, "max": 5, "step": 0.1, "default": 2.4, "unit": "s", "css_var": "--p-cycle", "prompt": "押してから次に押すまでの1周期は{value}"}]},
       "video": null
     },
     {
@@ -314,7 +314,7 @@
       "tags": ["UI", "通知", "フィードバック", "スライド"],
       "preview": {
         "html": "<div class=\"ts\"><span class=\"ts__icon\">✓</span>保存しました</div>",
-        "css": ".ts{position:absolute;left:50%;bottom:18px;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;background:var(--text);color:var(--bg);font:600 15px/1 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.2);animation:ts 3.6s cubic-bezier(.22,1,.36,1) infinite}\n.ts__icon{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#2fb37a;color:#fff;font-size:13px}\n@keyframes ts{0%{transform:translate(-50%,40px);opacity:0}12%,75%{transform:translate(-50%,0);opacity:1}88%,100%{transform:translate(-50%,40px);opacity:0}}",
+        "css": ".ts{position:absolute;left:50%;bottom:18px;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;background:var(--text);color:var(--bg);font:600 15px/1 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.2);animation:ts var(--p-cycle,3.6s) var(--p-ease,cubic-bezier(.22,1,.36,1)) infinite}\n.ts__icon{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--p-color,#2fb37a);color:#fff;font-size:13px}\n@keyframes ts{0%{transform:translate(-50%,var(--p-distance,40px));opacity:0}12%,75%{transform:translate(-50%,0);opacity:1}88%,100%{transform:translate(-50%,var(--p-distance,40px));opacity:0}}",
         "js": ""
       },
       "prompt": {
@@ -328,7 +328,7 @@
         "use": "保存・送信・コピー完了など、操作の結果を短く知らせるとき。"
       },
       "related": { "prompts": [], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 2, "max": 8, "step": 0.1, "default": 3.6, "unit": "s", "css_var": "--p-cycle", "prompt": "出てから消えるまでの1周期は{value}"}, {"key": "distance", "label": "移動量", "type": "range", "min": 10, "max": 80, "step": 2, "default": 40, "unit": "px", "css_var": "--p-distance", "prompt": "下からの移動量は{value}"}, {"key": "color", "label": "アイコンの色", "type": "color", "default": "#2fb37a", "css_var": "--p-color"}, {"key": "ease", "label": "動き方", "type": "select", "options": [{"value": "soft", "label": "やわらか", "css": "cubic-bezier(.22,1,.36,1)"}, {"value": "smooth", "label": "なめらか", "css": "ease-out"}, {"value": "bounce", "label": "弾む", "css": "cubic-bezier(.34,1.56,.64,1)"}], "default": "soft", "css_var": "--p-ease", "prompt": "動き方は「{value}」"}]},
       "video": null
     },
     {
@@ -343,7 +343,7 @@
       "tags": ["UI", "ローディング", "プレースホルダー", "シマー"],
       "preview": {
         "html": "<div class=\"sk\"><div class=\"sk__ph\"><div class=\"sk__img\"></div><div class=\"sk__t\"></div><div class=\"sk__t sk__t--s\"></div></div><div class=\"sk__real\"><div class=\"sk__img sk__img--real\"></div><p class=\"sk__title\">AIで作る最初の一歩</p><p class=\"sk__sub\">5分で読める入門ガイド</p></div></div>",
-        "css": ".sk{position:relative;width:220px;height:130px}\n.sk__ph,.sk__real{position:absolute;inset:0;padding:12px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}\n.sk__img{height:56px;border-radius:10px;background:var(--line)}\n.sk__t{height:10px;margin-top:12px;border-radius:5px;background:var(--line)}\n.sk__t--s{width:55%;margin-top:8px}\n.sk__ph>*{position:relative;overflow:hidden}\n.sk__ph>*::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:sk-shine 1.2s linear infinite}\n.sk__img--real{background:linear-gradient(135deg,var(--primary),var(--blue))}\n.sk__title{margin:10px 0 0;font:700 13px/1.3 system-ui,sans-serif;color:var(--text)}\n.sk__sub{margin:4px 0 0;font:500 11px/1.3 system-ui,sans-serif;color:var(--muted)}\n.sk__ph{animation:sk-ph 4s ease infinite}\n.sk__real{opacity:0;animation:sk-real 4s ease infinite}\n@keyframes sk-shine{to{transform:translateX(100%)}}\n@keyframes sk-ph{0%,55%{opacity:1}65%,92%{opacity:0}100%{opacity:1}}\n@keyframes sk-real{0%,55%{opacity:0;transform:translateY(4px)}65%,92%{opacity:1;transform:translateY(0)}100%{opacity:0}}",
+        "css": ".sk{position:relative;width:220px;height:130px}\n.sk__ph,.sk__real{position:absolute;inset:0;padding:12px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}\n.sk__img{height:56px;border-radius:10px;background:var(--line)}\n.sk__t{height:10px;margin-top:12px;border-radius:5px;background:var(--line)}\n.sk__t--s{width:55%;margin-top:8px}\n.sk__ph>*{position:relative;overflow:hidden}\n.sk__ph>*::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,var(--p-glow,.45)),transparent);transform:translateX(-100%);animation:sk-shine var(--p-shine,1.2s) linear infinite}\n.sk__img--real{background:linear-gradient(135deg,var(--primary),var(--blue))}\n.sk__title{margin:10px 0 0;font:700 13px/1.3 system-ui,sans-serif;color:var(--text)}\n.sk__sub{margin:4px 0 0;font:500 11px/1.3 system-ui,sans-serif;color:var(--muted)}\n.sk__ph{animation:sk-ph var(--p-cycle,4s) ease infinite}\n.sk__real{opacity:0;animation:sk-real var(--p-cycle,4s) ease infinite}\n@keyframes sk-shine{to{transform:translateX(100%)}}\n@keyframes sk-ph{0%,55%{opacity:1}65%,92%{opacity:0}100%{opacity:1}}\n@keyframes sk-real{0%,55%{opacity:0;transform:translateY(4px)}65%,92%{opacity:1;transform:translateY(0)}100%{opacity:0}}",
         "js": ""
       },
       "prompt": {
@@ -357,7 +357,7 @@
         "use": "一覧・カード・プロフィールなど、読み込みに1秒以上かかる画面。"
       },
       "related": { "prompts": ["development-web-performance-investigation"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "shine", "label": "光の流れる速さ", "type": "range", "min": 0.6, "max": 3, "step": 0.1, "default": 1.2, "unit": "s", "css_var": "--p-shine", "prompt": "光が1回流れるのに{value}"}, {"key": "cycle", "label": "1回の長さ", "type": "range", "min": 2, "max": 8, "step": 0.1, "default": 4, "unit": "s", "css_var": "--p-cycle", "prompt": "骨組み→本物→骨組みの1周期は{value}"}, {"key": "glow", "label": "光の強さ", "type": "range", "min": 0.1, "max": 0.9, "step": 0.05, "default": 0.45, "unit": "", "css_var": "--p-glow", "prompt": "光の強さは{value}（0〜1）"}]},
       "video": null
     },
     {
@@ -373,7 +373,7 @@
       "featured": true,
       "preview": {
         "html": "<div class=\"sf\"><div class=\"sf__page\"><section class=\"sf__sec\" style=\"--i:0\"><b></b><i></i></section><section class=\"sf__sec\" style=\"--i:1\"><b></b><i></i></section><section class=\"sf__sec\" style=\"--i:2\"><b></b><i></i></section><section class=\"sf__sec\" style=\"--i:3\"><b></b><i></i></section></div></div>",
-        "css": ".sf{width:240px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.sf__page{display:grid;gap:14px;padding:14px;animation:sf-scroll 5s cubic-bezier(.65,0,.35,1) infinite}\n.sf__sec{display:grid;gap:8px;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);opacity:0;transform:translateY(16px);animation:sf-in 5s ease-out calc(var(--i) * .9s) infinite}\n.sf__sec b{display:block;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--blue));opacity:.85}\n.sf__sec i{display:block;height:8px;width:70%;border-radius:4px;background:var(--line)}\n@keyframes sf-scroll{0%,12%{transform:translateY(0)}70%,88%{transform:translateY(-200px)}100%{transform:translateY(0)}}\n@keyframes sf-in{0%,6%{opacity:0;transform:translateY(16px)}16%,80%{opacity:1;transform:translateY(0)}92%,100%{opacity:0;transform:translateY(16px)}}",
+        "css": ".sf{width:240px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.sf__page{display:grid;gap:14px;padding:14px;animation:sf-scroll var(--p-cycle,5s) cubic-bezier(.65,0,.35,1) infinite}\n.sf__sec{display:grid;gap:8px;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);opacity:0;transform:translateY(var(--p-distance,16px));animation:sf-in var(--p-cycle,5s) var(--p-ease,ease-out) calc(var(--i) * var(--p-stagger,.9s)) infinite}\n.sf__sec b{display:block;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--blue));opacity:.85}\n.sf__sec i{display:block;height:8px;width:70%;border-radius:4px;background:var(--line)}\n@keyframes sf-scroll{0%,12%{transform:translateY(0)}70%,88%{transform:translateY(-200px)}100%{transform:translateY(0)}}\n@keyframes sf-in{0%,6%{opacity:0;transform:translateY(var(--p-distance,16px))}16%,80%{opacity:1;transform:translateY(0)}92%,100%{opacity:0;transform:translateY(var(--p-distance,16px))}}",
         "js": ""
       },
       "prompt": {
@@ -387,7 +387,7 @@
         "use": "LP・紹介ページ・記事内の図版など、縦に長いページ全般。"
       },
       "related": { "prompts": [], "tools": ["cursor", "claude"], "learn": ["learn/development"] },
-      "playground": null,
+      "playground": {"params": [{"key": "distance", "label": "移動量", "type": "range", "min": 4, "max": 48, "step": 2, "default": 16, "unit": "px", "css_var": "--p-distance", "prompt": "下からの移動量は{value}"}, {"key": "stagger", "label": "ずらし", "type": "range", "min": 0.3, "max": 1.5, "step": 0.1, "default": 0.9, "unit": "s", "css_var": "--p-stagger", "prompt": "セクションごとに{value}ずつ遅らせる"}, {"key": "cycle", "label": "1回の長さ", "type": "range", "min": 3, "max": 8, "step": 0.1, "default": 5, "unit": "s", "css_var": "--p-cycle", "prompt": "スクロールの1周期は{value}"}, {"key": "ease", "label": "動き方", "type": "select", "options": [{"value": "smooth", "label": "なめらか", "css": "ease-out"}, {"value": "soft", "label": "やわらか", "css": "cubic-bezier(.22,1,.36,1)"}, {"value": "bounce", "label": "弾む", "css": "cubic-bezier(.34,1.56,.64,1)"}], "default": "smooth", "css_var": "--p-ease", "prompt": "動き方は「{value}」"}]},
       "video": null
     },
     {
@@ -402,7 +402,7 @@
       "tags": ["スクロール", "ヘッダー", "sticky", "ナビ"],
       "preview": {
         "html": "<div class=\"sh\"><header class=\"sh__bar\"><span class=\"sh__logo\"></span><span class=\"sh__nav\"></span></header><div class=\"sh__page\"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>",
-        "css": ".sh{position:relative;width:240px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.sh__bar{position:absolute;z-index:1;inset:0 0 auto 0;display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--line);animation:sh-bar 4.5s cubic-bezier(.65,0,.35,1) infinite}\n.sh__logo{width:60px;height:12px;border-radius:6px;background:var(--primary)}\n.sh__nav{width:80px;height:8px;border-radius:4px;background:var(--line)}\n.sh__page{display:grid;gap:12px;padding:58px 14px 14px;animation:sh-scroll 4.5s cubic-bezier(.65,0,.35,1) infinite}\n.sh__page i{display:block;height:44px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}\n@keyframes sh-scroll{0%,15%{transform:translateY(0)}65%,85%{transform:translateY(-180px)}100%{transform:translateY(0)}}\n@keyframes sh-bar{0%,15%{height:44px;box-shadow:none}30%,85%{height:32px;box-shadow:0 6px 18px rgba(0,0,0,.12)}100%{height:44px;box-shadow:none}}",
+        "css": ".sh{position:relative;width:240px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.sh__bar{position:absolute;z-index:1;inset:0 0 auto 0;display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--line);animation:sh-bar var(--p-cycle,4.5s) cubic-bezier(.65,0,.35,1) infinite}\n.sh__logo{width:60px;height:12px;border-radius:6px;background:var(--p-color,var(--primary))}\n.sh__nav{width:80px;height:8px;border-radius:4px;background:var(--line)}\n.sh__page{display:grid;gap:12px;padding:58px 14px 14px;animation:sh-scroll var(--p-cycle,4.5s) cubic-bezier(.65,0,.35,1) infinite}\n.sh__page i{display:block;height:44px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}\n@keyframes sh-scroll{0%,15%{transform:translateY(0)}65%,85%{transform:translateY(-180px)}100%{transform:translateY(0)}}\n@keyframes sh-bar{0%,15%{height:44px;box-shadow:none}30%,85%{height:var(--p-compact,32px);box-shadow:0 6px 18px rgba(0,0,0,var(--p-shadow,.12))}100%{height:44px;box-shadow:none}}",
         "js": ""
       },
       "prompt": {
@@ -416,7 +416,7 @@
         "use": "長いページで常にナビへ戻れるようにしたいとき。"
       },
       "related": { "prompts": [], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 3, "max": 8, "step": 0.1, "default": 4.5, "unit": "s", "css_var": "--p-cycle", "prompt": "スクロールの1周期は{value}"}, {"key": "compact", "label": "縮んだときの高さ", "type": "range", "min": 24, "max": 44, "step": 2, "default": 32, "unit": "px", "css_var": "--p-compact", "prompt": "スクロール後のヘッダーの高さは{value}"}, {"key": "shadow", "label": "影の濃さ", "type": "range", "min": 0, "max": 0.4, "step": 0.02, "default": 0.12, "unit": "", "css_var": "--p-shadow", "prompt": "影の濃さは{value}（0〜1）"}, {"key": "color", "label": "ロゴの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}]},
       "video": null
     },
     {
@@ -431,7 +431,7 @@
       "tags": ["スクロール", "進捗", "記事", "インジケーター"],
       "preview": {
         "html": "<div class=\"sp\"><span class=\"sp__bar\"></span><div class=\"sp__page\"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>",
-        "css": ".sp{position:relative;width:240px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.sp__bar{position:absolute;z-index:1;top:0;left:0;height:4px;width:100%;background:var(--primary);transform-origin:left;animation:sp-bar 4.5s cubic-bezier(.65,0,.35,1) infinite}\n.sp__page{display:grid;gap:10px;padding:18px 16px;animation:sp-scroll 4.5s cubic-bezier(.65,0,.35,1) infinite}\n.sp__page i{display:block;height:10px;border-radius:5px;background:var(--line)}\n.sp__page i:nth-child(3n){width:70%}\n@keyframes sp-scroll{0%,12%{transform:translateY(0)}72%,88%{transform:translateY(-120px)}100%{transform:translateY(0)}}\n@keyframes sp-bar{0%,12%{transform:scaleX(0)}72%,88%{transform:scaleX(1)}100%{transform:scaleX(0)}}",
+        "css": ".sp{position:relative;width:240px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.sp__bar{position:absolute;z-index:1;top:0;left:0;height:var(--p-thick,4px);width:100%;background:var(--p-color,var(--primary));transform-origin:left;animation:sp-bar var(--p-cycle,4.5s) cubic-bezier(.65,0,.35,1) infinite}\n.sp__page{display:grid;gap:10px;padding:18px 16px;animation:sp-scroll var(--p-cycle,4.5s) cubic-bezier(.65,0,.35,1) infinite}\n.sp__page i{display:block;height:10px;border-radius:5px;background:var(--line)}\n.sp__page i:nth-child(3n){width:70%}\n@keyframes sp-scroll{0%,12%{transform:translateY(0)}72%,88%{transform:translateY(-120px)}100%{transform:translateY(0)}}\n@keyframes sp-bar{0%,12%{transform:scaleX(0)}72%,88%{transform:scaleX(1)}100%{transform:scaleX(0)}}",
         "js": ""
       },
       "prompt": {
@@ -445,7 +445,7 @@
         "use": "長文記事・ドキュメント・チュートリアルの読了感。"
       },
       "related": { "prompts": ["development-web-performance-investigation"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "color", "label": "バーの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}, {"key": "thick", "label": "バーの太さ", "type": "range", "min": 2, "max": 12, "step": 1, "default": 4, "unit": "px", "css_var": "--p-thick", "prompt": "バーの太さは{value}"}, {"key": "cycle", "label": "1回の長さ", "type": "range", "min": 3, "max": 8, "step": 0.1, "default": 4.5, "unit": "s", "css_var": "--p-cycle", "prompt": "読み始めから読み終わりまでの1周期は{value}"}]},
       "video": null
     },
     {
@@ -460,7 +460,7 @@
       "tags": ["スクロール", "奥行き", "レイヤー", "LP"],
       "preview": {
         "html": "<div class=\"px\"><span class=\"px__sun\"></span><span class=\"px__far\"></span><span class=\"px__near\"></span></div>",
-        "css": ".px{position:relative;width:280px;height:160px;overflow:hidden;border-radius:14px;background:linear-gradient(180deg,var(--bg),var(--surface))}\n.px__sun{position:absolute;top:26px;right:50px;width:40px;height:40px;border-radius:50%;background:var(--amber);animation:px-move 4s ease-in-out infinite alternate;--d:-8px}\n.px__far{position:absolute;left:-20px;right:-20px;bottom:30px;height:90px;background:var(--blue);opacity:.35;clip-path:polygon(0 100%,15% 45%,30% 70%,48% 25%,62% 60%,78% 35%,100% 70%,100% 100%);animation:px-move 4s ease-in-out infinite alternate;--d:-22px}\n.px__near{position:absolute;left:-30px;right:-30px;bottom:-10px;height:70px;background:var(--primary);border-radius:50% 50% 0 0;animation:px-move 4s ease-in-out infinite alternate;--d:-50px}\n@keyframes px-move{from{transform:translateY(0)}to{transform:translateY(var(--d))}}",
+        "css": ".px{position:relative;width:280px;height:160px;overflow:hidden;border-radius:14px;background:linear-gradient(180deg,var(--bg),var(--surface))}\n.px__sun{position:absolute;top:26px;right:50px;width:40px;height:40px;border-radius:50%;background:var(--p-sun,var(--amber));animation:px-move var(--p-cycle,4s) ease-in-out infinite alternate;--d:-8px}\n.px__far{position:absolute;left:-20px;right:-20px;bottom:30px;height:90px;background:var(--blue);opacity:.35;clip-path:polygon(0 100%,15% 45%,30% 70%,48% 25%,62% 60%,78% 35%,100% 70%,100% 100%);animation:px-move var(--p-cycle,4s) ease-in-out infinite alternate;--d:-22px}\n.px__near{position:absolute;left:-30px;right:-30px;bottom:-10px;height:70px;background:var(--p-near,var(--primary));border-radius:50% 50% 0 0;animation:px-move var(--p-cycle,4s) ease-in-out infinite alternate;--d:-50px}\n@keyframes px-move{from{transform:translateY(0)}to{transform:translateY(calc(var(--d) * var(--p-depth,1)))}}",
         "js": ""
       },
       "prompt": {
@@ -474,7 +474,7 @@
         "use": "ヒーロー背景、ブランドサイトの装飾、ストーリーテリング型LP。"
       },
       "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "片道の長さ", "type": "range", "min": 2, "max": 8, "step": 0.1, "default": 4, "unit": "s", "css_var": "--p-cycle", "prompt": "片道の長さは{value}"}, {"key": "depth", "label": "奥行きの強さ（倍率）", "type": "range", "min": 0.2, "max": 2, "step": 0.1, "default": 1, "unit": "", "css_var": "--p-depth", "prompt": "各レイヤーの移動量は既定の{value}倍"}, {"key": "sun", "label": "太陽の色", "type": "color", "default": "#d97706", "css_var": "--p-sun"}, {"key": "near", "label": "手前の丘の色", "type": "color", "default": "#6e4bff", "css_var": "--p-near"}]},
       "video": null
     },
     {
@@ -519,7 +519,7 @@
       "tags": ["背景", "ぼかし", "浮遊", "柔らかい"],
       "preview": {
         "html": "<div class=\"fb\"><i class=\"fb__b fb__b--1\"></i><i class=\"fb__b fb__b--2\"></i><i class=\"fb__b fb__b--3\"></i><span class=\"fb__t\">Learn</span></div>",
-        "css": ".fb{position:relative;display:grid;place-items:center;width:300px;height:170px;overflow:hidden;border-radius:16px;background:var(--surface)}\n.fb__b{position:absolute;width:140px;height:140px;border-radius:50%;filter:blur(28px);opacity:.55}\n.fb__b--1{left:-20px;top:-30px;background:var(--primary);animation:fb1 6s ease-in-out infinite alternate}\n.fb__b--2{right:-30px;top:10px;background:var(--blue);animation:fb2 7s ease-in-out infinite alternate}\n.fb__b--3{left:90px;bottom:-70px;background:var(--amber);animation:fb3 8s ease-in-out infinite alternate}\n.fb__t{position:relative;font:800 34px/1 system-ui,sans-serif;letter-spacing:-.04em;color:var(--text)}\n@keyframes fb1{to{transform:translate(50px,30px) scale(1.15)}}\n@keyframes fb2{to{transform:translate(-40px,40px) scale(.9)}}\n@keyframes fb3{to{transform:translate(-30px,-40px) scale(1.1)}}",
+        "css": ".fb{position:relative;display:grid;place-items:center;width:300px;height:170px;overflow:hidden;border-radius:16px;background:var(--surface)}\n.fb__b{position:absolute;width:140px;height:140px;border-radius:50%;filter:blur(var(--p-blur,28px));opacity:.55}\n.fb__b--1{left:-20px;top:-30px;background:var(--p-c1,var(--primary));animation:fb1 var(--p-cycle,6s) ease-in-out infinite alternate}\n.fb__b--2{right:-30px;top:10px;background:var(--p-c2,var(--blue));animation:fb2 calc(var(--p-cycle,6s) + 1s) ease-in-out infinite alternate}\n.fb__b--3{left:90px;bottom:-70px;background:var(--p-c3,var(--amber));animation:fb3 calc(var(--p-cycle,6s) + 2s) ease-in-out infinite alternate}\n.fb__t{position:relative;font:800 34px/1 system-ui,sans-serif;letter-spacing:-.04em;color:var(--text)}\n@keyframes fb1{to{transform:translate(50px,30px) scale(1.15)}}\n@keyframes fb2{to{transform:translate(-40px,40px) scale(.9)}}\n@keyframes fb3{to{transform:translate(-30px,-40px) scale(1.1)}}",
         "js": ""
       },
       "prompt": {
@@ -533,7 +533,7 @@
         "use": "セクション背景、ログイン画面、空状態（エンプティステート）の装飾。"
       },
       "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "ゆれの長さ", "type": "range", "min": 2, "max": 12, "step": 0.1, "default": 6, "unit": "s", "css_var": "--p-cycle", "prompt": "いちばん速いブロブの片道は{value}（ほかは+1秒、+2秒）"}, {"key": "blur", "label": "ぼかし", "type": "range", "min": 8, "max": 60, "step": 2, "default": 28, "unit": "px", "css_var": "--p-blur", "prompt": "ぼかしは{value}"}, {"key": "c1", "label": "色1", "type": "color", "default": "#6e4bff", "css_var": "--p-c1"}, {"key": "c2", "label": "色2", "type": "color", "default": "#2563eb", "css_var": "--p-c2"}, {"key": "c3", "label": "色3", "type": "color", "default": "#d97706", "css_var": "--p-c3"}]},
       "video": null
     },
     {
@@ -548,7 +548,7 @@
       "tags": ["背景", "光", "カード", "プレミアム"],
       "preview": {
         "html": "<div class=\"ls\"><span class=\"ls__badge\">PRO</span><b class=\"ls__t\">Premium Plan</b></div>",
-        "css": ".ls{position:relative;display:grid;align-content:end;gap:8px;width:240px;height:130px;padding:16px;overflow:hidden;border-radius:16px;background:linear-gradient(145deg,#1e1b2e,#2a2440);color:#fff;border:1px solid rgba(255,255,255,.12)}\n.ls::after{content:'';position:absolute;inset:-40% -60%;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.35) 50%,transparent 60%);transform:translateX(-60%);animation:ls 3.2s cubic-bezier(.65,0,.35,1) infinite}\n.ls__badge{width:max-content;padding:4px 10px;border-radius:999px;background:var(--primary);font:700 11px/1 system-ui,sans-serif;letter-spacing:.08em}\n.ls__t{font:700 20px/1.2 system-ui,sans-serif}\n@keyframes ls{0%,20%{transform:translateX(-60%)}60%,100%{transform:translateX(60%)}}",
+        "css": ".ls{position:relative;display:grid;align-content:end;gap:8px;width:240px;height:130px;padding:16px;overflow:hidden;border-radius:16px;background:linear-gradient(145deg,#1e1b2e,#2a2440);color:#fff;border:1px solid rgba(255,255,255,.12)}\n.ls::after{content:'';position:absolute;inset:-40% -60%;background:linear-gradient(var(--p-angle,115deg),transparent calc(50% - var(--p-band,10%)),rgba(255,255,255,var(--p-glow,.35)) 50%,transparent calc(50% + var(--p-band,10%)));transform:translateX(-60%);animation:ls var(--p-cycle,3.2s) cubic-bezier(.65,0,.35,1) infinite}\n.ls__badge{width:max-content;padding:4px 10px;border-radius:999px;background:var(--p-color,var(--primary));font:700 11px/1 system-ui,sans-serif;letter-spacing:.08em}\n.ls__t{font:700 20px/1.2 system-ui,sans-serif}\n@keyframes ls{0%,20%{transform:translateX(-60%)}60%,100%{transform:translateX(60%)}}",
         "js": ""
       },
       "prompt": {
@@ -562,7 +562,7 @@
         "use": "料金プラン、プレミアムバッジ、キャンペーンのカード。"
       },
       "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": [], "learn": [] },
-      "playground": null,
+      "playground": {"params": [{"key": "cycle", "label": "1回の長さ", "type": "range", "min": 1.5, "max": 6, "step": 0.1, "default": 3.2, "unit": "s", "css_var": "--p-cycle", "prompt": "光が1回通り過ぎる周期は{value}"}, {"key": "glow", "label": "光の強さ", "type": "range", "min": 0.1, "max": 0.8, "step": 0.05, "default": 0.35, "unit": "", "css_var": "--p-glow", "prompt": "光の強さは{value}（0〜1）"}, {"key": "band", "label": "光の帯の幅", "type": "range", "min": 4, "max": 30, "step": 2, "default": 10, "unit": "%", "css_var": "--p-band", "prompt": "光の帯の幅は中心から前後{value}"}, {"key": "angle", "label": "光の角度", "type": "range", "min": 90, "max": 160, "step": 5, "default": 115, "unit": "deg", "css_var": "--p-angle", "prompt": "光の角度は{value}"}, {"key": "color", "label": "バッジの色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}]},
       "video": null
     },
     {
@@ -577,8 +577,8 @@
       "tags": ["背景", "Canvas", "粒", "JavaScript"],
       "preview": {
         "html": "<canvas class=\"pt\" width=\"320\" height=\"180\" aria-hidden=\"true\"></canvas>",
-        "css": ".pt{display:block;width:320px;height:180px}",
-        "js": "var canvas=document.querySelector('.pt');var ctx=canvas.getContext('2d');var W=canvas.width,H=canvas.height;var dots=[];for(var i=0;i<40;i++){dots.push({x:Math.random()*W,y:Math.random()*H,r:1.2+Math.random()*2.2,vx:(Math.random()-.5)*14,vy:-6-Math.random()*10,a:.3+Math.random()*.5});}var last=0;omx.animate(function(t){var dt=Math.min(t-last,.05);last=t;var color=getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()||'#6e4bff';ctx.clearRect(0,0,W,H);ctx.fillStyle=color;for(var i=0;i<dots.length;i++){var d=dots[i];d.x+=d.vx*dt;d.y+=d.vy*dt;if(d.y<-4){d.y=H+4;d.x=Math.random()*W;}if(d.x<-4)d.x=W+4;if(d.x>W+4)d.x=-4;ctx.globalAlpha=d.a;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;});"
+        "css": ".pt{display:block;width:320px;height:180px;color:var(--p-color,var(--primary))}",
+        "js": "var canvas=document.querySelector('.pt');var ctx=canvas.getContext('2d');var W=canvas.width,H=canvas.height;var dots=[];function make(){dots=[];var n=omx.param('count',40);for(var i=0;i<n;i++){dots.push({x:Math.random()*W,y:Math.random()*H,r:1.2+Math.random()*2.2,vx:(Math.random()-.5)*14,vy:-6-Math.random()*10,a:.3+Math.random()*.5});}}make();omx.onParams(function(){if(dots.length!==omx.param('count',40))make();});var last=0;omx.animate(function(t){var dt=Math.min(t-last,.05);last=t;var speed=omx.param('speed',1),size=omx.param('size',1);var color=getComputedStyle(canvas).color||'#6e4bff';ctx.clearRect(0,0,W,H);ctx.fillStyle=color;for(var i=0;i<dots.length;i++){var d=dots[i];d.x+=d.vx*dt*speed;d.y+=d.vy*dt*speed;if(d.y<-4){d.y=H+4;d.x=Math.random()*W;}if(d.x<-4)d.x=W+4;if(d.x>W+4)d.x=-4;ctx.globalAlpha=d.a;ctx.beginPath();ctx.arc(d.x,d.y,d.r*size,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;});"
       },
       "prompt": {
         "ask": "ヒーローの背景に、小さな粒がゆっくり上へ漂うパーティクルを足して。40個くらいで軽めに。",
@@ -592,7 +592,7 @@
         "use": "ヒーロー背景、ローディング画面、祝福（完了）画面の演出。"
       },
       "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": ["cursor", "claude"], "learn": ["learn/development"] },
-      "playground": null,
+      "playground": {"params": [{"key": "count", "label": "粒の数", "type": "range", "min": 10, "max": 120, "step": 5, "default": 40, "unit": "", "target": "js", "prompt": "粒の数は{value}"}, {"key": "speed", "label": "速さ（倍率）", "type": "range", "min": 0.3, "max": 3, "step": 0.1, "default": 1, "unit": "", "target": "js", "prompt": "速さは既定の{value}倍"}, {"key": "size", "label": "粒の大きさ（倍率）", "type": "range", "min": 0.5, "max": 3, "step": 0.1, "default": 1, "unit": "", "target": "js", "prompt": "粒の大きさは既定の{value}倍"}, {"key": "color", "label": "粒の色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}]},
       "video": null
     }
   ]

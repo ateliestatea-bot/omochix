@@ -79,6 +79,10 @@
      * {cssVars:{'--p-x':'400ms'}, js:{target:12800}} plus the serialized
      * blocks the templates take: css ":root{…}" and jsBlock
      * "window.omxParams={…};" (empty strings when nothing applies).
+     * Values equal to the default are left out: the sample's CSS carries
+     * the default as the var() fallback (JS samples via omx.param()), so an
+     * untouched sample keeps its shipped, theme-aware look and the copied
+     * code only lists what was changed.
      */
     function blocks(defs, values) {
         var cssVars = {};
@@ -88,6 +92,7 @@
         values = values || {};
         (defs || []).forEach(function (def) {
             var v = has(values, def.key) ? values[def.key] : def['default'];
+            if (sameAsDefault(def, v)) return;
             var cssValue = '';
             var jsValue = v;
             if (def.type === 'select') {
