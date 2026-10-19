@@ -959,7 +959,7 @@ var omx = window.omx = window.omx || (function () {
   function tick(now) {
     frame = 0;
     if (stopped()) { stop(); return; }
-    var t = (now - started - lost) / 1000;
+    var t = Math.max(0, now - started - lost) / 1000; // rAF の時刻は要求時より前のことがある
     for (var i = 0; i < fns.length; i++) { try { fns[i](t); } catch (e) { /* 他の見本は止めない */ } }
     frame = window.requestAnimationFrame(tick);
   }

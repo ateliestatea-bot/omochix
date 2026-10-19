@@ -367,6 +367,14 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 見本 JS の書き方（catalog.json）：要素は `omx.root.querySelector(...)` で取る（`document.querySelector` は使わない）。最終状態を即座に出せる見本は `omx.reduced` を見る。
 
+**PR #31 レビュー後の修正（同日）**
+
+- **script 配置依存（MEDIUM）**：指示書の `omxSlot` は「この script を含む `.omx-motion-n`（`closest`）→ 直前の `.omx-motion-n` → まだどの script にも使われていない `.omx-motion-n` を文書順」の順で root を決め、使った要素に `omxClaimed` を付ける。AI が `<script>` をまとめて body 末尾に移しても、同じ見本 2 回がそれぞれ動く（確認済み）。
+- **`data-<key>` と omxSlot の二重定義（MEDIUM）**：指示書では、HTML に `data-<key>` を持つ JS パラメータ（count-up の `target`）を `omxSlot(n, {...})` の JSON から外す（`omochix_learn_composer_brief_js_params()` / `briefJsParams()`）。属性が唯一の編集箇所になり、見本はそれを fallback として読む。結合プレビューの `omxSlot` は従来どおり全 JS パラメータを渡す。
+- **ダーク配色（MEDIUM）**：トークンのコメントにランタイムの dark 値（`omochix_learn_composer_dark_tokens()` / `DARK_TOKENS`、`run.php` がランタイム CSS と突き合わせ）を併記し、「全体の実装条件」に「8 トークンをページのテーマ色（ダークモードがあればその色も）に合わせる」を追加。`prefers-color-scheme` での自動切替は、ページのテーマと食い違い得るので採らない。コメント文字列は PHP 側も `__()` を通さない（JS と byte 一致）。
+- **LOW**：コピー用シムの `t` を `Math.max(0, …)` で 0 以上に（rAF の時刻が要求時より前になる初回フレームで負の値が出ていた）。
+- テスト：`run.php` 46 件、parity 78 件。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。

@@ -55,6 +55,12 @@ fx.combined.forEach(function (c, i) {
 
 check('brief tokens: token block', core.tokenBlock(2), fx.tokenBlock);
 check('brief tokens: token list', core.TOKENS, fx.tokens);
+check('brief tokens: dark list', core.DARK_TOKENS, fx.darkTokens);
+check('brief tokens: comment', core.TOKEN_COMMENT, fx.tokenComment);
+fx.briefJsParams.forEach(function (c, i) {
+    var item = fx.catalog.items[c.slug];
+    check('brief js params ' + i + ' (' + c.slug + ')', core.briefJsParams(P, item, item.params, P.sanitize(item.params, c.params)), c.out);
+});
 fx.briefHtml.forEach(function (c, i) {
     var item = fx.catalog.items[c.slug];
     check('brief html ' + i + ' (' + c.slug + ')', core.briefHtml(P, item, item.params, P.sanitize(item.params, c.params)), c.out);

@@ -211,7 +211,19 @@
         ['--blue', '#2563eb'],
         ['--amber', '#d97706']
     ];
-    var TOKEN_COMMENT = '/* 見本が参照する色。自分のテーマの色に置き換えてよい */';
+    /* The runtime's dark-theme values, quoted in the comment (mirrors omochix_learn_composer_dark_tokens). */
+    var DARK_TOKENS = [
+        ['--bg', '#171719'],
+        ['--surface', '#242329'],
+        ['--text', '#f5f5f1'],
+        ['--muted', '#a3a39e'],
+        ['--line', 'rgba(255, 255, 255, 0.14)'],
+        ['--primary', '#9b84ff'],
+        ['--blue', '#60a5fa'],
+        ['--amber', '#f5a455']
+    ];
+    /* Byte-identical to omochix_learn_composer_token_comment() (the PHP side does not translate it). */
+    var TOKEN_COMMENT = '/* 見本が参照する色（ライト）。ページのテーマの色に置き換える。\n   ダークのときの参考値: ' + DARK_TOKENS.map(function (t) { return t[0] + ':' + t[1]; }).join(';') + ' */';
 
     /** ".omx-motion-n{--bg:…;…;--amber:…}" (mirrors omochix_learn_composer_token_block). */
     function tokenBlock(n) {
@@ -228,6 +240,24 @@
             html = html.replace(new RegExp('\\bdata-' + def.key + '="[^"]*"'), 'data-' + def.key + '="' + text + '"');
         });
         return html;
+    }
+
+    /** Whether the sample's HTML carries a data-<key> attribute for a JS parameter (mirrors omochix_learn_composer_html_carries). */
+    function htmlCarries(item, key) {
+        return new RegExp('\\bdata-' + key + '="[^"]*"').test(item.html || '');
+    }
+
+    /**
+     * Non-default JS params for the brief's omxSlot() ("{}" when none); keys
+     * the HTML carries as data-<key> are left to the attribute (mirrors
+     * omochix_learn_composer_brief_js_params).
+     */
+    function briefJsParams(P, item, defs, values) {
+        var blocks = P.blocks(defs, values);
+        if (!blocks.jsBlock) return '{}';
+        var js = JSON.parse(blocks.jsBlock.slice('window.omxParams='.length, -1));
+        Object.keys(js).forEach(function (key) { if (htmlCarries(item, key)) delete js[key]; });
+        return Object.keys(js).length ? JSON.stringify(js) : '{}';
     }
 
     /**
@@ -247,7 +277,7 @@
         parts.push('<style>\n' + TOKEN_COMMENT + '\n' + tokenBlock(n) + '\n' + scoped + (item.css || '') + '\n</style>');
         parts.push('<div class="omx-motion omx-motion-' + n + '">\n' + briefHtml(P, item, defs, values) + '\n</div>');
         if (item.js) {
-            parts.push('<script>\n' + shims.shim + '\n' + shims.slotShim + '\n(function(omx){\n' + item.js + '\n}(omxSlot(' + n + ',' + jsParams(P, defs, values) + ')));\n</script>');
+            parts.push('<script>\n' + shims.shim + '\n' + shims.slotShim + '\n(function(omx){\n' + item.js + '\n}(omxSlot(' + n + ',' + briefJsParams(P, item, defs, values) + ')));\n</script>');
         }
         return parts.join('\n\n');
     }
@@ -311,8 +341,11 @@
         jsParams: jsParams,
         buildCombinedDoc: buildCombinedDoc,
         TOKENS: TOKENS,
+        DARK_TOKENS: DARK_TOKENS,
+        TOKEN_COMMENT: TOKEN_COMMENT,
         tokenBlock: tokenBlock,
         briefHtml: briefHtml,
+        briefJsParams: briefJsParams,
         briefNote: briefNote,
         briefCode: briefCode,
         buildBrief: buildBrief
