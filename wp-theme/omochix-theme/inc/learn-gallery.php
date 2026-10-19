@@ -939,13 +939,55 @@ function omochix_learn_gallery_prompt_template(array $item, $url = '') {
 }
 
 /**
- * Minimal stand-in for the preview runtime's `omx.animate()` so a copied
- * JavaScript sample runs on its own.
+ * Stand-in for the preview runtime's `omx` so a copied JavaScript sample
+ * runs on its own: one requestAnimationFrame loop shared by every
+ * animate() callback, stopped while the tab is hidden or the visitor
+ * prefers reduced motion. `root` is the element a sample queries inside
+ * (the document here; the composer's per-slot omxSlot() narrows it).
  *
  * @return string
  */
 function omochix_learn_gallery_js_shim() {
-    return "var omx = window.omx || { animate: function (fn) { var start = performance.now(); (function frame(now) { fn((now - start) / 1000); requestAnimationFrame(frame); }(start)); }, param: function (key, fallback) { var p = window.omxParams || {}; return Object.prototype.hasOwnProperty.call(p, key) ? p[key] : fallback; }, onParams: function () {} };";
+    return <<<'JS'
+var omx = window.omx = window.omx || (function () {
+  // OmochiX の見本用の最小ランタイム。animate() の処理をすべて 1 本の
+  // requestAnimationFrame にまとめ、タブが隠れている間と
+  // prefers-reduced-motion: reduce のときは止める。
+  var fns = [], frame = 0, started = 0, stoppedAt = 0, lost = 0;
+  var media = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function stopped() { return (media && media.matches) || document.hidden; }
+  function tick(now) {
+    frame = 0;
+    if (stopped()) { stop(); return; }
+    var t = Math.max(0, now - started - lost) / 1000; // rAF の時刻は要求時より前のことがある
+    for (var i = 0; i < fns.length; i++) { try { fns[i](t); } catch (e) { /* 他の見本は止めない */ } }
+    frame = window.requestAnimationFrame(tick);
+  }
+  function stop() {
+    if (frame) { window.cancelAnimationFrame(frame); frame = 0; }
+    if (started && !stoppedAt) stoppedAt = performance.now();
+  }
+  function sync() {
+    api.reduced = !!(media && media.matches);
+    if (stopped()) { stop(); return; }
+    if (frame || !fns.length) return;
+    var now = performance.now();
+    if (!started) started = now; else if (stoppedAt) lost += now - stoppedAt;
+    stoppedAt = 0;
+    frame = window.requestAnimationFrame(tick);
+  }
+  var api = {
+    root: document,
+    reduced: !!(media && media.matches),
+    animate: function (fn) { if (typeof fn === 'function') { fns.push(fn); sync(); } },
+    param: function (key, fallback) { var p = window.omxParams || {}; return Object.prototype.hasOwnProperty.call(p, key) ? p[key] : fallback; },
+    onParams: function () {}
+  };
+  document.addEventListener('visibilitychange', sync);
+  if (media && media.addEventListener) media.addEventListener('change', sync);
+  return api;
+}());
+JS;
 }
 
 /**

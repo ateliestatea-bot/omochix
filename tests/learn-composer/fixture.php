@@ -64,9 +64,24 @@ $out['catalog'] = ['stage' => $client['stage'], 'runtime' => $client['runtime'],
 $data = json_decode(omochix_learn_composer_data_json(), true);
 $out['briefCtx'] = ['data' => $data['items'], 'shim' => $data['shim'], 'slotShim' => $data['slotShim'], 'templates' => omochix_learn_composer_brief_templates(), 'assistants' => omochix_learn_composer_assistants(), 'presets' => omochix_learn_composer_presets(), 'noParams' => '調整した値: なし'];
 $out['brief'] = [];
-foreach ([$raws[1], $raws[2], $raws[3], ['slots' => [['slug' => 'pop-in', 'target' => '-x', 'intent' => 'mood'], ['slug' => 'fade-up', 'params' => ['ease' => 'bounce'], 'target' => 'カスタム 対象', 'intent' => 'first']]]] as $raw) {
+foreach ([$raws[1], $raws[2], $raws[3], ['slots' => [['slug' => 'pop-in', 'target' => '-x', 'intent' => 'mood'], ['slug' => 'fade-up', 'params' => ['ease' => 'bounce'], 'target' => 'カスタム 対象', 'intent' => 'first']]], ['slots' => [['slug' => 'count-up', 'params' => ['target' => 500, 'duration' => 1.5]], ['slug' => 'particles', 'params' => ['count' => 80]]]]] as $raw) {
     foreach (['claude-code', 'codex'] as $assistant) {
         $out['brief'][] = ['in' => $raw, 'assistant' => $assistant, 'out' => omochix_learn_composer_brief($raw, $assistant)];
     }
+}
+// Brief code pieces: the token block and the data-* rewrite of JS params.
+$out['tokenBlock'] = omochix_learn_composer_token_block(2);
+$out['tokens'] = array_map(null, array_keys(omochix_learn_composer_tokens()), array_values(omochix_learn_composer_tokens()));
+$out['tokenComment'] = omochix_learn_composer_token_comment();
+$out['darkTokens'] = array_map(null, array_keys(omochix_learn_composer_dark_tokens()), array_values(omochix_learn_composer_dark_tokens()));
+$out['briefJsParams'] = [];
+foreach ([['count-up', ['target' => '500']], ['count-up', ['target' => 500, 'duration' => 1.5, 'easing' => 'linear']], ['count-up', ['size' => 72]], ['particles', ['count' => 80, 'speed' => 2]], ['pop-in', ['cycle' => 1.5]]] as [$slug, $params]) {
+    $item = omochix_learn_gallery_get_item($slug);
+    $out['briefJsParams'][] = ['slug' => $slug, 'params' => (object) $params, 'out' => omochix_learn_composer_brief_js_params($item, omochix_learn_gallery_sanitize_params($item, $params))];
+}
+$out['briefHtml'] = [];
+foreach ([['count-up', ['target' => '500']], ['count-up', []], ['count-up', ['target' => 1000000, 'easing' => 'linear']], ['particles', ['count' => 80]], ['pop-in', ['cycle' => 1.5]]] as [$slug, $params]) {
+    $item = omochix_learn_gallery_get_item($slug);
+    $out['briefHtml'][] = ['slug' => $slug, 'params' => (object) $params, 'out' => omochix_learn_composer_brief_html($item, omochix_learn_gallery_sanitize_params($item, $params))];
 }
 echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

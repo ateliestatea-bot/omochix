@@ -4,7 +4,10 @@
  *
  * - Fits the fixed-size stage into the frame with scale().
  * - Exposes `omx.animate(fn)` for JavaScript samples: fn(t) receives the
- *   elapsed playing time in seconds; the loop stops while paused.
+ *   elapsed playing time in seconds; the loop stops while paused. `omx.root`
+ *   is the element a sample queries inside (the stage) and `omx.reduced`
+ *   whether the viewer prefers reduced motion (a sample may then show its
+ *   end state right away).
  * - Listens for parent messages: omx:play, omx:pause, omx:theme.
  * - Starts paused when the viewer prefers reduced motion; the parent then
  *   shows a play button, so motion only runs on the viewer's own request.
@@ -22,6 +25,7 @@
     var pausedAt = 0;
     var pausedTotal = 0;
     var frame = 0;
+    var reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
     function fit() {
         if (!stage) return;
@@ -93,6 +97,8 @@
     }
 
     window.omx = {
+        root: stage || document,
+        reduced: reduced,
         animate: function (fn) {
             if (typeof fn !== 'function') return;
             callbacks.push(fn);
@@ -119,7 +125,7 @@
     window.addEventListener('resize', fit);
 
     fit();
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (reduced) {
         // Stay on the first frame until the viewer asks for motion.
         playing = true;
         setPlaying(false);
