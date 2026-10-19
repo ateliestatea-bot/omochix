@@ -67,6 +67,22 @@
     outline: 2px solid var(--color-primary); outline-offset: 3px;
 }
 
+.motion-composer__slot-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.motion-composer__adjust[aria-expanded="true"] { background: var(--color-hover); }
+.motion-composer__badge { width: max-content; margin-top: 2px; padding: 2px 8px; color: var(--color-primary); font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--color-primary) 10%, transparent); border-radius: 999px; }
+.motion-composer__panel { display: grid; gap: 12px; }
+.motion-composer__panel .motion-playground { margin: 0; padding: 16px; }
+.motion-composer__panel[aria-busy="true"] { min-height: 80px; opacity: 0.6; }
+.motion-composer__panel-error { margin: 0; padding: 12px 14px; color: var(--color-text); background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.motion-composer__panel-error button { margin-left: 8px; }
+
+/* --- Combined preview -------------------------------------------------- */
+.motion-composer__combined { margin-top: 32px; }
+.motion-composer__hint { margin: 0; color: var(--color-muted); font-size: 13px; }
+.motion-preview--combined { aspect-ratio: auto; height: auto; }
+.motion-preview--combined .motion-preview__frame, .motion-preview--combined .motion-preview__iframe { position: relative; height: var(--combined-h, 540px); }
+.motion-preview--combined .motion-preview__poster { min-height: 160px; }
+
 /* --- Picker dialog ----------------------------------------------------- */
 .motion-composer__picker {
     width: min(980px, calc(100% - 32px));

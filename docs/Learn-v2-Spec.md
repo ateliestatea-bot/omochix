@@ -288,6 +288,18 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 未実装（3C 以降）：スロットごとの調整パネル、結合プレビュー、指示書。本番公開には固定ページ `learn/motion/compose` の作成（運営者）と、デプロイ後の自動 flush（初回アクセス時）が必要。
 
+### 8.4.1 Phase 3C — スロットごとの調整パネルと結合プレビュー（2026年10月19日）
+
+| 要素 | 実装 |
+|---|---|
+| パネル取得 | `/learn/motion/<slug>/?omx_partial=1&omx_panel=1` が `playground.php` だけを返す（`inc/learn-composer.php` の `template_redirect` 優先度 9、`X-Robots-Tag: noindex`、`share => false`）。スロットの「調整する」で初回だけ取得し、slug 単位でキャッシュ。失敗時は再試行ボタン |
+| ホストモード | `learn-playground.js` は `[data-omx-params-host]` の中では `#p=` を読み書きせず、`data-omx-values` から初期値を取り、変更を `omx:params:change`（`{slug, values, modified}`、bubbles）で報告する。ギャラリーの詳細・ダイアログには属性が無いので挙動は不変 |
+| スロット | 変更を受けて `composition.slots[i].params` を更新 → `#c=`・下書き・結合プレビューを更新。個別プレビューはパネルが `sendParams` で即時反映。見出し横に「n項目を調整中」バッジ。並べ替えても開いたパネルと値はついてくる |
+| 結合プレビュー | 1 つの `srcdoc` に `<section class="omx-slot" data-slot="n">` を縦に積む。パラメータは `.omx-slot[data-slot="n"]{--p-*}` にスコープ（`:root` を使わない）。JS 見本は `(function(omx){…}(omxSlot(n,{…})))` で包み、`param()` がそのスロットの値を返す。各ステージは末尾の fit スクリプトで幅基準に拡縮。値・順番が変わると 300ms 後に文書を作り直す（`preview.docBuilder` を `learn-gallery.js` の `mount` が使う）。再生・一時停止・テーマ・reduced-motion は既存経路 |
+| PHP ⇄ JS | `omochix_learn_composer_scoped_block / js_params / preview_document` と `learn-composer-core.js` の `scopedBlock / jsParams / buildCombinedDoc` が同一文字列を返す（parity 48件）。`run.php` 22件 |
+
+確認済み（スタブ）：パネル取得と束縛（URL に `#p=` が付かない）、値変更 → `#c=1;pop-in:cycle=1.5;count-up`・バッジ・個別プレビュー・結合 srcdoc（スコープ付きブロック、`omxSlot(2,{})`）、並べ替え後もパネルと値が維持、既定に戻す、ギャラリーの詳細（`#p=` 復元）とダイアログの回帰なし、375px。同時再生のみ（順番再生は 3E の任意項目）。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。

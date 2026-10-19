@@ -156,12 +156,13 @@
     function mount(preview) {
         if (preview.mounted || !preview.frame) return;
         var data = catalog.items[preview.slug];
-        var doc = data ? buildDoc(data, preview.params) : '';
+        // A host may supply its own document (the composer's combined preview).
+        var doc = preview.docBuilder ? preview.docBuilder() : (data ? buildDoc(data, preview.params) : '');
         if (!doc) return;
         var iframe = document.createElement('iframe');
         iframe.className = 'motion-preview__iframe';
         iframe.setAttribute('sandbox', 'allow-scripts');
-        iframe.setAttribute('title', data.label || preview.label);
+        iframe.setAttribute('title', (data && data.label) || preview.label);
         iframe.setAttribute('loading', 'lazy');
         iframe.tabIndex = -1;
         iframe.srcdoc = doc;
@@ -197,8 +198,9 @@
             iframe: null
         };
         preview.label = (preview.frame && preview.frame.dataset.label) || preview.slug;
+        preview.docBuilder = typeof el.omxDocBuilder === 'function' ? el.omxDocBuilder : null;
         el.omxPreview = preview;
-        if (preview.controls && catalog.items[preview.slug]) preview.controls.hidden = false;
+        if (preview.controls && (catalog.items[preview.slug] || preview.docBuilder)) preview.controls.hidden = false;
         if (preview.toggle) {
             preview.toggle.addEventListener('click', function () {
                 preview.user = preview.playing ? 'pause' : 'play';

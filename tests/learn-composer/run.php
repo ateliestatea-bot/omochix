@@ -43,6 +43,17 @@ $capped = omochix_learn_composer_sanitize(omochix_learn_composer_parse_hash('1;p
 check('hash: an over-long numeric value is clamped to the range max', 4.0 === $capped['slots'][0]['params']['cycle']);
 check('hash: injection in notes is dropped', '' === omochix_learn_composer_sanitize(omochix_learn_composer_parse_hash('1;pop-in:t=' . rawurlencode('<img onerror=1>')))['slots'][0]['target']);
 
+// ----------------------------------------------------------------- combined
+$popIn   = omochix_learn_gallery_get_item('pop-in');
+$countUp = omochix_learn_gallery_get_item('count-up');
+check('combined: scoped block carries only non-default css params under the slot selector', '.omx-slot[data-slot="2"]{--p-cycle:1.5s;--p-color:#ff0000}' === omochix_learn_composer_scoped_block($popIn, omochix_learn_gallery_sanitize_params($popIn, ['cycle' => 1.5, 'color' => '#ff0000']), 2) && '' === omochix_learn_composer_scoped_block($popIn, omochix_learn_gallery_sanitize_params($popIn), 1));
+check('combined: js params are a JSON object of non-default js values', '{"target":500}' === omochix_learn_composer_js_params($countUp, omochix_learn_gallery_sanitize_params($countUp, ['target' => 500])) && '{}' === omochix_learn_composer_js_params($countUp, omochix_learn_gallery_sanitize_params($countUp)));
+$doc = omochix_learn_composer_preview_document([['item' => $popIn, 'values' => ['cycle' => 1.5]], ['item' => $countUp, 'values' => ['target' => 500, 'size' => 72]]]);
+check('combined: document stacks the slots in order with scoped params', strpos($doc, 'data-slot="1"') < strpos($doc, 'data-slot="2"') && str_contains($doc, '<style id="omx-params">.omx-slot[data-slot="1"]{--p-cycle:1.5s}.omx-slot[data-slot="2"]{--p-size:72px}</style>') && str_contains($doc, $popIn['preview']['html']) && str_contains($doc, $countUp['preview']['html']));
+check('combined: js samples are wrapped with a per-slot omx and their params', str_contains($doc, 'omxSlot(2,{"target":500})') && str_contains($doc, '(function(omx){' . $countUp['preview']['js'] . '}(omxSlot(2,') && str_contains($doc, 'function omxSlot(n,p)') && 1 === substr_count($doc, 'omx:ready'));
+check('combined: no :root block; exactly four scripts (runtime, shim, one js sample, fit) close cleanly', !str_contains($doc, '<style id="omx-params">:root') && 4 === substr_count($doc, '</script>') && 4 === substr_count($doc, '<script>'));
+check('combined: fit script present, runtime once, stage size from the catalog', str_contains($doc, 'data-stage-w="320"') && 1 === substr_count($doc, '.omx-stage{') && str_contains($doc, 'querySelectorAll(".omx-slot")'));
+
 // ------------------------------------------------------------------ presets
 $presets = omochix_learn_composer_presets();
 check('presets: target and intent lists exist with plain keys', count($presets['target']) >= 6 && count($presets['intent']) >= 5 && !array_filter(array_merge(array_keys($presets['target']), array_keys($presets['intent'])), static fn($k) => !preg_match('/^[a-z]+$/', $k)));

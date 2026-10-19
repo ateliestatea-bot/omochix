@@ -110,6 +110,67 @@
         return !composition || !composition.slots || !composition.slots.length;
     }
 
+    /* ---- combined preview (mirrors omochix_learn_composer_preview_document) ---- */
+
+    /** ".omx-slot[data-slot=\"n\"]{--p-a:v;…}" for the slot's non-default CSS params, '' when none. */
+    function scopedBlock(P, defs, values, slot) {
+        var blocks = P.blocks(defs, values);
+        if (!blocks.css) return '';
+        return '.omx-slot[data-slot="' + slot + '"]{' + blocks.css.slice(':root{'.length);
+    }
+
+    /** Non-default JS params of a slot as JSON text ("{}" when none). */
+    function jsParams(P, defs, values) {
+        var blocks = P.blocks(defs, values);
+        return blocks.jsBlock ? blocks.jsBlock.slice('window.omxParams='.length, -1) : '{}';
+    }
+
+    var SLOT_SHIM = 'function omxSlot(n,p){var l=[];return{animate:function(f){window.omx.animate(f)},param:function(k,d){return Object.prototype.hasOwnProperty.call(p,k)?p[k]:d},onParams:function(f){l.push(f)}}}';
+    var FIT_SCRIPT = '(function(){var r=document.documentElement,w=parseInt(r.getAttribute("data-stage-w"),10)||320,h=parseInt(r.getAttribute("data-stage-h"),10)||180;function fit(){var s=document.querySelectorAll(".omx-slot");for(var i=0;i<s.length;i++){var k=s[i].clientWidth/w;s[i].style.height=Math.round(h*k)+"px";var g=s[i].querySelector(".omx-stage");if(g){g.style.setProperty("--omx-w",w+"px");g.style.setProperty("--omx-h",h+"px");g.style.setProperty("--omx-scale",String(k));}}}window.addEventListener("resize",fit);fit();}());';
+    var COMBINED_CSS = 'html,body{height:auto;overflow:hidden}.omx-slot{position:relative;width:100%;max-width:640px;margin:0 auto;overflow:hidden}.omx-slot+.omx-slot{border-top:1px solid var(--line)}.omx-slot .omx-stage{transform-origin:top left;left:0;top:0;transform:scale(var(--omx-scale,1))}';
+
+    function escapeHtml(text) {
+        return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    /**
+     * One sandboxed document with the slots stacked in order.
+     * catalog: {stage, runtime:{css,js}, items}; slots: [{slug, params}] (sanitized composition slots);
+     * title: document title.
+     */
+    function buildCombinedDoc(catalog, P, slots, title) {
+        var scoped = [];
+        var css = [];
+        var html = [];
+        var js = [];
+        var n = 0;
+        slots.forEach(function (slot) {
+            var item = catalog.items[slot.slug];
+            if (!item) return;
+            n++;
+            var defs = item.params || [];
+            var values = P.sanitize(defs, slot.params || {});
+            var block = scopedBlock(P, defs, values, n);
+            if (block) scoped.push(block);
+            if (item.css) css.push('<style>' + item.css + '</style>');
+            html.push('<section class="omx-slot" data-slot="' + n + '"><div class="omx-stage">' + (item.html || '') + '</div></section>');
+            if (item.js) js.push('<script>(function(omx){' + item.js + '}(omxSlot(' + n + ',' + jsParams(P, defs, values) + ')));</script>');
+        });
+        return '<!doctype html><html lang="ja" data-theme="light" data-stage-w="' + catalog.stage.width + '" data-stage-h="' + catalog.stage.height + '">'
+            + '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            + '<title>' + escapeHtml(title || '') + '</title>'
+            + '<style>' + (catalog.runtime.css || '') + '</style>'
+            + '<style>' + COMBINED_CSS + '</style>'
+            + '<style id="omx-params">' + scoped.join('') + '</style>'
+            + css.join('')
+            + '</head><body>' + html.join('')
+            + '<script>' + (catalog.runtime.js || '') + '</script>'
+            + '<script>' + SLOT_SHIM + '</script>'
+            + js.join('')
+            + '<script>' + FIT_SCRIPT + '</script>'
+            + '</body></html>';
+    }
+
     return {
         VERSION: VERSION,
         MAX_SLOTS: MAX_SLOTS,
@@ -118,6 +179,9 @@
         sanitizeNote: sanitizeNote,
         toHash: toHash,
         parseHash: parseHash,
-        isEmpty: isEmpty
+        isEmpty: isEmpty,
+        scopedBlock: scopedBlock,
+        jsParams: jsParams,
+        buildCombinedDoc: buildCombinedDoc
     };
 }));

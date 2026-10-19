@@ -126,6 +126,7 @@ if (preg_match('#^/learn/motion/compose/?$#', $path)) {
     $GLOBALS['post'] = $GLOBALS['pages']['learn/motion'];
     $GLOBALS['qv']['omx_motion'] = $m[1];
     if (isset($_GET['omx_partial'])) { $GLOBALS['qv']['omx_partial'] = '1'; }
+    if (isset($_GET['omx_panel'])) { $GLOBALS['qv']['omx_panel'] = '1'; }
     do_action_stub('template_redirect');
     if (http_response_code() === 404) { echo '<!doctype html><meta charset="utf-8"><h1>404 (preview stub)</h1>'; exit; }
     include $THEME . '/page-learn-gallery.php';

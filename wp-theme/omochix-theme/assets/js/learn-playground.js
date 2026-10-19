@@ -10,6 +10,10 @@
  * the templates printed next to the panel, and mirrored into the URL hash (#p=…) so
  * the adjusted state can be shared. Without this file the controls are
  * inert and the defaults still describe the sample.
+ *
+ * Inside a [data-omx-params-host] (the Motion Composer) the panel does not
+ * touch the URL: it starts from data-omx-values and reports changes with an
+ * "omx:params:change" event instead.
  */
 (function () {
     'use strict';
@@ -92,6 +96,10 @@
         var defs = data && data.params;
         if (!defs || !defs.length) return;
         var detail = panel.closest('[data-motion-detail]') || panel.parentNode;
+        // A host (the Motion Composer) owns the URL and the state: no #p=
+        // reads or writes, initial values come from data-omx-values, and
+        // every change is reported as an "omx:params:change" event.
+        var host = panel.closest('[data-omx-params-host]');
         var inputs = Array.prototype.slice.call(panel.querySelectorAll('[data-omx-param]'));
         var outputs = {};
         Array.prototype.forEach.call(panel.querySelectorAll('[data-omx-output]'), function (o) { outputs[o.dataset.omxOutput] = o; });
@@ -165,7 +173,16 @@
             if (promptPre && templates && templates.promptTemplate) {
                 promptPre.textContent = P.fillTemplate(templates.promptTemplate, { '{{params_text}}': P.text(defs, values) });
             }
-            writeHash(defs, values);
+            if (host) emitChange(modified);
+            else writeHash(defs, values);
+        }
+
+        function emitChange(modified) {
+            var event;
+            var payload = { slug: slug, values: values, modified: modified };
+            try { event = new window.CustomEvent('omx:params:change', { bubbles: true, detail: payload }); }
+            catch (error) { event = document.createEvent('CustomEvent'); event.initCustomEvent('omx:params:change', true, false, payload); }
+            detail.dispatchEvent(event);
         }
 
         function scheduleRender() {
@@ -232,6 +249,13 @@
             return true;
         }
 
+        function applyHostValues() {
+            var raw = null;
+            try { raw = JSON.parse(panel.dataset.omxValues || 'null'); } catch (error) { raw = null; }
+            values = P.sanitize(defs, raw || {});
+            writeInputs();
+        }
+
         // In-page navigation to a shared link (#p=…) while this panel is open.
         // Dialog panels are re-rendered on every open, so the listener
         // unregisters itself once its panel has left the document.
@@ -242,9 +266,10 @@
             }
             if (applyHash()) render();
         }
-        window.addEventListener('hashchange', onHashChange);
+        if (!host) window.addEventListener('hashchange', onHashChange);
 
-        applyHash();
+        if (host) applyHostValues();
+        else applyHash();
         panel.omxBound = true;
         render();
     }

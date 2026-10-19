@@ -26,6 +26,7 @@ const OMOCHIX_LEARN_COMPOSER_HASH_KEY        = 'c';
 const OMOCHIX_LEARN_COMPOSER_HASH_VERSION    = '1';
 const OMOCHIX_LEARN_COMPOSER_NOTE_MAX        = 40;
 const OMOCHIX_LEARN_COMPOSER_NOTE_RE         = '/^[\p{L}\p{N} 　・、。，．ー\-_()（）!?！？:：]{0,40}$/u';
+const OMOCHIX_LEARN_COMPOSER_PANEL_VAR       = 'omx_panel';
 
 /* -------------------------------------------------------------------------
  * Routing
@@ -91,6 +92,34 @@ function omochix_learn_composer_template_include($template) {
     return file_exists($file) ? $file : $template;
 }
 add_filter('template_include', 'omochix_learn_composer_template_include', 8);
+
+function omochix_learn_composer_register_query_vars($vars) {
+    $vars[] = OMOCHIX_LEARN_COMPOSER_PANEL_VAR;
+    return $vars;
+}
+add_filter('query_vars', 'omochix_learn_composer_register_query_vars');
+
+/**
+ * Panel-only fragment: "/learn/motion/{slug}/?omx_partial=1&omx_panel=1"
+ * prints just the sample's adjustment panel (plus its copy templates) so a
+ * composer slot can load it on demand. Runs before the gallery's own
+ * template_redirect (priority 10), which would print the whole detail.
+ */
+function omochix_learn_composer_panel_redirect() {
+    if (!omochix_learn_gallery_is_request() || !omochix_learn_gallery_is_partial_request() || '1' !== (string) get_query_var(OMOCHIX_LEARN_COMPOSER_PANEL_VAR, '')) {
+        return;
+    }
+    $slug = omochix_learn_gallery_requested_slug();
+    $item = '' !== $slug ? omochix_learn_gallery_get_item($slug) : null;
+    if (!$item) {
+        return; // the gallery turns it into a 404
+    }
+    header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
+    header('X-Robots-Tag: noindex');
+    get_template_part('template-parts/learn-gallery/playground', null, ['item' => $item, 'heading' => 'h3', 'share' => false]);
+    exit;
+}
+add_action('template_redirect', 'omochix_learn_composer_panel_redirect', 9);
 
 /* -------------------------------------------------------------------------
  * Composition model (mirrored in assets/js/learn-composer-core.js)
@@ -240,6 +269,85 @@ function omochix_learn_composer_parse_hash($payload) {
 }
 
 /* -------------------------------------------------------------------------
+ * Combined preview (mirrored in learn-composer-core.js: scopedBlock /
+ * buildCombinedDoc). Several samples share one document, so their parameter
+ * variables are scoped to a wrapper per slot instead of :root, and JS
+ * samples get a per-slot `omx` whose param() reads that slot's values.
+ * ---------------------------------------------------------------------- */
+
+/** ".omx-slot[data-slot=\"n\"]{--p-a:v;…}" for the slot's non-default CSS params, '' when none. */
+function omochix_learn_composer_scoped_block(array $item, array $values, $slot) {
+    $block = omochix_learn_gallery_params_blocks($item, $values);
+    if ('' === $block['css']) {
+        return '';
+    }
+    return '.omx-slot[data-slot="' . (int) $slot . '"]{' . substr($block['css'], strlen(':root{')); // keep the inner "a:v;b:w}" as is
+}
+
+/** Non-default JS params of a slot as JSON ("{}" when none), for the per-slot omx shim. */
+function omochix_learn_composer_js_params(array $item, array $values) {
+    $block = omochix_learn_gallery_params_blocks($item, $values);
+    if ('' === $block['js']) {
+        return '{}';
+    }
+    return substr($block['js'], strlen('window.omxParams='), -1); // strip the assignment and the ";"
+}
+
+/** The per-slot omx shim used inside the combined document (plain JS, no WordPress). */
+function omochix_learn_composer_slot_shim() {
+    return 'function omxSlot(n,p){var l=[];return{animate:function(f){window.omx.animate(f)},param:function(k,d){return Object.prototype.hasOwnProperty.call(p,k)?p[k]:d},onParams:function(f){l.push(f)}}}';
+}
+
+/** Fits every .omx-stage to its section's width (the runtime only fits the first one). */
+function omochix_learn_composer_fit_script() {
+    return '(function(){var r=document.documentElement,w=parseInt(r.getAttribute("data-stage-w"),10)||320,h=parseInt(r.getAttribute("data-stage-h"),10)||180;function fit(){var s=document.querySelectorAll(".omx-slot");for(var i=0;i<s.length;i++){var k=s[i].clientWidth/w;s[i].style.height=Math.round(h*k)+"px";var g=s[i].querySelector(".omx-stage");if(g){g.style.setProperty("--omx-w",w+"px");g.style.setProperty("--omx-h",h+"px");g.style.setProperty("--omx-scale",String(k));}}}window.addEventListener("resize",fit);fit();}());';
+}
+
+/**
+ * One sandboxed document showing the slots stacked in order.
+ *
+ * @param array<int, array{item: array<string, mixed>, values: array<string, float|string>}> $slots In order.
+ * @return string
+ */
+function omochix_learn_composer_preview_document(array $slots) {
+    $stage  = omochix_learn_gallery_get_stage();
+    $scoped = [];
+    $css    = [];
+    $html   = [];
+    $js     = [];
+    $n      = 0;
+    foreach ($slots as $slot) {
+        $n++;
+        $item   = $slot['item'];
+        $values = omochix_learn_gallery_sanitize_params($item, $slot['values'] ?? []);
+        $block  = omochix_learn_composer_scoped_block($item, $values, $n);
+        if ('' !== $block) {
+            $scoped[] = $block;
+        }
+        if ('' !== $item['preview']['css']) {
+            $css[] = '<style>' . $item['preview']['css'] . '</style>';
+        }
+        $html[] = '<section class="omx-slot" data-slot="' . $n . '"><div class="omx-stage">' . $item['preview']['html'] . '</div></section>';
+        if ('' !== $item['preview']['js']) {
+            $js[] = '<script>(function(omx){' . $item['preview']['js'] . '}(omxSlot(' . $n . ',' . omochix_learn_composer_js_params($item, $values) . ')));</script>';
+        }
+    }
+    return '<!doctype html><html lang="ja" data-theme="light" data-stage-w="' . (int) $stage['width'] . '" data-stage-h="' . (int) $stage['height'] . '">'
+        . '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>' . esc_html(__('組み合わせプレビュー', 'omochix')) . '</title>'
+        . '<style>' . omochix_learn_gallery_runtime('css') . '</style>'
+        . '<style>html,body{height:auto;overflow:hidden}.omx-slot{position:relative;width:100%;max-width:640px;margin:0 auto;overflow:hidden}.omx-slot+.omx-slot{border-top:1px solid var(--line)}.omx-slot .omx-stage{transform-origin:top left;left:0;top:0;transform:scale(var(--omx-scale,1))}</style>'
+        . '<style id="omx-params">' . implode('', $scoped) . '</style>'
+        . implode('', $css)
+        . '</head><body>' . implode('', $html)
+        . '<script>' . omochix_learn_gallery_runtime('js') . '</script>'
+        . '<script>' . omochix_learn_composer_slot_shim() . '</script>'
+        . implode('', $js)
+        . '<script>' . omochix_learn_composer_fit_script() . '</script>'
+        . '</body></html>';
+}
+
+/* -------------------------------------------------------------------------
  * Assets
  * ---------------------------------------------------------------------- */
 
@@ -268,7 +376,14 @@ function omochix_learn_composer_enqueue_assets() {
             'moved'       => __('%sを%d番目に移動しました', 'omochix'),
             'cleared'     => __('すべて外しました', 'omochix'),
             'restored'    => __('前回の編集状態を復元しました', 'omochix'),
+            'adjust'      => __('調整する', 'omochix'),
+            'adjustClose' => __('調整を閉じる', 'omochix'),
+            'adjusted'    => __('%d項目を調整中', 'omochix'),
+            'panelFailed' => __('調整パネルを読み込めませんでした。', 'omochix'),
+            'retry'       => __('もう一度読み込む', 'omochix'),
         ],
+        'panelParam'  => OMOCHIX_LEARN_COMPOSER_PANEL_VAR,
+        'partialParam' => OMOCHIX_LEARN_GALLERY_PARTIAL_VAR,
     ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ';', 'before');
 }
 add_action('wp_enqueue_scripts', 'omochix_learn_composer_enqueue_assets', 21);

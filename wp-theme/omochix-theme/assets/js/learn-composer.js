@@ -1,13 +1,15 @@
 /**
  * Learn v2 / Motion Composer page (progressive enhancement).
  *
- * Up to three samples are picked from the picker dialog, ordered and
- * removed. Each slot shows the sample's live preview (cloned from the
- * picker and registered with learn-gallery.js). The composition is kept in
+ * Up to three samples are picked from the picker dialog, ordered, removed
+ * and adjusted. Each slot shows the sample's live preview (cloned from the
+ * picker and registered with learn-gallery.js) and, on demand, the sample's
+ * adjustment panel (fetched as a fragment and bound by learn-playground.js
+ * in host mode, which reports changes instead of touching the URL). A
+ * combined preview stacks the slots in one sandboxed document and is
+ * rebuilt when the order or a value changes. The composition is kept in
  * the URL hash (#c=…, see learn-composer-core.js) so it can be shared, and
  * the last state is also saved as a localStorage draft for the next visit.
- * Per-slot parameter panels and the implementation brief come in later
- * phases; the model already carries params and notes for them.
  */
 (function () {
     'use strict';
@@ -23,6 +25,8 @@
     var items = gallery.catalog.items;
     var HASH_KEY = config.hashKey || 'c';
     var DRAFT_KEY = 'omx-composer-draft';
+    var PARTIAL = config.partialParam || 'omx_partial';
+    var PANEL = config.panelParam || 'omx_panel';
     var slotEls = Array.prototype.slice.call(root.querySelectorAll('[data-composer-slot]'));
     var MAX = Math.min(core.MAX_SLOTS, slotEls.length);
     var picker = root.querySelector('[data-composer-picker]');
@@ -33,10 +37,14 @@
     var status = root.querySelector('[data-composer-status]');
     var shareButton = root.querySelector('[data-composer-share]');
     var clearButton = root.querySelector('[data-composer-clear]');
+    var combined = root.querySelector('[data-composer-combined]');
+    var combinedPreview = combined ? combined.querySelector('[data-motion-preview]') : null;
     var supportsDialog = !!(picker && typeof window.HTMLDialogElement === 'function' && 'showModal' in window.HTMLDialogElement.prototype);
     var composition = { v: core.VERSION, slots: [] };
     var pickerTrigger = null;
-    var pickerTargetIndex = null;
+    var panelCache = {};      // slug -> fragment HTML (fetched once)
+    var openPanels = {};      // slug -> true while the adjustment panel is expanded
+    var combinedTimer = 0;
 
     root.classList.add('is-ready');
 
@@ -95,12 +103,21 @@
         return String(template || '').replace(/%[sd]/g, function () { return args[i++]; });
     }
 
+    function galleryUrl() {
+        return ((window.omochixLearnGallery && window.omochixLearnGallery.listUrl) || '/learn/motion/').replace(/\/?$/, '/');
+    }
+
     /* ------------------------------------------------------------------ */
     /* Slots                                                               */
     /* ------------------------------------------------------------------ */
 
     function previewSource(slug) {
         return picker ? picker.querySelector('[data-composer-item][data-slug="' + slug + '"] [data-motion-preview]') : null;
+    }
+
+    function slotPreview(el, slug) {
+        var host = el.querySelector('[data-composer-preview]');
+        return gallery.previewsOf(slug).filter(function (p) { return host.contains(p.el); })[0] || null;
     }
 
     function fillSlot(el, slot, index) {
@@ -121,7 +138,7 @@
             if (controls) controls.hidden = true;
             previewHost.appendChild(clone);
             gallery.registerWithin(previewHost);
-            var preview = gallery.previewsOf(slot.slug).filter(function (p) { return previewHost.contains(p.el); })[0];
+            var preview = slotPreview(el, slot.slug);
             if (preview && Object.keys(slot.params).length) {
                 preview.params = P.sanitize(item.params, slot.params);
                 if (preview.ready) gallery.sendParams(preview);
@@ -130,16 +147,35 @@
         el.querySelector('[data-composer-name]').textContent = item.name && item.name.ja ? item.name.ja : slot.slug;
         el.querySelector('[data-composer-en]').textContent = item.name && item.name.en ? item.name.en : '';
         el.querySelector('[data-composer-summary]').textContent = item.summary || '';
-        el.querySelector('[data-composer-order]').textContent = String(index + 1);
         var link = el.querySelector('[data-composer-link]');
-        if (link) link.href = (config.galleryUrl || (window.omochixLearnGallery && window.omochixLearnGallery.listUrl) || '/learn/motion/').replace(/\/?$/, '/') + slot.slug + '/';
-        el.querySelector('[data-composer-up]').disabled = index === 0;
-        el.querySelector('[data-composer-down]').disabled = index === composition.slots.length - 1;
+        if (link) link.href = galleryUrl() + slot.slug + '/';
+        el.dataset.url = galleryUrl() + slot.slug + '/';
         el.dataset.slug = slot.slug;
         el.classList.remove('is-empty');
         el.classList.add('is-filled');
         empty.hidden = true;
         body.hidden = false;
+        var adjust = el.querySelector('[data-composer-adjust]');
+        var panelHost = el.querySelector('[data-composer-panel]');
+        panelHost.innerHTML = '';
+        panelHost.hidden = true;
+        adjust.hidden = !(item.params && item.params.length);
+        adjust.setAttribute('aria-expanded', 'false');
+        adjust.textContent = strings.adjust || '調整する';
+        if (openPanels[slot.slug]) openPanel(el, slot);
+        updateSlotChrome(el, slot, index);
+    }
+
+    function updateSlotChrome(el, slot, index) {
+        el.querySelector('[data-composer-order]').textContent = String(index + 1);
+        el.querySelector('[data-composer-up]').disabled = index === 0;
+        el.querySelector('[data-composer-down]').disabled = index === composition.slots.length - 1;
+        var badge = el.querySelector('[data-composer-adjusted]');
+        var n = Object.keys(slot.params || {}).length;
+        if (badge) {
+            badge.hidden = n === 0;
+            badge.textContent = format(strings.adjusted || '%d', n);
+        }
     }
 
     function emptySlot(el, index) {
@@ -148,7 +184,11 @@
         var previewHost = el.querySelector('[data-composer-preview]');
         gallery.unregisterWithin(previewHost);
         previewHost.innerHTML = '';
+        var panelHost = el.querySelector('[data-composer-panel]');
+        panelHost.innerHTML = '';
+        panelHost.hidden = true;
         delete el.dataset.slug;
+        delete el.dataset.url;
         el.classList.add('is-empty');
         el.classList.remove('is-filled');
         body.hidden = true;
@@ -157,17 +197,17 @@
         empty.querySelector('[data-composer-pick]').hidden = index !== composition.slots.length;
     }
 
+    function resetSlotEls() {
+        slotEls.forEach(function (el) { delete el.dataset.slug; });
+    }
+
     function render() {
         composition = core.sanitize(items, P, composition);
         slotEls.forEach(function (el, index) {
             var slot = composition.slots[index];
             if (slot) {
                 if (el.dataset.slug !== slot.slug) fillSlot(el, slot, index);
-                else {
-                    el.querySelector('[data-composer-order]').textContent = String(index + 1);
-                    el.querySelector('[data-composer-up]').disabled = index === 0;
-                    el.querySelector('[data-composer-down]').disabled = index === composition.slots.length - 1;
-                }
+                else updateSlotChrome(el, slot, index);
             } else {
                 emptySlot(el, index);
             }
@@ -184,6 +224,7 @@
         });
         writeHash();
         saveDraft();
+        scheduleCombined();
     }
 
     function addSample(slug) {
@@ -200,8 +241,8 @@
         var slot = composition.slots[index];
         if (!slot) return;
         composition.slots.splice(index, 1);
-        // Re-fill from scratch so previews follow their samples, not their positions.
-        slotEls.forEach(function (el) { delete el.dataset.slug; el.classList.add('is-empty'); });
+        delete openPanels[slot.slug];
+        resetSlotEls(); // re-fill from scratch so previews follow their samples, not their positions
         render();
         announce(format(strings.removed || '%s', items[slot.slug].name.ja));
         var next = slotEls[Math.min(index, composition.slots.length)];
@@ -214,7 +255,7 @@
         if (to < 0 || to >= composition.slots.length) return;
         var slot = composition.slots.splice(index, 1)[0];
         composition.slots.splice(to, 0, slot);
-        slotEls.forEach(function (el) { delete el.dataset.slug; el.classList.add('is-empty'); });
+        resetSlotEls();
         render();
         announce(format(strings.moved || '%s %d', items[slot.slug].name.ja, to + 1));
         var btn = slotEls[to].querySelector(delta < 0 ? '[data-composer-up]' : '[data-composer-down]');
@@ -223,17 +264,137 @@
     }
 
     /* ------------------------------------------------------------------ */
+    /* Adjustment panel (fragment + learn-playground.js in host mode)      */
+    /* ------------------------------------------------------------------ */
+
+    function panelUrl(slug) {
+        var url = galleryUrl() + slug + '/';
+        return url + (url.indexOf('?') > -1 ? '&' : '?') + PARTIAL + '=1&' + PANEL + '=1';
+    }
+
+    function openPanel(el, slot) {
+        var adjust = el.querySelector('[data-composer-adjust]');
+        var host = el.querySelector('[data-composer-panel]');
+        openPanels[slot.slug] = true;
+        adjust.setAttribute('aria-expanded', 'true');
+        adjust.textContent = strings.adjustClose || '調整を閉じる';
+        host.hidden = false;
+        if (panelCache[slot.slug]) { mountPanel(el, slot, panelCache[slot.slug]); return; }
+        host.setAttribute('aria-busy', 'true');
+        host.innerHTML = '';
+        window.fetch(panelUrl(slot.slug), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (response) {
+                if (!response.ok) throw new Error(String(response.status));
+                return response.text();
+            })
+            .then(function (html) {
+                panelCache[slot.slug] = html;
+                host.setAttribute('aria-busy', 'false');
+                if (el.dataset.slug === slot.slug && openPanels[slot.slug]) mountPanel(el, slot, html);
+            })
+            .catch(function () {
+                host.setAttribute('aria-busy', 'false');
+                host.innerHTML = '';
+                var p = document.createElement('p');
+                p.className = 'motion-composer__panel-error';
+                p.textContent = strings.panelFailed || 'Could not load the panel.';
+                var retry = document.createElement('button');
+                retry.type = 'button';
+                retry.className = 'motion-copy motion-copy--ghost';
+                retry.textContent = strings.retry || 'Retry';
+                retry.addEventListener('click', function () { openPanel(el, slot); });
+                p.appendChild(retry);
+                host.appendChild(p);
+            });
+    }
+
+    function mountPanel(el, slot, html) {
+        var host = el.querySelector('[data-composer-panel]');
+        host.innerHTML = html;
+        var panel = host.querySelector('[data-motion-playground]');
+        if (!panel) return;
+        var current = composition.slots.filter(function (s) { return s.slug === slot.slug; })[0] || slot;
+        panel.dataset.omxValues = JSON.stringify(P.sanitize(items[slot.slug].params, current.params || {}));
+        // Same path as the gallery dialog: learn-playground.js binds panels in the container.
+        var event;
+        try { event = new window.CustomEvent('omx:motion:detail', { detail: { container: host } }); }
+        catch (error) { event = document.createEvent('CustomEvent'); event.initCustomEvent('omx:motion:detail', false, false, { container: host }); }
+        document.dispatchEvent(event);
+        var first = panel.querySelector('[data-omx-param]');
+        if (first && document.activeElement === el.querySelector('[data-composer-adjust]')) first.focus();
+    }
+
+    function closePanel(el, slug) {
+        var adjust = el.querySelector('[data-composer-adjust]');
+        var host = el.querySelector('[data-composer-panel]');
+        delete openPanels[slug];
+        adjust.setAttribute('aria-expanded', 'false');
+        adjust.textContent = strings.adjust || '調整する';
+        host.hidden = true;
+        host.innerHTML = '';
+    }
+
+    // learn-playground.js (host mode) reports every change of a slot's panel.
+    root.addEventListener('omx:params:change', function (event) {
+        var detail = event.detail || {};
+        var el = event.target.closest ? event.target.closest('[data-composer-slot]') : null;
+        var index = el ? slotEls.indexOf(el) : -1;
+        var slot = composition.slots[index];
+        if (!slot || slot.slug !== detail.slug) return;
+        var defs = items[slot.slug].params || [];
+        var params = {};
+        defs.forEach(function (def) {
+            var v = detail.values ? detail.values[def.key] : undefined;
+            if (v === undefined) return;
+            var isDefault = def.type === 'range' ? Number(v) === Number(def['default']) : v === def['default'];
+            if (!isDefault) params[def.key] = v;
+        });
+        slot.params = params;
+        updateSlotChrome(el, slot, index);
+        writeHash();
+        saveDraft();
+        scheduleCombined();
+    });
+
+    /* ------------------------------------------------------------------ */
+    /* Combined preview: one document, rebuilt (debounced) on any change   */
+    /* ------------------------------------------------------------------ */
+
+    function combinedDoc() {
+        return core.buildCombinedDoc(gallery.catalog, P, composition.slots, combined ? combined.querySelector('.motion-composer__title').textContent : '');
+    }
+
+    function scheduleCombined() {
+        if (!combined || !combinedPreview) return;
+        window.clearTimeout(combinedTimer);
+        combinedTimer = window.setTimeout(rebuildCombined, 300);
+    }
+
+    function rebuildCombined() {
+        var n = composition.slots.length;
+        combined.hidden = n === 0;
+        gallery.unregisterWithin(combined);
+        var frame = combinedPreview.querySelector('[data-motion-frame]');
+        if (frame) frame.innerHTML = '';
+        combinedPreview.classList.remove('is-mounted');
+        if (n === 0) return;
+        // Each slot renders at min(frame width, 640px) wide, 320:180, plus a 1px divider between slots.
+        var slotWidth = Math.min(combinedPreview.clientWidth || 640, 640);
+        combinedPreview.style.setProperty('--combined-h', (n * Math.round(slotWidth * 180 / 320) + (n - 1)) + 'px');
+        combinedPreview.omxDocBuilder = combinedDoc;
+        gallery.registerWithin(combined);
+    }
+
+    /* ------------------------------------------------------------------ */
     /* Picker                                                              */
     /* ------------------------------------------------------------------ */
 
-    function openPicker(trigger, index) {
+    function openPicker(trigger) {
         if (!picker) return;
         pickerTrigger = trigger;
-        pickerTargetIndex = index;
         if (supportsDialog) picker.showModal();
         else { picker.setAttribute('open', ''); picker.hidden = false; }
         if (search) { search.value = ''; filterPicker(''); search.focus(); }
-        gallery.refreshAll && gallery.refreshAll();
     }
 
     function closePicker() {
@@ -261,7 +422,7 @@
     root.addEventListener('click', function (event) {
         var target = event.target;
         var pick = target.closest('[data-composer-pick]');
-        if (pick) { openPicker(pick, parseInt(pick.closest('[data-composer-slot]').dataset.composerSlot, 10)); return; }
+        if (pick) { openPicker(pick); return; }
         var add = target.closest('[data-composer-add]');
         if (add) {
             var slug = add.closest('[data-composer-item]').dataset.slug;
@@ -277,13 +438,20 @@
         var slotEl = target.closest('[data-composer-slot]');
         if (slotEl) {
             var index = slotEls.indexOf(slotEl);
+            var slot = composition.slots[index];
             if (target.closest('[data-composer-remove]')) { removeSample(index); return; }
             if (target.closest('[data-composer-up]')) { moveSample(index, -1); return; }
             if (target.closest('[data-composer-down]')) { moveSample(index, 1); return; }
+            if (target.closest('[data-composer-adjust]') && slot) {
+                if (openPanels[slot.slug]) closePanel(slotEl, slot.slug);
+                else openPanel(slotEl, slot);
+                return;
+            }
         }
         if (target.closest('[data-composer-clear]')) {
             composition.slots = [];
-            slotEls.forEach(function (el) { delete el.dataset.slug; });
+            openPanels = {};
+            resetSlotEls();
             render();
             announce(strings.cleared || '');
             var first = slotEls[0].querySelector('[data-composer-pick]');
@@ -326,7 +494,7 @@
         var fromHash = readHash();
         if (!fromHash) return;
         composition = fromHash;
-        slotEls.forEach(function (el) { delete el.dataset.slug; });
+        resetSlotEls();
         render();
     });
 

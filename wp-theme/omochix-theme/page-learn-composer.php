@@ -61,6 +61,26 @@ while (have_posts()) :
                 </ol>
             </section>
 
+            <?php $omochix_stage = omochix_learn_gallery_get_stage(); ?>
+            <section class="motion-composer__combined" data-composer-combined hidden aria-labelledby="composer-combined-title">
+                <div class="motion-composer__toolbar">
+                    <h2 id="composer-combined-title" class="motion-composer__title"><?php esc_html_e('組み合わせて見る', 'omochix'); ?></h2>
+                    <p class="motion-composer__hint"><?php esc_html_e('選んだ順に上から並べて、同時に再生します。', 'omochix'); ?></p>
+                </div>
+                <div class="motion-preview motion-preview--combined" data-motion-preview data-slug="composer" style="--stage-w: <?php echo (int) $omochix_stage['width']; ?>; --stage-h: <?php echo (int) $omochix_stage['height']; ?>;">
+                    <div class="motion-preview__poster" aria-hidden="true">
+                        <span class="motion-preview__poster-name"><?php esc_html_e('組み合わせプレビュー', 'omochix'); ?></span>
+                    </div>
+                    <div class="motion-preview__frame" data-motion-frame data-label="<?php esc_attr_e('組み合わせプレビュー', 'omochix'); ?>"></div>
+                    <div class="motion-preview__controls" data-motion-controls hidden>
+                        <button type="button" class="motion-preview__btn" data-motion-toggle aria-label="<?php esc_attr_e('組み合わせプレビューを一時停止', 'omochix'); ?>">
+                            <svg class="motion-preview__icon motion-preview__icon--pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>
+                            <svg class="motion-preview__icon motion-preview__icon--play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <?php get_template_part('template-parts/learn-composer/picker', null, ['items' => $omochix_items, 'categories' => $omochix_categories]); ?>
         </div>
     </main>

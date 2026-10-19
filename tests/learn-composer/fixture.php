@@ -42,4 +42,21 @@ foreach ($hashes as $h) {
     $comp = omochix_learn_composer_sanitize(omochix_learn_composer_parse_hash($h));
     $out['hash'][] = ['in' => $h, 'sanitized' => fixture_shape($comp), 'rehash' => omochix_learn_composer_hash($comp)];
 }
+// Combined preview: scoped blocks and whole documents for a few compositions.
+$out['combined'] = [];
+foreach ([$raws[1], $raws[2], $raws[3], $raws[5]] as $raw) {
+    $comp  = omochix_learn_composer_sanitize($raw);
+    $slots = [];
+    $blocks = [];
+    $n = 0;
+    foreach ($comp['slots'] as $slot) {
+        $n++;
+        $item   = omochix_learn_gallery_get_item($slot['slug']);
+        $values = omochix_learn_gallery_sanitize_params($item, $slot['params']);
+        $slots[] = ['item' => $item, 'values' => $values];
+        $blocks[] = ['scoped' => omochix_learn_composer_scoped_block($item, $values, $n), 'js' => omochix_learn_composer_js_params($item, $values)];
+    }
+    $out['combined'][] = ['slots' => fixture_shape($comp)['slots'], 'blocks' => $blocks, 'doc' => omochix_learn_composer_preview_document($slots)];
+}
+$out['catalog'] = ['stage' => $client['stage'], 'runtime' => $client['runtime'], 'items' => array_map(static fn($it) => ['params' => $it['params'], 'html' => $it['html'], 'css' => $it['css'], 'js' => $it['js']], $client['items'])];
 echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

@@ -43,5 +43,15 @@ fx.hash.forEach(function (c, i) {
     check('hash ' + i + ': rehash', core.toHash(items, P, comp), c.rehash);
 });
 
+fx.combined.forEach(function (c, i) {
+    c.slots.forEach(function (slot, k) {
+        var defs = fx.catalog.items[slot.slug].params;
+        var values = P.sanitize(defs, slot.params);
+        check('combined ' + i + ' slot ' + (k + 1) + ': scoped block', core.scopedBlock(P, defs, values, k + 1), c.blocks[k].scoped);
+        check('combined ' + i + ' slot ' + (k + 1) + ': js params', core.jsParams(P, defs, values), c.blocks[k].js);
+    });
+    check('combined ' + i + ': document', core.buildCombinedDoc(fx.catalog, P, c.slots, '組み合わせプレビュー'), c.doc);
+});
+
 process.stdout.write(pass + ' passed, ' + fail + ' failed\n');
 process.exit(fail ? 1 : 0);
