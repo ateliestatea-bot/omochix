@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 const OMOCHIX_LEARN_COMPOSER_PATH            = 'learn/motion/compose';
-const OMOCHIX_LEARN_COMPOSER_REWRITE_VERSION = '1';
+const OMOCHIX_LEARN_COMPOSER_REWRITE_VERSION = '2';
 const OMOCHIX_LEARN_COMPOSER_MAX_SLOTS       = 3;
 const OMOCHIX_LEARN_COMPOSER_HASH_KEY        = 'c';
 const OMOCHIX_LEARN_COMPOSER_HASH_VERSION    = '1';
@@ -59,8 +59,9 @@ function omochix_learn_composer_is_request() {
 }
 
 /**
- * Registered after the gallery's rule (init priority 10) and also at the
- * top, so it is matched first and "compose" is never taken for a sample.
+ * Registered before the gallery's rule (init priority 10): WordPress keeps
+ * "top" rules in registration order, so this one is matched first and
+ * "compose" is never taken for a sample slug.
  */
 function omochix_learn_composer_register_rewrite_rules() {
     add_rewrite_rule(
@@ -69,7 +70,7 @@ function omochix_learn_composer_register_rewrite_rules() {
         'top'
     );
 }
-add_action('init', 'omochix_learn_composer_register_rewrite_rules', 11);
+add_action('init', 'omochix_learn_composer_register_rewrite_rules', 9);
 
 function omochix_learn_composer_maybe_flush_rewrite_rules() {
     if (get_option('omochix_learn_composer_rewrite_version') === OMOCHIX_LEARN_COMPOSER_REWRITE_VERSION) {

@@ -280,7 +280,7 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 | 要素 | 実装 |
 |---|---|
-| ページ | `/learn/motion/compose/`（`learn/motion` の子ページ、`page-learn-composer.php`）。ギャラリーの `^learn/motion/([a-z0-9-]+)` が `compose` を見本スラッグとして拾わないよう、`inc/learn-composer.php` が `init` 優先度 11 で専用ルールを先頭に登録し、`omochix_learn_composer_rewrite_version` で一度だけ flush。`template_include` 優先度 8。`noindex, follow`（状態 URL が無限に増えるため） |
+| ページ | `/learn/motion/compose/`（`learn/motion` の子ページ、`page-learn-composer.php`）。ギャラリーの `^learn/motion/([a-z0-9-]+)` が `compose` を見本スラッグとして拾わないよう、`inc/learn-composer.php` が `init` 優先度 9（ギャラリーより先。WordPress は top ルールを登録順に並べる）で専用ルールを登録し、`omochix_learn_composer_rewrite_version` で一度だけ flush。`template_include` 優先度 8。`noindex, follow`（状態 URL が無限に増えるため） |
 | モデル | `{v:"1", slots:[{slug, params（既定と違う値だけ）, target, intent}]}`、最大 3。PHP `omochix_learn_composer_sanitize()` と JS `learn-composer-core.js`（純粋関数、Node でも読める）が双子。`target` / `intent` は 40 文字以内の平文（文字・数字・空白・句読点のみ）で、指示書にだけ使い、CSS / JS / srcdoc には流さない |
 | 保存 | URL ハッシュ `#c=1;pop-in:cycle=1.5,color=ff0000;toast;gradient-shift:angle=45,t=hero,i=…`（`replaceState`）。`localStorage` の `omx-composer-draft` に最後の状態を 1 件（URL が優先、無ければ下書きを復元して告知）。DB・オプションは書かない |
 | UI | 3 スロット（空のときは次の 1 つだけ「見本を選ぶ」を出す）、ピッカー `<dialog>`（20 件をカテゴリ別に、検索、選択済みは追加不可）、スロットは `preview.php` の複製を `registerWithin` で登録して再生、↑↓ で並べ替え、外す、すべて外す、リンクをコピー（Web Share 対応）。操作はライブリージョンで告知し、フォーカスを次の操作に移す |
@@ -319,6 +319,27 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 - **共有リンクの長さ**：`#c=` が 1,900 文字を超えると共有ボタンを無効化し、JSON コピーを案内（通常の組み合わせは 100〜400 文字。全パラメータを変えて 6 つの用途欄すべてに日本語 40 文字を入れた最悪ケースで約 2,300 文字になり、このときだけ無効化される）。
 - **公開に必要な運営者作業**：固定ページ `learn/motion/compose`（親：動く見本、slug `compose`）の作成 → 初回アクセスでリライトルールの flush → アクセラレータの「キャッシュ削除」。手順は `docs/Beta-Deployment-Runbook.md` 8c。
 - **順番再生**は見送り（同時再生のみ）。
+
+### 8.4.4 Phase 3E — Local 複製での実機確認（2026年10月19日）
+
+環境：Local の `omochix-learn-v2`、テーマ symlink を `omochix-composer-v1` に向け替え、固定ページ `learn/motion/compose`（ID 166、親 153）を Local の PHP ＋ `wp-load.php` で作成（WP-CLI は Local に同梱されていない）。symlink 切替後は 2E と同じく opcache の旧パス解決が残り、サイトの停止→起動で解消。
+
+**見つかった不具合（修正済み）**：`/learn/motion/compose/` が 404。WordPress は `add_rewrite_rule(..., 'top')` を登録順に並べるため、`init` 優先度 11 で登録した composer のルールがギャラリーの `([a-z0-9-]+)` ルールの後ろに置かれ、`compose` が見本スラッグとして扱われていた。優先度 9 に変更し、`OMOCHIX_LEARN_COMPOSER_REWRITE_VERSION` を `2` にして再 flush。スタブサーバーはリライトを通らないため検出できない種類の問題。
+
+| 観点 | 結果 |
+|---|---|
+| 到達 | `/learn/motion/compose/` 200（composer テンプレート、`noindex, follow`、title「動きを組み合わせる \| Learn \| OmochiX」）、`/learn/motion/`・`/learn/motion/pop-in/`・`/learn/` 200、`/learn/motion/nope/` 404、PHP notice なし。アセットは params → gallery → playground → composer-core → composer の順、`learn-composer.css` あり |
+| 導線 | 一覧のリード文の下に composer へのリンク |
+| スロット | ピッカーから 3 件追加（20 件表示）、`#c=` と下書き、並べ替えでパネル・用途・値が維持、既定に戻す |
+| 調整パネル | フラグメント `?omx_partial=1&omx_panel=1` 200・noindex・パネルのみ。ホストモードで束縛され URL に `#p=` が付かない。色と周期の変更が `#c=1;pop-in:cycle=1.5,color=ff0000;…`・バッジ「2項目を調整中」・個別プレビュー・結合プレビュー（`.omx-slot[data-slot="1"]{--p-cycle:1.5s}`、3 セクション）・指示書（`.omx-motion-1{--p-cycle:1.5s;--p-color:#ff0000}`）に反映 |
+| 用途・指示書 | 適用対象「ヒーロー」が `t=hero` と指示書に反映。章は 3 つ、順序どおり |
+| 共有・コピー | Local は http（非セキュアコンテキスト）のため `execCommand` 経路で、ブラウザペインが背面のときは「コピーできませんでした」になる（環境要因。本番 https では Clipboard API） |
+| 表示 | 1280px で 3 カラム、375px で縦積み・横スクロールなし、ダークで面の色が切り替わる |
+| 回帰 | ギャラリー詳細（`#p=` 復元・コードの `:root`・共有ボタンあり・ホストモードでない）、ダイアログ（束縛・Esc で一覧に戻る）、コンソールエラーなし（唯一の 404 は修正前の compose ページ） |
+
+スクリーンショット：`docs/learn-v2-qa/phase3-composer-1280-light.jpg`（調整パネルを開いた状態）、`phase3-composer-375-light.jpg`（プレビューの iframe を外して撮影）。
+
+未確認：Web Share（実機）、prefers-reduced-motion の OS 設定、指示書を実際に Claude Code に貼って実装する実地確認（運営者）。
 
 ## 9. 未決定事項・運用上の注意
 
