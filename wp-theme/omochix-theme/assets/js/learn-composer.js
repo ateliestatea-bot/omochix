@@ -286,7 +286,12 @@
         });
         var n = composition.slots.length;
         if (countEl) countEl.textContent = n + ' / ' + MAX;
-        if (shareButton) shareButton.hidden = n === 0;
+        if (shareButton) {
+            shareButton.hidden = n === 0;
+            // Browsers and chat apps start truncating around 2,000 characters; the JSON export still works then.
+            shareButton.disabled = core.toHash(items, P, composition).length > 1900;
+            shareButton.title = shareButton.disabled ? (strings.linkTooLong || '') : '';
+        }
         if (clearButton) clearButton.hidden = n === 0;
         pickerItems.forEach(function (li) {
             var chosen = composition.slots.some(function (s) { return s.slug === li.dataset.slug; });

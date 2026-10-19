@@ -73,6 +73,9 @@ a.motion-chip--tag:hover { color: var(--color-text); }
 }
 
 /* --- Gallery: hero ---------------------------------------------------- */
+.motion-gallery__compose { margin: 12px 0 0; font-size: 14px; font-weight: 650; }
+.motion-gallery__compose a { color: var(--color-primary); text-decoration: none; }
+.motion-gallery__compose a:hover { text-decoration: underline; }
 .motion-gallery { min-height: 100vh; }
 .motion-gallery__container,
 .motion-detail__container {

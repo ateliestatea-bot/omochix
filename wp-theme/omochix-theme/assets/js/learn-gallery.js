@@ -565,6 +565,7 @@
         button.classList.toggle('is-done', ok);
         var scope = button.closest('.motion-panel') || button.closest('[data-motion-detail]');
         var live = scope ? scope.querySelector('[data-omx-copy-status]') : null;
+        for (var el = button.parentElement; !live && el; el = el.parentElement) live = el.querySelector('[data-omx-copy-status]'); // e.g. the composer's action rows
         if (live) live.textContent = label;
         window.clearTimeout(button.omxTimer);
         button.omxTimer = window.setTimeout(function () {

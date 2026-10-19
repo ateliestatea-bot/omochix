@@ -562,6 +562,7 @@ function omochix_learn_composer_enqueue_assets() {
             'jsonInvalid' => __('読み込めるJSONではありません。', 'omochix'),
             'jsonLoaded'  => __('JSONから読み込みました', 'omochix'),
             'noParams'    => __('調整した値: なし', 'omochix'),
+            'linkTooLong' => __('リンクが長すぎます。JSON でコピーしてください。', 'omochix'),
         ],
         'brief'       => omochix_learn_composer_brief_templates(),
         'assistants'  => omochix_learn_composer_assistants(),
@@ -586,4 +587,29 @@ add_filter('wp_robots', static function ($robots) {
 });
 add_filter('slim_seo_robots_index', static function ($indexed) {
     return omochix_learn_composer_is_request() ? false : $indexed;
+});
+
+/** Title as shown in the tab / meta title: "<page title> | Learn". */
+function omochix_learn_composer_title() {
+    return omochix_learn_composer_is_request() ? sprintf(__('%s | Learn', 'omochix'), get_the_title()) : '';
+}
+add_filter('document_title_parts', static function ($parts) {
+    $title = omochix_learn_composer_title();
+    if ($title) {
+        $parts['title'] = $title;
+    }
+    return $parts;
+});
+add_filter('slim_seo_meta_title', static function ($title) {
+    $own = omochix_learn_composer_title();
+    return $own ? $own . ' | ' . get_bloginfo('name') : $title;
+});
+add_filter('slim_seo_meta_description', static function ($description) {
+    if (!omochix_learn_composer_is_request() || has_excerpt()) {
+        return $description;
+    }
+    return __('動く見本を3つまで選んで順番と値を決め、ひとつの流れとして確かめられます。組み合わせはリンクで共有でき、AIへの実装指示書としてコピーできます。', 'omochix');
+});
+add_filter('slim_seo_canonical_url', static function ($url) {
+    return omochix_learn_composer_is_request() ? (omochix_learn_composer_url() ?: $url) : $url;
 });

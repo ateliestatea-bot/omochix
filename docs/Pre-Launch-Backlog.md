@@ -77,7 +77,9 @@
 | 固定ページ `learn/motion` 作成・公開 | P1 | 未着手 | テーマ1.18.0反映 | 本番反映時 | 親=Learn、slug=motion。未公開の間はLearnトップに出ない（`docs/Beta-Deployment-Runbook.md` 8b） |
 | 見本↔Prompt関連の確定 | P1 | 要確認 | Prompt本番slug | 本番反映時 | `catalog.json` の `related.prompts` は暫定10件。公開済みPromptにのみ表示される |
 | 見本の詳細OGP画像 | P2 | 未着手 | 正式デザイン | 公開後 | 現状はDefault OGP |
-| Playground / OmochiX Video連携 | P2 | 未着手 | 仕様 | 公開後 | `playground` / `video` は予約フィールドのみ |
+| Playground（調整パネル） | P2 | 完了（1.21.0〜1.22.0） | — | 公開済み | 全20見本・78パラメータ、`#p=` 共有（`docs/Learn-v2-Spec.md` 8.3） |
+| Motion Composer（組み合わせ・AI指示書） | P2 | 実装済み・公開待ち | 固定ページ `learn/motion/compose` の作成 | 1.23.0反映時 | DB変更なし。手順は `docs/Beta-Deployment-Runbook.md` 8c、仕様は Spec 8.4 |
+| OmochiX Video連携 | P2 | 未着手 | 仕様 | 公開後 | `video` は予約フィールドのみ。Composer の composition JSON を入力にする想定 |
 
 ## 集計
 
