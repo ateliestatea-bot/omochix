@@ -7,7 +7,7 @@
  * Each change is sanitized with learn-params.js, pushed into the sample's
  * live previews (detail, expanded view) as CSS custom properties /
  * window.omxParams, written into the copy targets (prompt and code) through
- * the templates the server sent, and mirrored into the URL hash (#p=…) so
+ * the templates printed next to the panel, and mirrored into the URL hash (#p=…) so
  * the adjusted state can be shared. Without this file the controls are
  * inert and the defaults still describe the sample.
  */
@@ -70,6 +70,17 @@
     /* Panel                                                               */
     /* ------------------------------------------------------------------ */
 
+    /** The sample's copy templates, printed next to its panel; null when absent or invalid. */
+    function readTemplates(detail) {
+        var el = detail.querySelector('[data-omx-item-templates]');
+        if (!el) return null;
+        try {
+            var data = JSON.parse(el.textContent || '');
+            if (data && typeof data.codeTemplate === 'string' && typeof data.promptTemplate === 'string') return data;
+        } catch (error) { /* fall through */ }
+        return null;
+    }
+
     function announce(panel, message) {
         var live = panel.querySelector('[data-omx-copy-status]');
         if (live) live.textContent = message;
@@ -89,7 +100,12 @@
         var modifiedLabels = detail.querySelectorAll('[data-omx-modified]');
         var promptPre = document.getElementById('motion-' + slug + '-prompt-text');
         var codePre = document.getElementById('motion-' + slug + '-code-text');
+        var templates = readTemplates(detail);
         var frameId = 0;
+        // Without the templates (missing or unparsable JSON) the panel still
+        // drives the preview and the URL, but the copy targets keep their
+        // server-rendered defaults and are not flagged as adjusted.
+        if (!templates) modifiedLabels = [];
         var values = P.defaults(defs);
 
         function defOf(key) {
@@ -140,14 +156,14 @@
                 else if (!preview.mounted && preview.inView) gallery.mount(preview);
             });
             var blocks = P.blocks(defs, values);
-            if (codePre && data.codeTemplate) {
-                codePre.textContent = P.fillTemplate(data.codeTemplate, {
+            if (codePre && templates && templates.codeTemplate) {
+                codePre.textContent = P.fillTemplate(templates.codeTemplate, {
                     '{{params_css}}': blocks.css ? blocks.css + '\n' : '',
                     '{{params_js}}': blocks.jsBlock ? blocks.jsBlock + '\n' : ''
                 });
             }
-            if (promptPre && data.promptTemplate) {
-                promptPre.textContent = P.fillTemplate(data.promptTemplate, { '{{params_text}}': P.text(defs, values) });
+            if (promptPre && templates && templates.promptTemplate) {
+                promptPre.textContent = P.fillTemplate(templates.promptTemplate, { '{{params_text}}': P.text(defs, values) });
             }
             writeHash(defs, values);
         }

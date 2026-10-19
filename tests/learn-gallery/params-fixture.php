@@ -46,7 +46,8 @@ foreach (omochix_learn_gallery_get_items() as $slug => $item) {
         $cases[] = $raw;
     }
 
-    $entry = ['url' => $url, 'defs' => $client['items'][$slug]['params'], 'codeTemplate' => $client['items'][$slug]['codeTemplate'], 'promptTemplate' => $client['items'][$slug]['promptTemplate'], 'cases' => []];
+    $templates = json_decode(omochix_learn_gallery_item_json($item, $url), true);
+    $entry     = ['url' => $url, 'defs' => $client['items'][$slug]['params'], 'codeTemplate' => $templates['codeTemplate'], 'promptTemplate' => $templates['promptTemplate'], 'cases' => []];
     foreach ($cases as $raw) {
         $values = omochix_learn_gallery_sanitize_params($item, $raw);
         $blocks = omochix_learn_gallery_params_blocks($item, $values);

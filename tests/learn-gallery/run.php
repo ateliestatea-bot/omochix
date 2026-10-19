@@ -193,7 +193,12 @@ $ptext = omochix_learn_gallery_prompt_text($item, '', $s);
 check('params: prompt lists adjusted values with labels, units and （既定） markers', str_contains($ptext, "調整した値:\n- 登場から退場までの1周期は4s\n- 行き過ぎ（オーバーシュート）は「少し」（既定）\n- アイコンの色: #ff0000\n- バッジは0.35s遅らせて出す\n") && !str_contains(omochix_learn_gallery_prompt_text($plainItem), '調整した値'));
 check('params: prompt with defaults marks every line as 既定', 4 === substr_count(omochix_learn_gallery_prompt_text($item), '（既定）'));
 $pj = json_decode(omochix_learn_gallery_client_json(['pop-in' => $item, 'fade-up' => $plainItem]), true);
-check('client json: params and copy templates only for adjustable samples', 4 === count($pj['items']['pop-in']['params']) && str_contains($pj['items']['pop-in']['codeTemplate'], '{{params_css}}') && str_contains($pj['items']['pop-in']['promptTemplate'], '{{params_text}}') && [] === $pj['items']['fade-up']['params'] && !isset($pj['items']['fade-up']['codeTemplate']));
+check('client json: params for every sample, no copy templates (they travel with the panel)', 4 === count($pj['items']['pop-in']['params']) && !isset($pj['items']['pop-in']['codeTemplate']) && !isset($pj['items']['pop-in']['promptTemplate']) && [] === $pj['items']['fade-up']['params']);
+$ij = omochix_learn_gallery_item_json($item, 'https://example.test/x/');
+$ijd = json_decode($ij, true);
+check('item json: carries both templates with their placeholders and the url', is_array($ijd) && str_contains($ijd['codeTemplate'], '{{params_css}}') && str_contains($ijd['promptTemplate'], '{{params_text}}') && str_contains($ijd['codeTemplate'], 'https://example.test/x/') && $ijd['codeTemplate'] === omochix_learn_gallery_code_template($item, 'https://example.test/x/'));
+$ijJs = omochix_learn_gallery_item_json($jsItem, 'https://example.test/x/'); // a JS sample: its code template really contains "</script>"
+check('item json: safe inside a <script> element (JSON_HEX_TAG turns </script> into \\u003C/script\\u003E) and empty without params', str_contains(omochix_learn_gallery_code_template($jsItem), '</script>') && !str_contains($ijJs, '</script>') && !str_contains($ijJs, '<') && str_contains($ijJs, '\\u003C/script\\u003E') && '' === omochix_learn_gallery_item_json($plainItem));
 check('template: preview template exposes the params slots', str_contains($pj['template'], '<style id="omx-params">{{params_css}}</style>') && str_contains($pj['template'], '{{params_js}}{{js}}'));
 // Validator: every rule the schema states.
 $pv = static function (array $params, $css = 'x{a:var(--p-a) var(--p-b)}') { return omochix_learn_gallery_validate_params($params, ['css' => $css]); };
