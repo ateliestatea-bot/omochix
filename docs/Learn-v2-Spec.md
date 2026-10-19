@@ -270,7 +270,7 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 | PHP | `omochix_learn_gallery_client_json()` からテンプレートを外す（`params` は残す）。新規 `omochix_learn_gallery_item_json($item, $url)` が1見本分の `{codeTemplate, promptTemplate}` を `JSON_HEX_TAG` 付きで返す（params なしなら空文字） |
 | テンプレート | `playground.php` がパネルの直後に `<script type="application/json" id="motion-<slug>-pg-templates" data-omx-item-templates>` を出す。ページでもダイアログのフラグメントでも同じ経路 |
 | JS | `learn-playground.js` の `bind()` は `[data-motion-detail]` 内のその script を `JSON.parse` して使う。無い／壊れている場合はプレビュー・ハッシュ・既定に戻す・共有は動かし、コード／プロンプトの書き換えと「（調整済み）」は行わない |
-| テスト | `run.php` 134件（client JSON にテンプレートが無いこと、`item_json` のプレースホルダーと `<\/script>` エスケープ、params なしで空）。parity fixture は `item_json` からテンプレートを取る（1760件） |
+| テスト | `run.php` 134件（client JSON にテンプレートが無いこと、`item_json` のプレースホルダーと `</script>` のエスケープ（`JSON_HEX_TAG` で `\u003C/script\u003E` になることを JS 見本で確認）、params なしで空）。parity fixture は `item_json` からテンプレートを取る（1760件） |
 
 効果（スタブサーバー、JSON は本番と同一構造）：埋め込み JSON 103.1KB → 47.5KB（−54%）、gzip 後 20.0KB → 11.3KB。詳細ページは当該1件のテンプレート（約 2.4KB）が JSON から script タグへ移るだけで総量は同じ。ダイアログのフラグメントは 14.2KB → 16.1KB（gzip 3.7KB → 3.8KB）。
 

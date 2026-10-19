@@ -197,7 +197,8 @@ check('client json: params for every sample, no copy templates (they travel with
 $ij = omochix_learn_gallery_item_json($item, 'https://example.test/x/');
 $ijd = json_decode($ij, true);
 check('item json: carries both templates with their placeholders and the url', is_array($ijd) && str_contains($ijd['codeTemplate'], '{{params_css}}') && str_contains($ijd['promptTemplate'], '{{params_text}}') && str_contains($ijd['codeTemplate'], 'https://example.test/x/') && $ijd['codeTemplate'] === omochix_learn_gallery_code_template($item, 'https://example.test/x/'));
-check('item json: safe inside a <script> element (no raw </script>) and empty without params', !str_contains($ij, '</script>') && str_contains($ij, '<\\/script>') === str_contains(omochix_learn_gallery_code_template($item), '</script>') && '' === omochix_learn_gallery_item_json($plainItem));
+$ijJs = omochix_learn_gallery_item_json($jsItem, 'https://example.test/x/'); // a JS sample: its code template really contains "</script>"
+check('item json: safe inside a <script> element (JSON_HEX_TAG turns </script> into \\u003C/script\\u003E) and empty without params', str_contains(omochix_learn_gallery_code_template($jsItem), '</script>') && !str_contains($ijJs, '</script>') && !str_contains($ijJs, '<') && str_contains($ijJs, '\\u003C/script\\u003E') && '' === omochix_learn_gallery_item_json($plainItem));
 check('template: preview template exposes the params slots', str_contains($pj['template'], '<style id="omx-params">{{params_css}}</style>') && str_contains($pj['template'], '{{params_js}}{{js}}'));
 // Validator: every rule the schema states.
 $pv = static function (array $params, $css = 'x{a:var(--p-a) var(--p-b)}') { return omochix_learn_gallery_validate_params($params, ['css' => $css]); };
