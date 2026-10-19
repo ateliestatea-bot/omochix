@@ -75,6 +75,16 @@
 4. `/learn/`のヒーローに「動く見本を見る」が出ること、未公開の間は出ないことを確認する。
 5. 見本とPromptの関連（`assets/data/motion/catalog.json`の`related.prompts`）は公開済みPromptのslugにだけ効く。本番のslugと照合し、一致しないものは外すか差し替える。
 
+### 8c. Motion Composer（動きを組み合わせる）ページ
+
+テーマ1.23.0以降。詳細は`docs/Learn-v2-Spec.md` 8.4。
+
+1. 固定ページ「動く見本」（`learn/motion`）が公開済みであることを確認する。
+2. その子ページとしてタイトル「動きを組み合わせる」、slug `compose`（パス `learn/motion/compose`）を作成して公開する。本文は空でよい。抜粋を入れるとリード文と meta description に使われる。
+3. 公開後に`/learn/motion/compose/`を一度開き、Composer のページ（3つの空きスロット）が出ることを確認する。テーマが初回に書き換えルールを反映するが、「動く見本」の404になる場合は12のパーマリンクflushを行う。
+4. ロリポップ！アクセラレータの「キャッシュ削除」を実行する（テーマ更新後は毎回）。
+5. `/learn/motion/`のリード文の下に「見本を3つまで組み合わせて…」のリンクが出ること、`/learn/motion/compose/`が`noindex, follow`であることを確認する。Composer の状態はURLハッシュ（`#c=`）とブラウザ内保存だけで、DBには何も書かない。
+
 ### 9. Home / 投稿ページ設定
 
 1. 表示設定を固定フロントページへ切り替える。

@@ -52,6 +52,10 @@ while (have_posts()) :
                     <p class="motion-gallery__eyebrow"><?php esc_html_e('MOTION GALLERY', 'omochix'); ?></p>
                     <h1><?php the_title(); ?></h1>
                     <p class="motion-gallery__lead"><?php echo esc_html($omochix_lead); ?></p>
+                    <?php $omochix_compose_url = function_exists('omochix_learn_composer_url') ? omochix_learn_composer_url() : ''; ?>
+                    <?php if ($omochix_compose_url) : ?>
+                        <p class="motion-gallery__compose"><a href="<?php echo esc_url($omochix_compose_url); ?>"><?php esc_html_e('見本を3つまで組み合わせて、AIへの指示書にする →', 'omochix'); ?></a></p>
+                    <?php endif; ?>
                 </div>
             </header>
 

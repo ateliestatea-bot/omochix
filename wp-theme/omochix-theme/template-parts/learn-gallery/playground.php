@@ -5,6 +5,7 @@
  * Args:
  *   item    (array)  Catalog item. Required; renders nothing without params.
  *   heading (string) Heading tag for the panel title ("h2" on the page, "h3" in the dialog).
+ *   share   (bool)   Print the "copy link" button (default true; the composer brings its own).
  *
  * The panel is server-rendered with the sample's defaults, followed by a
  * JSON script with the sample's copy templates. learn-playground.js
@@ -28,6 +29,7 @@ if (!$omochix_item || empty($omochix_item['params'])) {
 $omochix_heading = isset($args['heading']) && in_array($args['heading'], ['h2', 'h3', 'h4'], true) ? $args['heading'] : 'h2';
 $omochix_uid     = 'motion-' . $omochix_item['slug'] . '-pg';
 $omochix_values  = omochix_learn_gallery_sanitize_params($omochix_item);
+$omochix_share   = !array_key_exists('share', $args) || !empty($args['share']);
 ?>
 <section class="motion-playground" data-motion-playground data-slug="<?php echo esc_attr($omochix_item['slug']); ?>" aria-labelledby="<?php echo esc_attr($omochix_uid); ?>-title">
     <div class="motion-panel__header">
@@ -61,7 +63,9 @@ $omochix_values  = omochix_learn_gallery_sanitize_params($omochix_item);
         <?php endforeach; ?>
     </div>
     <div class="motion-playground__actions">
-        <button type="button" class="motion-copy motion-copy--ghost" data-omx-share hidden><?php esc_html_e('調整した状態のリンクをコピー', 'omochix'); ?></button>
+        <?php if ($omochix_share) : ?>
+            <button type="button" class="motion-copy motion-copy--ghost" data-omx-share hidden><?php esc_html_e('調整した状態のリンクをコピー', 'omochix'); ?></button>
+        <?php endif; ?>
         <p class="sr-only" data-omx-copy-status aria-live="polite"></p>
     </div>
 </section>

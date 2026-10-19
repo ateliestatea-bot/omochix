@@ -274,6 +274,83 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 効果（スタブサーバー、JSON は本番と同一構造）：埋め込み JSON 103.1KB → 47.5KB（−54%）、gzip 後 20.0KB → 11.3KB。詳細ページは当該1件のテンプレート（約 2.4KB）が JSON から script タグへ移るだけで総量は同じ。ダイアログのフラグメントは 14.2KB → 16.1KB（gzip 3.7KB → 3.8KB）。
 
+### 8.4 Phase 3B — Motion Composer 基盤（2026年10月19日、`feature/motion-composer-v1`）
+
+「見る → 調整する → 組み合わせる → AIで制作する」の 3 段目。動く見本を 3 つまで選び、順番を決め、組み合わせをリンクとして共有する。Phase 3A の設計（§8.3 の後段、2026年10月19日の監査報告）に従い、既存の Gallery / Playground には手を入れず、公開 API の利用と 4 行のフック（`learn-gallery.js` の `registerWithin` / `unregisterWithin` 公開、`learn-gallery.php` の enqueue 判定、`functions.php` の require、`shell.php` の allow-list）だけで接続した。
+
+| 要素 | 実装 |
+|---|---|
+| ページ | `/learn/motion/compose/`（`learn/motion` の子ページ、`page-learn-composer.php`）。ギャラリーの `^learn/motion/([a-z0-9-]+)` が `compose` を見本スラッグとして拾わないよう、`inc/learn-composer.php` が `init` 優先度 9（ギャラリーより先。WordPress は top ルールを登録順に並べる）で専用ルールを登録し、`omochix_learn_composer_rewrite_version` で一度だけ flush。`template_include` 優先度 8。`noindex, follow`（状態 URL が無限に増えるため） |
+| モデル | `{v:"1", slots:[{slug, params（既定と違う値だけ）, target, intent}]}`、最大 3。PHP `omochix_learn_composer_sanitize()` と JS `learn-composer-core.js`（純粋関数、Node でも読める）が双子。`target` / `intent` は 40 文字以内の平文（文字・数字・空白・句読点のみ）で、指示書にだけ使い、CSS / JS / srcdoc には流さない |
+| 保存 | URL ハッシュ `#c=1;pop-in:cycle=1.5,color=ff0000;toast;gradient-shift:angle=45,t=hero,i=…`（`replaceState`）。`localStorage` の `omx-composer-draft` に最後の状態を 1 件（URL が優先、無ければ下書きを復元して告知）。DB・オプションは書かない |
+| UI | 3 スロット（空のときは次の 1 つだけ「見本を選ぶ」を出す）、ピッカー `<dialog>`（20 件をカテゴリ別に、検索、選択済みは追加不可）、スロットは `preview.php` の複製を `registerWithin` で登録して再生、↑↓ で並べ替え、外す、すべて外す、リンクをコピー（Web Share 対応）。操作はライブリージョンで告知し、フォーカスを次の操作に移す |
+| テスト | `tests/learn-composer/run.php` 16件（正規化・ハッシュ往復・上限・注入・プリセット・ルーティング）、`tests/learn-composer/core-parity.js` 30件（PHP ⇄ JS）。既存の 134 / 1760 件は無変更で通過。スタブサーバーに `/learn/motion/compose/` を追加 |
+
+未実装（3C 以降）：スロットごとの調整パネル、結合プレビュー、指示書。本番公開には固定ページ `learn/motion/compose` の作成（運営者）と、デプロイ後の自動 flush（初回アクセス時）が必要。
+
+### 8.4.1 Phase 3C — スロットごとの調整パネルと結合プレビュー（2026年10月19日）
+
+| 要素 | 実装 |
+|---|---|
+| パネル取得 | `/learn/motion/<slug>/?omx_partial=1&omx_panel=1` が `playground.php` だけを返す（`inc/learn-composer.php` の `template_redirect` 優先度 9、`X-Robots-Tag: noindex`、`share => false`）。スロットの「調整する」で初回だけ取得し、slug 単位でキャッシュ。失敗時は再試行ボタン |
+| ホストモード | `learn-playground.js` は `[data-omx-params-host]` の中では `#p=` を読み書きせず、`data-omx-values` から初期値を取り、変更を `omx:params:change`（`{slug, values, modified}`、bubbles）で報告する。ギャラリーの詳細・ダイアログには属性が無いので挙動は不変 |
+| スロット | 変更を受けて `composition.slots[i].params` を更新 → `#c=`・下書き・結合プレビューを更新。個別プレビューはパネルが `sendParams` で即時反映。見出し横に「n項目を調整中」バッジ。並べ替えても開いたパネルと値はついてくる |
+| 結合プレビュー | 1 つの `srcdoc` に `<section class="omx-slot" data-slot="n">` を縦に積む。パラメータは `.omx-slot[data-slot="n"]{--p-*}` にスコープ（`:root` を使わない）。JS 見本は `(function(omx){…}(omxSlot(n,{…})))` で包み、`param()` がそのスロットの値を返す。各ステージは末尾の fit スクリプトで幅基準に拡縮。値・順番が変わると 300ms 後に文書を作り直す（`preview.docBuilder` を `learn-gallery.js` の `mount` が使う）。再生・一時停止・テーマ・reduced-motion は既存経路 |
+| PHP ⇄ JS | `omochix_learn_composer_scoped_block / js_params / preview_document` と `learn-composer-core.js` の `scopedBlock / jsParams / buildCombinedDoc` が同一文字列を返す（parity 48件）。`run.php` 22件 |
+
+確認済み（スタブ）：パネル取得と束縛（URL に `#p=` が付かない）、値変更 → `#c=1;pop-in:cycle=1.5;count-up`・バッジ・個別プレビュー・結合 srcdoc（スコープ付きブロック、`omxSlot(2,{})`）、並べ替え後もパネルと値が維持、既定に戻す、ギャラリーの詳細（`#p=` 復元）とダイアログの回帰なし、375px。同時再生のみ（順番再生は 3E の任意項目）。
+
+### 8.4.2 Phase 3D — AI 実装指示書（2026年10月19日）
+
+| 要素 | 実装 |
+|---|---|
+| 用途入力 | スロットの「用途」トグルで「適用対象」「意図」をプリセット select（PHP の `omochix_learn_composer_presets()`：対象 8・意図 6）＋「自由入力…」（40 文字、平文のみ）で入力。値は `slots[].target / intent` → `#c=` の `t=` / `i=` と下書きへ。CSS / JS / srcdoc には流さない |
+| 指示書 | PHP が正本：`brief_templates()`（header / list_item / slot / footer）、`brief_code()`（`code_template` と同じ構成で `:root` の代わりに `.omx-motion-n{--p-*}`、HTML を `<div class="omx-motion omx-motion-n">` で包み、JS 見本は基本シム＋`omxSlot` ＋ IIFE）、`brief($composition, $assistant)`。JS は `learn-composer-core.js` の `buildBrief()` が同じテンプレートを埋める（parity 8 件、全文一致）。見本の仕様・用途・URL は composer ページだけに印字する `#omx-composer-data`（20 件、約 17KB）から取る |
+| 表現 | Markdown。概要（件数・見本一覧・再生）、見本ごとの章（見本・適用対象／意図・どんな動きか・仕様・調整した値（（既定）付き）・使いどころ・実装コード）、全体の実装条件（ライブラリ不可、数値はそのまま、接頭辞で包む、reduced-motion の具体例、性能）、受け入れ条件。Claude Code / Codex は冒頭 1 行だけ違う。注記が行頭で `#` `-` `*` `>` `\|` `+` になるときは全角空白を前置して Markdown の記法にしない |
+| UI | ページ下部「AIへの実装指示書」：相手の切替（ラジオ）、本文 `<pre>`、コピー、`.md` 保存（Blob）、組み合わせを JSON でコピー、JSON を貼り付けて読み込む（`<dialog>`、`core.sanitize` を通し、無効なら文言を表示）。状態変更の 300ms 後に再生成 |
+| テスト | `run.php` 30 件（章の順・用途の表示・（既定）・スコープ付きコード・footer・相手の差分・データ JSON）、parity 56 件 |
+
+### 8.4.3 Phase 3E — 仕上げ（2026年10月19日）
+
+- **読み上げ**：`learn-gallery.js` の `flash()` が、`.motion-panel` / `[data-motion-detail]` に無い場合は最も近い祖先の `[data-omx-copy-status]` を使うようになり、指示書の「コピー」「JSON でコピー」も告知される。既存ページの挙動は不変。
+- **用途入力**：各スロットの select / 入力に `aria-describedby` で「AIへの指示書にだけ使われます（プレビューやコードには入りません）」を付けた。
+- **SEO**：composer ページは `noindex, follow`、canonical は自分自身、`<title>` は「<ページ名> | Learn」、description は抜粋があればそれ、無ければ既定文。Learn ハブの一覧には `learn/motion` の子なので混ざらない。
+- **導線**：ギャラリー一覧のリード文の下に「見本を3つまで組み合わせて、AIへの指示書にする →」（composer ページが公開されているときだけ）。
+- **共有リンクの長さ**：`#c=` が 1,900 文字を超えると共有ボタンを無効化し、JSON コピーを案内（通常の組み合わせは 100〜400 文字。全パラメータを変えて 6 つの用途欄すべてに日本語 40 文字を入れた最悪ケースで約 2,300 文字になり、このときだけ無効化される）。
+- **公開に必要な運営者作業**：固定ページ `learn/motion/compose`（親：動く見本、slug `compose`）の作成 → 初回アクセスでリライトルールの flush → アクセラレータの「キャッシュ削除」。手順は `docs/Beta-Deployment-Runbook.md` 8c。
+- **順番再生**は見送り（同時再生のみ）。
+
+### 8.4.4 Phase 3E — Local 複製での実機確認（2026年10月19日）
+
+環境：Local の `omochix-learn-v2`、テーマ symlink を `omochix-composer-v1` に向け替え、固定ページ `learn/motion/compose`（ID 166、親 153）を Local の PHP ＋ `wp-load.php` で作成（WP-CLI は Local に同梱されていない）。symlink 切替後は 2E と同じく opcache の旧パス解決が残り、サイトの停止→起動で解消。
+
+**見つかった不具合（修正済み）**：`/learn/motion/compose/` が 404。WordPress は `add_rewrite_rule(..., 'top')` を登録順に並べるため、`init` 優先度 11 で登録した composer のルールがギャラリーの `([a-z0-9-]+)` ルールの後ろに置かれ、`compose` が見本スラッグとして扱われていた。優先度 9 に変更し、`OMOCHIX_LEARN_COMPOSER_REWRITE_VERSION` を `2` にして再 flush。スタブサーバーはリライトを通らないため検出できない種類の問題。
+
+| 観点 | 結果 |
+|---|---|
+| 到達 | `/learn/motion/compose/` 200（composer テンプレート、`noindex, follow`、title「動きを組み合わせる \| Learn \| OmochiX」）、`/learn/motion/`・`/learn/motion/pop-in/`・`/learn/` 200、`/learn/motion/nope/` 404、PHP notice なし。アセットは params → gallery → playground → composer-core → composer の順、`learn-composer.css` あり |
+| 導線 | 一覧のリード文の下に composer へのリンク |
+| スロット | ピッカーから 3 件追加（20 件表示）、`#c=` と下書き、並べ替えでパネル・用途・値が維持、既定に戻す |
+| 調整パネル | フラグメント `?omx_partial=1&omx_panel=1` 200・noindex・パネルのみ。ホストモードで束縛され URL に `#p=` が付かない。色と周期の変更が `#c=1;pop-in:cycle=1.5,color=ff0000;…`・バッジ「2項目を調整中」・個別プレビュー・結合プレビュー（`.omx-slot[data-slot="1"]{--p-cycle:1.5s}`、3 セクション）・指示書（`.omx-motion-1{--p-cycle:1.5s;--p-color:#ff0000}`）に反映 |
+| 用途・指示書 | 適用対象「ヒーロー」が `t=hero` と指示書に反映。章は 3 つ、順序どおり |
+| 共有・コピー | Local は http（非セキュアコンテキスト）のため `execCommand` 経路で、ブラウザペインが背面のときは「コピーできませんでした」になる（環境要因。本番 https では Clipboard API） |
+| 表示 | 1280px で 3 カラム、375px で縦積み・横スクロールなし、ダークで面の色が切り替わる |
+| 回帰 | ギャラリー詳細（`#p=` 復元・コードの `:root`・共有ボタンあり・ホストモードでない）、ダイアログ（束縛・Esc で一覧に戻る）、コンソールエラーなし（唯一の 404 は修正前の compose ページ） |
+
+スクリーンショット：`docs/learn-v2-qa/phase3-composer-1280-light.jpg`（調整パネルを開いた状態）、`phase3-composer-375-light.jpg`（プレビューの iframe を外して撮影）。
+
+未確認：Web Share（実機）、prefers-reduced-motion の OS 設定、指示書を実際に Claude Code に貼って実装する実地確認（運営者）。
+
+### 8.4.5 PR #29 レビュー後の修正（2026年10月19日）
+
+- **リスナーの蓄積（HIGH）**：`learn-gallery.js` の `register()` が付ける再生・拡大ボタンのハンドラを preview に保持し、同じ要素の再登録時と `unregisterWithin` で外すようにした。composer の結合プレビューは再構築のたびに同じ要素を登録し直すため、古いハンドラが残って iframe が積み重なっていた。
+- **空のリンクで下書きが消える（MEDIUM）**：`readHash` は解析結果が空なら「リンクなし」として扱い、下書きの復元へ進む。
+- **同じ見本の重複（MEDIUM）**：PHP / JS の sanitize が既出の slug を捨てる（parity ケース追加）。
+- **用途の文字集合（MEDIUM）**：`. , / ' " &` を許可し、使えない文字が含まれるときは `aria-invalid` と注意文を表示。入力途中の文字列は再描画で消さない。
+- **ノートの符号化（MEDIUM）**：JS 側を `rawurlencode` と同じ（`!'()*` も `%XX`）にして PHP とハッシュが一致するようにした。
+- **LOW**：最後の見本を外したあとのフォーカス、パネル取得失敗時のガード、JSON エラーの `role="alert"`、ピッカーの件数読み上げ、↑↓外すのラベルに見本名。
+- テスト：`run.php` 32 件、parity 62 件。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。

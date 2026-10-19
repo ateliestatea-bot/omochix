@@ -1,0 +1,160 @@
+/*
+ * Learn v2 / Motion Composer. Loaded after learn-v2.css and reuses its
+ * tokens (--color-*, --radius-*, --ease-out) and the motion-copy / breadcrumb
+ * / motion-preview components. Everything here is scoped to .motion-composer.
+ */
+
+.motion-composer { min-height: 100vh; padding-block: clamp(32px, 7vw, 56px) var(--section-space); }
+.motion-composer__container { width: min(100% - 32px, 1120px); margin-inline: auto; }
+.motion-composer__hero { margin-bottom: 28px; }
+.motion-composer .breadcrumb { margin-bottom: 20px; }
+.motion-composer__eyebrow { margin: 0 0 8px; color: var(--color-primary); font-size: 12px; font-weight: 750; letter-spacing: 0.12em; }
+.motion-composer h1 { margin: 0 0 12px; font-size: clamp(1.75rem, 6vw, 2.5rem); line-height: 1.15; letter-spacing: -0.04em; }
+.motion-composer__lead { max-width: 46rem; margin: 0; color: var(--color-muted); font-size: 1.0625rem; line-height: 1.7; }
+.motion-composer__noscript { margin: 12px 0 0; padding: 12px 16px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+
+/* The hidden attribute must win over the display rules below. */
+.motion-composer [hidden] { display: none !important; }
+
+/* --- Slots ------------------------------------------------------------- */
+.motion-composer__toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.motion-composer__title { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
+.motion-composer__count { margin-left: 8px; color: var(--color-muted); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.motion-composer__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.motion-composer__list { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.motion-composer__slot {
+    min-width: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+}
+.motion-composer__slot.is-empty { border-style: dashed; background: transparent; }
+.motion-composer__slot-empty { display: flex; align-items: center; gap: 14px; padding: 18px 20px; }
+.motion-composer__slot-number {
+    display: grid; place-items: center; flex-shrink: 0;
+    width: 28px; height: 28px;
+    color: #fff; font-size: 13px; font-weight: 750;
+    background: var(--color-primary); border-radius: 50%;
+}
+.motion-composer__slot.is-empty .motion-composer__slot-number { color: var(--color-muted); background: var(--color-bg); border: 1px solid var(--color-line); }
+.motion-composer__pick {
+    min-height: 40px; padding: 8px 16px;
+    color: var(--color-primary); font-weight: 700;
+    background: transparent; border: 1px solid var(--color-primary); border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.motion-composer__pick:hover { background: color-mix(in srgb, var(--color-primary) 8%, transparent); }
+.motion-composer__slot-body { display: grid; gap: 14px; padding: 18px 20px 20px; }
+.motion-composer__slot-head { display: flex; align-items: center; gap: 12px; }
+.motion-composer__slot-name { display: grid; min-width: 0; flex: 1; }
+.motion-composer__slot-name strong { font-size: 16px; letter-spacing: -0.02em; }
+.motion-composer__slot-en { color: var(--color-muted); font-size: 12.5px; }
+.motion-composer__slot-controls { display: flex; gap: 6px; }
+.motion-composer__move, .motion-composer__remove {
+    min-width: 40px; min-height: 40px; padding: 0 12px;
+    color: var(--color-text); font-size: 14px; font-weight: 650;
+    background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.motion-composer__move:disabled { opacity: 0.4; cursor: default; }
+.motion-composer__move:not(:disabled):hover, .motion-composer__remove:hover { background: var(--color-hover); }
+.motion-composer__slot-preview .motion-preview { max-width: 480px; }
+.motion-composer__slot-summary { margin: 0; color: var(--color-muted); font-size: 14px; line-height: 1.7; }
+.motion-composer__slot-link { color: var(--color-primary); font-size: 13px; font-weight: 650; text-decoration: none; }
+.motion-composer__slot-link:hover { text-decoration: underline; }
+.motion-composer__pick:focus-visible, .motion-composer__move:focus-visible, .motion-composer__remove:focus-visible,
+.motion-composer__add:focus-visible, .motion-composer__picker-close:focus-visible, .motion-composer__picker-search input:focus-visible {
+    outline: 2px solid var(--color-primary); outline-offset: 3px;
+}
+
+.motion-composer__slot-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.motion-composer__adjust[aria-expanded="true"] { background: var(--color-hover); }
+.motion-composer__badge { width: max-content; margin-top: 2px; padding: 2px 8px; color: var(--color-primary); font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--color-primary) 10%, transparent); border-radius: 999px; }
+.motion-composer__panel { display: grid; gap: 12px; }
+.motion-composer__panel .motion-playground { margin: 0; padding: 16px; }
+.motion-composer__panel[aria-busy="true"] { min-height: 80px; opacity: 0.6; }
+.motion-composer__panel-error { margin: 0; padding: 12px 14px; color: var(--color-text); background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.motion-composer__panel-error button { margin-left: 8px; }
+
+/* --- Combined preview -------------------------------------------------- */
+.motion-composer__combined { margin-top: 32px; }
+.motion-composer__hint { margin: 0; color: var(--color-muted); font-size: 13px; }
+.motion-preview--combined { aspect-ratio: auto; height: auto; }
+.motion-preview--combined .motion-preview__frame, .motion-preview--combined .motion-preview__iframe { position: relative; height: var(--combined-h, 540px); }
+.motion-preview--combined .motion-preview__poster { min-height: 160px; }
+
+/* --- Notes (target / intent) ------------------------------------------ */
+.motion-composer__notes { display: grid; gap: 10px; padding: 14px; background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.motion-composer__notes-hint { margin: 0; color: var(--color-muted); font-size: 12.5px; }
+.motion-composer__note { display: grid; gap: 6px; }
+.motion-composer__note-label { font-size: 12.5px; font-weight: 700; }
+.motion-composer__note select, .motion-composer__note-input { min-height: 40px; padding: 6px 10px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 14px; }
+.motion-composer__notes-toggle[aria-expanded="true"] { background: var(--color-hover); }
+.motion-composer__note-input[aria-invalid="true"] { border-color: #c0392b; }
+.motion-composer__note-warn { color: #c0392b; font-size: 12px; }
+
+/* --- Brief ------------------------------------------------------------- */
+.motion-composer__brief { margin-top: 32px; }
+.motion-composer__brief-options { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 12px; }
+.motion-composer__brief-options label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.motion-composer__brief-text {
+    max-height: 480px; margin: 0; padding: 16px; overflow: auto;
+    color: var(--color-text); font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-word;
+    background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md);
+}
+.motion-composer__brief-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.motion-composer__json { width: min(720px, calc(100% - 32px)); padding: 0; color: var(--color-text); background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-lg); }
+.motion-composer__json::backdrop { background: rgba(0, 0, 0, 0.4); }
+.motion-composer__json-frame { display: grid; gap: 12px; padding: 24px; }
+.motion-composer__json textarea { width: 100%; min-height: 160px; padding: 10px; color: var(--color-text); font: 12.5px/1.5 ui-monospace, Menlo, monospace; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.motion-composer__json-error { margin: 0; color: #c0392b; font-size: 13px; }
+
+/* --- Picker dialog ----------------------------------------------------- */
+.motion-composer__picker {
+    width: min(980px, calc(100% - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+.motion-composer__picker::backdrop { background: rgba(0, 0, 0, 0.4); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.motion-composer__picker-frame { padding: clamp(20px, 4vw, 32px); }
+.motion-composer__picker-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; margin: -4px 0 16px; padding: 4px 0 12px; background: var(--color-bg); }
+.motion-composer__picker-head .motion-composer__title { flex-shrink: 0; }
+.motion-composer__picker-search { flex: 1; min-width: 0; }
+.motion-composer__picker-search input { width: 100%; min-height: 40px; padding: 8px 12px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.motion-composer__picker-close { flex-shrink: 0; width: 40px; height: 40px; color: var(--color-text); font-size: 22px; line-height: 1; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 50%; cursor: pointer; }
+.motion-composer__picker-group { margin-bottom: 20px; }
+.motion-composer__picker-group-title { margin: 0 0 10px; color: var(--color-muted); font-size: 12px; font-weight: 750; letter-spacing: 0.06em; }
+.motion-composer__picker-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.motion-composer__picker-item {
+    display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+    padding: 10px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md);
+}
+.motion-composer__picker-item.is-chosen { opacity: 0.55; }
+.motion-composer__picker-preview .motion-preview { width: 112px; }
+.motion-composer__picker-preview .motion-preview__controls { display: none; }
+.motion-composer__picker-meta { display: grid; gap: 2px; min-width: 0; }
+.motion-composer__picker-name { font-size: 15px; letter-spacing: -0.02em; }
+.motion-composer__picker-summary { color: var(--color-muted); font-size: 12.5px; }
+.motion-composer__add { min-height: 40px; }
+.motion-composer__add:disabled { opacity: 0.5; cursor: default; }
+.motion-composer__picker-none { margin: 8px 0 0; color: var(--color-muted); }
+
+@media (min-width: 768px) {
+    .motion-composer__list { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+    .motion-composer__slot-preview .motion-preview { max-width: none; }
+}
+@media (max-width: 767px) {
+    .motion-composer__picker { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; border: 0; border-radius: 0; }
+    .motion-composer__picker-item { grid-template-columns: 96px minmax(0, 1fr); }
+    .motion-composer__add { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .motion-composer * { transition: none !important; }
+}
