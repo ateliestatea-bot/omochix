@@ -56,6 +56,7 @@ $omochix_index = isset($args['index']) ? (int) $args['index'] : 0;
                         <option value="__custom"><?php esc_html_e('自由入力…', 'omochix'); ?></option>
                     </select>
                     <input type="text" class="motion-composer__note-input" data-composer-note-input maxlength="<?php echo (int) OMOCHIX_LEARN_COMPOSER_NOTE_MAX; ?>" hidden aria-describedby="composer-notes-hint-<?php echo esc_attr((string) $omochix_index); ?>" aria-label="<?php echo esc_attr($omochix_kind_label); ?>（<?php esc_attr_e('自由入力', 'omochix'); ?>）" placeholder="<?php esc_attr_e('40文字まで', 'omochix'); ?>">
+                    <span class="motion-composer__note-warn" data-composer-note-warn role="status" hidden><?php esc_html_e('使えない文字があります。文字・数字・空白と . , / \' " & ( ) ! ? : - _ 、40文字まで。', 'omochix'); ?></span>
                 </div>
             <?php endforeach; ?>
         </div>

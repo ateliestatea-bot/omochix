@@ -199,18 +199,24 @@
         };
         preview.label = (preview.frame && preview.frame.dataset.label) || preview.slug;
         preview.docBuilder = typeof el.omxDocBuilder === 'function' ? el.omxDocBuilder : null;
+        // An element may be registered again (the composer rebuilds its combined
+        // preview in place): drop the handlers of the previous registration first.
+        detachHandlers(el);
         el.omxPreview = preview;
         if (preview.controls && (catalog.items[preview.slug] || preview.docBuilder)) preview.controls.hidden = false;
         if (preview.toggle) {
-            preview.toggle.addEventListener('click', function () {
+            preview.onToggle = function () {
                 preview.user = preview.playing ? 'pause' : 'play';
                 if (!preview.mounted) { preview.inView = true; mount(preview); }
                 apply(preview);
-            });
+            };
+            preview.toggle.addEventListener('click', preview.onToggle);
         }
         var expandButton = el.querySelector('[data-motion-expand-btn]');
         if (expandButton) {
-            expandButton.addEventListener('click', function () { openExpand(preview, expandButton); });
+            preview.expandButton = expandButton;
+            preview.onExpand = function () { openExpand(preview, expandButton); };
+            expandButton.addEventListener('click', preview.onExpand);
         }
         previews.push(preview);
         if (observer) {
@@ -231,10 +237,20 @@
         });
     }
 
+    /** Remove the click handlers a previous register() attached to this element's controls. */
+    function detachHandlers(el) {
+        var old = el.omxPreview;
+        if (!old) return;
+        if (old.toggle && old.onToggle) old.toggle.removeEventListener('click', old.onToggle);
+        if (old.expandButton && old.onExpand) old.expandButton.removeEventListener('click', old.onExpand);
+        old.onToggle = old.onExpand = null;
+    }
+
     function unregisterWithin(container) {
         previews = previews.filter(function (preview) {
             if (!container.contains(preview.el)) return true;
             if (observer) observer.unobserve(preview.el);
+            detachHandlers(preview.el);
             preview.el.omxPreview = null;
             return false;
         });

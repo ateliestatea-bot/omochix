@@ -22,8 +22,9 @@ $raws = [
     ['slots' => [['slug' => 'count-up', 'params' => ['target' => '512', 'easing' => 'linear'], 'target' => 'hero', 'intent' => '第一印象 テスト'], ['slug' => 'particles', 'params' => ['count' => '1000', 'size' => '0.1']]]],
     ['slots' => [['slug' => 'nope'], ['slug' => 'fade-up', 'params' => ['ease' => 'bounce'], 'target' => str_repeat('a', 41)], ['slug' => 'stagger'], ['slug' => 'typewriter'], ['slug' => 'toast']]],
     ['slots' => [['slug' => 'marker-highlight', 'params' => ['thick' => '70', 'cycle' => 'abc'], 'intent' => '<b>x</b>']]],
+    ['slots' => [['slug' => 'toast', 'target' => '(ヒーロー)!'], ['slug' => 'toast', 'params' => ['distance' => 80]], ['slug' => 'pop-in', 'intent' => "v2.0 hero, test/'x' & \"q\""], ['slug' => 'fade-up']]],
 ];
-$hashes = ['', '1', '2;pop-in', '1;pop-in', '1;pop-in:cycle=1.5,color=ff0000,badge_delay=0.8,t=hero,i=%E7%AC%AC%E4%B8%80%E5%8D%B0%E8%B1%A1;toast;gradient-shift:angle=45', '1;pop-in;toast;fade-up;stagger', '1;pop-in:Bad=1,cycle=' . str_repeat('9', 100), '1;count-up:target=512,easing=linear,size=72;particles:count=1000', '1;toast:t=' . rawurlencode('<img onerror=1>') . ',i=hello'];
+$hashes = ['', '1', '1;toast;toast;pop-in', '1;toast:t=%28%E3%83%92%E3%83%BC%E3%83%AD%E3%83%BC%29%21,i=v2.0%20hero%2C%20test%2F%27x%27', '2;pop-in', '1;pop-in', '1;pop-in:cycle=1.5,color=ff0000,badge_delay=0.8,t=hero,i=%E7%AC%AC%E4%B8%80%E5%8D%B0%E8%B1%A1;toast;gradient-shift:angle=45', '1;pop-in;toast;fade-up;stagger', '1;pop-in:Bad=1,cycle=' . str_repeat('9', 100), '1;count-up:target=512,easing=linear,size=72;particles:count=1000', '1;toast:t=' . rawurlencode('<img onerror=1>') . ',i=hello'];
 
 /** JSON-shape the composition like the JS does (params is always an object, never a list). */
 function fixture_shape(array $comp) {

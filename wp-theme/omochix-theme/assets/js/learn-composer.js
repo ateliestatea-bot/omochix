@@ -71,7 +71,10 @@
         });
         if (payload === null) return null;
         try { payload = decodeURIComponent(payload); } catch (error) { /* keep */ }
-        return core.sanitize(items, P, core.parseHash(payload));
+        var comp = core.sanitize(items, P, core.parseHash(payload));
+        // A link that parses to nothing (future version, retired sample, bare #c=)
+        // is treated as "no link" so a saved draft is not wiped by it.
+        return core.isEmpty(comp) ? null : comp;
     }
 
     function writeHash() {
@@ -143,8 +146,6 @@
             clone.className = 'motion-preview motion-preview--detail';
             var frame = clone.querySelector('[data-motion-frame]');
             if (frame) frame.innerHTML = '';
-            var controls = clone.querySelector('[data-motion-controls]');
-            if (controls) controls.hidden = true;
             previewHost.appendChild(clone);
             gallery.registerWithin(previewHost);
             var preview = slotPreview(el, slot.slug);
@@ -153,7 +154,11 @@
                 if (preview.ready) gallery.sendParams(preview);
             }
         }
-        el.querySelector('[data-composer-name]').textContent = item.name && item.name.ja ? item.name.ja : slot.slug;
+        var nameJa = item.name && item.name.ja ? item.name.ja : slot.slug;
+        el.querySelector('[data-composer-name]').textContent = nameJa;
+        el.querySelector('[data-composer-up]').setAttribute('aria-label', format(strings.moveUp || '%s ↑', nameJa));
+        el.querySelector('[data-composer-down]').setAttribute('aria-label', format(strings.moveDown || '%s ↓', nameJa));
+        el.querySelector('[data-composer-remove]').setAttribute('aria-label', format(strings.removeOne || '%s', nameJa));
         el.querySelector('[data-composer-en]').textContent = item.name && item.name.en ? item.name.en : '';
         el.querySelector('[data-composer-summary]').textContent = item.summary || '';
         var link = el.querySelector('[data-composer-link]');
@@ -198,7 +203,8 @@
             select.value = isPreset ? value : '__custom';
             if (select.value !== (isPreset ? value : '__custom')) select.value = '';
             input.hidden = isPreset;
-            input.value = isPreset ? '' : value;
+            if (input.value.trim() === '' || core.sanitizeNote(input.value) === value) input.value = isPreset ? '' : value; // keep a draft the visitor is still typing
+            flagNote(field);
         });
     }
 
@@ -217,6 +223,7 @@
             var slot = composition.slots[slotEls.indexOf(el)];
             if (!slot) return;
             slot[field.dataset.composerNote] = readNote(field);
+            flagNote(field);
             if (field.querySelector('[data-composer-note-select]').value === '__custom' && event.target.matches('select')) field.querySelector('[data-composer-note-input]').focus();
             writeHash();
             saveDraft();
@@ -225,6 +232,14 @@
         }
         if (event.target.matches && event.target.matches('[data-composer-assistant]')) renderBrief();
     });
+    function flagNote(field) {
+        var input = field.querySelector('[data-composer-note-input]');
+        var warn = field.querySelector('[data-composer-note-warn]');
+        var invalid = !input.hidden && input.value.trim() !== '' && core.sanitizeNote(input.value) !== input.value.replace(/\s+/g, ' ').trim();
+        input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+        if (warn) warn.hidden = !invalid;
+    }
+
     root.addEventListener('input', function (event) {
         var input = event.target.closest && event.target.closest('[data-composer-note-input]');
         if (!input) return;
@@ -233,6 +248,7 @@
         var slot = composition.slots[slotEls.indexOf(el)];
         if (!slot) return;
         slot[field.dataset.composerNote] = core.sanitizeNote(input.value);
+        flagNote(field);
         writeHash();
         saveDraft();
         scheduleBrief();
@@ -324,7 +340,7 @@
         render();
         announce(format(strings.removed || '%s', items[slot.slug].name.ja));
         var next = slotEls[Math.min(index, composition.slots.length)];
-        var focus = next && (next.querySelector('[data-composer-remove]:not([hidden])') || next.querySelector('[data-composer-pick]'));
+        var focus = next && (next.classList.contains('is-filled') ? next.querySelector('[data-composer-remove]') : next.querySelector('[data-composer-pick]'));
         if (focus && !focus.hidden) focus.focus();
     }
 
@@ -372,6 +388,7 @@
             })
             .catch(function () {
                 host.setAttribute('aria-busy', 'false');
+                if (el.dataset.slug !== slot.slug || !openPanels[slot.slug]) return; // the slot moved on meanwhile
                 host.innerHTML = '';
                 var p = document.createElement('p');
                 p.className = 'motion-composer__panel-error';
@@ -598,6 +615,8 @@
             });
         }
         if (pickerNone) pickerNone.hidden = shown > 0;
+        var pickerStatus = picker ? picker.querySelector('[data-composer-picker-status]') : null;
+        if (pickerStatus) pickerStatus.textContent = format(strings.pickerCount || '%d', shown);
     }
 
     root.addEventListener('click', function (event) {

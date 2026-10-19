@@ -28,7 +28,9 @@ $comp = omochix_learn_composer_sanitize($raw);
 check('sanitize: keeps at most 3 valid slots in order, drops unknown slugs and garbage', ['pop-in', 'toast', 'gradient-shift'] === array_column($comp['slots'], 'slug'));
 check('sanitize: params are sanitized and only non-default values survive', ['cycle' => 1.5, 'color' => '#ff0000', 'badge_delay' => 0.8] === $comp['slots'][0]['params'] && [] === $comp['slots'][1]['params'] && ['angle' => 45.0] === $comp['slots'][2]['params']);
 check('sanitize: notes keep short plain text, drop over-long and markup', 'hero' === $comp['slots'][0]['target'] && '第一印象' === $comp['slots'][0]['intent'] && '' === $comp['slots'][2]['target'] && '' === $comp['slots'][2]['intent']);
-check('sanitize: duplicate slug is allowed by the sanitizer (the UI prevents it)', 2 === count(omochix_learn_composer_sanitize(['slots' => [['slug' => 'toast'], ['slug' => 'toast']]])['slots']));
+check('sanitize: a repeated slug is dropped (the UI is keyed by slug)', ['toast', 'pop-in'] === array_column(omochix_learn_composer_sanitize(['slots' => [['slug' => 'toast'], ['slug' => 'toast'], ['slug' => 'pop-in']]])['slots'], 'slug'));
+check('sanitize: notes accept common ASCII punctuation but not markup or markdown markers', "v2.0 hero, test/'x' & \"q\" (A)!" === omochix_learn_composer_sanitize_note("v2.0 hero, test/'x' & \"q\" (A)!") && '' === omochix_learn_composer_sanitize_note('<b>x</b>') && '' === omochix_learn_composer_sanitize_note('a `code` b') && '' === omochix_learn_composer_sanitize_note('[link](x)'));
+check('hash: notes are rawurlencoded (parentheses and ! included) and round-trip', str_contains(omochix_learn_composer_hash(['slots' => [['slug' => 'toast', 'target' => '(ヒーロー)!']]]), 't=%28%E3%83%92%E3%83%BC%E3%83%AD%E3%83%BC%29%21') && '(ヒーロー)!' === omochix_learn_composer_sanitize(omochix_learn_composer_parse_hash(omochix_learn_composer_hash(['slots' => [['slug' => 'toast', 'target' => '(ヒーロー)!']]])))['slots'][0]['target']);
 
 // --------------------------------------------------------------------- hash
 $hash = omochix_learn_composer_hash($comp);

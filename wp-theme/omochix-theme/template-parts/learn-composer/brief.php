@@ -38,7 +38,7 @@ $omochix_assistants = omochix_learn_composer_assistants();
             <h3 id="composer-json-title" class="motion-composer__title"><?php esc_html_e('JSON を貼り付けて読み込む', 'omochix'); ?></h3>
             <label class="sr-only" for="composer-json-text"><?php esc_html_e('組み合わせの JSON', 'omochix'); ?></label>
             <textarea id="composer-json-text" data-composer-json-text spellcheck="false"></textarea>
-            <p class="motion-composer__json-error" data-composer-json-error hidden></p>
+            <p class="motion-composer__json-error" data-composer-json-error role="alert" hidden></p>
             <div class="motion-composer__actions">
                 <button type="submit" class="motion-copy" value="load" data-composer-json-load><?php esc_html_e('読み込む', 'omochix'); ?></button>
                 <button type="submit" class="motion-copy motion-copy--ghost" value="cancel"><?php esc_html_e('やめる', 'omochix'); ?></button>

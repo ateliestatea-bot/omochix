@@ -20,7 +20,7 @@
     var VERSION = '1';
     var MAX_SLOTS = 3;
     var NOTE_MAX = 40;
-    var NOTE_RE = /^[\p{L}\p{N} 　・、。，．ー\-_()（）!?！？:：]{0,40}$/u;
+    var NOTE_RE = /^[\p{L}\p{N} 　・、。，．ー\-_()（）!?！？:：.,\/'"&]{0,40}$/u;
     var KEY_RE = /^[a-z][a-z0-9_]{0,23}$/;
 
     function sameAsDefault(def, v) {
@@ -41,11 +41,13 @@
     function sanitize(items, P, raw) {
         var out = { v: VERSION, slots: [] };
         var slots = raw && Array.isArray(raw.slots) ? raw.slots : [];
+        var seen = {};
         for (var i = 0; i < slots.length && out.slots.length < MAX_SLOTS; i++) {
             var slot = slots[i] || {};
             var slug = typeof slot.slug === 'string' ? slot.slug.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') : '';
             var item = slug && items[slug];
-            if (!item) continue;
+            if (!item || seen[slug]) continue; // unknown or repeated samples are dropped
+            seen[slug] = true;
             var defs = item.params || [];
             var values = P.sanitize(defs, slot.params && typeof slot.params === 'object' ? slot.params : {});
             var params = {};
@@ -70,8 +72,8 @@
                 var v = slot.params[def.key];
                 pairs.push(def.key + '=' + (def.type === 'color' ? String(v).replace(/^#/, '') : def.type === 'range' ? P.formatNumber(v) : v));
             });
-            if (slot.target) pairs.push('t=' + encodeURIComponent(slot.target));
-            if (slot.intent) pairs.push('i=' + encodeURIComponent(slot.intent));
+            if (slot.target) pairs.push('t=' + rawUrlEncode(slot.target));
+            if (slot.intent) pairs.push('i=' + rawUrlEncode(slot.intent));
             segments.push(slot.slug + (pairs.length ? ':' + pairs.join(',') : ''));
         });
         return segments.join(';');
@@ -100,6 +102,11 @@
             raw.slots.push(slot);
         });
         return raw;
+    }
+
+    /** Like PHP's rawurlencode: encodeURIComponent plus the five characters it leaves alone. */
+    function rawUrlEncode(s) {
+        return encodeURIComponent(s).replace(/[!'()*]/g, function (c) { return '%' + c.charCodeAt(0).toString(16).toUpperCase(); });
     }
 
     function safeDecode(s) {
@@ -260,6 +267,7 @@
         NOTE_MAX: NOTE_MAX,
         sanitize: sanitize,
         sanitizeNote: sanitizeNote,
+        rawUrlEncode: rawUrlEncode,
         toHash: toHash,
         parseHash: parseHash,
         isEmpty: isEmpty,

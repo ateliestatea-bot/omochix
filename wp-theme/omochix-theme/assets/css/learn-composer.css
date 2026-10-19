@@ -90,6 +90,8 @@
 .motion-composer__note-label { font-size: 12.5px; font-weight: 700; }
 .motion-composer__note select, .motion-composer__note-input { min-height: 40px; padding: 6px 10px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 14px; }
 .motion-composer__notes-toggle[aria-expanded="true"] { background: var(--color-hover); }
+.motion-composer__note-input[aria-invalid="true"] { border-color: #c0392b; }
+.motion-composer__note-warn { color: #c0392b; font-size: 12px; }
 
 /* --- Brief ------------------------------------------------------------- */
 .motion-composer__brief { margin-top: 32px; }

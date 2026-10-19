@@ -25,7 +25,7 @@ const OMOCHIX_LEARN_COMPOSER_MAX_SLOTS       = 3;
 const OMOCHIX_LEARN_COMPOSER_HASH_KEY        = 'c';
 const OMOCHIX_LEARN_COMPOSER_HASH_VERSION    = '1';
 const OMOCHIX_LEARN_COMPOSER_NOTE_MAX        = 40;
-const OMOCHIX_LEARN_COMPOSER_NOTE_RE         = '/^[\p{L}\p{N} 　・、。，．ー\-_()（）!?！？:：]{0,40}$/u';
+const OMOCHIX_LEARN_COMPOSER_NOTE_RE         = '/^[\p{L}\p{N} 　・、。，．ー\-_()（）!?！？:：.,\/\'"&]{0,40}$/u';
 const OMOCHIX_LEARN_COMPOSER_PANEL_VAR       = 'omx_panel';
 
 /* -------------------------------------------------------------------------
@@ -162,6 +162,7 @@ function omochix_learn_composer_presets() {
 function omochix_learn_composer_sanitize($raw) {
     $out   = ['v' => OMOCHIX_LEARN_COMPOSER_HASH_VERSION, 'slots' => []];
     $slots = is_array($raw) && isset($raw['slots']) && is_array($raw['slots']) ? $raw['slots'] : [];
+    $seen  = [];
     foreach ($slots as $slot) {
         if (count($out['slots']) >= OMOCHIX_LEARN_COMPOSER_MAX_SLOTS) {
             break;
@@ -171,9 +172,10 @@ function omochix_learn_composer_sanitize($raw) {
         }
         $slug = isset($slot['slug']) && is_string($slot['slug']) ? sanitize_title($slot['slug']) : '';
         $item = '' !== $slug ? omochix_learn_gallery_get_item($slug) : null;
-        if (!$item) {
-            continue;
+        if (!$item || isset($seen[$slug])) {
+            continue; // unknown or repeated samples are dropped
         }
+        $seen[$slug] = true;
         $values = omochix_learn_gallery_sanitize_params($item, is_array($slot['params'] ?? null) ? $slot['params'] : []);
         $params = [];
         foreach ($item['params'] as $def) {
@@ -564,6 +566,11 @@ function omochix_learn_composer_enqueue_assets() {
             'jsonLoaded'  => __('JSONから読み込みました', 'omochix'),
             'noParams'    => __('調整した値: なし', 'omochix'),
             'linkTooLong' => __('リンクが長すぎます。JSON でコピーしてください。', 'omochix'),
+            'noteInvalid' => __('使えない文字があります。文字・数字・空白と . , / \' " & ( ) ! ? : - _ 、40文字まで。', 'omochix'),
+            'pickerCount' => __('%d件の見本', 'omochix'),
+            'moveUp'      => __('%sをひとつ前へ', 'omochix'),
+            'moveDown'    => __('%sをひとつ後ろへ', 'omochix'),
+            'removeOne'   => __('%sを外す', 'omochix'),
         ],
         'brief'       => omochix_learn_composer_brief_templates(),
         'assistants'  => omochix_learn_composer_assistants(),
