@@ -17,7 +17,7 @@ function omochix_shell_page_enabled() {
     $template = isset($GLOBALS['omochix_shell_template']) ? $GLOBALS['omochix_shell_template'] : '';
     return in_array($template, [
         'page-about.php', 'page-contact.php', 'page-company.php', 'page-privacy-policy.php', 'page-terms.php',
-        'page-learn.php', 'page-learn-article.php', 'page-learn-gallery.php',
+        'page-learn.php', 'page-learn-article.php', 'page-learn-gallery.php', 'page-learn-composer.php',
     ], true);
 }
 

@@ -1316,7 +1316,8 @@ function omochix_learn_gallery_is_prompt_with_samples() {
 }
 
 function omochix_learn_gallery_enqueue_assets() {
-    if (!omochix_learn_gallery_is_request() && !omochix_learn_gallery_is_hub_request() && !omochix_learn_gallery_is_prompt_with_samples()) {
+    $composer = function_exists('omochix_learn_composer_is_request') && omochix_learn_composer_is_request();
+    if (!$composer && !omochix_learn_gallery_is_request() && !omochix_learn_gallery_is_hub_request() && !omochix_learn_gallery_is_prompt_with_samples()) {
         return;
     }
     $theme = wp_get_theme();

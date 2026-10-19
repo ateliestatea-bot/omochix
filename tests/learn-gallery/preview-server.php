@@ -86,20 +86,21 @@ function get_header() { global $post;
         echo '<script>window.matchMedia=function(q){return {matches:/prefers-reduced-motion:\s*reduce/.test(q),media:q,onchange:null,addEventListener:function(){},removeEventListener:function(){},addListener:function(){},removeListener:function(){}};};</script>';
     }
     echo '<script>(function(){try{var s=localStorage.getItem("omochix-theme");var d=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.dataset.theme=s||(d?"dark":"light");}catch(e){}}());</script>';
-    echo '<link rel="stylesheet" href="/wp-theme/omochix-theme/style.css"><link rel="stylesheet" href="/wp-theme/omochix-theme/assets/css/shell.css"><link rel="stylesheet" href="/wp-theme/omochix-theme/assets/css/learn-v2.css"></head>';
+    echo '<link rel="stylesheet" href="/wp-theme/omochix-theme/style.css"><link rel="stylesheet" href="/wp-theme/omochix-theme/assets/css/shell.css"><link rel="stylesheet" href="/wp-theme/omochix-theme/assets/css/learn-v2.css"><link rel="stylesheet" href="/wp-theme/omochix-theme/assets/css/learn-composer.css"></head>';
     echo '<body class="omx-shell page"><a class="skip-link" href="#main-content">本文へ移動</a><header class="site-header" data-site-header><div class="site-header__inner"><a class="site-logo" href="/learn/"><img class="site-logo__image" src="/wp-theme/omochix-theme/assets/img/logo-lockup-horizontal.svg" width="142" height="36" alt="OmochiX"></a>';
     echo '<nav class="primary-nav" id="primary-navigation" data-primary-nav><ul class="primary-nav__list"><li><a href="/learn/">Learn</a></li><li><a href="/learn/motion/">動く見本</a></li><li><a href="/prompts/">Prompts</a></li></ul></nav>';
     echo '<div class="site-header__actions"><button class="icon-button" type="button" data-theme-toggle aria-label="ダークモードに切り替える"><svg class="icon icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg><svg class="icon icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z"/></svg></button></div></div></header>';
 }
 function get_footer() { echo '<footer class="site-footer" style="padding:40px 0;text-align:center;color:var(--color-muted);font-size:12px">preview footer</footer>';
     do_action_stub('wp_footer');
-    echo '<script src="/wp-theme/omochix-theme/assets/js/header.js"></script><script>window.omochixLearnGallery=' . json_encode(['listUrl' => omochix_learn_gallery_url(), 'partialParam' => 'omx_partial', 'strings' => ['play' => '再生', 'pause' => '一時停止', 'pauseAll' => 'すべて一時停止', 'playAll' => 'すべて再生', 'copied' => 'コピーしました', 'copyFailed' => 'コピーできませんでした', 'count' => '%s件の見本', 'noResults' => '条件に合う見本がありません', 'loadFailed' => '読み込めませんでした', 'linkCopied' => 'リンクをコピーしました', 'resetDone' => '既定の値に戻しました']], JSON_UNESCAPED_UNICODE) . ';</script><script src="/wp-theme/omochix-theme/assets/js/learn-params.js"></script><script src="/wp-theme/omochix-theme/assets/js/learn-gallery.js"></script><script src="/wp-theme/omochix-theme/assets/js/learn-playground.js"></script></body></html>';
+    echo '<script src="/wp-theme/omochix-theme/assets/js/header.js"></script><script>window.omochixLearnGallery=' . json_encode(['listUrl' => omochix_learn_gallery_url(), 'partialParam' => 'omx_partial', 'strings' => ['play' => '再生', 'pause' => '一時停止', 'pauseAll' => 'すべて一時停止', 'playAll' => 'すべて再生', 'copied' => 'コピーしました', 'copyFailed' => 'コピーできませんでした', 'count' => '%s件の見本', 'noResults' => '条件に合う見本がありません', 'loadFailed' => '読み込めませんでした', 'linkCopied' => 'リンクをコピーしました', 'resetDone' => '既定の値に戻しました']], JSON_UNESCAPED_UNICODE) . ';</script><script src="/wp-theme/omochix-theme/assets/js/learn-params.js"></script><script src="/wp-theme/omochix-theme/assets/js/learn-gallery.js"></script><script src="/wp-theme/omochix-theme/assets/js/learn-playground.js"></script><script>window.omochixLearnComposer=' . json_encode(['maxSlots' => OMOCHIX_LEARN_COMPOSER_MAX_SLOTS, 'hashKey' => OMOCHIX_LEARN_COMPOSER_HASH_KEY, 'hashVersion' => OMOCHIX_LEARN_COMPOSER_HASH_VERSION, 'noteMax' => OMOCHIX_LEARN_COMPOSER_NOTE_MAX, 'presets' => omochix_learn_composer_presets(), 'strings' => ['slotEmpty' => '見本を選ぶ', 'linkCopied' => 'リンクをコピーしました', 'copyFailed' => 'コピーできませんでした', 'full' => '3件まで選べます。', 'added' => '%sを追加しました', 'removed' => '%sを外しました', 'moved' => '%sを%d番目に移動しました', 'cleared' => 'すべて外しました', 'restored' => '前回の編集状態を復元しました']], JSON_UNESCAPED_UNICODE) . ';</script><script src="/wp-theme/omochix-theme/assets/js/learn-composer-core.js"></script><script src="/wp-theme/omochix-theme/assets/js/learn-composer.js"></script></body></html>';
 }
 
 // Local fixtures (not real content).
 $GLOBALS['pages'] = [
     'learn'             => new WP_Post(['ID' => 10, 'post_name' => 'learn', 'post_title' => 'Learn']),
     'learn/motion'      => new WP_Post(['ID' => 42, 'post_name' => 'learn/motion', 'post_title' => '動く見本', 'post_parent' => 10]),
+    'learn/motion/compose' => new WP_Post(['ID' => 43, 'post_name' => 'learn/motion/compose', 'post_title' => '動きを組み合わせる', 'post_parent' => 42]),
     'learn/basics'      => new WP_Post(['ID' => 11, 'post_name' => 'learn/basics', 'post_title' => 'AI入門']),
     'learn/development' => new WP_Post(['ID' => 12, 'post_name' => 'learn/development', 'post_title' => '開発入門', 'post_excerpt' => 'AIを使った開発の基礎']),
 ];
@@ -113,11 +114,15 @@ $GLOBALS['wp_query'] = new class { public function set_404() { http_response_cod
 
 require $THEME . '/inc/learn.php';
 require $THEME . '/inc/learn-gallery.php';
+require $THEME . '/inc/learn-composer.php';
 function omochix_get_published_page_url($path) { $p = get_page_by_path($path); return $p ? get_permalink($p) : ''; }
 
 // Routing: list, detail (with ?omx_partial=1 fragment), hub.
 $GLOBALS['qv'] = [];
-if (preg_match('#^/learn/motion/([a-z0-9-]+)/?$#', $path, $m)) {
+if (preg_match('#^/learn/motion/compose/?$#', $path)) {
+    $GLOBALS['post'] = $GLOBALS['pages']['learn/motion/compose'];
+    include $THEME . '/page-learn-composer.php';
+} elseif (preg_match('#^/learn/motion/([a-z0-9-]+)/?$#', $path, $m)) {
     $GLOBALS['post'] = $GLOBALS['pages']['learn/motion'];
     $GLOBALS['qv']['omx_motion'] = $m[1];
     if (isset($_GET['omx_partial'])) { $GLOBALS['qv']['omx_partial'] = '1'; }

@@ -609,6 +609,8 @@
         strings: strings,
         expand: expand,
         previewsOf: previewsOf,
+        registerWithin: registerWithin,
+        unregisterWithin: unregisterWithin,
         mount: mount,
         sendParams: sendParams,
         copyText: copyText,

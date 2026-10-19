@@ -274,6 +274,20 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 効果（スタブサーバー、JSON は本番と同一構造）：埋め込み JSON 103.1KB → 47.5KB（−54%）、gzip 後 20.0KB → 11.3KB。詳細ページは当該1件のテンプレート（約 2.4KB）が JSON から script タグへ移るだけで総量は同じ。ダイアログのフラグメントは 14.2KB → 16.1KB（gzip 3.7KB → 3.8KB）。
 
+### 8.4 Phase 3B — Motion Composer 基盤（2026年10月19日、`feature/motion-composer-v1`）
+
+「見る → 調整する → 組み合わせる → AIで制作する」の 3 段目。動く見本を 3 つまで選び、順番を決め、組み合わせをリンクとして共有する。Phase 3A の設計（§8.3 の後段、2026年10月19日の監査報告）に従い、既存の Gallery / Playground には手を入れず、公開 API の利用と 4 行のフック（`learn-gallery.js` の `registerWithin` / `unregisterWithin` 公開、`learn-gallery.php` の enqueue 判定、`functions.php` の require、`shell.php` の allow-list）だけで接続した。
+
+| 要素 | 実装 |
+|---|---|
+| ページ | `/learn/motion/compose/`（`learn/motion` の子ページ、`page-learn-composer.php`）。ギャラリーの `^learn/motion/([a-z0-9-]+)` が `compose` を見本スラッグとして拾わないよう、`inc/learn-composer.php` が `init` 優先度 11 で専用ルールを先頭に登録し、`omochix_learn_composer_rewrite_version` で一度だけ flush。`template_include` 優先度 8。`noindex, follow`（状態 URL が無限に増えるため） |
+| モデル | `{v:"1", slots:[{slug, params（既定と違う値だけ）, target, intent}]}`、最大 3。PHP `omochix_learn_composer_sanitize()` と JS `learn-composer-core.js`（純粋関数、Node でも読める）が双子。`target` / `intent` は 40 文字以内の平文（文字・数字・空白・句読点のみ）で、指示書にだけ使い、CSS / JS / srcdoc には流さない |
+| 保存 | URL ハッシュ `#c=1;pop-in:cycle=1.5,color=ff0000;toast;gradient-shift:angle=45,t=hero,i=…`（`replaceState`）。`localStorage` の `omx-composer-draft` に最後の状態を 1 件（URL が優先、無ければ下書きを復元して告知）。DB・オプションは書かない |
+| UI | 3 スロット（空のときは次の 1 つだけ「見本を選ぶ」を出す）、ピッカー `<dialog>`（20 件をカテゴリ別に、検索、選択済みは追加不可）、スロットは `preview.php` の複製を `registerWithin` で登録して再生、↑↓ で並べ替え、外す、すべて外す、リンクをコピー（Web Share 対応）。操作はライブリージョンで告知し、フォーカスを次の操作に移す |
+| テスト | `tests/learn-composer/run.php` 16件（正規化・ハッシュ往復・上限・注入・プリセット・ルーティング）、`tests/learn-composer/core-parity.js` 30件（PHP ⇄ JS）。既存の 134 / 1760 件は無変更で通過。スタブサーバーに `/learn/motion/compose/` を追加 |
+
+未実装（3C 以降）：スロットごとの調整パネル、結合プレビュー、指示書。本番公開には固定ページ `learn/motion/compose` の作成（運営者）と、デプロイ後の自動 flush（初回アクセス時）が必要。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。
