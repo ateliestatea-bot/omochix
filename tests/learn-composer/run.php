@@ -62,13 +62,33 @@ $brief = omochix_learn_composer_brief($briefComp, 'claude-code');
 check('brief: one heading per slot in order, overview list with all three', 3 === preg_match_all('/^## \d\. /m', $brief) && strpos($brief, '## 1. ポップイン') < strpos($brief, '## 2. カウントアップ') && strpos($brief, '## 2. カウントアップ') < strpos($brief, '## 3. パーティクル') && str_contains($brief, '- 見本: 3件') && str_contains($brief, '  - #020 パーティクル（Particles） https://example.test/learn/motion/particles/'));
 check('brief: preset note shows its label, a free note starting with a marker is neutralised, empty shows （未指定）', str_contains($brief, '- 適用対象: ヒーロー / 意図: 　-注意') && str_contains($brief, '- 適用対象: （未指定） / 意図: （未指定）'));
 check('brief: adjusted values with （既定） markers and the spec lines', str_contains($brief, "- 調整した値:\n  - 登場から退場までの1周期は1.5s\n  - 行き過ぎ（オーバーシュート）は「少し」（既定）") && str_contains($brief, "- 動きの仕様:\n  - 拡大率 0→1"));
-check('brief: code is scoped with a wrapper class, no :root, js samples wrapped with their own omxSlot', str_contains($brief, '.omx-motion-1{--p-cycle:1.5s}') && str_contains($brief, '<div class="omx-motion omx-motion-1">') && !str_contains($brief, ':root{') && str_contains($brief, 'omxSlot(2,{"target":500})') && str_contains($brief, 'omxSlot(3,{})') && 2 === substr_count($brief, 'function omxSlot(n,p)'));
+check('brief: code is scoped with a wrapper class, no :root, js samples wrapped with their own omxSlot', str_contains($brief, "\n.omx-motion-1{--p-cycle:1.5s}\n") && str_contains($brief, '<div class="omx-motion omx-motion-1">') && !str_contains($brief, ':root{') && str_contains($brief, 'omxSlot(2,{"target":500})') && str_contains($brief, 'omxSlot(3,{})') && 2 === substr_count($brief, 'function omxSlot(n, p)'));
+// Standalone code: the tokens the sample CSS refers to are defined on every wrapper, with the preview runtime's :root values.
+$runtimeCss = file_get_contents($THEME . '/assets/css/learn-preview-runtime.css');
+preg_match('/:root \{([^}]*)\}/', $runtimeCss, $m);
+$runtimeTokens = [];
+foreach (array_filter(array_map('trim', explode(';', $m[1]))) as $decl) {
+    [$name, $value] = array_map('trim', explode(':', $decl, 2));
+    if (str_starts_with($name, '--')) { $runtimeTokens[$name] = $value; }
+}
+check('brief tokens: the hard-coded token list equals the runtime stylesheet :root (name, value and order)', $runtimeTokens === omochix_learn_composer_tokens() && 8 === count($runtimeTokens));
+check('brief tokens: every slot style starts with the token block for its wrapper, before the params block and the sample css', 3 === substr_count($brief, "<style>\n/* ") && str_contains($brief, "*/\n" . omochix_learn_composer_token_block(1) . "\n.omx-motion-1{--p-cycle:1.5s}\n.pop{") && str_contains($brief, "*/\n" . omochix_learn_composer_token_block(2) . "\n.cu{") && str_contains(omochix_learn_composer_token_block(3), '.omx-motion-3{--bg:#f7f7f5;') && str_contains(omochix_learn_composer_token_block(3), ';--amber:#d97706}'));
+check('brief tokens: a css-only sample without params still gets a style block (tokens)', str_contains(omochix_learn_composer_brief_code(omochix_learn_gallery_get_item('gradient-shift'), [], 1), "<style>\n/* "));
+// Standalone code: JS samples query inside omx.root, and the HTML data-* of JS params carry the adjusted values.
+check('brief html: count-up data-target is rewritten to the adjusted value (default otherwise), other html untouched', str_contains($brief, '<span class="cu__n" data-target="500">0</span>') && str_contains(omochix_learn_composer_brief_html($countUp, omochix_learn_gallery_sanitize_params($countUp)), 'data-target="12800"') && $popIn['preview']['html'] === omochix_learn_composer_brief_html($popIn, omochix_learn_gallery_sanitize_params($popIn, ['cycle' => 1.5])));
+$jsItems = array_filter(omochix_learn_gallery_get_items(), static fn($it) => '' !== $it['preview']['js']);
+check('catalog: every js sample queries its elements inside omx.root, never the whole document', 2 === count($jsItems) && !array_filter($jsItems, static fn($it) => str_contains($it['preview']['js'], 'document.querySelector') || !str_contains($it['preview']['js'], 'omx.root.querySelector')));
+check('catalog: count-up shows the target right away under reduced motion and reads data-target as its fallback', str_contains($countUp['preview']['js'], 'if(omx.reduced)show(target())') && str_contains($countUp['preview']['js'], "getAttribute('data-target')"));
+$shim = omochix_learn_gallery_js_shim();
+check('shim: one shared rAF loop that stops for reduced motion and hidden tabs, exposes root and reduced', 2 === substr_count($shim, 'requestAnimationFrame(tick)') && str_contains($shim, "matchMedia('(prefers-reduced-motion: reduce)')") && str_contains($shim, 'document.hidden') && str_contains($shim, 'root: document') && str_contains($shim, 'visibilitychange') && str_contains($shim, 'var omx = window.omx = window.omx ||'));
+check('shim: the brief slot shim roots at the nearest preceding .omx-motion-n, the combined-document shim at its .omx-slot', str_contains(omochix_learn_composer_brief_shim(), 'document.currentScript') && str_contains(omochix_learn_composer_brief_shim(), "'omx-motion-' + n") && str_contains(omochix_learn_composer_brief_shim(), 'root: root') && str_contains(omochix_learn_composer_slot_shim(), '.omx-slot[data-slot="\'+n+\'"]') && str_contains(omochix_learn_composer_slot_shim(), 'root:r') && str_contains($doc, 'root:r,reduced:!!window.omx.reduced'));
 check('brief: footer conditions and acceptance present once', 1 === substr_count($brief, '## 全体の実装条件') && 1 === substr_count($brief, '## 受け入れ条件') && str_contains($brief, 'prefers-reduced-motion'));
 $codex = omochix_learn_composer_brief($briefComp, 'codex');
 check('brief: assistants differ by the opening line only', $codex !== $brief && 1 === count(array_diff(explode("\n", $codex), explode("\n", $brief))));
 check('brief: empty composition -> empty string; unknown assistant falls back', '' === omochix_learn_composer_brief(['slots' => []]) && $brief === omochix_learn_composer_brief($briefComp, 'nope'));
 $dataJson = json_decode(omochix_learn_composer_data_json(), true);
 check('data json: 20 items with spec/url/tech, plus both shims', 20 === count($dataJson['items']) && is_array($dataJson['items']['pop-in']['spec']) && str_contains($dataJson['items']['pop-in']['url'], '/learn/motion/pop-in/') && str_contains($dataJson['shim'], 'var omx = window.omx') && str_contains($dataJson['slotShim'], 'function omxSlot'));
+check('data json: slotShim is the brief shim (currentScript-rooted), not the combined-document one', str_contains($dataJson['slotShim'], 'document.currentScript') && !str_contains($dataJson['slotShim'], 'data-slot'));
 
 // ------------------------------------------------------------------ presets
 $presets = omochix_learn_composer_presets();

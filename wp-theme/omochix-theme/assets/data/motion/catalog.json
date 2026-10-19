@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-17",
+  "updated": "2026-10-19",
   "stage": { "width": 320, "height": 180 },
   "categories": [
     { "slug": "entrance", "name": "登場・退場", "description": "要素が現れる・消えるときの動き。ページやアプリの第一印象を決めます。", "order": 1 },
@@ -170,7 +170,7 @@
       "preview": {
         "html": "<p class=\"cu\"><span class=\"cu__n\" data-target=\"12800\">0</span><span class=\"cu__u\">users</span></p>",
         "css": ".cu{display:flex;align-items:baseline;gap:10px;margin:0;color:var(--text)}\n.cu__n{font:800 var(--p-size,56px)/1 system-ui,sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;min-width:4.2em;text-align:right}\n.cu__u{font:600 16px/1 system-ui,sans-serif;color:var(--muted)}",
-        "js": "var el=document.querySelector('.cu__n');var loopGap=1.2;var base=0;var lastT=0;function ease(p,kind){if(kind==='linear')return p;if(kind==='inout')return p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;return 1-Math.pow(1-p,3);}omx.onParams(function(){base=lastT;});omx.animate(function(t){lastT=t;var target=Number(omx.param('target',12800));var duration=Number(omx.param('duration',2.2));var kind=omx.param('easing','out');var loop=duration+loopGap;var p=Math.min(((t-base)%loop)/duration,1);el.textContent=Math.round(ease(p,kind)*target).toLocaleString('ja-JP');});"
+        "js": "var el=omx.root.querySelector('.cu__n');var loopGap=1.2;var base=0;var lastT=0;function ease(p,kind){if(kind==='linear')return p;if(kind==='inout')return p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;return 1-Math.pow(1-p,3);}function target(){return Number(omx.param('target',Number(el.getAttribute('data-target'))||12800));}function show(n){el.textContent=Math.round(n).toLocaleString('ja-JP');}omx.onParams(function(){base=lastT;});omx.animate(function(t){lastT=t;var duration=Number(omx.param('duration',2.2));var kind=omx.param('easing','out');var loop=duration+loopGap;var p=Math.min(((t-base)%loop)/duration,1);show(ease(p,kind)*target());});if(omx.reduced)show(target());"
       },
       "prompt": {
         "ask": "実績の数字をカウントアップで見せて。2秒で、最後はゆっくり止まる感じ。",
@@ -578,7 +578,7 @@
       "preview": {
         "html": "<canvas class=\"pt\" width=\"320\" height=\"180\" aria-hidden=\"true\"></canvas>",
         "css": ".pt{display:block;width:320px;height:180px;color:var(--p-color,var(--primary))}",
-        "js": "var canvas=document.querySelector('.pt');var ctx=canvas.getContext('2d');var W=canvas.width,H=canvas.height;var dots=[];function make(){dots=[];var n=omx.param('count',40);for(var i=0;i<n;i++){dots.push({x:Math.random()*W,y:Math.random()*H,r:1.2+Math.random()*2.2,vx:(Math.random()-.5)*14,vy:-6-Math.random()*10,a:.3+Math.random()*.5});}}make();omx.onParams(function(){if(dots.length!==omx.param('count',40))make();});var last=0;omx.animate(function(t){var dt=Math.min(t-last,.05);last=t;var speed=omx.param('speed',1),size=omx.param('size',1);var color=getComputedStyle(canvas).color||'#6e4bff';ctx.clearRect(0,0,W,H);ctx.fillStyle=color;for(var i=0;i<dots.length;i++){var d=dots[i];d.x+=d.vx*dt*speed;d.y+=d.vy*dt*speed;if(d.y<-4){d.y=H+4;d.x=Math.random()*W;}if(d.x<-4)d.x=W+4;if(d.x>W+4)d.x=-4;ctx.globalAlpha=d.a;ctx.beginPath();ctx.arc(d.x,d.y,d.r*size,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;});"
+        "js": "var canvas=omx.root.querySelector('.pt');var ctx=canvas.getContext('2d');var W=canvas.width,H=canvas.height;var dots=[];function make(){dots=[];var n=omx.param('count',40);for(var i=0;i<n;i++){dots.push({x:Math.random()*W,y:Math.random()*H,r:1.2+Math.random()*2.2,vx:(Math.random()-.5)*14,vy:-6-Math.random()*10,a:.3+Math.random()*.5});}}make();omx.onParams(function(){if(dots.length!==omx.param('count',40))make();});var last=0;omx.animate(function(t){var dt=Math.min(t-last,.05);last=t;var speed=omx.param('speed',1),size=omx.param('size',1);var color=getComputedStyle(canvas).color||'#6e4bff';ctx.clearRect(0,0,W,H);ctx.fillStyle=color;for(var i=0;i<dots.length;i++){var d=dots[i];d.x+=d.vx*dt*speed;d.y+=d.vy*dt*speed;if(d.y<-4){d.y=H+4;d.x=Math.random()*W;}if(d.x<-4)d.x=W+4;if(d.x>W+4)d.x=-4;ctx.globalAlpha=d.a;ctx.beginPath();ctx.arc(d.x,d.y,d.r*size,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;});"
       },
       "prompt": {
         "ask": "ヒーローの背景に、小さな粒がゆっくり上へ漂うパーティクルを足して。40個くらいで軽めに。",

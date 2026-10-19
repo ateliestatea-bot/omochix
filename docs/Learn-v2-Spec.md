@@ -351,6 +351,22 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 - **LOW**：最後の見本を外したあとのフォーカス、パネル取得失敗時のガード、JSON エラーの `role="alert"`、ピッカーの件数読み上げ、↑↓外すのラベルに見本名。
 - テスト：`run.php` 32 件、parity 62 件。
 
+### 8.4.6 本番監査後の修正 — 指示書コードの独立性・768px（2026年10月19日、`fix/motion-composer-brief-standalone`）
+
+本番（Theme 1.23.0）の監査で、指示書の ```html ブロックをそのまま並べた素の HTML が単体で動かない点と、768px でスロットがはみ出す点が見つかった。方針は変えず（PHP 正本・JS 双子、クライアントサイドのみ、`#p=` / `#c=` 互換）、指示書が「貼ればその通りに動くコード」になるよう直した。
+
+| 項目 | 修正 |
+|---|---|
+| 指示書コードの独立性（HIGH） | `omochix_learn_composer_brief_code()` / `briefCode()` の `<style>` の先頭に、見本 CSS が参照するトークン 8 つ（`--bg --surface --text --muted --line --primary --blue --amber`）を `.omx-motion-n{…}` として出す。値は `learn-preview-runtime.css` の `:root` と同じで、PHP `omochix_learn_composer_tokens()` と JS `TOKENS` に持ち、`run.php` がランタイム CSS と突き合わせる（ずれたら落ちる）。既定値のパラメータは 2D-0 どおり省略のまま（`var(--p-x, var(--primary))` の fallback が定義済みになる）。`<style>` はトークンがあるので常に出す |
+| JS 見本のスコープ（HIGH） | `omx` に `root`（見本が `querySelector` する起点）を追加。プレビューランタイムは `.omx-stage`、ギャラリーの「コードをコピー」のシムは `document`、結合プレビューの `omxSlot` は `.omx-slot[data-slot=n]`、指示書の `omxSlot`（`omochix_learn_composer_brief_shim()`、データ JSON の `slotShim`）は **この script の直前の `.omx-motion-n`**（`document.currentScript` から遡る。無ければ最後の `.omx-motion-n`）。count-up と particles の JS を `omx.root.querySelector(...)` に変更。同じ見本を 2 回置いても両方動く |
+| 説明と実装の矛盾（MEDIUM） | ギャラリーのシム `omochix_learn_gallery_js_shim()` を、`animate()` をすべて 1 本の `requestAnimationFrame` にまとめ、`matchMedia('(prefers-reduced-motion: reduce)')` と `document.hidden` で止める（復帰時に止まっていた時間を引く）実装にした。`omx.reduced` を公開し、count-up は reduced のとき最初から目標値を表示（ランタイムでは「再生」を押すと 0 から数える）。count-up の `data-target` は JS で fallback として読まれ、指示書では `omochix_learn_composer_brief_html()` / `briefHtml()` が JS パラメータの `data-<key>` 属性を調整後の値に差し替える |
+| 768px（MEDIUM） | `learn-composer.css`：3 カラムは 1024px から、768〜1023px は 2 カラム。`__slot-head` / `__slot-controls` は折り返し、`__slot-name` は `flex: 1 1 120px; overflow-wrap: anywhere`、`__slot-body` に `min-width: 0`。375 / 768 / 1024 / 1440 で `scrollWidth === innerWidth` を確認 |
+| 調整パネルのヒント（LOW） | `playground.php` に `host` 引数を追加。composer のフラグメント（`omx_panel=1`）では「値を変えるとプレビューと、ページ下部の「AIへの実装指示書」に反映されます。」、ギャラリーでは従来の文言 |
+
+確認（スタブサーバー ＋ ブラウザ）：指示書の ```html ブロックを順に連結しただけの HTML で、ポップイン（アイコン＋アンバーのバッジ）・タイプライター・カウントアップが動き、count-up のブロックを 2 回置いても両方 500 まで数える。`matchMedia` を reduce に偽装すると `requestAnimationFrame` が 0 回で両方の count-up が最初から 500。結合プレビュー・ギャラリー詳細のプレビューは従来どおり。テスト：`tests/learn-composer/run.php` 41 件、`core-parity.js` 69 件、`tests/learn-gallery/run.php` 134 件、`params-parity.js` 1760 件。
+
+見本 JS の書き方（catalog.json）：要素は `omx.root.querySelector(...)` で取る（`document.querySelector` は使わない）。最終状態を即座に出せる見本は `omx.reduced` を見る。
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。

@@ -132,7 +132,7 @@
         return blocks.jsBlock ? blocks.jsBlock.slice('window.omxParams='.length, -1) : '{}';
     }
 
-    var SLOT_SHIM = 'function omxSlot(n,p){var l=[];return{animate:function(f){window.omx.animate(f)},param:function(k,d){return Object.prototype.hasOwnProperty.call(p,k)?p[k]:d},onParams:function(f){l.push(f)}}}';
+    var SLOT_SHIM = 'function omxSlot(n,p){var l=[];var r=document.querySelector(\'.omx-slot[data-slot="\'+n+\'"]\')||document;return{root:r,reduced:!!window.omx.reduced,animate:function(f){window.omx.animate(f)},param:function(k,d){return Object.prototype.hasOwnProperty.call(p,k)?p[k]:d},onParams:function(f){l.push(f)}}}';
     var FIT_SCRIPT = '(function(){var r=document.documentElement,w=parseInt(r.getAttribute("data-stage-w"),10)||320,h=parseInt(r.getAttribute("data-stage-h"),10)||180;function fit(){var s=document.querySelectorAll(".omx-slot");for(var i=0;i<s.length;i++){var k=s[i].clientWidth/w;s[i].style.height=Math.round(h*k)+"px";var g=s[i].querySelector(".omx-stage");if(g){g.style.setProperty("--omx-w",w+"px");g.style.setProperty("--omx-h",h+"px");g.style.setProperty("--omx-scale",String(k));}}}window.addEventListener("resize",fit);fit();}());';
     var COMBINED_CSS = 'html,body{height:auto;overflow:hidden}.omx-slot{position:relative;width:100%;max-width:640px;margin:0 auto;overflow:hidden}.omx-slot+.omx-slot{border-top:1px solid var(--line)}.omx-slot .omx-stage{transform-origin:top left;left:0;top:0;transform:scale(var(--omx-scale,1))}';
 
@@ -196,10 +196,46 @@
         return presets && presets[kind] && Object.prototype.hasOwnProperty.call(presets[kind], note) ? presets[kind][note] : note;
     }
 
+    /*
+     * Design tokens the sample CSS refers to, with the preview runtime's
+     * :root values (assets/css/learn-preview-runtime.css), so the brief's
+     * code renders outside the theme. Mirrors omochix_learn_composer_tokens().
+     */
+    var TOKENS = [
+        ['--bg', '#f7f7f5'],
+        ['--surface', '#ffffff'],
+        ['--text', '#101010'],
+        ['--muted', '#666663'],
+        ['--line', 'rgba(16, 16, 16, 0.12)'],
+        ['--primary', '#6e4bff'],
+        ['--blue', '#2563eb'],
+        ['--amber', '#d97706']
+    ];
+    var TOKEN_COMMENT = '/* 見本が参照する色。自分のテーマの色に置き換えてよい */';
+
+    /** ".omx-motion-n{--bg:…;…;--amber:…}" (mirrors omochix_learn_composer_token_block). */
+    function tokenBlock(n) {
+        return '.omx-motion-' + n + '{' + TOKENS.map(function (t) { return t[0] + ':' + t[1]; }).join(';') + '}';
+    }
+
+    /** The sample HTML with each JS parameter's data-<key> attribute at the current value (mirrors omochix_learn_composer_brief_html). */
+    function briefHtml(P, item, defs, values) {
+        var html = item.html || '';
+        defs.forEach(function (def) {
+            if (def.target !== 'js') return;
+            var v = Object.prototype.hasOwnProperty.call(values, def.key) ? values[def.key] : def['default'];
+            var text = def.type === 'range' ? P.formatNumber(v) : String(v);
+            html = html.replace(new RegExp('\\bdata-' + def.key + '="[^"]*"'), 'data-' + def.key + '="' + text + '"');
+        });
+        return html;
+    }
+
     /**
      * The copyable implementation code of one motion, scoped with a wrapper
-     * class instead of :root. item: catalog entry {html, css, js, params};
-     * meta: {id, name:{ja,en}, url}; shims: {shim, slotShim}.
+     * class instead of :root: tokens, non-default parameters, sample CSS,
+     * HTML (data-* at the current values) and, for JS samples, the runtime
+     * shim + per-slot shim + sample. item: catalog entry {html, css, js,
+     * params}; meta: {id, name:{ja,en}, url}; shims: {shim, slotShim}.
      */
     function briefCode(P, item, meta, values, n, shims) {
         var defs = item.params || [];
@@ -208,8 +244,8 @@
         var parts = [];
         parts.push('<!-- ' + meta.name.ja + ' (' + meta.name.en + ') | OmochiX Learn 動く見本 #' + meta.id + (meta.url ? ' | ' + meta.url : '') + ' -->');
         var scoped = blocks.css ? '.omx-motion-' + n + '{' + blocks.css.slice(':root{'.length) + '\n' : '';
-        if (item.css || defs.length) parts.push('<style>\n' + scoped + (item.css || '') + '\n</style>');
-        parts.push('<div class="omx-motion omx-motion-' + n + '">\n' + (item.html || '') + '\n</div>');
+        parts.push('<style>\n' + TOKEN_COMMENT + '\n' + tokenBlock(n) + '\n' + scoped + (item.css || '') + '\n</style>');
+        parts.push('<div class="omx-motion omx-motion-' + n + '">\n' + briefHtml(P, item, defs, values) + '\n</div>');
         if (item.js) {
             parts.push('<script>\n' + shims.shim + '\n' + shims.slotShim + '\n(function(omx){\n' + item.js + '\n}(omxSlot(' + n + ',' + jsParams(P, defs, values) + ')));\n</script>');
         }
@@ -274,6 +310,9 @@
         scopedBlock: scopedBlock,
         jsParams: jsParams,
         buildCombinedDoc: buildCombinedDoc,
+        TOKENS: TOKENS,
+        tokenBlock: tokenBlock,
+        briefHtml: briefHtml,
         briefNote: briefNote,
         briefCode: briefCode,
         buildBrief: buildBrief

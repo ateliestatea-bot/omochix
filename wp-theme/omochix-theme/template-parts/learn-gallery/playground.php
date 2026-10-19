@@ -6,6 +6,8 @@
  *   item    (array)  Catalog item. Required; renders nothing without params.
  *   heading (string) Heading tag for the panel title ("h2" on the page, "h3" in the dialog).
  *   share   (bool)   Print the "copy link" button (default true; the composer brings its own).
+ *   host    (bool)   Rendered inside a host (the composer): the hint names the brief instead of
+ *                    the copy buttons, which the host does not have (default false).
  *
  * The panel is server-rendered with the sample's defaults, followed by a
  * JSON script with the sample's copy templates. learn-playground.js
@@ -30,13 +32,14 @@ $omochix_heading = isset($args['heading']) && in_array($args['heading'], ['h2', 
 $omochix_uid     = 'motion-' . $omochix_item['slug'] . '-pg';
 $omochix_values  = omochix_learn_gallery_sanitize_params($omochix_item);
 $omochix_share   = !array_key_exists('share', $args) || !empty($args['share']);
+$omochix_host    = !empty($args['host']);
 ?>
 <section class="motion-playground" data-motion-playground data-slug="<?php echo esc_attr($omochix_item['slug']); ?>" aria-labelledby="<?php echo esc_attr($omochix_uid); ?>-title">
     <div class="motion-panel__header">
         <<?php echo $omochix_heading; ?> class="motion-panel__title" id="<?php echo esc_attr($omochix_uid); ?>-title"><?php esc_html_e('調整する', 'omochix'); ?></<?php echo $omochix_heading; ?>>
         <button type="button" class="motion-playground__reset" data-omx-reset disabled><?php esc_html_e('既定に戻す', 'omochix'); ?></button>
     </div>
-    <p class="motion-playground__hint"><?php esc_html_e('値を変えるとプレビューに反映され、「プロンプトをコピー」「コードをコピー」も調整後の内容になります。', 'omochix'); ?></p>
+    <p class="motion-playground__hint"><?php $omochix_host ? esc_html_e('値を変えるとプレビューと、ページ下部の「AIへの実装指示書」に反映されます。', 'omochix') : esc_html_e('値を変えるとプレビューに反映され、「プロンプトをコピー」「コードをコピー」も調整後の内容になります。', 'omochix'); ?></p>
     <div class="motion-playground__grid">
         <?php foreach ($omochix_item['params'] as $omochix_def) : ?>
             <?php

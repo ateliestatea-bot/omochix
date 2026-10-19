@@ -44,12 +44,13 @@
     cursor: pointer;
 }
 .motion-composer__pick:hover { background: color-mix(in srgb, var(--color-primary) 8%, transparent); }
-.motion-composer__slot-body { display: grid; gap: 14px; padding: 18px 20px 20px; }
-.motion-composer__slot-head { display: flex; align-items: center; gap: 12px; }
-.motion-composer__slot-name { display: grid; min-width: 0; flex: 1; }
+.motion-composer__slot-body { display: grid; gap: 14px; min-width: 0; padding: 18px 20px 20px; }
+/* Head and controls wrap instead of widening the card (three narrow columns on a tablet). */
+.motion-composer__slot-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.motion-composer__slot-name { display: grid; min-width: 0; flex: 1 1 120px; overflow-wrap: anywhere; }
 .motion-composer__slot-name strong { font-size: 16px; letter-spacing: -0.02em; }
 .motion-composer__slot-en { color: var(--color-muted); font-size: 12.5px; }
-.motion-composer__slot-controls { display: flex; gap: 6px; }
+.motion-composer__slot-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
 .motion-composer__move, .motion-composer__remove {
     min-width: 40px; min-height: 40px; padding: 0 12px;
     color: var(--color-text); font-size: 14px; font-weight: 650;
@@ -146,9 +147,14 @@
 .motion-composer__add:disabled { opacity: 0.5; cursor: default; }
 .motion-composer__picker-none { margin: 8px 0 0; color: var(--color-muted); }
 
+/* Two columns on a tablet, three from 1024px: at 768px three columns leave ~195px per
+   slot, which the head controls and the adjustment panel cannot fit without overflowing. */
 @media (min-width: 768px) {
-    .motion-composer__list { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+    .motion-composer__list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
     .motion-composer__slot-preview .motion-preview { max-width: none; }
+}
+@media (min-width: 1024px) {
+    .motion-composer__list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 767px) {
     .motion-composer__picker { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; border: 0; border-radius: 0; }

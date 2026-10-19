@@ -69,4 +69,12 @@ foreach ([$raws[1], $raws[2], $raws[3], ['slots' => [['slug' => 'pop-in', 'targe
         $out['brief'][] = ['in' => $raw, 'assistant' => $assistant, 'out' => omochix_learn_composer_brief($raw, $assistant)];
     }
 }
+// Brief code pieces: the token block and the data-* rewrite of JS params.
+$out['tokenBlock'] = omochix_learn_composer_token_block(2);
+$out['tokens'] = array_map(null, array_keys(omochix_learn_composer_tokens()), array_values(omochix_learn_composer_tokens()));
+$out['briefHtml'] = [];
+foreach ([['count-up', ['target' => '500']], ['count-up', []], ['count-up', ['target' => 1000000, 'easing' => 'linear']], ['particles', ['count' => 80]], ['pop-in', ['cycle' => 1.5]]] as [$slug, $params]) {
+    $item = omochix_learn_gallery_get_item($slug);
+    $out['briefHtml'][] = ['slug' => $slug, 'params' => (object) $params, 'out' => omochix_learn_composer_brief_html($item, omochix_learn_gallery_sanitize_params($item, $params))];
+}
 echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

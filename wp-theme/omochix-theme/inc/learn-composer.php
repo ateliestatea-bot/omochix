@@ -117,7 +117,7 @@ function omochix_learn_composer_panel_redirect() {
     }
     header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
     header('X-Robots-Tag: noindex');
-    get_template_part('template-parts/learn-gallery/playground', null, ['item' => $item, 'heading' => 'h3', 'share' => false]);
+    get_template_part('template-parts/learn-gallery/playground', null, ['item' => $item, 'heading' => 'h3', 'share' => false, 'host' => true]);
     exit;
 }
 add_action('template_redirect', 'omochix_learn_composer_panel_redirect', 9);
@@ -296,9 +296,81 @@ function omochix_learn_composer_js_params(array $item, array $values) {
     return substr($block['js'], strlen('window.omxParams='), -1); // strip the assignment and the ";"
 }
 
-/** The per-slot omx shim used inside the combined document (plain JS, no WordPress). */
+/** The per-slot omx shim used inside the combined document (plain JS, no WordPress): root is the slot's section. */
 function omochix_learn_composer_slot_shim() {
-    return 'function omxSlot(n,p){var l=[];return{animate:function(f){window.omx.animate(f)},param:function(k,d){return Object.prototype.hasOwnProperty.call(p,k)?p[k]:d},onParams:function(f){l.push(f)}}}';
+    return 'function omxSlot(n,p){var l=[];var r=document.querySelector(\'.omx-slot[data-slot="\'+n+\'"]\')||document;return{root:r,reduced:!!window.omx.reduced,animate:function(f){window.omx.animate(f)},param:function(k,d){return Object.prototype.hasOwnProperty.call(p,k)?p[k]:d},onParams:function(f){l.push(f)}}}';
+}
+
+/**
+ * The per-slot omx shim the brief ships with every JavaScript sample. Its
+ * root is the sample's own wrapper (the nearest `.omx-motion-n` before the
+ * script), so the same sample can be pasted twice on one page.
+ */
+function omochix_learn_composer_brief_shim() {
+    return <<<'JS'
+function omxSlot(n, p) {
+  // この見本の要素：この script の直前にある .omx-motion-n（同じ見本を 2 回置いても別々に動く）
+  var root = document.currentScript ? document.currentScript.previousElementSibling : null;
+  while (root && !(root.classList && root.classList.contains('omx-motion-' + n))) root = root.previousElementSibling;
+  if (!root) { var all = document.querySelectorAll('.omx-motion-' + n); root = all[all.length - 1] || document; }
+  return {
+    root: root,
+    reduced: window.omx.reduced,
+    animate: function (fn) { window.omx.animate(fn); },
+    param: function (key, fallback) { return Object.prototype.hasOwnProperty.call(p, key) ? p[key] : fallback; },
+    onParams: function () {}
+  };
+}
+JS;
+}
+
+/**
+ * Design tokens the sample CSS refers to (var(--primary) etc.), with the
+ * values of the preview runtime's :root (assets/css/learn-preview-runtime.css),
+ * so the brief's code renders outside the theme. Order and values are
+ * mirrored in learn-composer-core.js (TOKENS); tests/learn-composer/run.php
+ * checks them against the runtime stylesheet.
+ *
+ * @return array<string, string>
+ */
+function omochix_learn_composer_tokens() {
+    return [
+        '--bg'      => '#f7f7f5',
+        '--surface' => '#ffffff',
+        '--text'    => '#101010',
+        '--muted'   => '#666663',
+        '--line'    => 'rgba(16, 16, 16, 0.12)',
+        '--primary' => '#6e4bff',
+        '--blue'    => '#2563eb',
+        '--amber'   => '#d97706',
+    ];
+}
+
+/** ".omx-motion-n{--bg:…;…;--amber:…}" */
+function omochix_learn_composer_token_block($n) {
+    $pairs = [];
+    foreach (omochix_learn_composer_tokens() as $name => $value) {
+        $pairs[] = $name . ':' . $value;
+    }
+    return '.omx-motion-' . (int) $n . '{' . implode(';', $pairs) . '}';
+}
+
+/**
+ * The sample's HTML with every `data-<key>` attribute of a JS parameter set
+ * to the current value (e.g. count-up's data-target), so the markup an AI
+ * reads agrees with the omxSlot() values.
+ */
+function omochix_learn_composer_brief_html(array $item, array $values) {
+    $html = $item['preview']['html'];
+    foreach ($item['params'] as $def) {
+        if ('js' !== $def['target']) {
+            continue;
+        }
+        $v    = $values[$def['key']] ?? $def['default'];
+        $text = 'range' === $def['type'] ? omochix_learn_gallery_format_number($v) : (string) $v;
+        $html = preg_replace('/\bdata-' . preg_quote($def['key'], '/') . '="[^"]*"/', 'data-' . $def['key'] . '="' . $text . '"', $html, 1);
+    }
+    return $html;
 }
 
 /** Fits every .omx-stage to its section's width (the runtime only fits the first one). */
@@ -422,19 +494,22 @@ function omochix_learn_composer_brief_templates() {
     ];
 }
 
-/** The copyable implementation code of one motion, scoped with a wrapper class instead of :root. */
+/**
+ * The copyable implementation code of one motion, scoped with a wrapper
+ * class instead of :root: the tokens the sample CSS uses, the non-default
+ * parameters, the sample CSS, the HTML (data-* attributes at the current
+ * values) and, for JS samples, the runtime shim + per-slot shim + sample.
+ */
 function omochix_learn_composer_brief_code(array $item, array $values, $n, $url = '') {
     $values = omochix_learn_gallery_sanitize_params($item, $values);
     $block  = omochix_learn_gallery_params_blocks($item, $values);
     $parts  = [];
     $parts[] = sprintf('<!-- %s (%s) | OmochiX Learn 動く見本 #%s%s -->', $item['name']['ja'], $item['name']['en'], $item['id'], $url ? ' | ' . $url : '');
     $scoped = '' !== $block['css'] ? '.omx-motion-' . (int) $n . '{' . substr($block['css'], strlen(':root{')) . "\n" : '';
-    if ('' !== $item['preview']['css'] || $item['params']) {
-        $parts[] = "<style>\n" . $scoped . $item['preview']['css'] . "\n</style>";
-    }
-    $parts[] = '<div class="omx-motion omx-motion-' . (int) $n . '">' . "\n" . $item['preview']['html'] . "\n" . '</div>';
+    $parts[] = "<style>\n" . '/* ' . __('見本が参照する色。自分のテーマの色に置き換えてよい', 'omochix') . ' */' . "\n" . omochix_learn_composer_token_block($n) . "\n" . $scoped . $item['preview']['css'] . "\n</style>";
+    $parts[] = '<div class="omx-motion omx-motion-' . (int) $n . '">' . "\n" . omochix_learn_composer_brief_html($item, $values) . "\n" . '</div>';
     if ('' !== $item['preview']['js']) {
-        $parts[] = "<script>\n" . omochix_learn_gallery_js_shim() . "\n" . omochix_learn_composer_slot_shim() . "\n"
+        $parts[] = "<script>\n" . omochix_learn_gallery_js_shim() . "\n" . omochix_learn_composer_brief_shim() . "\n"
             . '(function(omx){' . "\n" . $item['preview']['js'] . "\n" . '}(omxSlot(' . (int) $n . ',' . omochix_learn_composer_js_params($item, $values) . ')));'
             . "\n</script>";
     }
@@ -460,7 +535,7 @@ function omochix_learn_composer_item_data(array $item) {
 }
 
 function omochix_learn_composer_data_json() {
-    $out = ['items' => [], 'shim' => omochix_learn_gallery_js_shim(), 'slotShim' => omochix_learn_composer_slot_shim()];
+    $out = ['items' => [], 'shim' => omochix_learn_gallery_js_shim(), 'slotShim' => omochix_learn_composer_brief_shim()];
     foreach (omochix_learn_gallery_get_items() as $slug => $item) {
         $out['items'][$slug] = omochix_learn_composer_item_data($item);
     }
