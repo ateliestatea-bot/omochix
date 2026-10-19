@@ -53,5 +53,11 @@ fx.combined.forEach(function (c, i) {
     check('combined ' + i + ': document', core.buildCombinedDoc(fx.catalog, P, c.slots, '組み合わせプレビュー'), c.doc);
 });
 
+var ctx = fx.briefCtx;
+ctx.items = fx.catalog.items;
+fx.brief.forEach(function (c, i) {
+    check('brief ' + i + ' (' + c.assistant + ')', core.buildBrief(ctx, P, c.in, c.assistant), c.out);
+});
+
 process.stdout.write(pass + ' passed, ' + fail + ' failed\n');
 process.exit(fail ? 1 : 0);

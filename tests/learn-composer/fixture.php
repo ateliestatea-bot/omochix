@@ -59,4 +59,13 @@ foreach ([$raws[1], $raws[2], $raws[3], $raws[5]] as $raw) {
     $out['combined'][] = ['slots' => fixture_shape($comp)['slots'], 'blocks' => $blocks, 'doc' => omochix_learn_composer_preview_document($slots)];
 }
 $out['catalog'] = ['stage' => $client['stage'], 'runtime' => $client['runtime'], 'items' => array_map(static fn($it) => ['params' => $it['params'], 'html' => $it['html'], 'css' => $it['css'], 'js' => $it['js']], $client['items'])];
+// Brief: whole Markdown for a few compositions and both assistants.
+$data = json_decode(omochix_learn_composer_data_json(), true);
+$out['briefCtx'] = ['data' => $data['items'], 'shim' => $data['shim'], 'slotShim' => $data['slotShim'], 'templates' => omochix_learn_composer_brief_templates(), 'assistants' => omochix_learn_composer_assistants(), 'presets' => omochix_learn_composer_presets(), 'noParams' => '調整した値: なし'];
+$out['brief'] = [];
+foreach ([$raws[1], $raws[2], $raws[3], ['slots' => [['slug' => 'pop-in', 'target' => '-x', 'intent' => 'mood'], ['slug' => 'fade-up', 'params' => ['ease' => 'bounce'], 'target' => 'カスタム 対象', 'intent' => 'first']]]] as $raw) {
+    foreach (['claude-code', 'codex'] as $assistant) {
+        $out['brief'][] = ['in' => $raw, 'assistant' => $assistant, 'out' => omochix_learn_composer_brief($raw, $assistant)];
+    }
+}
 echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

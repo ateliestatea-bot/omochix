@@ -83,6 +83,29 @@
 .motion-preview--combined .motion-preview__frame, .motion-preview--combined .motion-preview__iframe { position: relative; height: var(--combined-h, 540px); }
 .motion-preview--combined .motion-preview__poster { min-height: 160px; }
 
+/* --- Notes (target / intent) ------------------------------------------ */
+.motion-composer__notes { display: grid; gap: 10px; padding: 14px; background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.motion-composer__note { display: grid; gap: 6px; }
+.motion-composer__note-label { font-size: 12.5px; font-weight: 700; }
+.motion-composer__note select, .motion-composer__note-input { min-height: 40px; padding: 6px 10px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 14px; }
+.motion-composer__notes-toggle[aria-expanded="true"] { background: var(--color-hover); }
+
+/* --- Brief ------------------------------------------------------------- */
+.motion-composer__brief { margin-top: 32px; }
+.motion-composer__brief-options { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 12px; }
+.motion-composer__brief-options label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.motion-composer__brief-text {
+    max-height: 480px; margin: 0; padding: 16px; overflow: auto;
+    color: var(--color-text); font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-word;
+    background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md);
+}
+.motion-composer__brief-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.motion-composer__json { width: min(720px, calc(100% - 32px)); padding: 0; color: var(--color-text); background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-lg); }
+.motion-composer__json::backdrop { background: rgba(0, 0, 0, 0.4); }
+.motion-composer__json-frame { display: grid; gap: 12px; padding: 24px; }
+.motion-composer__json textarea { width: 100%; min-height: 160px; padding: 10px; color: var(--color-text); font: 12.5px/1.5 ui-monospace, Menlo, monospace; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.motion-composer__json-error { margin: 0; color: #c0392b; font-size: 13px; }
+
 /* --- Picker dialog ----------------------------------------------------- */
 .motion-composer__picker {
     width: min(980px, calc(100% - 32px));

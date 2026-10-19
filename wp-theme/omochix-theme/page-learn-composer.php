@@ -81,7 +81,10 @@ while (have_posts()) :
                 </div>
             </section>
 
+            <?php get_template_part('template-parts/learn-composer/brief', null, []); ?>
+
             <?php get_template_part('template-parts/learn-composer/picker', null, ['items' => $omochix_items, 'categories' => $omochix_categories]); ?>
+            <script type="application/json" id="omx-composer-data"><?php echo omochix_learn_composer_data_json(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON built with JSON_HEX_TAG by omochix_learn_composer_data_json(). ?></script>
         </div>
     </main>
     <?php

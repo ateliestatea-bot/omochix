@@ -38,8 +38,25 @@ $omochix_index = isset($args['index']) ? (int) $args['index'] : 0;
         <p class="motion-composer__slot-summary" data-composer-summary></p>
         <div class="motion-composer__slot-foot">
             <button type="button" class="motion-copy motion-copy--ghost motion-composer__adjust" data-composer-adjust aria-expanded="false"><?php esc_html_e('調整する', 'omochix'); ?></button>
+            <button type="button" class="motion-copy motion-copy--ghost motion-composer__notes-toggle" data-composer-notes-toggle aria-expanded="false"><?php esc_html_e('用途', 'omochix'); ?></button>
             <a class="motion-composer__slot-link" data-composer-link href="#"><?php esc_html_e('見本の詳細を見る', 'omochix'); ?></a>
         </div>
         <div class="motion-composer__panel" data-composer-panel hidden aria-busy="false"></div>
+        <?php $omochix_presets = omochix_learn_composer_presets(); ?>
+        <div class="motion-composer__notes" data-composer-notes hidden>
+            <?php foreach (['target' => __('適用対象', 'omochix'), 'intent' => __('意図', 'omochix')] as $omochix_kind => $omochix_kind_label) : ?>
+                <div class="motion-composer__note" data-composer-note="<?php echo esc_attr($omochix_kind); ?>">
+                    <label class="motion-composer__note-label" for="composer-<?php echo esc_attr($omochix_kind); ?>-<?php echo esc_attr((string) $omochix_index); ?>"><?php echo esc_html($omochix_kind_label); ?></label>
+                    <select id="composer-<?php echo esc_attr($omochix_kind); ?>-<?php echo esc_attr((string) $omochix_index); ?>" data-composer-note-select>
+                        <option value=""><?php esc_html_e('（未指定）', 'omochix'); ?></option>
+                        <?php foreach ($omochix_presets[$omochix_kind] as $omochix_key => $omochix_label) : ?>
+                            <option value="<?php echo esc_attr($omochix_key); ?>"><?php echo esc_html($omochix_label); ?></option>
+                        <?php endforeach; ?>
+                        <option value="__custom"><?php esc_html_e('自由入力…', 'omochix'); ?></option>
+                    </select>
+                    <input type="text" class="motion-composer__note-input" data-composer-note-input maxlength="<?php echo (int) OMOCHIX_LEARN_COMPOSER_NOTE_MAX; ?>" hidden aria-label="<?php echo esc_attr($omochix_kind_label); ?>（<?php esc_attr_e('自由入力', 'omochix'); ?>）" placeholder="<?php esc_attr_e('40文字まで', 'omochix'); ?>">
+                </div>
+            <?php endforeach; ?>
+        </div>
     </div>
 </li>

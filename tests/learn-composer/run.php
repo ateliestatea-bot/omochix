@@ -54,6 +54,20 @@ check('combined: js samples are wrapped with a per-slot omx and their params', s
 check('combined: no :root block; exactly four scripts (runtime, shim, one js sample, fit) close cleanly', !str_contains($doc, '<style id="omx-params">:root') && 4 === substr_count($doc, '</script>') && 4 === substr_count($doc, '<script>'));
 check('combined: fit script present, runtime once, stage size from the catalog', str_contains($doc, 'data-stage-w="320"') && 1 === substr_count($doc, '.omx-stage{') && str_contains($doc, 'querySelectorAll(".omx-slot")'));
 
+// -------------------------------------------------------------------- brief
+$briefComp = ['slots' => [['slug' => 'pop-in', 'params' => ['cycle' => 1.5], 'target' => 'hero', 'intent' => '-注意'], ['slug' => 'count-up', 'params' => ['target' => 500]], ['slug' => 'particles']]];
+$brief = omochix_learn_composer_brief($briefComp, 'claude-code');
+check('brief: one heading per slot in order, overview list with all three', 3 === preg_match_all('/^## \d\. /m', $brief) && strpos($brief, '## 1. ポップイン') < strpos($brief, '## 2. カウントアップ') && strpos($brief, '## 2. カウントアップ') < strpos($brief, '## 3. パーティクル') && str_contains($brief, '- 見本: 3件') && str_contains($brief, '  - #020 パーティクル（Particles） https://example.test/learn/motion/particles/'));
+check('brief: preset note shows its label, a free note starting with a marker is neutralised, empty shows （未指定）', str_contains($brief, '- 適用対象: ヒーロー / 意図: 　-注意') && str_contains($brief, '- 適用対象: （未指定） / 意図: （未指定）'));
+check('brief: adjusted values with （既定） markers and the spec lines', str_contains($brief, "- 調整した値:\n  - 登場から退場までの1周期は1.5s\n  - 行き過ぎ（オーバーシュート）は「少し」（既定）") && str_contains($brief, "- 動きの仕様:\n  - 拡大率 0→1"));
+check('brief: code is scoped with a wrapper class, no :root, js samples wrapped with their own omxSlot', str_contains($brief, '.omx-motion-1{--p-cycle:1.5s}') && str_contains($brief, '<div class="omx-motion omx-motion-1">') && !str_contains($brief, ':root{') && str_contains($brief, 'omxSlot(2,{"target":500})') && str_contains($brief, 'omxSlot(3,{})') && 2 === substr_count($brief, 'function omxSlot(n,p)'));
+check('brief: footer conditions and acceptance present once', 1 === substr_count($brief, '## 全体の実装条件') && 1 === substr_count($brief, '## 受け入れ条件') && str_contains($brief, 'prefers-reduced-motion'));
+$codex = omochix_learn_composer_brief($briefComp, 'codex');
+check('brief: assistants differ by the opening line only', $codex !== $brief && 1 === count(array_diff(explode("\n", $codex), explode("\n", $brief))));
+check('brief: empty composition -> empty string; unknown assistant falls back', '' === omochix_learn_composer_brief(['slots' => []]) && $brief === omochix_learn_composer_brief($briefComp, 'nope'));
+$dataJson = json_decode(omochix_learn_composer_data_json(), true);
+check('data json: 20 items with spec/url/tech, plus both shims', 20 === count($dataJson['items']) && is_array($dataJson['items']['pop-in']['spec']) && str_contains($dataJson['items']['pop-in']['url'], '/learn/motion/pop-in/') && str_contains($dataJson['shim'], 'var omx = window.omx') && str_contains($dataJson['slotShim'], 'function omxSlot'));
+
 // ------------------------------------------------------------------ presets
 $presets = omochix_learn_composer_presets();
 check('presets: target and intent lists exist with plain keys', count($presets['target']) >= 6 && count($presets['intent']) >= 5 && !array_filter(array_merge(array_keys($presets['target']), array_keys($presets['intent'])), static fn($k) => !preg_match('/^[a-z]+$/', $k)));

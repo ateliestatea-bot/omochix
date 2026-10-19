@@ -300,6 +300,16 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 確認済み（スタブ）：パネル取得と束縛（URL に `#p=` が付かない）、値変更 → `#c=1;pop-in:cycle=1.5;count-up`・バッジ・個別プレビュー・結合 srcdoc（スコープ付きブロック、`omxSlot(2,{})`）、並べ替え後もパネルと値が維持、既定に戻す、ギャラリーの詳細（`#p=` 復元）とダイアログの回帰なし、375px。同時再生のみ（順番再生は 3E の任意項目）。
 
+### 8.4.2 Phase 3D — AI 実装指示書（2026年10月19日）
+
+| 要素 | 実装 |
+|---|---|
+| 用途入力 | スロットの「用途」トグルで「適用対象」「意図」をプリセット select（PHP の `omochix_learn_composer_presets()`：対象 8・意図 6）＋「自由入力…」（40 文字、平文のみ）で入力。値は `slots[].target / intent` → `#c=` の `t=` / `i=` と下書きへ。CSS / JS / srcdoc には流さない |
+| 指示書 | PHP が正本：`brief_templates()`（header / list_item / slot / footer）、`brief_code()`（`code_template` と同じ構成で `:root` の代わりに `.omx-motion-n{--p-*}`、HTML を `<div class="omx-motion omx-motion-n">` で包み、JS 見本は基本シム＋`omxSlot` ＋ IIFE）、`brief($composition, $assistant)`。JS は `learn-composer-core.js` の `buildBrief()` が同じテンプレートを埋める（parity 8 件、全文一致）。見本の仕様・用途・URL は composer ページだけに印字する `#omx-composer-data`（20 件、約 17KB）から取る |
+| 表現 | Markdown。概要（件数・見本一覧・再生）、見本ごとの章（見本・適用対象／意図・どんな動きか・仕様・調整した値（（既定）付き）・使いどころ・実装コード）、全体の実装条件（ライブラリ不可、数値はそのまま、接頭辞で包む、reduced-motion の具体例、性能）、受け入れ条件。Claude Code / Codex は冒頭 1 行だけ違う。注記が行頭で `#` `-` `*` `>` `\|` `+` になるときは全角空白を前置して Markdown の記法にしない |
+| UI | ページ下部「AIへの実装指示書」：相手の切替（ラジオ）、本文 `<pre>`、コピー、`.md` 保存（Blob）、組み合わせを JSON でコピー、JSON を貼り付けて読み込む（`<dialog>`、`core.sanitize` を通し、無効なら文言を表示）。状態変更の 300ms 後に再生成 |
+| テスト | `run.php` 30 件（章の順・用途の表示・（既定）・スコープ付きコード・footer・相手の差分・データ JSON）、parity 56 件 |
+
 ## 9. 未決定事項・運用上の注意
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。

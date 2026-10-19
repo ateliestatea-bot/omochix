@@ -7,7 +7,9 @@
  * adjustment panel (fetched as a fragment and bound by learn-playground.js
  * in host mode, which reports changes instead of touching the URL). A
  * combined preview stacks the slots in one sandboxed document and is
- * rebuilt when the order or a value changes. The composition is kept in
+ * rebuilt when the order or a value changes; the implementation brief
+ * (Markdown, see learn-composer-core.js buildBrief) follows the same
+ * changes and can be copied, saved or exchanged as JSON. The composition is kept in
  * the URL hash (#c=…, see learn-composer-core.js) so it can be shared, and
  * the last state is also saved as a localStorage draft for the next visit.
  */
@@ -39,6 +41,13 @@
     var clearButton = root.querySelector('[data-composer-clear]');
     var combined = root.querySelector('[data-composer-combined]');
     var combinedPreview = combined ? combined.querySelector('[data-motion-preview]') : null;
+    var brief = root.querySelector('[data-composer-brief]');
+    var briefText = brief ? brief.querySelector('[data-composer-brief-text]') : null;
+    var jsonDialog = brief ? brief.querySelector('[data-composer-json-dialog]') : null;
+    var briefData = null;
+    try { briefData = JSON.parse((document.getElementById('omx-composer-data') || {}).textContent || 'null'); } catch (error) { briefData = null; }
+    var briefTimer = 0;
+    var openNotes = {};       // slug -> true while the notes form is expanded
     var supportsDialog = !!(picker && typeof window.HTMLDialogElement === 'function' && 'showModal' in window.HTMLDialogElement.prototype);
     var composition = { v: core.VERSION, slots: [] };
     var pickerTrigger = null;
@@ -163,8 +172,71 @@
         adjust.setAttribute('aria-expanded', 'false');
         adjust.textContent = strings.adjust || '調整する';
         if (openPanels[slot.slug]) openPanel(el, slot);
+        syncNotes(el, slot);
         updateSlotChrome(el, slot, index);
     }
+
+    /* ---- notes (target / intent): preset select + free text ---- */
+
+    function syncNotes(el, slot) {
+        var toggle = el.querySelector('[data-composer-notes-toggle]');
+        var form = el.querySelector('[data-composer-notes]');
+        if (!form) return;
+        var open = !!openNotes[slot.slug];
+        form.hidden = !open;
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            toggle.textContent = open ? (strings.notesClose || '用途を閉じる') : (strings.notes || '用途');
+        }
+        Array.prototype.forEach.call(form.querySelectorAll('[data-composer-note]'), function (field) {
+            var kind = field.dataset.composerNote;
+            var select = field.querySelector('[data-composer-note-select]');
+            var input = field.querySelector('[data-composer-note-input]');
+            var value = slot[kind] || '';
+            var presets = (config.presets && config.presets[kind]) || {};
+            var isPreset = value === '' || Object.prototype.hasOwnProperty.call(presets, value);
+            select.value = isPreset ? value : '__custom';
+            if (select.value !== (isPreset ? value : '__custom')) select.value = '';
+            input.hidden = isPreset;
+            input.value = isPreset ? '' : value;
+        });
+    }
+
+    function readNote(field) {
+        var select = field.querySelector('[data-composer-note-select]');
+        var input = field.querySelector('[data-composer-note-input]');
+        if (select.value === '__custom') { input.hidden = false; return core.sanitizeNote(input.value); }
+        input.hidden = true;
+        return core.sanitizeNote(select.value);
+    }
+
+    root.addEventListener('change', function (event) {
+        var field = event.target.closest && event.target.closest('[data-composer-note]');
+        if (field) {
+            var el = field.closest('[data-composer-slot]');
+            var slot = composition.slots[slotEls.indexOf(el)];
+            if (!slot) return;
+            slot[field.dataset.composerNote] = readNote(field);
+            if (field.querySelector('[data-composer-note-select]').value === '__custom' && event.target.matches('select')) field.querySelector('[data-composer-note-input]').focus();
+            writeHash();
+            saveDraft();
+            scheduleBrief();
+            return;
+        }
+        if (event.target.matches && event.target.matches('[data-composer-assistant]')) renderBrief();
+    });
+    root.addEventListener('input', function (event) {
+        var input = event.target.closest && event.target.closest('[data-composer-note-input]');
+        if (!input) return;
+        var field = input.closest('[data-composer-note]');
+        var el = field.closest('[data-composer-slot]');
+        var slot = composition.slots[slotEls.indexOf(el)];
+        if (!slot) return;
+        slot[field.dataset.composerNote] = core.sanitizeNote(input.value);
+        writeHash();
+        saveDraft();
+        scheduleBrief();
+    });
 
     function updateSlotChrome(el, slot, index) {
         el.querySelector('[data-composer-order]').textContent = String(index + 1);
@@ -225,6 +297,7 @@
         writeHash();
         saveDraft();
         scheduleCombined();
+        scheduleBrief();
     }
 
     function addSample(slug) {
@@ -354,7 +427,110 @@
         writeHash();
         saveDraft();
         scheduleCombined();
+        scheduleBrief();
     });
+
+    /* ------------------------------------------------------------------ */
+    /* Brief (Markdown), copy / download, JSON in and out                  */
+    /* ------------------------------------------------------------------ */
+
+    function assistant() {
+        var checked = brief ? brief.querySelector('[data-composer-assistant]:checked') : null;
+        return checked ? checked.value : 'claude-code';
+    }
+
+    function briefContext() {
+        return {
+            items: items,
+            data: briefData.items,
+            shim: briefData.shim,
+            slotShim: briefData.slotShim,
+            templates: config.brief,
+            assistants: config.assistants,
+            presets: config.presets,
+            noParams: strings.noParams || '調整した値: なし'
+        };
+    }
+
+    function scheduleBrief() {
+        if (!brief || !briefText) return;
+        window.clearTimeout(briefTimer);
+        briefTimer = window.setTimeout(renderBrief, 300);
+    }
+
+    function renderBrief() {
+        if (!brief || !briefText) return;
+        var n = composition.slots.length;
+        brief.hidden = n === 0 || !briefData || !config.brief;
+        if (brief.hidden) return;
+        briefText.textContent = core.buildBrief(briefContext(), P, composition, assistant());
+    }
+
+    function download(name, text) {
+        var blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    if (brief) {
+        brief.addEventListener('click', function (event) {
+            var button = event.target.closest('button');
+            if (!button) return;
+            if (button.hasAttribute('data-composer-brief-copy')) {
+                gallery.copyText(briefText.textContent).then(function () {
+                    gallery.flash(button, strings.briefCopied || strings.linkCopied || 'Copied', true);
+                }).catch(function () {
+                    gallery.flash(button, strings.copyFailed || 'Copy failed', false);
+                });
+            } else if (button.hasAttribute('data-composer-brief-download')) {
+                download('omochix-motion-brief.md', briefText.textContent);
+            } else if (button.hasAttribute('data-composer-json-copy')) {
+                gallery.copyText(JSON.stringify(composition, null, 2)).then(function () {
+                    gallery.flash(button, strings.jsonCopied || 'Copied', true);
+                }).catch(function () {
+                    gallery.flash(button, strings.copyFailed || 'Copy failed', false);
+                });
+            } else if (button.hasAttribute('data-composer-json-open') && jsonDialog) {
+                var text = jsonDialog.querySelector('[data-composer-json-text]');
+                var error = jsonDialog.querySelector('[data-composer-json-error]');
+                text.value = '';
+                error.hidden = true;
+                if (typeof jsonDialog.showModal === 'function') jsonDialog.showModal();
+                else jsonDialog.setAttribute('open', '');
+                text.focus();
+            }
+        });
+        if (jsonDialog) {
+            var form = jsonDialog.querySelector('[data-composer-json-form]');
+            form.addEventListener('submit', function (event) {
+                var submitter = event.submitter || form.querySelector('[data-composer-json-load]');
+                if (!submitter || submitter.value !== 'load') return; // "cancel" closes the dialog natively
+                var text = jsonDialog.querySelector('[data-composer-json-text]');
+                var error = jsonDialog.querySelector('[data-composer-json-error]');
+                var parsed = null;
+                try { parsed = JSON.parse(text.value); } catch (e) { parsed = null; }
+                var comp = parsed ? core.sanitize(items, P, parsed) : null;
+                if (!comp || core.isEmpty(comp)) {
+                    event.preventDefault();
+                    error.textContent = strings.jsonInvalid || 'Invalid JSON';
+                    error.hidden = false;
+                    text.focus();
+                    return;
+                }
+                composition = comp;
+                openPanels = {};
+                resetSlotEls();
+                render();
+                announce(strings.jsonLoaded || '');
+            });
+        }
+    }
 
     /* ------------------------------------------------------------------ */
     /* Combined preview: one document, rebuilt (debounced) on any change   */
@@ -447,10 +623,17 @@
                 else openPanel(slotEl, slot);
                 return;
             }
+            if (target.closest('[data-composer-notes-toggle]') && slot) {
+                openNotes[slot.slug] = !openNotes[slot.slug];
+                syncNotes(slotEl, slot);
+                if (openNotes[slot.slug]) slotEl.querySelector('[data-composer-note-select]').focus();
+                return;
+            }
         }
         if (target.closest('[data-composer-clear]')) {
             composition.slots = [];
             openPanels = {};
+            openNotes = {};
             resetSlotEls();
             render();
             announce(strings.cleared || '');

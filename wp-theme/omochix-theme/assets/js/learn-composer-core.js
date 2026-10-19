@@ -171,6 +171,89 @@
             + '</body></html>';
     }
 
+    /* ---- implementation brief (mirrors omochix_learn_composer_brief) ---- */
+
+    function fillTemplate(template, map) {
+        return String(template).replace(/\{\{[a-z_]+\}\}/g, function (token) {
+            return Object.prototype.hasOwnProperty.call(map, token) ? map[token] : token;
+        });
+    }
+
+    /** A note as it may appear in Markdown: never a list/heading/quote marker at line start. */
+    function briefNote(note) {
+        note = sanitizeNote(note);
+        return /^[#\-*>|+]/.test(note) ? '　' + note : note;
+    }
+
+    function noteLabel(presets, kind, note) {
+        return presets && presets[kind] && Object.prototype.hasOwnProperty.call(presets[kind], note) ? presets[kind][note] : note;
+    }
+
+    /**
+     * The copyable implementation code of one motion, scoped with a wrapper
+     * class instead of :root. item: catalog entry {html, css, js, params};
+     * meta: {id, name:{ja,en}, url}; shims: {shim, slotShim}.
+     */
+    function briefCode(P, item, meta, values, n, shims) {
+        var defs = item.params || [];
+        values = P.sanitize(defs, values || {});
+        var blocks = P.blocks(defs, values);
+        var parts = [];
+        parts.push('<!-- ' + meta.name.ja + ' (' + meta.name.en + ') | OmochiX Learn 動く見本 #' + meta.id + (meta.url ? ' | ' + meta.url : '') + ' -->');
+        var scoped = blocks.css ? '.omx-motion-' + n + '{' + blocks.css.slice(':root{'.length) + '\n' : '';
+        if (item.css || defs.length) parts.push('<style>\n' + scoped + (item.css || '') + '\n</style>');
+        parts.push('<div class="omx-motion omx-motion-' + n + '">\n' + (item.html || '') + '\n</div>');
+        if (item.js) {
+            parts.push('<script>\n' + shims.shim + '\n' + shims.slotShim + '\n(function(omx){\n' + item.js + '\n}(omxSlot(' + n + ',' + jsParams(P, defs, values) + ')));\n</script>');
+        }
+        return parts.join('\n\n');
+    }
+
+    /**
+     * The whole brief as Markdown. ctx: {items (catalog), data (per-sample
+     * facts), shim, slotShim, templates, assistants, presets, noParams}.
+     */
+    function buildBrief(ctx, P, composition, assistant) {
+        var comp = sanitize(ctx.items, P, composition);
+        var t = ctx.templates;
+        if (!comp.slots.length) return '';
+        if (!ctx.assistants[assistant]) assistant = 'claude-code';
+        var list = [];
+        var slots = [];
+        comp.slots.forEach(function (slot, i) {
+            var n = i + 1;
+            var item = ctx.items[slot.slug];
+            var data = ctx.data[slot.slug];
+            var defs = item.params || [];
+            var values = P.sanitize(defs, slot.params);
+            list.push(fillTemplate(t.list_item, { '{{id}}': data.id, '{{name}}': data.name.ja, '{{en}}': data.name.en, '{{url}}': data.url }));
+            var spec = (data.spec || []).map(function (line) { return '  - ' + line; }).join('\n');
+            var params = defs.length ? '- ' + P.text(defs, values).replace(/\n- /g, '\n  - ').replace(/\s+$/, '') : '- ' + ctx.noParams;
+            slots.push(fillTemplate(t.slot, {
+                '{{n}}': String(n),
+                '{{name}}': data.name.ja,
+                '{{en}}': data.name.en,
+                '{{id}}': data.id,
+                '{{category}}': data.category,
+                '{{url}}': data.url,
+                '{{target}}': slot.target ? briefNote(noteLabel(ctx.presets, 'target', slot.target)) : t.note_empty,
+                '{{intent}}': slot.intent ? briefNote(noteLabel(ctx.presets, 'intent', slot.intent)) : t.note_empty,
+                '{{summary}}': data.summary,
+                '{{spec}}': spec,
+                '{{params_text}}': params,
+                '{{use}}': data.use,
+                '{{tech}}': data.tech,
+                '{{code}}': briefCode(P, item, { id: data.id, name: data.name, url: data.url }, values, n, { shim: ctx.shim, slotShim: ctx.slotShim })
+            }));
+        });
+        var header = fillTemplate(t.header, {
+            '{{assistant_line}}': ctx.assistants[assistant].line,
+            '{{count}}': String(comp.slots.length),
+            '{{list}}': list.join('\n')
+        });
+        return header + '\n' + slots.join('\n') + '\n' + t.footer + '\n';
+    }
+
     return {
         VERSION: VERSION,
         MAX_SLOTS: MAX_SLOTS,
@@ -182,6 +265,9 @@
         isEmpty: isEmpty,
         scopedBlock: scopedBlock,
         jsParams: jsParams,
-        buildCombinedDoc: buildCombinedDoc
+        buildCombinedDoc: buildCombinedDoc,
+        briefNote: briefNote,
+        briefCode: briefCode,
+        buildBrief: buildBrief
     };
 }));

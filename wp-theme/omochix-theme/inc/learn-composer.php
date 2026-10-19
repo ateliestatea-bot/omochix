@@ -348,6 +348,178 @@ function omochix_learn_composer_preview_document(array $slots) {
 }
 
 /* -------------------------------------------------------------------------
+ * Implementation brief (Markdown for Claude Code / Codex). PHP is the
+ * reference; learn-composer-core.js fills the same templates so the text
+ * the visitor copies is byte-identical on both sides (parity test).
+ * ---------------------------------------------------------------------- */
+
+/** A note as it may appear in Markdown: plain already, but never a list/heading/quote marker at line start. */
+function omochix_learn_composer_brief_note($note) {
+    $note = omochix_learn_composer_sanitize_note($note);
+    return preg_match('/^[#\-*>|+]/', $note) ? '　' . $note : $note;
+}
+
+/** Preset label for a note that is a preset key, else the note itself. */
+function omochix_learn_composer_note_label($kind, $note) {
+    $presets = omochix_learn_composer_presets();
+    return $presets[$kind][$note] ?? $note;
+}
+
+/** Opening line per assistant; the rest of the brief is shared. */
+function omochix_learn_composer_assistants() {
+    return [
+        'claude-code' => ['label' => 'Claude Code', 'line' => __('このファイルの指示に従って実装してください。分からない点は実装前に質問してください。', 'omochix')],
+        'codex'       => ['label' => 'Codex', 'line' => __('以下の指示に従って実装してください。前提が足りない場合は推測せず、質問してください。', 'omochix')],
+    ];
+}
+
+function omochix_learn_composer_brief_templates() {
+    return [
+        'header' => implode("\n", [
+            '# ' . __('モーション実装指示（OmochiX Learn Motion Composer）', 'omochix'),
+            '{{assistant_line}}',
+            '',
+            '## ' . __('概要', 'omochix'),
+            '- ' . __('見本: {{count}}件（上から順に）', 'omochix'),
+            '{{list}}',
+            '- ' . __('再生: 同時に（各見本は自分の周期で繰り返す）', 'omochix'),
+            '',
+        ]),
+        'list_item' => '  - #{{id}} {{name}}（{{en}}） {{url}}',
+        'slot' => implode("\n", [
+            '## {{n}}. {{name}}（{{en}}）',
+            '- ' . __('見本: #{{id}}（{{category}}） {{url}}', 'omochix'),
+            '- ' . __('適用対象: {{target}} / 意図: {{intent}}', 'omochix'),
+            '- ' . __('どんな動きか: {{summary}}', 'omochix'),
+            '- ' . __('動きの仕様:', 'omochix'),
+            '{{spec}}',
+            '{{params_text}}',
+            '- ' . __('使いどころ: {{use}}', 'omochix'),
+            '- ' . __('実装コード（{{tech}}。クラス名と変数は見本のまま。`.omx-motion-{{n}}` の中だけに効く）:', 'omochix'),
+            '',
+            '```html',
+            '{{code}}',
+            '```',
+            '',
+        ]),
+        'footer' => implode("\n", [
+            '## ' . __('全体の実装条件', 'omochix'),
+            '- ' . __('HTML / CSS（必要なら素の JavaScript）で、外部ライブラリは使わない', 'omochix'),
+            '- ' . __('見本の形・タイミング・イージングの数値はそのまま使い、文字・色・素材だけ今作っているものに合わせる', 'omochix'),
+            '- ' . __('各見本は `.omx-motion-n` で包み、変数（--p-*）はその要素に置く。別の見本のクラス名や keyframes 名を変えない', 'omochix'),
+            '- ' . __('prefers-reduced-motion: reduce の環境では動きを止めるか最小限にする（例: `@media (prefers-reduced-motion: reduce) { .omx-motion * { animation: none !important; transition: none !important; } }`）', 'omochix'),
+            '- ' . __('性能: transform と opacity だけを動かす。will-change は実際に動かす要素だけ。同時に動く要素は 3 つまで。JavaScript は requestAnimationFrame を 1 本にまとめる', 'omochix'),
+            '',
+            '## ' . __('受け入れ条件', 'omochix'),
+            '- ' . __('各見本が上の順番で、指定した長さ・値で再生される', 'omochix'),
+            '- ' . __('reduced-motion を有効にすると動きが止まる', 'omochix'),
+            '- ' . __('レイアウトシフト（CLS）が増えない', 'omochix'),
+        ]),
+        'note_empty' => __('（未指定）', 'omochix'),
+    ];
+}
+
+/** The copyable implementation code of one motion, scoped with a wrapper class instead of :root. */
+function omochix_learn_composer_brief_code(array $item, array $values, $n, $url = '') {
+    $values = omochix_learn_gallery_sanitize_params($item, $values);
+    $block  = omochix_learn_gallery_params_blocks($item, $values);
+    $parts  = [];
+    $parts[] = sprintf('<!-- %s (%s) | OmochiX Learn 動く見本 #%s%s -->', $item['name']['ja'], $item['name']['en'], $item['id'], $url ? ' | ' . $url : '');
+    $scoped = '' !== $block['css'] ? '.omx-motion-' . (int) $n . '{' . substr($block['css'], strlen(':root{')) . "\n" : '';
+    if ('' !== $item['preview']['css'] || $item['params']) {
+        $parts[] = "<style>\n" . $scoped . $item['preview']['css'] . "\n</style>";
+    }
+    $parts[] = '<div class="omx-motion omx-motion-' . (int) $n . '">' . "\n" . $item['preview']['html'] . "\n" . '</div>';
+    if ('' !== $item['preview']['js']) {
+        $parts[] = "<script>\n" . omochix_learn_gallery_js_shim() . "\n" . omochix_learn_composer_slot_shim() . "\n"
+            . '(function(omx){' . "\n" . $item['preview']['js'] . "\n" . '}(omxSlot(' . (int) $n . ',' . omochix_learn_composer_js_params($item, $values) . ')));'
+            . "\n</script>";
+    }
+    return implode("\n\n", $parts);
+}
+
+/** Per-sample facts the brief needs beyond the client catalog JSON (printed on the composer page as #omx-composer-data). */
+function omochix_learn_composer_item_data(array $item) {
+    $category = omochix_learn_gallery_get_category($item['category']);
+    return [
+        'id'          => $item['id'],
+        'name'        => $item['name'],
+        'category'    => $category ? $category['name'] : $item['category'],
+        'summary'     => $item['summary'],
+        'description' => $item['description'],
+        'spec'        => $item['prompt']['spec'],
+        'use'         => $item['prompt']['use'],
+        'tech'        => implode(' / ', array_map(static function ($tech) {
+            return omochix_learn_gallery_techs()[$tech] ?? $tech;
+        }, $item['tech'])),
+        'url'         => omochix_learn_gallery_url($item),
+    ];
+}
+
+function omochix_learn_composer_data_json() {
+    $out = ['items' => [], 'shim' => omochix_learn_gallery_js_shim(), 'slotShim' => omochix_learn_composer_slot_shim()];
+    foreach (omochix_learn_gallery_get_items() as $slug => $item) {
+        $out['items'][$slug] = omochix_learn_composer_item_data($item);
+    }
+    return (string) wp_json_encode($out, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+/** Fill {{placeholders}}; unknown ones are left as they are (same rule as the gallery). */
+function omochix_learn_composer_fill($template, array $map) {
+    return strtr($template, $map);
+}
+
+/**
+ * The whole brief as Markdown for a (raw or sanitized) composition.
+ *
+ * @param mixed  $composition
+ * @param string $assistant 'claude-code' | 'codex'
+ */
+function omochix_learn_composer_brief($composition, $assistant = 'claude-code') {
+    $comp       = omochix_learn_composer_sanitize($composition);
+    $t          = omochix_learn_composer_brief_templates();
+    $assistants = omochix_learn_composer_assistants();
+    $assistant  = isset($assistants[$assistant]) ? $assistant : 'claude-code';
+    if (!$comp['slots']) {
+        return '';
+    }
+    $list  = [];
+    $slots = [];
+    $n     = 0;
+    foreach ($comp['slots'] as $slot) {
+        $n++;
+        $item   = omochix_learn_gallery_get_item($slot['slug']);
+        $data   = omochix_learn_composer_item_data($item);
+        $values = omochix_learn_gallery_sanitize_params($item, $slot['params']);
+        $list[] = omochix_learn_composer_fill($t['list_item'], ['{{id}}' => $data['id'], '{{name}}' => $data['name']['ja'], '{{en}}' => $data['name']['en'], '{{url}}' => $data['url']]);
+        $spec   = implode("\n", array_map(static fn($line) => '  - ' . $line, $data['spec']));
+        $params = $item['params'] ? '- ' . rtrim(str_replace("\n- ", "\n  - ", omochix_learn_gallery_params_text($item, $values))) : '- ' . __('調整した値: なし', 'omochix');
+        $slots[] = omochix_learn_composer_fill($t['slot'], [
+            '{{n}}'           => (string) $n,
+            '{{name}}'        => $data['name']['ja'],
+            '{{en}}'          => $data['name']['en'],
+            '{{id}}'          => $data['id'],
+            '{{category}}'    => $data['category'],
+            '{{url}}'         => $data['url'],
+            '{{target}}'      => '' !== $slot['target'] ? omochix_learn_composer_brief_note(omochix_learn_composer_note_label('target', $slot['target'])) : $t['note_empty'],
+            '{{intent}}'      => '' !== $slot['intent'] ? omochix_learn_composer_brief_note(omochix_learn_composer_note_label('intent', $slot['intent'])) : $t['note_empty'],
+            '{{summary}}'     => $data['summary'],
+            '{{spec}}'        => $spec,
+            '{{params_text}}' => $params,
+            '{{use}}'         => $data['use'],
+            '{{tech}}'        => $data['tech'],
+            '{{code}}'        => omochix_learn_composer_brief_code($item, $values, $n, $data['url']),
+        ]);
+    }
+    $header = omochix_learn_composer_fill($t['header'], [
+        '{{assistant_line}}' => $assistants[$assistant]['line'],
+        '{{count}}'          => (string) count($comp['slots']),
+        '{{list}}'           => implode("\n", $list),
+    ]);
+    return $header . "\n" . implode("\n", $slots) . "\n" . $t['footer'] . "\n";
+}
+
+/* -------------------------------------------------------------------------
  * Assets
  * ---------------------------------------------------------------------- */
 
@@ -381,7 +553,18 @@ function omochix_learn_composer_enqueue_assets() {
             'adjusted'    => __('%d項目を調整中', 'omochix'),
             'panelFailed' => __('調整パネルを読み込めませんでした。', 'omochix'),
             'retry'       => __('もう一度読み込む', 'omochix'),
+            'notes'       => __('用途', 'omochix'),
+            'notesClose'  => __('用途を閉じる', 'omochix'),
+            'custom'      => __('自由入力…', 'omochix'),
+            'noteEmpty'   => __('（未指定）', 'omochix'),
+            'briefCopied' => __('指示書をコピーしました', 'omochix'),
+            'jsonCopied'  => __('JSONをコピーしました', 'omochix'),
+            'jsonInvalid' => __('読み込めるJSONではありません。', 'omochix'),
+            'jsonLoaded'  => __('JSONから読み込みました', 'omochix'),
+            'noParams'    => __('調整した値: なし', 'omochix'),
         ],
+        'brief'       => omochix_learn_composer_brief_templates(),
+        'assistants'  => omochix_learn_composer_assistants(),
         'panelParam'  => OMOCHIX_LEARN_COMPOSER_PANEL_VAR,
         'partialParam' => OMOCHIX_LEARN_GALLERY_PARTIAL_VAR,
     ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) . ';', 'before');
