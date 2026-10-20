@@ -235,8 +235,8 @@ a.motion-chip--tag:hover { color: var(--color-text); }
 .motion-card__en { display: block; margin-top: 2px; color: var(--color-muted); font-size: 12px; font-weight: 500; letter-spacing: 0; }
 .motion-card__summary { margin: 0; color: var(--color-muted); font-size: 13px; line-height: 1.6; }
 .motion-gallery__empty { display: grid; justify-items: center; gap: 10px; padding: 56px 0; color: var(--color-muted); text-align: center; }
-/* The hidden attribute must win over the display rule above: the list prints the empty state hidden while samples match, and the filter script toggles it. */
-.motion-gallery__empty[hidden] { display: none; }
+/* The hidden attribute must win over the display rules: the list prints the empty state hidden while samples match, cards hidden when they do not match the URL filters, and learn-gallery.js toggles both on every filter change. */
+.motion-gallery__empty[hidden], .motion-card[hidden] { display: none; }
 .motion-gallery__empty p { margin: 0; }
 .motion-gallery__empty a { color: var(--color-primary); font-size: 13px; font-weight: 700; }
 .motion-gallery__editor-content { padding-block: var(--section-space); border-top: 1px solid var(--color-line); }
