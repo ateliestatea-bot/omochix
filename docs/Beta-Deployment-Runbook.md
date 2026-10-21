@@ -87,7 +87,7 @@
 
 ### 8d. Learn 実践教材（Learn Practice）と分野ハブ
 
-テーマ1.25.0 / Core Plugin 1.7.0以降。詳細は`docs/Learn-Phase4-Spec.md`。
+テーマ1.25.0 / Core Plugin 1.8.0以降（実践教材の post type・分野は 1.7.0 から、JSON インポートは 1.8.0 から）。詳細は`docs/Learn-Phase4-Spec.md`。
 
 1. Core Plugin を更新すると、初回アクセスで実践教材の post type・分野などのタクソノミー・初期ターム（分野 8・形式 5・対応AI 10・技術 14）が登録され、書き換えルールが一度 flush される。`/learn/practice/`が404なら12のパーマリンクflushを行う。
 2. 分野ハブとして、固定ページ「Learn」の子ページを slug `web` / `apps` / `video` / `automation` / `ai` / `projects` / `devtools` で作成して公開する（タイトルは分野名。`motion` は既存の「動く見本」が兼ねるので作らない）。本文は空でよい。抜粋はカードの説明になる。
