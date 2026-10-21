@@ -62,6 +62,7 @@ $GLOBALS['meta'][10] = [
     'practice_verify'      => [['title' => '通知が届く', 'how' => "テスト送信\nする", 'expect' => 'メールと LINE に届く']],
     'practice_safety'      => ['トークンは環境変数に置く'],
     'practice_publish'     => ['Vercel に環境変数を登録'],
+    'practice_troubleshooting' => [['symptom' => '通知が来ない', 'cause' => '環境変数が未設定', 'fix' => '再デプロイ']],
     'related_motion_slugs' => ['fade-up', 'nope-sample', 'toast', 'pop-in', 'typewriter'],
     'practice_verified_at' => '2026-10-21',
     'practice_sources'     => [['label' => 'LINE Messaging API', 'url' => 'https://developers.line.biz/ja/reference/messaging-api/']],
@@ -100,6 +101,7 @@ $brief = omochix_learn_practice_brief(10, 'claude-code');
 check('brief: heading, assistant line, overview facts', str_starts_with($brief, "# 実装指示: 問い合わせフォーム・LINE連携付き企業サイト\nこのファイルの指示に従って実装してください") && str_contains($brief, '- 難易度: 中級 / 所要 約180分') && str_contains($brief, '- 対応AI: Claude Code') && str_contains($brief, '- 使用技術: Vercel / LINE Messaging API') && str_contains($brief, '- 最終検証日: 2026-10-21'));
 check('brief: steps embed their prompt and code, a longer fence wraps a prompt that contains ```', str_contains($brief, "### STEP 1: 要件を決める\n1 文で。\n\nAI に渡すプロンプト（要件整理）:\n````text\nあなたは Web 制作者です。\n```\ncode fence inside\n```\n````\n\n- 確認: 1 文で言えた") && str_contains($brief, "### STEP 2: API を作る\n\nコード例（api/contact.js）:\n```javascript\nexport default function handler() {}\n```"));
 check('brief: broken references are ignored, verify / safety / publish / sources / acceptance present', str_contains($brief, "### STEP 3: 壊れた参照\n\n## 検証") && str_contains($brief, '- 通知が届く — やり方: テスト送信 する / 期待結果: メールと LINE に届く') && str_contains($brief, "## 安全性・秘密情報\n- トークンは環境変数に置く\n- 「＜ここに貼る") && str_contains($brief, "## 公開手順\n- Vercel に環境変数を登録") && str_contains($brief, '- LINE Messaging API https://developers.line.biz/ja/reference/messaging-api/') && str_contains($brief, "## 受け入れ条件"));
+check('brief: troubleshooting rows render as 原因 / 対処 lines', str_contains($brief, "## よくあるエラー\n- 通知が来ない — 原因: 環境変数が未設定 / 対処: 再デプロイ") && 1 === count(omochix_learn_practice_item(10)['troubleshooting']));
 check('brief: codex differs by the opening line only; missing post is empty', 1 === count(array_diff(explode("\n", omochix_learn_practice_brief(10, 'codex')), explode("\n", $brief))) && '' === omochix_learn_practice_brief(999));
 check('brief: fence helper escalates past backtick runs', "````js\na```b\n````" === omochix_learn_practice_md_fence('a```b', 'js') && "```\nx\n```" === omochix_learn_practice_md_fence("x\r\n"));
 
@@ -115,6 +117,61 @@ $GLOBALS['ctx']['is_tax'] = false; $GLOBALS['ctx']['is_archive'] = true;
 $_GET = ['format' => 'lesson'];
 check('seo: a filtered list is noindex, the bare list is not', omochix_learn_practice_is_noindex_request() && ($_GET = []) === [] && !omochix_learn_practice_is_noindex_request());
 $GLOBALS['ctx']['is_archive'] = false;
+
+
+// ---------------------------------------------------------------- importer
+$GLOBALS['query_result'] = null; unset($GLOBALS['query_result']);
+$GLOBALS['posts'][30] = new WP_Post(['ID' => 30, 'post_type' => 'prompt', 'post_name' => 'video-text-to-video-shot-prompts', 'post_title' => 'P']);
+$GLOBALS['posts'][31] = new WP_Post(['ID' => 31, 'post_type' => 'ai_tool', 'post_name' => 'cursor', 'post_title' => 'Cursor']);
+$GLOBALS['pages_by_id'] += [30 => 'prompts/video-text-to-video-shot-prompts', 31 => 'ai-tools/cursor'];
+$imp = static fn($items) => omochix_core_practice_import_plan(json_encode(['version' => 1, 'items' => $items], JSON_UNESCAPED_UNICODE));
+$bad = omochix_core_practice_import_decode('{"items": "x"}');
+check('import decode: shape, version, empty and oversize are refused', is_wp_error($bad) && is_wp_error(omochix_core_practice_import_decode('')) && is_wp_error(omochix_core_practice_import_decode('{"version":2,"items":[{}]}')) && is_wp_error(omochix_core_practice_import_decode('{"items":[]}')) && is_wp_error(omochix_core_practice_import_decode('{not json')) && !is_wp_error(omochix_core_practice_import_decode('{"version":1,"items":[{"slug":"a"}]}')));
+$findings = [];
+omochix_core_practice_import_lint_secrets(['meta' => ['practice_code' => [['body' => "const key = 'sk-abcdefghijklmnopqrstuvwxyz123456';"]], 'practice_safety' => ['トークンは ＜ここに貼る：LINE_CHANNEL_ACCESS_TOKEN＞ に置く'], 'practice_prompts' => [['body' => 'https://hooks.slack.com/services/T000/B000/XXXXXXXX']]]], 'items.0', $findings);
+check('import lint: real-looking keys and webhook urls are found, placeholders are not', 2 === count($findings) && 'items.0.meta.practice_code.0.body' === $findings[0]['path'] && str_contains($findings[1]['label'], 'webhook'));
+$full = ['slug' => 'corporate-site-line', 'title' => '企業サイト', 'status' => 'publish', 'excerpt' => 'x', 'meta' => ['practice_summary' => 'まとめ', 'practice_minutes' => 120, 'practice_outcome' => '完成', 'practice_prompts' => [['title' => 'A', 'for' => 'claude-code', 'body' => 'B']], 'practice_steps' => [['title' => 'S', 'body' => '<p>b</p>', 'prompt' => 0, 'code' => null, 'check' => 'c']], 'practice_verify' => [['title' => 'v', 'how' => 'h', 'expect' => 'e']], 'practice_safety' => ['s'], 'practice_verified_at' => '2026-10-21', 'practice_sources' => [['label' => 'L', 'url' => 'https://example.com/']], 'practice_troubleshooting' => [['symptom' => 'x', 'cause' => 'y', 'fix' => 'z']]], 'terms' => ['learn_field' => ['web', 'automation'], 'learn_format' => ['project']], 'relations' => ['prompts' => ['video-text-to-video-shot-prompts', 'nope-prompt'], 'tools' => ['cursor'], 'motion' => ['fade-up', 'nope-motion']]];
+$plan = $imp([$full]);
+check('import plan: an existing slug is an update with field-level changes, unknown relation slugs are warnings', !is_wp_error($plan) && [] === $plan['errors'] && 'update' === $plan['rows'][0]['action'] && 10 === $plan['rows'][0]['post_id'] && in_array('practice_minutes', array_column($plan['rows'][0]['changes'], 'field'), true) && 2 === count($plan['warnings']) && str_contains($plan['warnings'][0], 'nope-prompt') && str_contains($plan['warnings'][1], 'nope-motion') && [30] === $plan['rows'][0]['item']['relation_meta']['related_prompt_ids'] && ['fade-up'] === $plan['rows'][0]['item']['meta']['related_motion_slugs']);
+$errs = $imp([['slug' => '!!!', 'title' => 'x'], ['slug' => 'new-one', 'status' => 'publish', 'title' => 'n', 'meta' => ['practice_summary' => 'only']], ['slug' => 'new-three', 'title' => 'n3', 'terms' => ['learn_field' => ['nope-field']]], ['slug' => 'new-two', 'title' => 't', 'meta' => ['nope_key' => 1, 'related_tool_ids' => [1], 'practice_prompts' => 'not-array', 'practice_verified_at' => '2026-99-99']], ['slug' => 'corporate-site-line', 'title' => 'dup'], ['slug' => 'corporate-site-line', 'title' => 'dup2'], ['slug' => 'no-title']]);
+check('import plan: slug, publish-without-required, unknown term/meta/relation keys, non-array rows, bad date, duplicate slug and missing title are errors', !is_wp_error($errs) && 9 <= count($errs['errors']) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, 'slug は'))) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, 'nope-field'))) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, 'nope_key'))) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, 'relations（slug 指定）'))) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, '"practice_prompts" は配列'))) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, 'YYYY-MM-DD'))) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, '重複'))) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, 'title が必要'))) && 1 === count(array_filter($errs['errors'], static fn($e) => str_contains($e, 'publish には必須項目'))));
+$leak = $imp([['slug' => 'leak', 'title' => 'l', 'meta' => ['practice_code' => [['label' => 'k', 'lang' => 'js', 'file' => '', 'body' => 'token = "AKIAABCDEFGHIJKLMNOP"']]]]]);
+check('import plan: a secret-looking value blocks the plan with an error', 1 === count($leak['lint']) && 1 === count(array_filter($leak['errors'], static fn($e) => str_contains($e, '秘密情報'))));
+$create = $imp([['slug' => 'login-dashboard', 'title' => 'ログイン', 'meta' => ['practice_summary' => '要約', 'practice_minutes' => 240], 'terms' => ['learn_field' => ['apps']], 'relations' => ['practice' => ['corporate-site-line']]]]);
+check('import plan: a new slug is a create (draft) with every carried field listed', [] === $create['errors'] && 'create' === $create['rows'][0]['action'] && 'draft' === $create['rows'][0]['item']['post']['post_status'] && [10] === $create['rows'][0]['item']['relation_meta']['related_practice_ids'] && 1 === $create['summary']['create']);
+$GLOBALS['inserted'] = [];
+$res = omochix_core_practice_import_execute($create['rows']);
+$new_id = $GLOBALS['inserted'][0] ?? 0;
+check('import execute: creates the draft, writes meta, terms and relations, no backup for a new post', 1 === $res['created'] && 0 === $res['updated'] && [] === $res['failed'] && [] === $res['backups'] && $new_id && 'login-dashboard' === $GLOBALS['posts'][$new_id]->post_name && 'draft' === $GLOBALS['posts'][$new_id]->post_status && '要約' === $GLOBALS['meta'][$new_id]['practice_summary'] && 240 === $GLOBALS['meta'][$new_id]['practice_minutes'] && ['apps'] === $GLOBALS['post_terms'][$new_id]['learn_field'] && [10] === $GLOBALS['meta'][$new_id]['related_practice_ids']);
+$again = $imp([['slug' => 'login-dashboard', 'title' => 'ログイン', 'meta' => ['practice_summary' => '要約', 'practice_minutes' => 240], 'terms' => ['learn_field' => ['apps']], 'relations' => ['practice' => ['corporate-site-line']]]]);
+check('import rerun: the same file is unchanged, never a duplicate', 'unchanged' === $again['rows'][0]['action'] && [] === $again['rows'][0]['changes'] && 1 === $again['summary']['unchanged'] && 1 === count(array_filter($GLOBALS['posts'], static fn($p) => 'login-dashboard' === $p->post_name)));
+$partial = $imp([['slug' => 'login-dashboard', 'meta' => ['practice_minutes' => 300, 'practice_summary' => null]]]);
+$before_summary = $GLOBALS['meta'][$new_id]['practice_summary'];
+$res2 = omochix_core_practice_import_execute($partial['rows']);
+check('import update: only carried keys change, null leaves the field, a backup snapshot is taken', 1 === $res2['updated'] && 1 === count($res2['backups']) && 240 === $res2['backups'][0]['meta']['practice_minutes'] && 300 === $GLOBALS['meta'][$new_id]['practice_minutes'] && $before_summary === $GLOBALS['meta'][$new_id]['practice_summary'] && [['field' => 'practice_minutes', 'before' => '240', 'after' => '300']] === $partial['rows'][0]['changes']);
+$clear = $imp([['slug' => 'login-dashboard', 'meta' => ['practice_summary' => '']]]);
+omochix_core_practice_import_execute($clear['rows']);
+check('import update: "" clears a field', !isset($GLOBALS['meta'][$new_id]['practice_summary']));
+$GLOBALS['meta'][$new_id]['practice_minutes'] = '300'; // the database hands scalars back as strings
+$same = $imp([['slug' => 'login-dashboard', 'meta' => ['practice_minutes' => 300]]]);
+check('import diff: a stored "300" equals a planned 300 (no spurious update)', 'unchanged' === $same['rows'][0]['action']);
+$pair = $imp([['slug' => 'pair-a', 'title' => 'A', 'relations' => ['practice' => ['pair-b']]], ['slug' => 'pair-b', 'title' => 'B', 'relations' => ['practice' => ['pair-a', 'nope-x']]]]);
+check('import plan: relations to items of the same file are pending, not warnings', [] === $pair['errors'] && ['pair-b'] === $pair['rows'][0]['item']['pending_practice'] && ['pair-a'] === $pair['rows'][1]['item']['pending_practice'] && 1 === count($pair['warnings']) && str_contains($pair['warnings'][0], 'nope-x'));
+$GLOBALS['inserted'] = [];
+omochix_core_practice_import_execute($pair['rows']);
+[$ia, $ib] = $GLOBALS['inserted'];
+check('import execute: same-file relations are linked once both posts exist', [$ib] === $GLOBALS['meta'][$ia]['related_practice_ids'] && [$ia] === $GLOBALS['meta'][$ib]['related_practice_ids']);
+omochix_core_practice_import_log('abc', $res2, 7);
+$log = omochix_core_practice_import_get_log();
+check('import log: newest first with counts and slugs', 1 === count($log) && 'abc' === $log[0]['hash'] && 7 === $log[0]['user_id'] && 1 === $log[0]['updated'] && ['login-dashboard'] === $log[0]['slugs']);
+check('import: the sample files decode, validate without errors and carry the required fields', (static function () use ($imp) {
+    $ok = true;
+    foreach (glob(__DIR__ . '/../../wp-plugin/omochix-core/sample/practice/*.json') as $file) {
+        $plan = omochix_core_practice_import_plan((string) file_get_contents($file));
+        if (is_wp_error($plan) || $plan['errors'] || 1 !== count($plan['rows']) || [] === $plan['rows'][0]['item']['meta']['practice_troubleshooting'] || 'create' !== $plan['rows'][0]['action']) { $ok = false; fwrite(STDERR, basename($file) . ': ' . (is_wp_error($plan) ? $plan->get_error_message() : implode(' | ', $plan['errors'])) . "\n"); }
+    }
+    return $ok && 3 === count(glob(__DIR__ . '/../../wp-plugin/omochix-core/sample/practice/*.json'));
+})());
 
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

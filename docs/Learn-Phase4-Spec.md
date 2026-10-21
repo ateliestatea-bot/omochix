@@ -41,6 +41,7 @@ Phase 4C 以降：JSON インポータ、代表 3 教材、Motion 新規見本�
 | `practice_prereq` / `practice_safety` / `practice_publish` / `practice_env` | 1 行 1 項目 | safety ◯ |
 | `practice_steps` | rows `{title, body(html), prompt, code, check}` ≤40 | ◯ |
 | `practice_verify` | rows `{title, how, expect}` ≤20 | ◯ |
+| `practice_troubleshooting` | rows `{symptom, cause, fix}` ≤20（よくあるエラー、4C で追加） | – |
 | `related_practice_ids` / `related_prompt_ids` / `related_tool_ids` / `related_learn_ids` | ID 配列 | – |
 | `related_motion_slugs` | catalog slug ≤6 | – |
 | `practice_verified_at` | Y-m-d | ◯ |
@@ -74,5 +75,30 @@ rows は JSON 配列で入力（管理画面のテキストエリア、4C のイ
 - 教材の作成は管理画面 → Learn 実践教材。必須項目が揃うまで公開しない（通知が出る）。
 - 既存 Learn 固定ページには「分野」「用途」を付与できる（ページ編集画面）。
 
-## 7. 未実装（4C 以降）
-JSON インポータ（dry-run・SHA ロック・秘密情報リント）、代表 3 教材、Motion 新規見本 3 件、ニュース記事末尾の「Learn で実践」、既存 Learn 記事の目次・コピー、難易度ラベルの一元化、`ai_tool.related_learn_ids` ピッカーの教材対応。
+## 7. Phase 4C — JSON インポータ・代表 3 教材・カメラワーク見本（2026年10月22日）
+
+### 7.1 JSON インポータ
+- `includes/practice-importer.php`（ロジック）と `admin/practice-json-importer.php`（管理画面：Learn 実践教材 → JSON インポート、`manage_options`）。
+- 形式：`{"version": 1, "items": [ {"slug", "title", "status", "excerpt", "content", "menu_order", "meta": {…}, "terms": {"learn_field": […], …}, "relations": {"prompts": [slug], "tools": [slug], "learn": ["learn/…"], "practice": [slug], "motion": [catalog slug]}} ]}`。1 ファイル 5MB・200 件まで。
+- 流れ：dry-run（DB 無変更）→ 同じファイルを再アップロード（SHA-256 一致・確認チェック）→ 反映 → 更新前スナップショット JSON のダウンロード。ログは option `omochix_core_practice_import_log`（最新 20 件：日時・実行者・SHA・件数・slug）。
+- 検証：不明キー・不明タクソノミー・存在しないターム・配列でない rows・不正な日付・画像 ID はエラー。`publish` は必須項目（説明・所要・完成イメージ・プロンプト・手順・検証・安全性・検証日・出典）が揃わないとエラー。関連の不明 slug は警告（無視）。
+- 秘密情報リント：`sk-`、`AIza`、GitHub token、AWS key、Slack token、Slack / Discord webhook URL、秘密鍵ブロック、JWT、LINE トークン様の長い base64、`api_key = …` などの代入。1 件でもあれば反映不可。
+- 非破壊：slug で既存と照合し、JSON に無いキー・`null` は変更しない。`""` / `[]` は空にする。同じファイルの再実行は「変更なし」。
+- テスト：`tests/learn-practice/run.php` 50 件（decode・lint・plan・create・再実行・部分更新・クリア・ログ・サンプル 3 件の検証）。
+
+### 7.2 代表 3 教材（`sample/practice/*.json`、status は draft。公開は運営者が管理画面で）
+| slug | 分野 / 形式 | 内容 |
+|---|---|---|
+| `corporate-site-contact-line` | web + automation / project | 5 ページの企業サイト + 問い合わせフォーム + メールと LINE Messaging API への通知。トークンは環境変数のみ |
+| `nextjs-login-dashboard` | apps / project | Next.js + Supabase（Auth + RLS）のログインとメモのダッシュボード、E2E 3 本 |
+| `video-camerawork-prompts` | video + motion / lesson + prompt | 7 要素テンプレートとサービス別（Sora / Veo / Runway / Kling）の書き分け、比較して直す手順 |
+
+各教材は完成イメージ・難易度・所要・対応AI・技術・プロンプト・コード・手順・検証・安全性・公開手順・よくあるエラー（`practice_troubleshooting`、4C で追加）・出典・更新履歴・関連（教材 / Motion / プロンプト / ツール / Learn）を持つ。
+
+### 7.3 Motion 見本の追加
+- カテゴリ `camera`（カメラワーク、order 6）と見本 021 ドリーイン `dolly-in`、022 パン `pan`、023 オービット `orbit`（CSS のみ、各 4〜5 パラメータ）。既存 20 件は無変更。
+- Web 上の CSS 再現と、動画生成 AI へ渡すカメラワークの語彙を区別する（各見本の `prompt.use` に明記。生成結果を保証する表現は使わない）。
+- テスト：`tests/learn-gallery/run.php` の件数を 23 / 6 カテゴリに更新、`params-parity.js` 2024 件。
+
+### 7.4 未実装（4D 以降）
+ニュース記事末尾の「Learn で実践」、既存 Learn 記事の目次・コピー、難易度ラベルの一元化、`ai_tool.related_learn_ids` ピッカーの教材対応、50 件の制作。

@@ -1,0 +1,293 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "slug": "nextjs-login-dashboard",
+      "title": "Next.js でログインとダッシュボード付きの Web アプリを作る",
+      "status": "draft",
+      "excerpt": "メールとパスワードでログインし、自分のメモだけを追加・編集・削除できるダッシュボードを、Next.js と Supabase で作って公開します。",
+      "menu_order": 20,
+      "meta": {
+        "practice_summary": "メール + パスワードのログインと、自分のデータだけを扱うダッシュボードを Next.js と Supabase（Auth + Postgres + RLS）で作る。",
+        "practice_difficulty": "intermediate",
+        "practice_minutes": 240,
+        "practice_outcome": "サインアップ・ログイン・ログアウト、ログイン後のダッシュボードでメモの追加・編集・削除ができる Web アプリ。他のユーザーのメモは API を直接叩いても見えない。Vercel で公開済み。",
+        "practice_preview_type": "srcdoc",
+        "practice_preview_src": "<style>body{margin:0;font-family:system-ui,-apple-system,'Hiragino Sans',sans-serif;background:#f7f7f5;color:#101010}.app{display:grid;grid-template-columns:150px 1fr;min-height:100vh}aside{padding:16px;background:#fff;border-right:1px solid rgba(16,16,16,.12)}aside b{display:block;margin-bottom:12px}aside a{display:block;padding:6px 0;font-size:13px;color:#666}aside a.on{color:#6e4bff;font-weight:700}main{padding:16px}h1{margin:0 0 10px;font-size:18px}form{display:flex;gap:6px;margin-bottom:10px}input,button{font:inherit;padding:7px 10px;border:1px solid #ccc;border-radius:8px}button{background:#6e4bff;color:#fff;border:0;font-weight:700}ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}li{display:flex;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid rgba(16,16,16,.12);border-radius:8px;font-size:13px}li button{background:transparent;color:#999;padding:0 4px}</style><div class=\"app\"><aside><b>Dashboard</b><a class=\"on\">メモ</a><a>設定</a><a>ログアウト</a></aside><main><h1>自分のメモ</h1><form onsubmit=\"event.preventDefault();var i=this.querySelector('input');if(!i.value.trim())return;var l=document.createElement('li');l.innerHTML='<span></span><button aria-label=\\'削除\\'>×</button>';l.firstChild.textContent=i.value;l.lastChild.onclick=function(){l.remove()};document.getElementById('list').prepend(l);i.value=''\"><input placeholder=\"メモを追加（模擬）\" aria-label=\"メモ\"><button>追加</button></form><ul id=\"list\"><li><span>Supabase の RLS を有効にする</span><button aria-label=\"削除\" onclick=\"this.parentNode.remove()\">×</button></li><li><span>E2E テストを 3 本書く</span><button aria-label=\"削除\" onclick=\"this.parentNode.remove()\">×</button></li></ul></main></div>",
+        "practice_prompts": [
+          {
+            "title": "データ設計と RLS ポリシー",
+            "for": "claude-code",
+            "body": "Supabase（Postgres）で「ユーザーごとのメモ」を扱うテーブルを設計してください。\n\n要件:\n- テーブル notes: id (uuid, 既定値 gen_random_uuid()), user_id (auth.users への参照), title (text, 1〜120 文字), body (text, 最大 5000 文字), created_at, updated_at\n- RLS を有効にし、select / insert / update / delete のすべてで auth.uid() = user_id だけを許可するポリシー\n- updated_at を自動更新するトリガー\n\n出力: Supabase の SQL エディタにそのまま貼れる SQL と、各ポリシーが何を防ぐかの 1 行説明。service role key を使う前提の設計にはしないこと。"
+          },
+          {
+            "title": "認証 UI（サインアップ / ログイン / ログアウト）",
+            "for": "claude-code",
+            "body": "Next.js（App Router）と @supabase/ssr で、メール + パスワードの認証を作ってください。\n\n画面:\n- /signup: メール・パスワード（8 文字以上）・確認。登録後は確認メールの案内\n- /login: メール・パスワード。失敗時は理由を表示（存在しないメールか間違いかは区別しない）\n- ログアウトはヘッダーのボタン\n- /dashboard は未ログインなら /login へ 302（middleware で保護）\n\n条件:\n- クライアントには NEXT_PUBLIC_SUPABASE_URL と NEXT_PUBLIC_SUPABASE_ANON_KEY だけを渡す。service role key は使わない\n- セッションは cookie（@supabase/ssr の推奨どおり）\n- フォームは aria-live でエラーを読み上げる\n- 環境変数は .env.example にキー名とプレースホルダー（＜ここに貼る：…＞）だけ書く"
+          },
+          {
+            "title": "ダッシュボードのメモ CRUD",
+            "for": "claude-code",
+            "body": "/dashboard にメモの一覧・追加・編集・削除を作ってください。\n\n条件:\n- Server Actions で insert / update / delete を行い、必ずログインユーザーの user_id を付ける（クライアントから user_id を受け取らない）\n- 一覧はサーバーコンポーネントで取得し、空のときは「まだメモがありません」\n- 追加フォームは送信中に無効化、完了後にリストを再検証（revalidatePath）\n- 削除は確認ダイアログ付き\n- 読み込み中はスケルトン、完了時は小さなトーストで知らせる\n- 375px で 1 カラムになる"
+          },
+          {
+            "title": "セキュリティのセルフチェック",
+            "for": "claude-code",
+            "body": "このアプリについて、次を確認して結果を表にしてください。\n\n- RLS が notes で有効で、4 つの操作すべてにポリシーがある\n- Server Action が user_id をクライアントから受け取っていない\n- service role key がクライアント側のコードと .env.example に無い\n- 未ログインで /dashboard を開くと /login に行く\n- 別ユーザーのメモ id を指定して update / delete を呼んでも失敗する（curl の手順も書く）\n- エラーメッセージに他ユーザーの情報やスタックトレースが出ない\n\n問題があれば修正案も出してください。"
+          },
+          {
+            "title": "E2E テスト 3 本",
+            "for": "claude-code",
+            "body": "Playwright で次の 3 本の E2E テストを書いてください。テスト用ユーザーは環境変数 E2E_EMAIL / E2E_PASSWORD から読み、コードに書かないこと。\n\n1. 未ログインで /dashboard を開くと /login に遷移する\n2. ログインしてメモを追加すると一覧に表示され、削除すると消える\n3. ログアウト後に /dashboard を開くと /login に戻る\n\nnpm run test:e2e で動くようにし、CI で動かす場合の注意点を最後に 3 行で書いてください。"
+          }
+        ],
+        "practice_code": [
+          {
+            "label": ".env.example",
+            "lang": "bash",
+            "file": ".env.example",
+            "body": "# 公開してよいのはこの 2 つだけ。service role key はここにも書かない\nNEXT_PUBLIC_SUPABASE_URL=＜ここに貼る：Supabase プロジェクトの URL＞\nNEXT_PUBLIC_SUPABASE_ANON_KEY=＜ここに貼る：anon key（RLS があるので公開可）＞\n# E2E テスト用（ローカルと CI のみ）\nE2E_EMAIL=＜ここに貼る：テスト用ユーザーのメール＞\nE2E_PASSWORD=＜ここに貼る：テスト用ユーザーのパスワード＞"
+          },
+          {
+            "label": "notes テーブルと RLS",
+            "lang": "sql",
+            "file": "supabase/notes.sql",
+            "body": "create table if not exists public.notes (\n  id uuid primary key default gen_random_uuid(),\n  user_id uuid not null references auth.users (id) on delete cascade,\n  title text not null check (char_length(title) between 1 and 120),\n  body text not null default '' check (char_length(body) <= 5000),\n  created_at timestamptz not null default now(),\n  updated_at timestamptz not null default now()\n);\n\nalter table public.notes enable row level security;\n\ncreate policy \"own notes: select\" on public.notes for select using (auth.uid() = user_id);\ncreate policy \"own notes: insert\" on public.notes for insert with check (auth.uid() = user_id);\ncreate policy \"own notes: update\" on public.notes for update using (auth.uid() = user_id) with check (auth.uid() = user_id);\ncreate policy \"own notes: delete\" on public.notes for delete using (auth.uid() = user_id);"
+          },
+          {
+            "label": "Server Action（追加・抜粋）",
+            "lang": "typescript",
+            "file": "app/dashboard/actions.ts",
+            "body": "'use server';\n\nimport { revalidatePath } from 'next/cache';\nimport { createClient } from '@/lib/supabase/server';\n\nexport async function addNote(formData: FormData) {\n  const supabase = await createClient();\n  const { data: { user } } = await supabase.auth.getUser();\n  if (!user) return { ok: false, message: 'ログインが必要です' };\n\n  const title = String(formData.get('title') ?? '').trim();\n  if (title.length < 1 || title.length > 120) return { ok: false, message: 'タイトルは 1〜120 文字です' };\n\n  // user_id はサーバーで付ける（クライアントからは受け取らない）\n  const { error } = await supabase.from('notes').insert({ title, user_id: user.id });\n  if (error) return { ok: false, message: '保存できませんでした' };\n\n  revalidatePath('/dashboard');\n  return { ok: true };\n}"
+          },
+          {
+            "label": "middleware（保護・抜粋）",
+            "lang": "typescript",
+            "file": "middleware.ts",
+            "body": "import { NextResponse, type NextRequest } from 'next/server';\nimport { updateSession } from '@/lib/supabase/middleware';\n\nexport async function middleware(request: NextRequest) {\n  const { response, user } = await updateSession(request);\n  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {\n    const url = request.nextUrl.clone();\n    url.pathname = '/login';\n    return NextResponse.redirect(url);\n  }\n  return response;\n}\n\nexport const config = { matcher: ['/dashboard/:path*'] };"
+          }
+        ],
+        "practice_prereq": [
+          "GitHub アカウントと Vercel アカウント",
+          "Supabase の無料プロジェクト（Auth のメール確認を有効にする）",
+          "Node.js 20 以上、Claude Code か Cursor",
+          "先に読む: ログイン機能を追加する / データベースを追加する（Learn Tutorials）"
+        ],
+        "practice_env": [
+          "Node.js 20",
+          "Next.js 15（App Router、Server Actions）",
+          "@supabase/ssr",
+          "Supabase（Postgres + Auth、2026年10月時点の無料枠）",
+          "Playwright（E2E）"
+        ],
+        "practice_steps": [
+          {
+            "title": "作るものを決める",
+            "body": "<p>この教材では「自分だけのメモ」を扱います。あなたのアプリでは、<strong>ユーザーごとに分かれていなければならないデータ</strong>を 1 つ選んでください（予約・日報・在庫など）。</p>",
+            "prompt": null,
+            "code": null,
+            "check": "テーブルにする対象が 1 つ決まった"
+          },
+          {
+            "title": "Supabase でテーブルと RLS を作る",
+            "body": "<p>AI に SQL を出してもらい、Supabase の SQL エディタで実行します。<strong>RLS を有効にする前にデータを入れない</strong>でください。</p>",
+            "prompt": 0,
+            "code": 1,
+            "check": "Table Editor で notes が見え、RLS が ON になっている"
+          },
+          {
+            "title": "プロジェクトを作り、環境変数を置く",
+            "body": "<p><code>npx create-next-app@latest</code> でプロジェクトを作り、<code>.env.local</code> に URL と anon key を入れます。<code>.env.example</code> はプレースホルダーだけです。</p>",
+            "prompt": null,
+            "code": 0,
+            "check": "git ls-files .env.local が空"
+          },
+          {
+            "title": "認証 UI を作る",
+            "body": "<p>サインアップ・ログイン・ログアウトと、<code>/dashboard</code> の保護を作ります。確認メールが届いてからログインできることを確かめます。</p>",
+            "prompt": 1,
+            "code": 3,
+            "check": "未ログインで /dashboard を開くと /login に行く"
+          },
+          {
+            "title": "ダッシュボードのメモ CRUD を作る",
+            "body": "<p>一覧・追加・編集・削除を Server Actions で作ります。<code>user_id</code> は必ずサーバーで付けます。</p>",
+            "prompt": 2,
+            "code": 2,
+            "check": "追加したメモが一覧に出て、削除で消える"
+          },
+          {
+            "title": "別ユーザーで分離を確かめる",
+            "body": "<p>2 つ目のユーザーでログインし、1 つ目のメモが見えないこと、id を指定した更新・削除も失敗することを確かめます。これが RLS の効果です。</p>",
+            "prompt": 3,
+            "code": null,
+            "check": "別ユーザーのメモは一覧にも API にも出ない"
+          },
+          {
+            "title": "E2E テストを 3 本書く",
+            "body": "<p>ログイン保護・追加と削除・ログアウト後の保護を Playwright で自動化します。テスト用ユーザーの情報は環境変数から読みます。</p>",
+            "prompt": 4,
+            "code": null,
+            "check": "npm run test:e2e が 3 本とも通る"
+          },
+          {
+            "title": "Vercel に公開する",
+            "body": "<p>Vercel に環境変数（公開してよい 2 つ）を登録してデプロイします。Supabase の Auth 設定で、公開 URL を Site URL と Redirect URLs に追加します。</p>",
+            "prompt": null,
+            "code": null,
+            "check": "公開 URL でサインアップから削除まで一通りできる"
+          }
+        ],
+        "practice_verify": [
+          {
+            "title": "未ログインで保護される",
+            "how": "ログアウトした状態で /dashboard を開く",
+            "expect": "/login に 302 で戻る"
+          },
+          {
+            "title": "自分のメモだけ見える",
+            "how": "2 ユーザーで交互にログインして一覧を見る",
+            "expect": "相手のメモは一覧に出ない"
+          },
+          {
+            "title": "API を直接叩いても他人のデータは触れない",
+            "how": "ユーザー B のセッションで、ユーザー A のメモ id を指定して update / delete を呼ぶ（Supabase REST を curl）",
+            "expect": "0 行が対象になり、A のメモは変わらない"
+          },
+          {
+            "title": "user_id を偽装できない",
+            "how": "追加フォームの送信に user_id を混ぜて送る",
+            "expect": "無視され、ログインユーザーの id で保存される"
+          },
+          {
+            "title": "service role key がクライアントに無い",
+            "how": "ビルド後の JS を SUPABASE_SERVICE_ROLE で検索する",
+            "expect": "見つからない"
+          },
+          {
+            "title": "パスワードリセットが動く",
+            "how": "/login の「パスワードを忘れた」から再設定する",
+            "expect": "メールが届き、新しいパスワードでログインできる"
+          },
+          {
+            "title": "E2E テストが通る",
+            "how": "npm run test:e2e",
+            "expect": "3 本すべて成功"
+          },
+          {
+            "title": "375px で崩れない",
+            "how": "端末エミュレーションで /login と /dashboard を見る",
+            "expect": "1 カラムになり、横スクロールが出ない"
+          }
+        ],
+        "practice_safety": [
+          "anon key は公開前提だが、RLS が有効で正しいポリシーがあることが前提。RLS なしで公開しない",
+          "service role key はサーバーの秘密。この教材では一切使わず、.env.example にも書かない",
+          "user_id はサーバー（Server Action）で付け、クライアントからの値を信用しない",
+          "エラーメッセージに他ユーザーの情報やスタックトレースを出さない",
+          "テスト用ユーザーの認証情報は環境変数に置き、コードに書かない",
+          "パスワードは 8 文字以上、確認メールを有効にする"
+        ],
+        "practice_publish": [
+          "Vercel の Environment Variables に NEXT_PUBLIC_SUPABASE_URL と NEXT_PUBLIC_SUPABASE_ANON_KEY を登録する",
+          "Supabase の Authentication → URL Configuration に公開 URL を Site URL と Redirect URLs として追加する",
+          "公開 URL でサインアップ → 確認メール → ログイン → メモ追加 → 削除を 1 周する",
+          "独自ドメインを設定し、HTTPS を確認する"
+        ],
+        "practice_troubleshooting": [
+          {
+            "symptom": "ログイン後に /dashboard を開いても /login に戻される",
+            "cause": "cookie ベースのセッションが middleware で更新されていない、または Supabase の Site URL / Redirect URLs に公開 URL が無い",
+            "fix": "@supabase/ssr の updateSession を middleware で呼ぶ。Supabase の URL Configuration に公開 URL を追加する"
+          },
+          {
+            "symptom": "メモを追加しても一覧に出ない",
+            "cause": "insert は成功しているが revalidatePath を呼んでいない、または RLS の select ポリシーが無い",
+            "fix": "Server Action の最後で revalidatePath('/dashboard') を呼ぶ。4 つのポリシーが揃っているか確認する"
+          },
+          {
+            "symptom": "insert が「new row violates row-level security policy」で失敗する",
+            "cause": "insert の with check が auth.uid() = user_id なのに、user_id を付けていない",
+            "fix": "Server Action でログインユーザーの id を user_id に入れる"
+          },
+          {
+            "symptom": "他人のメモが見えてしまう",
+            "cause": "RLS を有効化していない（alter table … enable row level security を実行していない）",
+            "fix": "RLS を有効化し、ポリシーを作り直す。公開前に別ユーザーで必ず確認する"
+          },
+          {
+            "symptom": "E2E が CI だけ落ちる",
+            "cause": "CI に E2E_EMAIL / E2E_PASSWORD が無い、または確認メール待ちのユーザーを使っている",
+            "fix": "CI の Secrets に設定し、確認済みのテスト用ユーザーを使う"
+          }
+        ],
+        "practice_verified_at": "2026-10-21",
+        "practice_sources": [
+          {
+            "label": "Supabase Row Level Security",
+            "url": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+          },
+          {
+            "label": "Supabase Auth with Next.js (SSR)",
+            "url": "https://supabase.com/docs/guides/auth/server-side/nextjs"
+          },
+          {
+            "label": "Next.js Server Actions",
+            "url": "https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations"
+          },
+          {
+            "label": "Playwright Getting started",
+            "url": "https://playwright.dev/docs/intro"
+          }
+        ],
+        "practice_changelog": [
+          {
+            "date": "2026-10-21",
+            "note": "初版"
+          }
+        ]
+      },
+      "terms": {
+        "learn_field": [
+          "apps"
+        ],
+        "learn_format": [
+          "project"
+        ],
+        "learn_ai": [
+          "claude-code",
+          "cursor"
+        ],
+        "learn_tech": [
+          "nextjs",
+          "typescript",
+          "supabase",
+          "vercel"
+        ]
+      },
+      "relations": {
+        "prompts": [
+          "development-api-design-review",
+          "development-security-checklist"
+        ],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/tutorials/add-authentication",
+          "learn/tutorials/add-database",
+          "learn/tools/neon"
+        ],
+        "practice": [
+          "corporate-site-contact-line"
+        ],
+        "motion": [
+          "skeleton-loading",
+          "count-up",
+          "toast"
+        ]
+      }
+    }
+  ]
+}

@@ -42,6 +42,7 @@ function omochix_core_get_practice_meta_schema() {
 		'practice_steps'          => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'json_rows', 'max' => 40, 'rows' => array( 'title' => 'text', 'body' => 'html', 'prompt' => 'int', 'code' => 'int', 'check' => 'text' ) ),
 		'practice_verify'         => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'json_rows', 'max' => 20, 'rows' => array( 'title' => 'text', 'how' => 'textarea', 'expect' => 'textarea' ) ),
 		'practice_safety'         => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'string_array' ),
+		'practice_troubleshooting' => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'json_rows', 'max' => 20, 'rows' => array( 'symptom' => 'text', 'cause' => 'textarea', 'fix' => 'textarea' ) ),
 		'practice_publish'        => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'string_array' ),
 		'practice_env'            => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'string_array' ),
 		'related_practice_ids'    => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'post_id_array' ),

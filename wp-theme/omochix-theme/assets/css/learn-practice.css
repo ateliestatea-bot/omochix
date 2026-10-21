@@ -166,6 +166,12 @@ a.practice__ai:hover { color: var(--color-primary); }
 .practice-links a:hover { border-color: var(--color-primary); color: var(--color-primary); }
 .practice-links__kind { color: var(--color-muted); font-size: 12px; font-weight: 700; }
 .practice-links__en { color: var(--color-muted); font-size: 12.5px; font-weight: 500; }
+.practice-trouble { margin: 0; display: grid; gap: 10px; }
+.practice-trouble div { padding: 12px 16px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.practice-trouble dt { font-weight: 700; }
+.practice-trouble dd { margin: 6px 0 0; font-size: 14px; line-height: 1.7; }
+.practice-trouble dd p { margin: 0; }
+.practice-trouble dd p + p { margin-top: 4px; }
 .practice-changelog { margin: 0; display: grid; gap: 6px; }
 .practice-changelog div { display: grid; grid-template-columns: 90px 1fr; gap: 10px; font-size: 14px; }
 .practice-changelog dt { color: var(--color-muted); font-variant-numeric: tabular-nums; }

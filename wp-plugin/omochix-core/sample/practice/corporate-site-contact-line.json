@@ -1,0 +1,304 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "slug": "corporate-site-contact-line",
+      "title": "問い合わせフォーム・LINE 連携付きの企業サイトを作る",
+      "status": "draft",
+      "excerpt": "5 ページの企業サイトに問い合わせフォームを付け、送信をメールと LINE 公式アカウントへ通知するところまで、AI と一緒に作って公開します。",
+      "menu_order": 10,
+      "meta": {
+        "practice_summary": "5 ページの企業サイトに問い合わせフォームを付け、送信をメールと LINE 公式アカウントへ通知する。トークンはコードに書かない。",
+        "practice_difficulty": "intermediate",
+        "practice_minutes": 180,
+        "practice_outcome": "トップ・サービス・会社情報・お問い合わせ・プライバシーポリシーの 5 ページ。問い合わせフォームを送ると、管理者のメールと LINE 公式アカウントに 1 通ずつ通知が届く。Vercel で公開済み。",
+        "practice_preview_type": "srcdoc",
+        "practice_preview_src": "<style>body{margin:0;font-family:system-ui,-apple-system,'Hiragino Sans',sans-serif;background:#f7f7f5;color:#101010}header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#fff;border-bottom:1px solid rgba(16,16,16,.12)}header b{font-size:16px}nav a{margin-left:12px;font-size:12px;color:#666}main{padding:20px}h1{margin:0 0 6px;font-size:22px}p{margin:0 0 14px;color:#666;font-size:13px}form{display:grid;gap:8px;max-width:320px;padding:14px;background:#fff;border:1px solid rgba(16,16,16,.12);border-radius:12px}input,textarea,button{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8px}button{background:#6e4bff;color:#fff;border:0;font-weight:700}.ok{min-height:1.2em;color:#1f8f5f;font-weight:700;font-size:13px}</style><header><b>Omochi Design</b><nav><a>サービス</a><a>会社情報</a><a>お問い合わせ</a></nav></header><main><h1>お問い合わせ</h1><p>送信は模擬です。実際の教材では API を経由してメールと LINE に通知します。</p><form onsubmit=\"event.preventDefault();this.querySelector('.ok').textContent='送信しました（模擬）'\"><input placeholder=\"お名前\" required><input type=\"email\" placeholder=\"メールアドレス\" required><textarea placeholder=\"お問い合わせ内容\" rows=\"3\" required></textarea><button>送信する</button><div class=\"ok\" aria-live=\"polite\"></div></form></main>",
+        "practice_prompts": [
+          {
+            "title": "要件を 1 文から情報設計にする",
+            "for": "claude-code",
+            "body": "あなたは Web 制作者です。次の 1 文から、企業サイトの情報設計を提案してください。\n\n作りたいもの: ＜ここに 1 文。例: 小さなデザイン事務所の、問い合わせをもらうためのサイト＞\n\n出力:\n- 5 ページ（トップ / サービス / 会社情報 / お問い合わせ / プライバシーポリシー）それぞれの目的と見出し構成\n- トップに載せる要素の優先順位\n- 問い合わせフォームの項目（必須 / 任意）\n- まだ決まっていないことの質問リスト（推測で埋めない）"
+          },
+          {
+            "title": "静的サイトの骨子を作る",
+            "for": "claude-code",
+            "body": "Next.js（App Router）で 5 ページの静的な企業サイトを作ってください。\n\n条件:\n- ページ: / , /services , /company , /contact , /privacy\n- 共通ヘッダー（ロゴ・ナビ）と共通フッター（会社名・プライバシーポリシーへのリンク）\n- CSS はフレームワークを使わず、CSS Modules か素の CSS。色は --primary: #6e4bff を基調に\n- 画像はプレースホルダーでよい（alt は必ず付ける）\n- スマートフォン幅（375px）で崩れないこと\n- 各ページの title と description を設定すること\n\n作ったら、起動コマンドと確認手順を最後に書いてください。"
+          },
+          {
+            "title": "問い合わせフォームと API ルート",
+            "for": "claude-code",
+            "body": "/contact に問い合わせフォームを作り、送信先として API ルート app/api/contact/route.ts を作ってください。\n\nフォーム:\n- 項目: お名前（必須）、メールアドレス（必須・形式チェック）、お問い合わせ内容（必須・最大 2000 文字）\n- ハニーポット用の非表示項目（入力があれば受け付けない）\n- 送信中はボタンを無効化し、成功 / 失敗をテキストで表示（aria-live=\"polite\"）\n\nAPI:\n- POST のみ。JSON を受け取り、サーバー側でも同じ検証を行う\n- 同じ IP から 1 分に 3 回を超えたら 429 を返す（メモリ上の簡易制限でよい）\n- 成功したら { ok: true } を返す。通知の送信は次のステップで実装するので、いまは console.log で内容を出すだけにする\n- 秘密情報は一切ハードコードしない"
+          },
+          {
+            "title": "メールと LINE への通知",
+            "for": "claude-code",
+            "body": "app/api/contact/route.ts に、受け付けた問い合わせを 2 か所へ通知する処理を追加してください。\n\n1. メール: Resend の SDK で管理者宛に送る。API キーは環境変数 RESEND_API_KEY、宛先は CONTACT_TO、差出人は CONTACT_FROM\n2. LINE: Messaging API の push message で、環境変数 LINE_CHANNEL_ACCESS_TOKEN と LINE_TO（通知先のユーザー ID）を使って送る。本文は「お名前 / メール / 内容の先頭 200 文字」\n\n条件:\n- 環境変数は process.env から読み、未設定のときは 500 ではなく「設定が足りません」とログに出して { ok: false } を返す\n- トークンや宛先をコードや .env.example に実際の値で書かない。.env.example にはキー名とプレースホルダー（＜ここに貼る：…＞）だけを書く\n- 片方の送信が失敗しても、もう片方は送る\n- 個人情報をログに残さない（名前・メール・本文をそのまま console.log しない）"
+          },
+          {
+            "title": "公開前のセルフチェック",
+            "for": "claude-code",
+            "body": "このプロジェクトを公開する前に、次を確認して結果を表にしてください。\n\n- .env が .gitignore に入っていて、git ls-files .env が空\n- .env.example に実際の値が入っていない\n- API ルートで入力を検証している（必須・長さ・メール形式・ハニーポット・レート制限）\n- 問い合わせ内容を永続化していない（通知だけ）\n- プライバシーポリシーに「問い合わせ内容をメールと LINE で運営者に通知する」ことが書いてある\n- 375px で全ページが崩れない\n- 各ページに title と description がある\n\n問題があれば、修正案も一緒に出してください。"
+          }
+        ],
+        "practice_code": [
+          {
+            "label": ".env.example",
+            "lang": "bash",
+            "file": ".env.example",
+            "body": "# 実際の値は .env（git には入れない）と Vercel の環境変数にだけ置く\nRESEND_API_KEY=＜ここに貼る：Resend の API キー＞\nCONTACT_TO=＜ここに貼る：通知を受け取るメールアドレス＞\nCONTACT_FROM=＜ここに貼る：Resend で認証した差出人＞\nLINE_CHANNEL_ACCESS_TOKEN=＜ここに貼る：LINE Developers のチャネルアクセストークン＞\nLINE_TO=＜ここに貼る：通知先の LINE ユーザー ID＞"
+          },
+          {
+            "label": "LINE 通知（抜粋）",
+            "lang": "typescript",
+            "file": "app/api/contact/line.ts",
+            "body": "export async function notifyLine(text: string) {\n  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;\n  const to = process.env.LINE_TO;\n  if (!token || !to) {\n    console.warn('LINE notification skipped: environment is not configured');\n    return false;\n  }\n  const res = await fetch('https://api.line.me/v2/bot/message/push', {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      Authorization: `Bearer ${token}`,\n    },\n    body: JSON.stringify({ to, messages: [{ type: 'text', text: text.slice(0, 1000) }] }),\n  });\n  return res.ok;\n}"
+          },
+          {
+            "label": "簡易レート制限（抜粋）",
+            "lang": "typescript",
+            "file": "app/api/contact/rate-limit.ts",
+            "body": "const hits = new Map<string, number[]>();\n\nexport function tooMany(ip: string, limit = 3, windowMs = 60_000) {\n  const now = Date.now();\n  const recent = (hits.get(ip) ?? []).filter((t) => now - t < windowMs);\n  recent.push(now);\n  hits.set(ip, recent);\n  return recent.length > limit;\n}"
+          }
+        ],
+        "practice_prereq": [
+          "GitHub アカウント",
+          "Vercel アカウント（無料枠でよい）",
+          "LINE Developers のプロバイダーと Messaging API チャネル（無料）",
+          "Resend のアカウント（無料枠でよい。別のメール送信サービスでも可）",
+          "Node.js 20 以上と、Claude Code か Cursor"
+        ],
+        "practice_env": [
+          "Node.js 20",
+          "Next.js 15（App Router）",
+          "Vercel（2026年10月時点の無料枠）",
+          "LINE Messaging API（push message）",
+          "Resend（メール送信）"
+        ],
+        "practice_steps": [
+          {
+            "title": "作りたいものを 1 文で決める",
+            "body": "<p>「誰のための、何をしてもらうサイトか」を 1 文にします。例：<strong>小さなデザイン事務所が、見積もりの問い合わせをもらうためのサイト</strong>。</p>",
+            "prompt": null,
+            "code": null,
+            "check": "1 文で言えたら次へ"
+          },
+          {
+            "title": "AI に情報設計を出してもらう",
+            "body": "<p>1 文をプロンプトに入れて、5 ページの見出し構成とフォーム項目を出してもらいます。分からない点は推測させず、質問として返してもらいます。</p>",
+            "prompt": 0,
+            "code": null,
+            "check": "5 ページの見出しとフォーム項目が決まった"
+          },
+          {
+            "title": "プロジェクトを作って GitHub に置く",
+            "body": "<p><code>npx create-next-app@latest</code> でプロジェクトを作り、最初のコミットを GitHub に置きます。手順は <a href=\"/learn/tutorials/ai-web-service-launch/\">AI で 0 から Web サービスを公開する</a> の STEP 4〜15 と同じです。</p>",
+            "prompt": null,
+            "code": null,
+            "check": "GitHub にリポジトリができた"
+          },
+          {
+            "title": "静的サイトの骨子を作る",
+            "body": "<p>5 ページと共通ヘッダー・フッターを作ってもらいます。文章はあとで差し替えるので、まずは構造と見た目だけを整えます。</p>",
+            "prompt": 1,
+            "code": null,
+            "check": "5 ページが表示され、375px で崩れない"
+          },
+          {
+            "title": "問い合わせフォームと API ルートを作る",
+            "body": "<p>フォームと受け口の API を作ります。この段階では通知を送らず、受け付けた内容をサーバーのログに出すだけにして、検証とレート制限が効くことを先に確かめます。</p>",
+            "prompt": 2,
+            "code": 2,
+            "check": "空送信が拒否され、連打すると 429 になる"
+          },
+          {
+            "title": "LINE Developers でチャネルを用意する",
+            "body": "<p>LINE Developers コンソールでプロバイダーと Messaging API チャネルを作り、<strong>チャネルアクセストークン（長期）</strong>を発行します。通知先は自分のユーザー ID（チャネル基本設定の「あなたのユーザー ID」）です。公式アカウントを友だち追加しておきます。</p><p>トークンは <code>.env</code> に書きます。<code>.env.example</code> にはキー名とプレースホルダーだけを書きます。</p>",
+            "prompt": null,
+            "code": 0,
+            "check": ".env にトークンがあり、.env.example には実際の値が無い"
+          },
+          {
+            "title": "メールと LINE に通知する",
+            "body": "<p>API ルートに通知処理を足します。環境変数が無いときは落ちずにスキップし、片方が失敗してももう片方は送るようにします。</p>",
+            "prompt": 3,
+            "code": 1,
+            "check": "テスト送信でメールと LINE に 1 通ずつ届く"
+          },
+          {
+            "title": "プライバシーポリシーに通知先を書く",
+            "body": "<p>問い合わせ内容を「メールと LINE で運営者に通知し、サーバーには保存しない」ことをプライバシーポリシーに明記します。文面は運営者が確認してから公開します。</p>",
+            "prompt": null,
+            "code": null,
+            "check": "通知先と保存しない旨が書かれている"
+          },
+          {
+            "title": "公開前チェックを AI に出してもらう",
+            "body": "<p>秘密情報の混入、検証、レート制限、表示崩れを表で確認します。問題があればその場で直します。</p>",
+            "prompt": 4,
+            "code": null,
+            "check": "表のすべてが OK"
+          },
+          {
+            "title": "Vercel に公開する",
+            "body": "<p>Vercel でリポジトリを取り込み、<strong>環境変数（5 つ）を Vercel 側に登録</strong>してからデプロイします。公開 URL でフォームを 1 回送信し、通知が届くことを確かめます。</p>",
+            "prompt": null,
+            "code": null,
+            "check": "公開 URL からの送信でメールと LINE に届く"
+          }
+        ],
+        "practice_verify": [
+          {
+            "title": "フォーム送信で通知が届く",
+            "how": "公開 URL からテスト送信する",
+            "expect": "メールと LINE 公式アカウントに 1 通ずつ届き、本文に名前・メール・内容の先頭が含まれる"
+          },
+          {
+            "title": "空送信・不正なメールが拒否される",
+            "how": "必須項目を空にして送る。メール欄に abc と入れて送る",
+            "expect": "送信されず、エラー文が表示される（画面と API の両方で拒否）"
+          },
+          {
+            "title": "連打がブロックされる",
+            "how": "1 分以内に 4 回送る",
+            "expect": "4 回目は 429 になり、通知は 3 通まで"
+          },
+          {
+            "title": "ハニーポットが効く",
+            "how": "開発者ツールで非表示項目に文字を入れて送る",
+            "expect": "受け付けられず、通知も届かない"
+          },
+          {
+            "title": "秘密情報が git に入っていない",
+            "how": "git ls-files .env を実行し、.env.example を開く",
+            "expect": "何も表示されず、.env.example はプレースホルダーだけ"
+          },
+          {
+            "title": "環境変数なしで落ちない",
+            "how": "ローカルで .env を外して送信する",
+            "expect": "500 にならず、ログに「設定が足りません」と出る"
+          },
+          {
+            "title": "個人情報がログに出ない",
+            "how": "Vercel のログを見る",
+            "expect": "名前・メール・本文がそのまま出ていない"
+          },
+          {
+            "title": "375px で崩れない",
+            "how": "端末エミュレーションで 5 ページを見る",
+            "expect": "横スクロールが出ず、フォームが押せる"
+          }
+        ],
+        "practice_safety": [
+          "チャネルアクセストークンとメール API キーは .env と Vercel の環境変数にだけ置く。コード・コミット・このページには書かない",
+          ".env を .gitignore に入れ、公開前に git ls-files .env が空であることを確認する",
+          "LINE API はブラウザから直接叩かず、必ずサーバー（API ルート）から送る",
+          "入力はサーバー側でも検証し、ハニーポットとレート制限で迷惑送信を減らす",
+          "問い合わせ内容はサーバーに保存せず通知だけにし、プライバシーポリシーに通知先を書く",
+          "ログに個人情報（名前・メール・本文）をそのまま出さない"
+        ],
+        "practice_publish": [
+          "Vercel で GitHub リポジトリを取り込む",
+          "Vercel の Environment Variables に .env.example の 5 項目を登録する（Production）",
+          "デプロイ後、公開 URL から 1 回テスト送信して通知を確認する",
+          "独自ドメインを設定し、HTTPS になっていることを確認する",
+          "Search Console にサイトを登録する"
+        ],
+        "practice_troubleshooting": [
+          {
+            "symptom": "送信しても LINE に届かない",
+            "cause": "LINE_TO が自分のユーザー ID ではない、または公式アカウントを友だち追加していない。トークンの期限切れや Vercel に環境変数を登録していないことも多い",
+            "fix": "LINE Developers の「あなたのユーザー ID」を LINE_TO に入れ、公式アカウントを友だち追加する。Vercel の環境変数を確認して再デプロイする"
+          },
+          {
+            "symptom": "メールは届くのに LINE だけ失敗する（401）",
+            "cause": "チャネルアクセストークンが間違っている、または別チャネルのもの",
+            "fix": "LINE Developers で長期トークンを再発行し、.env と Vercel の両方を更新する"
+          },
+          {
+            "symptom": "ローカルでは届くのに公開後は届かない",
+            "cause": ".env は git に入れていないので、Vercel 側に環境変数が無い",
+            "fix": "Vercel の Environment Variables に 5 項目を登録して再デプロイする"
+          },
+          {
+            "symptom": "正しい入力でも 429 になる",
+            "cause": "レート制限の窓（1 分 3 回）にテスト送信が引っかかっている",
+            "fix": "1 分待つか、開発中だけ上限を上げる。本番の値は戻す"
+          },
+          {
+            "symptom": "GitHub にトークンを push してしまった",
+            "cause": ".env をコミットした、またはコードに直書きした",
+            "fix": "すぐに LINE Developers と Resend でトークンを無効化・再発行し、履歴から削除する。再発行しない限り漏れたトークンは使われ続ける"
+          }
+        ],
+        "practice_verified_at": "2026-10-21",
+        "practice_sources": [
+          {
+            "label": "LINE Messaging API リファレンス（プッシュメッセージ）",
+            "url": "https://developers.line.biz/ja/reference/messaging-api/#send-push-message"
+          },
+          {
+            "label": "Next.js Route Handlers",
+            "url": "https://nextjs.org/docs/app/building-your-application/routing/route-handlers"
+          },
+          {
+            "label": "Vercel Environment Variables",
+            "url": "https://vercel.com/docs/projects/environment-variables"
+          },
+          {
+            "label": "Resend Node.js SDK",
+            "url": "https://resend.com/docs/send-with-nodejs"
+          }
+        ],
+        "practice_changelog": [
+          {
+            "date": "2026-10-21",
+            "note": "初版"
+          }
+        ]
+      },
+      "terms": {
+        "learn_field": [
+          "web",
+          "automation"
+        ],
+        "learn_format": [
+          "project"
+        ],
+        "learn_ai": [
+          "claude-code",
+          "cursor"
+        ],
+        "learn_tech": [
+          "nextjs",
+          "typescript",
+          "vercel",
+          "line-messaging-api"
+        ]
+      },
+      "relations": {
+        "prompts": [
+          "development-landing-page-section-structure",
+          "productivity-no-code-automation-flow-design"
+        ],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/tutorials/ai-web-service-launch",
+          "learn/tools/vercel",
+          "learn/tools/github"
+        ],
+        "practice": [
+          "nextjs-login-dashboard"
+        ],
+        "motion": [
+          "fade-up",
+          "sticky-header",
+          "toast"
+        ]
+      }
+    }
+  ]
+}

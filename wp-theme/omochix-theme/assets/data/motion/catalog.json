@@ -1,13 +1,19 @@
 {
   "version": 1,
-  "updated": "2026-10-19",
+  "updated": "2026-10-21",
   "stage": { "width": 320, "height": 180 },
   "categories": [
     { "slug": "entrance", "name": "登場・退場", "description": "要素が現れる・消えるときの動き。ページやアプリの第一印象を決めます。", "order": 1 },
     { "slug": "text", "name": "テキスト・数字", "description": "文字や数字に動きをつけて、読ませたいところへ目を導きます。", "order": 2 },
     { "slug": "ui", "name": "UIパーツの動き", "description": "ボタンやスイッチ、通知など、操作の手応えを作る小さな動き。", "order": 3 },
     { "slug": "scroll", "name": "スクロール演出", "description": "スクロールに合わせて要素を見せる、LPやWebサイトの定番演出。", "order": 4 },
-    { "slug": "ambient", "name": "背景・雰囲気", "description": "主役を邪魔せずに画面へ奥行きや空気感を足す、背景の動き。", "order": 5 }
+    { "slug": "ambient", "name": "背景・雰囲気", "description": "主役を邪魔せずに画面へ奥行きや空気感を足す、背景の動き。", "order": 5 },
+    {
+      "slug": "camera",
+      "name": "カメラワーク",
+      "description": "動画やヒーロー映像で使うカメラの動きを、Web 上で CSS として再現した見本。動画生成AIへ指示するときの語彙の確認にも使えます。",
+      "order": 6
+    }
   ],
   "items": [
     {
@@ -593,6 +599,337 @@
       },
       "related": { "prompts": ["video-image-to-video-motion-direction"], "tools": ["cursor", "claude"], "learn": ["learn/development"] },
       "playground": {"params": [{"key": "count", "label": "粒の数", "type": "range", "min": 10, "max": 120, "step": 5, "default": 40, "unit": "", "target": "js", "prompt": "粒の数は{value}"}, {"key": "speed", "label": "速さ（倍率）", "type": "range", "min": 0.3, "max": 3, "step": 0.1, "default": 1, "unit": "", "target": "js", "prompt": "速さは既定の{value}倍"}, {"key": "size", "label": "粒の大きさ（倍率）", "type": "range", "min": 0.5, "max": 3, "step": 0.1, "default": 1, "unit": "", "target": "js", "prompt": "粒の大きさは既定の{value}倍"}, {"key": "color", "label": "粒の色", "type": "color", "default": "#6e4bff", "css_var": "--p-color"}]},
+      "video": null
+    },
+    {
+      "id": "021",
+      "slug": "dolly-in",
+      "category": "camera",
+      "name": {
+        "ja": "ドリーイン",
+        "en": "Dolly in"
+      },
+      "summary": "被写体へゆっくり寄っていく",
+      "description": "カメラが被写体に向かって前進するドリーイン。被写体は大きく、背景はそれより少し遅れて大きくなり、奥行きが出ます。Web 上では拡大で再現しています。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "カメラ",
+        "ズーム",
+        "ヒーロー",
+        "動画",
+        "寄り"
+      ],
+      "preview": {
+        "html": "<div class=\"dl\"><div class=\"dl__bg\"></div><div class=\"dl__subject\"><span>★</span></div></div>",
+        "css": ".dl{position:relative;width:280px;height:160px;overflow:hidden;border-radius:14px;background:#1b1830}\n.dl__bg{position:absolute;inset:-20%;background:radial-gradient(circle at 50% 60%,rgba(255,255,255,.14),transparent 55%),repeating-linear-gradient(90deg,transparent 0 38px,rgba(255,255,255,.06) 38px 40px),repeating-linear-gradient(0deg,transparent 0 38px,rgba(255,255,255,.06) 38px 40px);animation:dl-bg var(--p-cycle,4s) var(--p-ease,cubic-bezier(.22,1,.36,1)) infinite}\n.dl__subject{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:18px;background:var(--p-color,var(--primary));color:#fff;font-size:30px;display:grid;place-items:center;box-shadow:0 18px 40px rgba(0,0,0,.4);animation:dl-in var(--p-cycle,4s) var(--p-ease,cubic-bezier(.22,1,.36,1)) infinite}\n@keyframes dl-in{0%{transform:scale(1)}75%,100%{transform:scale(var(--p-zoom,1.4))}}\n@keyframes dl-bg{0%{transform:scale(1)}75%,100%{transform:scale(calc(1 + (var(--p-zoom,1.4) - 1) * .5))}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "ヒーロー画像に、被写体へゆっくり寄っていくドリーインを付けて。4秒かけて1.4倍まで。",
+        "spec": [
+          "被写体は transform: scale(1)→scale(1.4) を 4 秒、ease-out で拡大し、最後の 1 秒は静止する",
+          "背景は被写体の半分の倍率（1→1.2）で拡大して奥行きを出す",
+          "コンテナは overflow: hidden で切り抜く",
+          "動かすのは transform だけ（レイアウトを変えない）",
+          "prefers-reduced-motion では最終フレーム（寄った状態）で静止する"
+        ],
+        "use": "ヒーロー映像、製品の寄り、注目させたい要素の導入。動画生成AIには、この CSS ではなく「slow dolly in toward the subject, 4 seconds」のようにカメラワークの語彙で指示する（Web 上の再現であり、生成結果を保証するものではない）。"
+      },
+      "related": {
+        "prompts": [
+          "video-text-to-video-shot-prompts",
+          "video-image-to-video-motion-direction"
+        ],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回の長さ",
+            "type": "range",
+            "min": 2,
+            "max": 8,
+            "step": 0.5,
+            "default": 4,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "寄り始めから止まるまで{value}"
+          },
+          {
+            "key": "zoom",
+            "label": "寄りの強さ",
+            "type": "range",
+            "min": 1.1,
+            "max": 2,
+            "step": 0.1,
+            "default": 1.4,
+            "unit": "",
+            "css_var": "--p-zoom",
+            "prompt": "被写体は{value}倍まで寄る"
+          },
+          {
+            "key": "ease",
+            "label": "寄り方",
+            "type": "select",
+            "options": [
+              {
+                "value": "out",
+                "label": "最後にゆっくり",
+                "css": "cubic-bezier(.22,1,.36,1)"
+              },
+              {
+                "value": "linear",
+                "label": "一定",
+                "css": "linear"
+              },
+              {
+                "value": "inout",
+                "label": "ゆっくり始まりゆっくり終わる",
+                "css": "ease-in-out"
+              }
+            ],
+            "default": "out",
+            "css_var": "--p-ease",
+            "prompt": "寄り方は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "被写体の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "022",
+      "slug": "pan",
+      "category": "camera",
+      "name": {
+        "ja": "パン",
+        "en": "Pan"
+      },
+      "summary": "横に首を振るように景色が流れる",
+      "description": "カメラを横に振るパン。手前の景色が横に流れ、端まで行くとゆっくり戻ります。Web 上では横スクロールで再現しています。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "カメラ",
+        "横",
+        "風景",
+        "動画",
+        "パン"
+      ],
+      "preview": {
+        "html": "<div class=\"pn\"><div class=\"pn__strip\"><i style=\"--h:60px\"></i><i style=\"--h:110px\"></i><i style=\"--h:80px\"></i><i style=\"--h:130px\"></i><i style=\"--h:70px\"></i><i style=\"--h:100px\"></i><i style=\"--h:90px\"></i><i style=\"--h:120px\"></i></div></div>",
+        "css": ".pn{width:280px;height:150px;overflow:hidden;border-radius:14px;background:linear-gradient(180deg,#bfd7ff 0%,#eef5ff 70%,#dde6f3 70%)}\n.pn__strip{display:flex;gap:14px;align-items:flex-end;width:440px;height:100%;padding:0 12px;box-sizing:border-box;animation:pn var(--p-cycle,5s) var(--p-ease,ease-in-out) infinite alternate}\n.pn__strip i{display:block;flex:0 0 38px;height:var(--h);border-radius:4px 4px 0 0;background:var(--p-color,var(--primary));opacity:.85}\n@keyframes pn{from{transform:translateX(0)}to{transform:translateX(calc(var(--p-distance,80px) * var(--p-dir,-1)))}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "街並みのイラストを、カメラを横に振るように左へゆっくり流して。5秒で80px、端まで行ったら戻る。",
+        "spec": [
+          "コンテナより広い帯（440px）を overflow: hidden のコンテナに入れる",
+          "帯を translateX(0)→translateX(-80px) で 5 秒、ease-in-out、alternate で往復させる",
+          "動かすのは transform だけ",
+          "向きを変えるときは距離の符号だけを反転する",
+          "prefers-reduced-motion では静止させる"
+        ],
+        "use": "ヒーローの背景、風景の見せ方、スライドの導入。動画生成AIには「slow pan to the left across the skyline」のようにカメラワークの語彙で指示する（Web 上の再現であり、生成結果を保証するものではない）。"
+      },
+      "related": {
+        "prompts": [
+          "video-text-to-video-shot-prompts",
+          "video-image-to-video-motion-direction"
+        ],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "片道の長さ",
+            "type": "range",
+            "min": 2,
+            "max": 10,
+            "step": 0.5,
+            "default": 5,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "片道{value}で振る"
+          },
+          {
+            "key": "distance",
+            "label": "振る距離",
+            "type": "range",
+            "min": 20,
+            "max": 140,
+            "step": 10,
+            "default": 80,
+            "unit": "px",
+            "css_var": "--p-distance",
+            "prompt": "横に{value}流す"
+          },
+          {
+            "key": "dir",
+            "label": "向き",
+            "type": "select",
+            "options": [
+              {
+                "value": "left",
+                "label": "左へ",
+                "css": "-1"
+              },
+              {
+                "value": "right",
+                "label": "右へ",
+                "css": "1"
+              }
+            ],
+            "default": "left",
+            "css_var": "--p-dir",
+            "prompt": "向きは「{value}」"
+          },
+          {
+            "key": "ease",
+            "label": "振り方",
+            "type": "select",
+            "options": [
+              {
+                "value": "inout",
+                "label": "ゆっくり始まりゆっくり終わる",
+                "css": "ease-in-out"
+              },
+              {
+                "value": "linear",
+                "label": "一定",
+                "css": "linear"
+              }
+            ],
+            "default": "inout",
+            "css_var": "--p-ease",
+            "prompt": "振り方は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "建物の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "023",
+      "slug": "orbit",
+      "category": "camera",
+      "name": {
+        "ja": "オービット",
+        "en": "Orbit"
+      },
+      "summary": "被写体のまわりをカメラが回る",
+      "description": "被写体を中心にカメラが円を描いて回るオービット。Web 上では被写体を 3D 回転させて、回り込む見え方を再現しています。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "カメラ",
+        "3D",
+        "回転",
+        "製品",
+        "動画"
+      ],
+      "preview": {
+        "html": "<div class=\"ob\"><div class=\"ob__card\"><b>NEW</b></div><i class=\"ob__shadow\"></i></div>",
+        "css": ".ob{position:relative;width:260px;height:160px;display:grid;place-items:center;perspective:600px;border-radius:14px;background:radial-gradient(circle at 50% 30%,#2a2440,#141225)}\n.ob__card{width:120px;height:76px;border-radius:14px;background:var(--p-color,var(--primary));color:#fff;display:grid;place-items:center;font:700 18px/1 system-ui,sans-serif;letter-spacing:.08em;transform-style:preserve-3d;backface-visibility:visible;animation:ob var(--p-cycle,6s) var(--p-ease,linear) infinite}\n.ob__shadow{position:absolute;left:50%;bottom:22px;width:110px;height:14px;margin-left:-55px;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(4px)}\n@keyframes ob{from{transform:rotateY(0deg)}to{transform:rotateY(calc(var(--p-angle,360) * 1deg))}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "製品カードのまわりをカメラが一周するように、カードをゆっくり回して見せて。6秒で1周、一定の速さ。",
+        "spec": [
+          "親に perspective: 600px、要素に transform-style: preserve-3d を指定する",
+          "transform: rotateY(0)→rotateY(360deg) を 6 秒、linear で繰り返す",
+          "足元に楕円の影を置いて浮いて見えないようにする",
+          "動かすのは transform だけ",
+          "prefers-reduced-motion では静止させる"
+        ],
+        "use": "製品紹介、カード型コンテンツの見せ方、3D 風の導入。動画生成AIには「camera orbits slowly around the product, one full turn in 6 seconds」のようにカメラワークの語彙で指示する（Web 上の再現であり、生成結果を保証するものではない）。"
+      },
+      "related": {
+        "prompts": [
+          "video-text-to-video-shot-prompts",
+          "video-image-to-video-motion-direction"
+        ],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1周の長さ",
+            "type": "range",
+            "min": 2,
+            "max": 12,
+            "step": 0.5,
+            "default": 6,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "{value}で1周する"
+          },
+          {
+            "key": "angle",
+            "label": "回る角度",
+            "type": "range",
+            "min": 90,
+            "max": 360,
+            "step": 30,
+            "default": 360,
+            "unit": "",
+            "css_var": "--p-angle",
+            "prompt": "{value}度まで回る"
+          },
+          {
+            "key": "ease",
+            "label": "回り方",
+            "type": "select",
+            "options": [
+              {
+                "value": "linear",
+                "label": "一定",
+                "css": "linear"
+              },
+              {
+                "value": "inout",
+                "label": "ゆっくり始まりゆっくり終わる",
+                "css": "ease-in-out"
+              }
+            ],
+            "default": "linear",
+            "css_var": "--p-ease",
+            "prompt": "回り方は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "カードの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
       "video": null
     }
   ]

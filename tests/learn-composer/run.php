@@ -99,7 +99,7 @@ $codex = omochix_learn_composer_brief($briefComp, 'codex');
 check('brief: assistants differ by the opening line only', $codex !== $brief && 1 === count(array_diff(explode("\n", $codex), explode("\n", $brief))));
 check('brief: empty composition -> empty string; unknown assistant falls back', '' === omochix_learn_composer_brief(['slots' => []]) && $brief === omochix_learn_composer_brief($briefComp, 'nope'));
 $dataJson = json_decode(omochix_learn_composer_data_json(), true);
-check('data json: 20 items with spec/url/tech, plus both shims', 20 === count($dataJson['items']) && is_array($dataJson['items']['pop-in']['spec']) && str_contains($dataJson['items']['pop-in']['url'], '/learn/motion/pop-in/') && str_contains($dataJson['shim'], 'var omx = window.omx') && str_contains($dataJson['slotShim'], 'function omxSlot'));
+check('data json: 23 items with spec/url/tech, plus both shims', 23 === count($dataJson['items']) && is_array($dataJson['items']['pop-in']['spec']) && str_contains($dataJson['items']['pop-in']['url'], '/learn/motion/pop-in/') && str_contains($dataJson['shim'], 'var omx = window.omx') && str_contains($dataJson['slotShim'], 'function omxSlot'));
 check('data json: slotShim is the brief shim (currentScript-rooted), not the combined-document one', str_contains($dataJson['slotShim'], 'document.currentScript') && !str_contains($dataJson['slotShim'], 'data-slot'));
 
 // ------------------------------------------------------------------ presets

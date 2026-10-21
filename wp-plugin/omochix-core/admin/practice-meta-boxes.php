@@ -190,6 +190,7 @@ function omochix_core_render_practice_verify_meta_box( $post ) {
 	omochix_core_practice_rows_field( $post, 'practice_verify', __( 'テスト・検証（最大 20 件）', 'omochix-core' ), '[{"title":"フォーム送信で通知が届く","how":"テスト送信する","expect":"メールと LINE に 1 通ずつ届く"}]', 8 );
 	omochix_core_practice_lines_field( $post, 'practice_safety', __( '安全性・秘密情報（1 行 1 項目）', 'omochix-core' ), __( 'トークンや API キーは必ずプレースホルダー（＜ここに貼る：…＞）で書きます。実際の値は公開コンテンツに入れません。', 'omochix-core' ) );
 	omochix_core_practice_lines_field( $post, 'practice_publish', __( '公開手順（1 行 1 項目）', 'omochix-core' ), __( '例: Vercel に環境変数を登録する / 独自ドメインを設定する', 'omochix-core' ) );
+	omochix_core_practice_rows_field( $post, 'practice_troubleshooting', __( 'よくあるエラー（最大 20 件）', 'omochix-core' ), '[{"symptom":"送信しても通知が来ない","cause":"環境変数が未設定","fix":"Vercel の環境変数を確認して再デプロイ"}]', 6 );
 }
 
 /**

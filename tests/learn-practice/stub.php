@@ -10,7 +10,7 @@
 define('ABSPATH', '/');
 define('OBJECT', 'OBJECT');
 $THEME = realpath(__DIR__ . '/../../wp-theme/omochix-theme');
-class WP_Post { public $ID, $post_type = 'page', $post_status = 'publish', $post_name = '', $post_title = '', $post_parent = 0; function __construct($a) { foreach ($a as $k => $v) { $this->$k = $v; } } }
+class WP_Post { public $ID, $post_type = 'page', $post_status = 'publish', $post_name = '', $post_title = '', $post_parent = 0, $post_excerpt = '', $post_content = '', $menu_order = 0; function __construct($a) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 $GLOBALS['pages'] = []; $GLOBALS['pages_by_id'] = []; $GLOBALS['query_vars'] = []; $GLOBALS['ctx'] = ['is_page' => false, 'queried' => 0];
 function add_action() {} function add_filter() {}
 function __($t) { return $t; }
@@ -72,7 +72,19 @@ function update_post_meta($id, $key, $v) { $GLOBALS['meta'][$id][$key] = is_stri
 function delete_post_meta($id, $key) { unset($GLOBALS['meta'][$id][$key]); return true; }
 function get_post($p = null) { if ($p instanceof WP_Post) { return $p; } return $GLOBALS['posts'][(int) $p] ?? null; }
 function get_post_type($id) { $p = get_post($id); return $p ? $p->post_type : false; }
-function get_posts($args) { return $GLOBALS['query_result'] ?? []; }
+function get_posts($args) {
+    // Name lookups (importer): posts by post_type + post_name; otherwise the canned result.
+    if (isset($args['name'])) { foreach ($GLOBALS['posts'] as $p) { if ($p->post_type === ($args['post_type'] ?? $p->post_type) && $p->post_name === $args['name']) { return ($args['fields'] ?? '') === 'ids' ? [$p->ID] : [$p]; } } return []; }
+    if (isset($args['post_type']) && 'learn_practice' === $args['post_type'] && ($args['fields'] ?? '') === 'ids' && !isset($GLOBALS['query_result'])) { return array_keys(array_filter($GLOBALS['posts'], static fn($p) => 'learn_practice' === $p->post_type)); }
+    return $GLOBALS['query_result'] ?? [];
+}
+function get_post_field($field, $id) { $p = get_post($id); return $p ? ($p->$field ?? '') : ''; }
+function wp_insert_post($a, $wp_error = false) { $id = max(array_keys($GLOBALS['posts'] ?: [0])) + 1; $GLOBALS['posts'][$id] = new WP_Post(['ID' => $id, 'post_type' => $a['post_type'], 'post_name' => $a['post_name'], 'post_title' => $a['post_title'] ?? '', 'post_status' => $a['post_status'] ?? 'draft', 'post_excerpt' => $a['post_excerpt'] ?? '', 'post_content' => $a['post_content'] ?? '', 'menu_order' => $a['menu_order'] ?? 0]); $GLOBALS['inserted'][] = $id; return $id; }
+function wp_update_post($a, $wp_error = false) { $p = $GLOBALS['posts'][$a['ID']] ?? null; if (!$p) { return 0; } foreach ($a as $k => $v) { if ('ID' !== $k) { $p->$k = is_string($v) ? stripslashes($v) : $v; } } return $a['ID']; }
+function wp_set_object_terms($id, $slugs, $tax, $append = false) { $GLOBALS['post_terms'][$id][$tax] = array_values((array) $slugs); return $slugs; }
+function wp_slash($v) { return is_array($v) ? array_map('wp_slash', $v) : (is_string($v) ? addslashes($v) : $v); }
+function current_time($t) { return '2026-10-21 00:00:00'; }
+function get_userdata($id) { return null; }
 function wp_count_posts($t) { return (object) ['publish' => $GLOBALS['practice_count'] ?? 0]; }
 function get_option($k, $d = false) { return $GLOBALS['options'][$k] ?? $d; }
 function update_option($k, $v) { $GLOBALS['options'][$k] = $v; return true; }
@@ -103,6 +115,7 @@ require $PLUGIN . '/includes/practice-post-type.php';
 require $PLUGIN . '/includes/practice-taxonomies.php';
 require $PLUGIN . '/includes/practice-meta-schema.php';
 require $PLUGIN . '/includes/practice-relations.php';
+require $PLUGIN . '/includes/practice-importer.php';
 require $THEME . '/inc/learn.php';
 require $THEME . '/inc/learn-composer.php';
 require $THEME . '/inc/learn-practice.php';
