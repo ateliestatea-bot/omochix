@@ -87,15 +87,28 @@
 
 ### 8d. Learn 実践教材（Learn Practice）と分野ハブ
 
-テーマ1.25.0 / Core Plugin 1.7.0以降。詳細は`docs/Learn-Phase4-Spec.md`。
+テーマ1.25.0 / Core Plugin 1.8.0以降（実践教材の post type・分野は 1.7.0 から、JSON インポートは 1.8.0 から）。詳細は`docs/Learn-Phase4-Spec.md`。
 
 1. Core Plugin を更新すると、初回アクセスで実践教材の post type・分野などのタクソノミー・初期ターム（分野 8・形式 5・対応AI 10・技術 14）が登録され、書き換えルールが一度 flush される。`/learn/practice/`が404なら12のパーマリンクflushを行う。
-2. 分野ハブとして、固定ページ「Learn」の子ページを slug `web` / `apps` / `video` / `automation` / `ai` / `projects` / `devtools` で作成して公開する（タイトルは分野名。`motion` は既存の「動く見本」が兼ねるので作らない）。本文は空でよい。抜粋はカードの説明になる。
+2. 分野ハブは 8 つ。固定ページ「Learn」（slug `learn`）の子ページとして次の 7 ページを作成して公開する（親＝Learn、slug は分野タームの slug と一致させる。タイトルは分野名。本文は空でよい。抜粋はカードの説明になる）。`motion` は既存の「動く見本」ページ（`/learn/motion/`）がハブを兼ねるので作らない。
+
+   | 分野ターム slug | ページ slug（親：Learn） | URL | タイトル |
+   |---|---|---|---|
+   | `web` | `web` | `/learn/web/` | Webサイト・LP制作 |
+   | `apps` | `apps` | `/learn/apps/` | アプリ・システム開発 |
+   | `motion` | （作らない：既存 `motion`） | `/learn/motion/` | モーション・インタラクション |
+   | `video` | `video` | `/learn/video/` | 動画・映像制作 |
+   | `automation` | `automation` | `/learn/automation/` | 外部連携・自動化 |
+   | `ai` | `ai` | `/learn/ai/` | AI入門・AI活用 |
+   | `projects` | `projects` | `/learn/projects/` | 実践プロジェクト |
+   | `devtools` | `devtools` | `/learn/devtools/` | 開発ツール・制作環境 |
+
+   ページが無い間、`/learn/web/`・`/learn/video/`・`/learn/ai/` は WordPress の 404 推測リダイレクトで無関係な既存記事へ 301 する（2026年10月22日時点の本番で確認）。ページを作成すると完全一致が優先され、その URL は作成したページになる。作成前にこれらの URL をメニューや記事からリンクしない。
 3. 既存の Learn セクションページに「分野」を付ける（ページ編集画面の分野パネル）：basics・work → AI入門・AI活用、development・tools → 開発ツール・制作環境、tutorials → 実践プロジェクト。
 4. `learn/practice` という固定ページは作らない（実践教材の URL と競合する）。
 5. ロリポップ！アクセラレータの「キャッシュ削除」を実行する。
 6. `/learn/`に「分野から探す」と「作る」、`/learn/practice/`が200（教材 0 件なら「準備中」）であることを確認する。
-7. 教材の一括登録は「Learn 実践教材 → JSON インポート」（管理者のみ）。`wp-plugin/omochix-core/sample/practice/*.json` を dry-run → 内容確認 → 同じファイルで反映。登録される教材は下書きなので、必須項目と本文を確認してから公開する。反映後に表示される「ロールバック用バックアップ」は保存しておく。
+7. 教材の一括登録は「Learn 実践教材 → JSON インポート」（管理者のみ）。dry-run の結果表で「公開されます」「公開が取り下げられます」の注意が出た行は、反映前に意図どおりか確認する。見つからない関連先（prompts / learn / tools / motion）は注意として表示され無視される（エラーにはならない）。`wp-plugin/omochix-core/sample/practice/*.json` を dry-run → 内容確認 → 同じファイルで反映。登録される教材は下書きなので、必須項目と本文を確認してから公開する。反映後に表示される「ロールバック用バックアップ」は保存しておく。
 
 ### 9. Home / 投稿ページ設定
 
@@ -170,6 +183,22 @@ Home、AIニュース一覧・詳細、AI Tool一覧・詳細、About、Search�
 ### 21. 公開判定
 
 P0チェックがすべて完了し、Fatal/500、誤情報、法務未確定、意図しないindex、主要導線404が0件の場合のみ公開する。未解消P0が1件でもあれば延期する。
+
+## 更新リリースの適用順序（Theme 1.25.0 / Core Plugin 1.8.0）
+
+配布物と手順書は `omochix-learn-v2/release/omochix-theme-1.25.0.*`・`omochix-core-1.8.0.*`・`release-1.25.0-core-1.8.0.deploy.md`。
+
+1. 順序は **Core Plugin 1.8.0 → Theme 1.25.0**。Core だけ先に更新しても旧テーマ 1.24.2 は致命的エラーなく動く（実践教材 post type が登録されるが、テーマ側の一覧・単体テンプレートが無いので標準テンプレートで表示される。教材が 0 件なら影響なし）。Theme だけ先に更新しても旧 Core 1.6.0 で致命的エラーは起きない（実践教材・分野ハブの表示は `post_type_exists` / `function_exists` で自動的に非表示になる）。どちらの順でも DB は変更されないが、`/learn/practice/` が確実に表示されるのは両方が揃ってから。
+2. Core 1.6.0 → 1.8.0 はファイルの追加と `omochix-core.php`・`readme.txt` の差し替えのみで、削除されるファイルはない。Theme 1.24.2 → 1.25.0 も同様（追加 8・変更 10、削除 0）。したがって上書きアップロードで旧ファイルが残っても動作に影響しない。
+3. Core 更新後の初回アクセスで実践教材の post type・5 タクソノミー・初期ターム（分野 8・形式 5・対応AI 10・技術 14）が登録され、書き換えルールが一度 flush される（オプション `omochix_core_practice_rewrite_version`）。既存の `ai_tool`・`prompt`・投稿・固定ページ・オプションは変更されない。
+4. Theme 更新前後で既存 URL（`/`、`/learn/`、`/learn/motion/`、`/learn/motion/compose/`、`/learn/motion/<slug>/`、`/ai-tools/`、`/prompts/`、Learn 各ページ）の title・canonical・robots は変わらない（Local で新旧を比較済み）。
+
+## 復旧（Core 1.6.0 / Theme 1.24.2 へ戻す）
+
+- 戻す条件：PHP Fatal、管理画面の実践教材メニューや JSON インポートでのエラー、既存の `/ai-tools/`・`/prompts/`・Learn ページの表示崩れ・404、Schema / Sitemap の欠落のいずれかが本番で確認されたとき。
+- Core を 1.6.0 に戻す場合：`omochix-core/` を 1.6.0 の配布物（`release/` の 1.6.0 相当は `git` の `e4f9918` から `git archive` で再作成できる）で上書きする。1.8.0 で追加されたファイルは 1.6.0 の `omochix-core.php` から読み込まれないので残っていても無害だが、`includes/practice-*.php`・`admin/practice-*.php`・`sample/practice/` を削除すれば完全に 1.6.0 と同一になる。実践教材を作成済みなら、その投稿・ターム・メタは DB に残る（post type 未登録のため表示されないだけ。再度 1.8.0 にすると復活する）。DB の復元は不要。
+- Theme を 1.24.2 に戻す場合：`release/omochix-theme-1.24.2.zip` の内容で上書きする（追加された 8 ファイルは残っても読み込まれない）。
+- 戻した後：ロリポップ！アクセラレータのキャッシュ削除、パーマリンクの再保存、主要 URL と管理画面の確認。
 
 ## Rollback
 

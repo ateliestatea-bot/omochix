@@ -278,8 +278,9 @@
       },
       "relations": {
         "prompts": [
-          "development-landing-page-section-structure",
-          "productivity-no-code-automation-flow-design"
+          "development-prototype-brief-for-ai-builders",
+          "productivity-no-code-automation-flow-design",
+          "sales-web-inquiry-first-reply"
         ],
         "tools": [
           "cursor",

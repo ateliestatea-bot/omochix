@@ -267,8 +267,9 @@
       },
       "relations": {
         "prompts": [
-          "development-api-design-review",
-          "development-security-checklist"
+          "development-openapi-spec-draft",
+          "development-database-schema-design",
+          "development-unit-test-case-generation"
         ],
         "tools": [
           "cursor",

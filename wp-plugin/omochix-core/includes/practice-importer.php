@@ -427,6 +427,14 @@ function omochix_core_practice_import_plan( $contents ) {
 		foreach ( $item['post'] as $field => $value ) {
 			$before = $post_id ? (string) get_post_field( $field, $post_id ) : '';
 			if ( ! $post_id || (string) $value !== $before ) {
+				if ( 'post_status' === $field ) {
+					// Visibility changes are called out explicitly so a file never publishes or unpublishes a post unnoticed.
+					if ( 'publish' === $value && 'publish' !== $before ) {
+						$warnings[] = sprintf( __( '%1$d件目：この反映で「%2$s」が公開されます（status: publish）。', 'omochix-core' ), $line, $item['slug'] );
+					} elseif ( 'publish' === $before && 'publish' !== $value ) {
+						$warnings[] = sprintf( __( '%1$d件目：公開中の「%2$s」が「%3$s」になり、公開が取り下げられます。', 'omochix-core' ), $line, $item['slug'], $value );
+					}
+				}
 				$changes[] = array( 'field' => $field, 'before' => omochix_core_practice_import_format_value( $before ), 'after' => omochix_core_practice_import_format_value( $value ) );
 			}
 		}

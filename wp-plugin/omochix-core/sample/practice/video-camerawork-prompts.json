@@ -231,7 +231,7 @@
         "tools": [
           "sora",
           "runway",
-          "kling"
+          "kling-ai"
         ],
         "learn": [
           "learn/basics/prompt"
