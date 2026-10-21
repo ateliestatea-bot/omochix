@@ -85,6 +85,17 @@
 4. ロリポップ！アクセラレータの「キャッシュ削除」を実行する（テーマ更新後は毎回）。
 5. `/learn/motion/`のリード文の下に「見本を3つまで組み合わせて…」のリンクが出ること、`/learn/motion/compose/`が`noindex, follow`であることを確認する。Composer の状態はURLハッシュ（`#c=`）とブラウザ内保存だけで、DBには何も書かない。
 
+### 8d. Learn 実践教材（Learn Practice）と分野ハブ
+
+テーマ1.25.0 / Core Plugin 1.7.0以降。詳細は`docs/Learn-Phase4-Spec.md`。
+
+1. Core Plugin を更新すると、初回アクセスで実践教材の post type・分野などのタクソノミー・初期ターム（分野 8・形式 5・対応AI 10・技術 14）が登録され、書き換えルールが一度 flush される。`/learn/practice/`が404なら12のパーマリンクflushを行う。
+2. 分野ハブとして、固定ページ「Learn」の子ページを slug `web` / `apps` / `video` / `automation` / `ai` / `projects` / `devtools` で作成して公開する（タイトルは分野名。`motion` は既存の「動く見本」が兼ねるので作らない）。本文は空でよい。抜粋はカードの説明になる。
+3. 既存の Learn セクションページに「分野」を付ける（ページ編集画面の分野パネル）：basics・work → AI入門・AI活用、development・tools → 開発ツール・制作環境、tutorials → 実践プロジェクト。
+4. `learn/practice` という固定ページは作らない（実践教材の URL と競合する）。
+5. ロリポップ！アクセラレータの「キャッシュ削除」を実行する。
+6. `/learn/`に「分野から探す」と「作る」、`/learn/practice/`が200（教材 0 件なら「準備中」）であることを確認する。
+
 ### 9. Home / 投稿ページ設定
 
 1. 表示設定を固定フロントページへ切り替える。

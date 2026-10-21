@@ -149,6 +149,17 @@ $omochix_hub_url  = function_exists('omochix_get_published_page_url') ? omochix_
         </section>
     <?php endif; ?>
 
+    <?php
+    // Learn Phase 4: practice items that use this sample (page context only;
+    // the dialog keeps its focus on the sample itself).
+    $omochix_practice_for_motion = 'dialog' !== $omochix_context && function_exists('omochix_core_get_practice_for_motion') && function_exists('omochix_learn_practice_url')
+        ? omochix_core_get_practice_for_motion($omochix_item['slug'], 3)
+        : [];
+    ?>
+    <?php if ($omochix_practice_for_motion) : ?>
+        <?php get_template_part('template-parts/learn-practice/related', null, ['posts' => $omochix_practice_for_motion, 'title' => __('この見本を使う実践教材', 'omochix'), 'more' => omochix_learn_practice_url(), 'heading' => 'h2' === $omochix_h_panel ? 'h2' : 'h3']); ?>
+    <?php endif; ?>
+
     <?php if ($omochix_nav['prev'] || $omochix_nav['next']) : ?>
         <nav class="motion-detail__nav" aria-label="<?php esc_attr_e('同じカテゴリの見本', 'omochix'); ?>">
             <?php if ($omochix_nav['prev']) : ?>

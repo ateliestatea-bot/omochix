@@ -14,6 +14,7 @@ require_once get_theme_file_path('/inc/contact-form.php');
 require_once get_theme_file_path('/inc/learn.php');
 require_once get_theme_file_path('/inc/learn-gallery.php');
 require_once get_theme_file_path('/inc/learn-composer.php');
+require_once get_theme_file_path('/inc/learn-practice.php');
 require_once get_theme_file_path('/inc/ai-tool-detail.php');
 require_once get_theme_file_path('/inc/editorial-home.php');
 require_once get_theme_file_path('/inc/shell.php');
@@ -131,6 +132,11 @@ function omochix_prepare_site_search($query) {
         'tools'   => ['ai_tool'],
         'prompts' => ['prompt'],
     ];
+    // Learn Phase 4: practice items join the search once the Core plugin registers them.
+    if (post_type_exists('learn_practice')) {
+        $allowed_types['all'][]    = 'learn_practice';
+        $allowed_types['practice'] = ['learn_practice'];
+    }
     if (!isset($allowed_types[$type])) {
         $type = 'all';
     }

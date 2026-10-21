@@ -33,6 +33,9 @@ $omochix_type_links = [
     'tools'   => __('AIツール', 'omochix'),
     'prompts' => __('プロンプト', 'omochix'),
 ];
+if (post_type_exists('learn_practice')) {
+    $omochix_type_links['practice'] = __('実践教材', 'omochix');
+}
 ?>
 
 <main class="search-page" id="main-content">

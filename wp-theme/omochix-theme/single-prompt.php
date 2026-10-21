@@ -167,6 +167,15 @@ if (have_posts()) :
                     </section>
                 <?php endif; ?>
 
+                <?php if (function_exists('omochix_core_get_practice_for_prompt') && function_exists('omochix_learn_practice_url')) : ?>
+                    <?php $omochix_practice_for_prompt = omochix_core_get_practice_for_prompt($omochix_prompt_id, 3); ?>
+                    <?php if ($omochix_practice_for_prompt) : ?>
+                        <div class="prompt-detail__container">
+                            <?php get_template_part('template-parts/learn-practice/related', null, ['posts' => $omochix_practice_for_prompt, 'title' => __('このプロンプトを使う実践教材', 'omochix'), 'more' => omochix_learn_practice_url()]); ?>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+
                 <?php
                 // Learn v2: motion samples whose catalog entry lists this prompt
                 // (related.prompts). Rendered only when the gallery page is

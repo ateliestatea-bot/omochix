@@ -71,6 +71,11 @@ while (have_posts()) :
     // created under it to appear here — no separate config to maintain.
     $omochix_learn_children = omochix_get_learn_child_pages($omochix_learn_post_id);
     $omochix_has_content    = '' !== trim((string) get_the_content());
+    // Learn Phase 4: practice items that reference this page, or (for a field
+    // hub page) belong to the field whose slug equals the page slug. They count
+    // as content, so a hub page with an empty body shows them instead of the
+    // "準備中" notice.
+    $omochix_practice_posts = function_exists('omochix_learn_practice_for_page') ? omochix_learn_practice_for_page($omochix_learn_post, 6) : [];
     ?>
 
     <main class="learn-article" id="main-content">
@@ -108,7 +113,7 @@ while (have_posts()) :
             </div>
         </header>
 
-        <?php if ($omochix_has_content || !$omochix_learn_children) : ?>
+        <?php if ($omochix_has_content || (!$omochix_learn_children && !$omochix_practice_posts)) : ?>
             <div class="learn-article__container learn-article__body">
                 <div class="learn-article__content article-content">
                     <?php if ($omochix_has_content) : ?>
@@ -140,6 +145,15 @@ while (have_posts()) :
                     </div>
                 </div>
             </section>
+        <?php endif; ?>
+
+        <?php
+        if ($omochix_practice_posts) :
+            $omochix_practice_more = function_exists('omochix_learn_practice_url') && (int) $omochix_learn_post->post_parent === omochix_get_learn_page_id() ? omochix_learn_practice_url(['field' => $omochix_learn_post->post_name]) : '';
+            ?>
+            <div class="learn-article__container">
+                <?php get_template_part('template-parts/learn-practice/related', null, ['posts' => $omochix_practice_posts, 'title' => __('この内容を実践する', 'omochix'), 'more' => $omochix_practice_more]); ?>
+            </div>
         <?php endif; ?>
 
         <?php if ($omochix_next_post instanceof WP_Post) : ?>
