@@ -2,7 +2,7 @@
 /**
  * Plugin Name: OmochiX Core
  * Description: Provides the AI tool data model and editorial interface for OmochiX.
- * Version: 1.6.0
+ * Version: 1.7.0
  * Requires at least: 6.8
  * Requires PHP: 8.1
  * Author: OmochiX
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OMOCHIX_CORE_VERSION', '1.6.0' );
+define( 'OMOCHIX_CORE_VERSION', '1.7.0' );
 define( 'OMOCHIX_CORE_FILE', __FILE__ );
 define( 'OMOCHIX_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'OMOCHIX_CORE_URL', plugin_dir_url( __FILE__ ) );
@@ -30,6 +30,10 @@ require_once OMOCHIX_CORE_DIR . 'includes/prompt-post-type.php';
 require_once OMOCHIX_CORE_DIR . 'includes/prompt-taxonomies.php';
 require_once OMOCHIX_CORE_DIR . 'includes/prompt-meta-schema.php';
 require_once OMOCHIX_CORE_DIR . 'includes/prompt-relations.php';
+require_once OMOCHIX_CORE_DIR . 'includes/practice-post-type.php';
+require_once OMOCHIX_CORE_DIR . 'includes/practice-taxonomies.php';
+require_once OMOCHIX_CORE_DIR . 'includes/practice-meta-schema.php';
+require_once OMOCHIX_CORE_DIR . 'includes/practice-relations.php';
 require_once OMOCHIX_CORE_DIR . 'admin/meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/relations-meta-box.php';
 require_once OMOCHIX_CORE_DIR . 'admin/timeline-meta-box.php';
@@ -40,6 +44,8 @@ require_once OMOCHIX_CORE_DIR . 'admin/ai-tool-content-updater.php';
 require_once OMOCHIX_CORE_DIR . 'admin/prompt-meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/save-prompt-meta.php';
 require_once OMOCHIX_CORE_DIR . 'admin/prompt-csv-importer.php';
+require_once OMOCHIX_CORE_DIR . 'admin/practice-meta-boxes.php';
+require_once OMOCHIX_CORE_DIR . 'admin/save-practice-meta.php';
 
 /**
  * Register plugin data structures.
@@ -53,6 +59,10 @@ function omochix_core_init() {
 	omochix_core_register_prompt_post_type();
 	omochix_core_register_prompt_taxonomies();
 	omochix_core_register_prompt_post_meta();
+	omochix_core_register_practice_post_type();
+	omochix_core_register_practice_taxonomies();
+	omochix_core_register_practice_post_meta();
+	omochix_core_practice_maybe_flush_rewrite_rules();
 }
 add_action( 'init', 'omochix_core_init' );
 
@@ -66,7 +76,10 @@ function omochix_core_activate() {
 	omochix_core_register_taxonomies();
 	omochix_core_register_prompt_post_type();
 	omochix_core_register_prompt_taxonomies();
+	omochix_core_register_practice_post_type();
+	omochix_core_register_practice_taxonomies();
 	omochix_core_insert_initial_terms();
+	omochix_core_insert_practice_initial_terms();
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'omochix_core_activate' );

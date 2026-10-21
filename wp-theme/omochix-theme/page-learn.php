@@ -194,26 +194,85 @@ while (have_posts()) :
             </section>
         <?php endif; ?>
 
+        <?php
+        // Learn Phase 4: "作る" — the Composer, the practice list and the
+        // OmochiX Video placeholder. Items whose page is not published stay
+        // marked 準備中 instead of linking to a 404.
+        $omochix_composer_url = function_exists('omochix_learn_composer_url') ? omochix_learn_composer_url() : '';
+        $omochix_practice_url = function_exists('omochix_learn_practice_url') && function_exists('omochix_learn_practice_count') && omochix_learn_practice_count() > 0 ? omochix_learn_practice_url() : '';
+        $omochix_practice_fields = [];
+        if (function_exists('omochix_learn_practice_fields')) {
+            foreach (omochix_learn_practice_fields(true) as $omochix_field_term) {
+                $omochix_field_hub = omochix_learn_practice_field_hub_url($omochix_field_term->slug);
+                if ($omochix_field_hub) {
+                    $omochix_practice_fields[] = ['url' => $omochix_field_hub, 'name' => $omochix_field_term->name, 'description' => $omochix_field_term->description];
+                }
+            }
+        }
+        $omochix_practice_featured = $omochix_practice_url ? omochix_learn_practice_featured(3) : [];
+        ?>
+        <?php if (count($omochix_practice_fields) >= 2) : ?>
+            <section class="learn-hub-v2__section" aria-labelledby="learn-fields-title">
+                <div class="learn-hub__container">
+                    <header class="learn-hub-v2__section-header">
+                        <div>
+                            <p class="learn-hub__eyebrow"><?php esc_html_e('FIELDS', 'omochix'); ?></p>
+                            <h2 id="learn-fields-title"><?php esc_html_e('分野から探す', 'omochix'); ?></h2>
+                        </div>
+                    </header>
+                    <div class="practice-fields">
+                        <?php foreach ($omochix_practice_fields as $omochix_field_card) : ?>
+                            <a href="<?php echo esc_url($omochix_field_card['url']); ?>"><strong><?php echo esc_html($omochix_field_card['name']); ?></strong><?php if ($omochix_field_card['description']) : ?><span><?php echo esc_html($omochix_field_card['description']); ?></span><?php endif; ?></a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
+
         <section class="learn-hub-v2__section" aria-labelledby="learn-build-title">
             <div class="learn-hub__container">
                 <header class="learn-hub-v2__section-header">
                     <div>
-                        <p class="learn-hub__eyebrow"><?php esc_html_e('COMING SOON', 'omochix'); ?></p>
+                        <p class="learn-hub__eyebrow"><?php esc_html_e('BUILD', 'omochix'); ?></p>
                         <h2 id="learn-build-title"><?php esc_html_e('作る', 'omochix'); ?></h2>
                     </div>
                 </header>
                 <div class="learn-hub-v2__soon-grid">
-                    <div class="learn-hub-v2__soon" aria-disabled="true">
-                        <small><?php esc_html_e('準備中', 'omochix'); ?></small>
-                        <strong><?php esc_html_e('Playground', 'omochix'); ?></strong>
-                        <span><?php esc_html_e('見本の長さ・色・動き方をその場で変えて、調整したコードとプロンプトを持ち帰れるようにします。', 'omochix'); ?></span>
-                    </div>
+                    <?php if ($omochix_composer_url) : ?>
+                        <a class="learn-hub-v2__soon learn-hub-v2__soon--ready" href="<?php echo esc_url($omochix_composer_url); ?>">
+                            <small><?php esc_html_e('Motion Composer', 'omochix'); ?></small>
+                            <strong><?php esc_html_e('動きを組み合わせて、AIへの指示書にする', 'omochix'); ?></strong>
+                            <span><?php esc_html_e('見本を3つまで選んで順番と値を決め、そのまま Claude Code や Codex に渡せる指示書をコピーできます。', 'omochix'); ?></span>
+                        </a>
+                    <?php else : ?>
+                        <div class="learn-hub-v2__soon" aria-disabled="true">
+                            <small><?php esc_html_e('準備中', 'omochix'); ?></small>
+                            <strong><?php esc_html_e('Motion Composer', 'omochix'); ?></strong>
+                            <span><?php esc_html_e('見本を組み合わせて、AIへの指示書にします。', 'omochix'); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($omochix_practice_url) : ?>
+                        <a class="learn-hub-v2__soon learn-hub-v2__soon--ready" href="<?php echo esc_url($omochix_practice_url); ?>">
+                            <small><?php esc_html_e('Learn Practice', 'omochix'); ?></small>
+                            <strong><?php esc_html_e('実践教材で、AIと一緒に作って公開する', 'omochix'); ?></strong>
+                            <span><?php esc_html_e('見本・プロンプト・コード・検証手順を一つにまとめた教材。実装指示書をそのまま AI に渡せます。', 'omochix'); ?></span>
+                        </a>
+                    <?php else : ?>
+                        <div class="learn-hub-v2__soon" aria-disabled="true">
+                            <small><?php esc_html_e('準備中', 'omochix'); ?></small>
+                            <strong><?php esc_html_e('実践教材', 'omochix'); ?></strong>
+                            <span><?php esc_html_e('見本・プロンプト・コード・検証手順を一つにまとめた教材を準備しています。', 'omochix'); ?></span>
+                        </div>
+                    <?php endif; ?>
                     <div class="learn-hub-v2__soon" aria-disabled="true">
                         <small><?php esc_html_e('準備中', 'omochix'); ?></small>
                         <strong><?php esc_html_e('OmochiX Video', 'omochix'); ?></strong>
                         <span><?php esc_html_e('見本の使い方を短い動画で解説し、動画から見本・プロンプトへ行き来できるようにします。', 'omochix'); ?></span>
                     </div>
                 </div>
+                <?php if ($omochix_practice_featured) : ?>
+                    <?php get_template_part('template-parts/learn-practice/related', null, ['posts' => $omochix_practice_featured, 'title' => __('いま作れるもの', 'omochix'), 'eyebrow' => __('LEARN PRACTICE', 'omochix'), 'more' => $omochix_practice_url]); ?>
+                <?php endif; ?>
             </div>
         </section>
 

@@ -675,6 +675,15 @@ if (have_posts()) :
                 <?php endif; ?>
                 <?php wp_reset_postdata(); ?>
 
+                <?php if (function_exists('omochix_core_get_practice_for_tool') && function_exists('omochix_learn_practice_url')) : ?>
+                    <?php $omochix_practice_for_tool = omochix_core_get_practice_for_tool($omochix_tool_id, 3); ?>
+                    <?php if ($omochix_practice_for_tool) : ?>
+                        <div class="article-container">
+                            <?php get_template_part('template-parts/learn-practice/related', null, ['posts' => $omochix_practice_for_tool, 'title' => sprintf(__('%sで作る実践教材', 'omochix'), $omochix_tool_name), 'more' => omochix_learn_practice_url()]); ?>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+
                 <?php if ($omochix_related_posts && $omochix_related_posts->have_posts()) : ?>
                     <section class="related-articles tool-related-articles" aria-labelledby="tool-related-posts-title">
                         <div class="article-container">
