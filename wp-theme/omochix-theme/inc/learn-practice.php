@@ -310,6 +310,7 @@ function omochix_learn_practice_item($post) {
         'steps'        => $rows('practice_steps'),
         'verify'       => $rows('practice_verify'),
         'safety'       => $lines('practice_safety'),
+        'troubleshooting' => $rows('practice_troubleshooting'),
         'publish'      => $lines('practice_publish'),
         'env'          => $lines('practice_env'),
         'sources'      => $rows('practice_sources'),
@@ -525,6 +526,13 @@ function omochix_learn_practice_brief($post, $assistant = 'claude-code') {
         $out[] = '';
         $out[] = '## ' . __('公開手順', 'omochix');
         $out[] = omochix_learn_practice_md_list($item['publish']);
+    }
+    if ($item['troubleshooting']) {
+        $out[] = '';
+        $out[] = '## ' . __('よくあるエラー', 'omochix');
+        foreach ($item['troubleshooting'] as $row) {
+            $out[] = '- ' . $row['symptom'] . ('' !== $row['cause'] ? ' — ' . __('原因', 'omochix') . ': ' . preg_replace('/\s+/u', ' ', $row['cause']) : '') . ('' !== $row['fix'] ? ' / ' . __('対処', 'omochix') . ': ' . preg_replace('/\s+/u', ' ', $row['fix']) : '');
+        }
     }
     if ($item['sources']) {
         $out[] = '';

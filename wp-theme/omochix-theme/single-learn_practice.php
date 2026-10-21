@@ -36,6 +36,7 @@ while (have_posts()) :
     if ($omochix_item['verify']) { $omochix_sections['verify'] = __('検証', 'omochix'); }
     if ($omochix_item['safety']) { $omochix_sections['safety'] = __('安全性', 'omochix'); }
     if ($omochix_item['publish']) { $omochix_sections['publish'] = __('公開手順', 'omochix'); }
+    if ($omochix_item['troubleshooting']) { $omochix_sections['troubleshooting'] = __('よくあるエラー', 'omochix'); }
     $omochix_sections['brief'] = __('AI実装指示書', 'omochix');
     if ($omochix_motion['items'] || array_filter($omochix_related)) { $omochix_sections['related'] = __('関連', 'omochix'); }
     if ($omochix_item['sources']) { $omochix_sections['sources'] = __('参照仕様', 'omochix'); }
@@ -173,6 +174,23 @@ while (have_posts()) :
                     <section class="practice__section" id="publish" aria-labelledby="practice-publish-title">
                         <h2 id="practice-publish-title"><?php esc_html_e('公開手順', 'omochix'); ?></h2>
                         <ol class="practice__list"><?php foreach ($omochix_item['publish'] as $omochix_line) : ?><li><?php echo esc_html($omochix_line); ?></li><?php endforeach; ?></ol>
+                    </section>
+                <?php endif; ?>
+
+                <?php if ($omochix_item['troubleshooting']) : ?>
+                    <section class="practice__section" id="troubleshooting" aria-labelledby="practice-troubleshooting-title">
+                        <h2 id="practice-troubleshooting-title"><?php esc_html_e('よくあるエラー', 'omochix'); ?></h2>
+                        <dl class="practice-trouble">
+                            <?php foreach ($omochix_item['troubleshooting'] as $omochix_row) : ?>
+                                <div>
+                                    <dt><?php echo esc_html($omochix_row['symptom']); ?></dt>
+                                    <dd>
+                                        <?php if ('' !== $omochix_row['cause']) : ?><p><strong><?php esc_html_e('原因', 'omochix'); ?>:</strong> <?php echo nl2br(esc_html($omochix_row['cause'])); ?></p><?php endif; ?>
+                                        <?php if ('' !== $omochix_row['fix']) : ?><p><strong><?php esc_html_e('対処', 'omochix'); ?>:</strong> <?php echo nl2br(esc_html($omochix_row['fix'])); ?></p><?php endif; ?>
+                                    </dd>
+                                </div>
+                            <?php endforeach; ?>
+                        </dl>
                     </section>
                 <?php endif; ?>
 

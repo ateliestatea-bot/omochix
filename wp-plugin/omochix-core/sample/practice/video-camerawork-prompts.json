@@ -1,0 +1,250 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "slug": "video-camerawork-prompts",
+      "title": "動画生成 AI 向けのカメラワーク・モーションプロンプトを作る",
+      "status": "draft",
+      "excerpt": "ドリーイン・パン・オービットなどカメラワークの語彙を使って、Sora / Veo / Runway / Kling に通じる「構造化プロンプト」を作り、出力を比べて直す方法を学びます。",
+      "menu_order": 30,
+      "meta": {
+        "practice_summary": "カメラワークとモーションの語彙を 7 要素のテンプレートにまとめ、動画生成 AI 4 サービス向けに書き分ける。生成結果は保証しないので、比較して直す手順まで含む。",
+        "practice_difficulty": "beginner",
+        "practice_minutes": 60,
+        "practice_outcome": "「被写体 / 動作 / カメラワーク / 画角 / 光 / 尺 / 禁止事項」の 7 要素で書いた自分のプロンプト 3 本と、サービス別に整えた版。同じプロンプトで 2 サービスの出力を比べたチェックシート。",
+        "practice_preview_type": "image",
+        "practice_preview_src": "",
+        "practice_prompts": [
+          {
+            "title": "7 要素テンプレート（日本語で設計する）",
+            "for": "chatgpt",
+            "body": "次の 7 要素で動画生成 AI 向けのプロンプトを作ります。まず日本語で埋め、最後に英語版も出してください。生成結果を保証する表現（「必ず」「完璧に」）は使わないでください。\n\n1. 被写体: ＜誰 / 何＞\n2. 動作: ＜被写体がしていること＞\n3. カメラワーク: ＜dolly in / dolly out / pan left / pan right / tilt up / tilt down / tracking / crane up / orbit / handheld / static のどれか 1 つ＞\n4. 画角と構図: ＜wide / medium / close-up、位置＞\n5. 光と時間帯: ＜golden hour / overcast / neon night など＞\n6. 尺とテンポ: ＜5 秒 / 10 秒、slow motion / real time / time-lapse＞\n7. 禁止事項: ＜入れたくないもの。文字・ロゴ・急なカット など＞\n\n出力:\n- 日本語の設計（箇条書き）\n- 英語のプロンプト 1 段落（カメラワークは必ず 1 つだけ、順番は 被写体 → 動作 → カメラ → 画角 → 光 → 尺 → 禁止）"
+          },
+          {
+            "title": "Sora 向けに整える",
+            "for": "sora",
+            "body": "A ＜被写体＞ ＜動作＞. Slow ＜カメラワーク: dolly in / pan left / orbit＞ around the subject. ＜画角: medium shot＞, ＜光: soft golden hour light＞. ＜尺: 5 seconds＞, real time, smooth and steady. No text, no logos, no sudden cuts.\n\n＜ ＞ を自分の設計で置き換えてください。Sora では 1 文を短く切り、カメラワークを 1 つに絞ると意図が通りやすい傾向があります（結果は保証されません。出力を見て 1 要素ずつ直します）。"
+          },
+          {
+            "title": "Veo 向けに整える",
+            "for": "veo",
+            "body": "Cinematic ＜画角＞ of ＜被写体＞ ＜動作＞. The camera ＜カメラワークを動詞で: slowly dollies in / pans left / orbits＞. ＜光＞, ＜尺＞, ＜テンポ＞. Keep the frame free of text and logos.\n\nVeo はカメラの動きを「The camera …」と主語にして書くと読まれやすい傾向があります。音声の指示を足す場合は最後に 1 文で（例: ambient city sounds, no music）。"
+          },
+          {
+            "title": "Runway / Kling 向けに整える（画像から動画）",
+            "for": "runway",
+            "body": "参照画像をアップロードしたうえで、動きだけを指示します。\n\n＜カメラワーク: camera slowly dollies in / camera pans right / camera orbits the subject＞, ＜被写体の動き: the subject turns toward the camera＞, ＜テンポ: smooth, slow＞. Keep the subject and background consistent with the image.\n\n画像から動画にするときは、被写体の見た目は画像に任せ、プロンプトには「動き」と「保ちたいこと」だけを書きます。Runway と Kling は強度（motion strength / 動きの量）のスライダーがあるので、まず低めから試します。"
+          },
+          {
+            "title": "出力を比べて直す",
+            "for": "claude",
+            "body": "同じ設計から作った 2 サービスの出力について、次の表を埋めてください（私が観察した事実を渡します）。\n\n観察: ＜ここに貼る：A サービスの出力で起きたこと / B サービスの出力で起きたこと＞\n\n表の列: 要素（被写体 / 動作 / カメラワーク / 画角 / 光 / 尺 / 禁止事項）、意図どおりか（○ △ ×）、ずれの内容、次に直す 1 か所。\n\n直すのは 1 回につき 1 要素だけにし、カメラワークがずれた場合は「別の語彙に替える」「静止させてから動かす」「尺を短くする」の順で試す案を出してください。"
+          }
+        ],
+        "practice_code": [
+          {
+            "label": "カメラワーク語彙シート",
+            "lang": "text",
+            "file": "camerawork-vocabulary.txt",
+            "body": "dolly in        カメラが被写体へ前進する（Web の見本: ドリーイン）\ndolly out       カメラが被写体から後退する\npan left/right  カメラが左右に首を振る（Web の見本: パン）\ntilt up/down    カメラが上下に首を振る\ntracking shot   被写体と並走する\ncrane up/down   カメラが上下に移動する\norbit           被写体のまわりを回る（Web の見本: オービット）\nhandheld        手持ちの揺れ\nstatic          固定\n\nモーションの語彙\nslow motion / real time / time-lapse / rack focus（ピント送り）/ zoom in（レンズのズーム。dolly とは別物）"
+          },
+          {
+            "label": "比較チェックシート",
+            "lang": "markdown",
+            "file": "compare-sheet.md",
+            "body": "# 比較チェックシート\n\n| 要素 | 設計 | サービス A | サービス B | 次に直す |\n|---|---|---|---|---|\n| 被写体 | | ○/△/× | ○/△/× | |\n| 動作 | | | | |\n| カメラワーク | | | | |\n| 画角・構図 | | | | |\n| 光・時間帯 | | | | |\n| 尺・テンポ | | | | |\n| 禁止事項 | | | | |\n\n- 1 回に直すのは 1 要素だけ\n- 生成は確率的。同じプロンプトでも結果は変わる（3 回生成して傾向を見る）"
+          }
+        ],
+        "practice_prereq": [
+          "動画生成 AI のどれか 2 つのアカウント（Sora / Veo / Runway / Kling。無料枠や試用でよい）",
+          "参照用の静止画 1 枚（自分で撮ったもの、または権利の明確なもの）",
+          "Web の見本: ドリーイン / パン / オービットを先に見ておく"
+        ],
+        "practice_env": [
+          "Sora / Veo / Runway / Kling の Web UI（2026年10月時点）",
+          "API キー不要"
+        ],
+        "practice_steps": [
+          {
+            "title": "作りたい 5 秒を決める",
+            "body": "<p>「何が、どう動いて、カメラはどう見るか」を一言で決めます。例：<strong>コーヒーカップから湯気が立つ。カメラはゆっくり寄る。</strong> 最初はカメラワーク 1 つだけにします。</p>",
+            "prompt": null,
+            "code": null,
+            "check": "一言で言えた"
+          },
+          {
+            "title": "語彙を確かめる",
+            "body": "<p>カメラワークの語彙シートで、使う語を 1 つ選びます。Web の見本（ドリーイン / パン / オービット）は<strong>動きのイメージを確かめるための再現</strong>で、動画生成 AI に渡すのは語彙のほうです。</p>",
+            "prompt": null,
+            "code": 0,
+            "check": "dolly / pan / orbit のどれかを選んだ"
+          },
+          {
+            "title": "7 要素で設計する",
+            "body": "<p>テンプレートを埋めて、日本語の設計と英語のプロンプトを作ります。禁止事項（文字・ロゴ・急なカット）を忘れずに。</p>",
+            "prompt": 0,
+            "code": null,
+            "check": "7 要素が全部埋まった英語プロンプトが 1 本できた"
+          },
+          {
+            "title": "サービス別に整える",
+            "body": "<p>同じ設計を、使う 2 サービスの書き方に合わせて整えます。Sora は短文、Veo は「The camera …」、Runway / Kling は画像 + 動きの指示です。</p>",
+            "prompt": 1,
+            "code": null,
+            "check": "2 サービス分のプロンプトができた"
+          },
+          {
+            "title": "生成して比べる",
+            "body": "<p>各サービスで 3 回ずつ生成し、チェックシートに「意図どおりか」を書きます。生成は確率的なので、1 回の結果で判断しません。</p>",
+            "prompt": null,
+            "code": 1,
+            "check": "チェックシートが 2 サービス分埋まった"
+          },
+          {
+            "title": "1 要素ずつ直す",
+            "body": "<p>ずれた要素を 1 つだけ直して再生成します。カメラワークがずれたら、語彙を替える → 静止から動かす → 尺を短くする、の順で試します。</p>",
+            "prompt": 4,
+            "code": null,
+            "check": "直した 1 要素で改善が見えた（または別案に切り替えた）"
+          },
+          {
+            "title": "自分のテンプレートとして保存する",
+            "body": "<p>うまくいった設計と英語プロンプトを 3 本、サービス別の差分と一緒に保存します。次回はここから始めます。</p>",
+            "prompt": null,
+            "code": null,
+            "check": "3 本のプロンプトと差分メモが残った"
+          }
+        ],
+        "practice_verify": [
+          {
+            "title": "カメラワークが 1 つだけ指定されている",
+            "how": "英語プロンプトを読む",
+            "expect": "dolly / pan / orbit などの語が 1 つだけ入っている"
+          },
+          {
+            "title": "禁止事項が入っている",
+            "how": "プロンプト末尾を確認",
+            "expect": "No text, no logos などが書かれている"
+          },
+          {
+            "title": "2 サービスで同じ設計を試した",
+            "how": "チェックシートを確認",
+            "expect": "同じ 7 要素の行が 2 列分埋まっている"
+          },
+          {
+            "title": "1 回に 1 要素だけ直した",
+            "how": "修正前後のプロンプトを比べる",
+            "expect": "差分が 1 要素"
+          },
+          {
+            "title": "権利に問題のある素材を使っていない",
+            "how": "参照画像の出所を確認",
+            "expect": "自分で撮った、または利用条件が明確"
+          }
+        ],
+        "practice_safety": [
+          "生成結果は確率的で、どのサービスも意図どおりの動きを保証しない。「必ず」「完璧に」と書かないし、期待もしない",
+          "実在の人物・ブランド・著作物を指示や参照画像に使わない。顔が写る画像は本人の同意があるものだけ",
+          "生成した動画を公開するときは、サービスの利用規約（商用利用・クレジット表記）を確認する",
+          "API キーは不要。各サービスの Web UI を使う"
+        ],
+        "practice_publish": [
+          "SNS や LP に使う前に、サービスの商用利用条件を確認する",
+          "動画には AI 生成である旨を書く（媒体の方針に従う）"
+        ],
+        "practice_troubleshooting": [
+          {
+            "symptom": "カメラが動かず静止画のようになる",
+            "cause": "カメラワークの語が入っていない、または弱い（\"slightly\" など）",
+            "fix": "動詞で明示する（\"The camera slowly dollies in\"）。Runway / Kling は動きの強度を上げる"
+          },
+          {
+            "symptom": "カメラが指示と違う動きをする",
+            "cause": "複数のカメラワークを同時に書いている、または zoom と dolly を混同している",
+            "fix": "カメラワークを 1 つに絞る。寄りたいなら dolly in（カメラが前進）、画角を変えたいなら zoom in と書き分ける"
+          },
+          {
+            "symptom": "被写体が途中で別物になる",
+            "cause": "尺が長い、または被写体の説明が曖昧",
+            "fix": "5 秒に短くし、被写体の特徴（色・形）を 2 つ足す。画像から動画にする"
+          },
+          {
+            "symptom": "画面に文字やロゴが出る",
+            "cause": "禁止事項が無い",
+            "fix": "末尾に No text, no logos, no watermarks を入れる"
+          },
+          {
+            "symptom": "同じプロンプトなのに毎回違う",
+            "cause": "生成は確率的",
+            "fix": "3 回生成して傾向で判断する。seed を固定できるサービスでは固定する"
+          }
+        ],
+        "practice_verified_at": "2026-10-21",
+        "practice_sources": [
+          {
+            "label": "OpenAI Sora（公式）",
+            "url": "https://openai.com/sora/"
+          },
+          {
+            "label": "Google Veo プロンプトガイド",
+            "url": "https://ai.google.dev/gemini-api/docs/video"
+          },
+          {
+            "label": "Runway Gen-3 Alpha プロンプトガイド",
+            "url": "https://help.runwayml.com/hc/en-us/articles/30586818553107"
+          },
+          {
+            "label": "Kling AI",
+            "url": "https://klingai.com/"
+          }
+        ],
+        "practice_changelog": [
+          {
+            "date": "2026-10-21",
+            "note": "初版"
+          }
+        ]
+      },
+      "terms": {
+        "learn_field": [
+          "video",
+          "motion"
+        ],
+        "learn_format": [
+          "lesson",
+          "prompt"
+        ],
+        "learn_ai": [
+          "sora",
+          "veo",
+          "runway",
+          "kling",
+          "chatgpt"
+        ],
+        "learn_tech": []
+      },
+      "relations": {
+        "prompts": [
+          "video-text-to-video-shot-prompts",
+          "video-image-to-video-motion-direction"
+        ],
+        "tools": [
+          "sora",
+          "runway",
+          "kling"
+        ],
+        "learn": [
+          "learn/basics/prompt"
+        ],
+        "practice": [
+          "corporate-site-contact-line"
+        ],
+        "motion": [
+          "dolly-in",
+          "pan",
+          "orbit"
+        ]
+      }
+    }
+  ]
+}
