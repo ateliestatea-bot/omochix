@@ -98,6 +98,8 @@
 .practice-related__more { margin: 14px 0 0; font-size: 14px; }
 .practice-related__more a { color: var(--color-primary); font-weight: 700; text-decoration: none; }
 .learn-article .practice-related, .learn-hub .practice-related, .prompt-detail .practice-related, .tool-detail .practice-related { width: min(100% - 32px, 1120px); margin-inline: auto; }
+/* Learn articles and field hubs: the block sits between two ruled sections, so it carries its own symmetric padding (56px on desktop, 32px on phones) instead of a top margin. */
+.learn-article .practice-related { margin-top: 0; padding-block: clamp(32px, 6vw, 56px); }
 
 /* --- single ---------------------------------------------------------- */
 .practice { padding-block: clamp(32px, 7vw, 56px) var(--section-space, 80px); }
