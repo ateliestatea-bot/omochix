@@ -220,6 +220,38 @@ check('backup json: {"backups": [...]} is accepted too, and a plain items file i
 $GLOBALS['meta'][$new_id]['practice_summary'] = '要約';
 unset($GLOBALS['meta'][$new_id]['practice_env']);
 
+// ------------------------------------------------------ list table (6A-S2)
+$cols = omochix_core_practice_list_columns(['cb' => '', 'title' => 'Title', 'taxonomy-learn_field' => 'x', 'date' => 'Date']);
+check('list: practice columns follow the title, WordPress taxonomy columns are folded away', ['cb', 'title', 'practice_field', 'practice_format', 'practice_level', 'practice_minutes', 'practice_verified', 'practice_missing', 'practice_slug', 'date'] === array_keys($cols));
+$lf = omochix_core_practice_list_current_filters(['practice_field_filter' => 'web', 'practice_format_filter' => 'nope', 'practice_level_filter' => 'advanced', 'practice_flag_filter' => 'stale']);
+check('list: filters validate against terms, levels and flags', 'web' === $lf['field'] && '' === $lf['format'] && 'advanced' === $lf['level'] && 'stale' === $lf['flag'] && '' === omochix_core_practice_list_current_filters(['practice_flag_filter' => 'x'])['flag']);
+check('list: missing ids flag the incomplete import-created item, not the complete fixture', in_array($new_id, omochix_core_practice_missing_ids(), true) && !in_array(10, omochix_core_practice_missing_ids(), true));
+check('list: stale threshold is the verified-days window before now, levels rank beginner < intermediate < advanced', '2026-07-23' === omochix_core_practice_stale_before(strtotime('2026-10-21 00:00:00 UTC')) && omochix_core_practice_level_rank('beginner') < omochix_core_practice_level_rank('intermediate') && omochix_core_practice_level_rank('intermediate') < omochix_core_practice_level_rank('advanced'));
+$GLOBALS['ctx']['is_admin'] = true;
+$aq = new class { public $vars = ['post_type' => 'learn_practice']; function is_main_query() { return true; } function get($k) { return $this->vars[$k] ?? ''; } function set($k, $v) { $this->vars[$k] = $v; } };
+$_GET = ['practice_field_filter' => 'web', 'practice_format_filter' => 'project', 'practice_level_filter' => 'beginner', 'practice_flag_filter' => 'stale'];
+omochix_core_practice_list_query($aq);
+$tq = array_values(array_filter($aq->vars['tax_query'], 'is_array')); $mq = array_values(array_filter($aq->vars['meta_query'], 'is_array'));
+check('list query: field + format become an AND tax_query; beginner matches missing meta too; stale is an OR over missing / empty / old dates', 2 === count($tq) && 'AND' === $aq->vars['tax_query']['relation'] && 'learn_format' === $tq[1]['taxonomy'] && 2 === count($mq) && 'AND' === $aq->vars['meta_query']['relation'] && 'OR' === $mq[0]['relation'] && 'NOT EXISTS' === $mq[0][1]['compare'] && 'OR' === $mq[1]['relation'] && 'DATE' === $mq[1][2]['type'] && '<' === $mq[1][2]['compare']);
+$aq2 = new class { public $vars = ['post_type' => 'learn_practice']; function is_main_query() { return true; } function get($k) { return $this->vars[$k] ?? ''; } function set($k, $v) { $this->vars[$k] = $v; } };
+$_GET = ['practice_flag_filter' => 'missing'];
+omochix_core_practice_list_query($aq2);
+check('list query: "missing" narrows to the incomplete ids via post__in and sets no tax or meta query', in_array($new_id, $aq2->vars['post__in'], true) && !in_array(10, $aq2->vars['post__in'], true) && !isset($aq2->vars['tax_query']) && !isset($aq2->vars['meta_query']));
+$_GET = [];
+$GLOBALS['ctx']['is_admin'] = false;
+$aq3 = new class { public $vars = ['post_type' => 'learn_practice']; function is_main_query() { return true; } function get($k) { return $this->vars[$k] ?? ''; } function set($k, $v) { $this->vars[$k] = $v; } };
+$_GET = ['practice_flag_filter' => 'missing'];
+omochix_core_practice_list_query($aq3);
+check('list query: outside wp-admin the list filters never touch the query', [] === array_diff_key($aq3->vars, ['post_type' => 1]));
+$_GET = [];
+$w = omochix_core_practice_apply_inline_meta($new_id, ['practice_difficulty' => 'advanced', 'practice_minutes' => '45', 'practice_verified_at' => '2026-10-25'], false);
+check('quick edit: difficulty, minutes and date are written through the schema', ['practice_difficulty', 'practice_minutes', 'practice_verified_at'] === $w && 'advanced' === $GLOBALS['meta'][$new_id]['practice_difficulty'] && 45 === $GLOBALS['meta'][$new_id]['practice_minutes'] && '2026-10-25' === $GLOBALS['meta'][$new_id]['practice_verified_at']);
+$w2 = omochix_core_practice_apply_inline_meta($new_id, ['practice_difficulty' => 'bogus', 'practice_minutes' => '', 'practice_verified_at' => 'not-a-date'], false);
+check('quick edit: an unknown level falls back, an empty minutes clears, an unparsable date keeps the stored one', ['practice_difficulty', 'practice_minutes'] === $w2 && 'beginner' === $GLOBALS['meta'][$new_id]['practice_difficulty'] && !isset($GLOBALS['meta'][$new_id]['practice_minutes']) && '2026-10-25' === $GLOBALS['meta'][$new_id]['practice_verified_at']);
+$w3 = omochix_core_practice_apply_inline_meta($new_id, ['practice_difficulty' => '', 'practice_minutes' => '99', 'practice_verified_at' => ''], true);
+check('bulk edit: only difficulty is allowed and "" leaves it unchanged', [] === $w3 && 'beginner' === $GLOBALS['meta'][$new_id]['practice_difficulty'] && !isset($GLOBALS['meta'][$new_id]['practice_minutes']));
+unset($GLOBALS['meta'][$new_id]['practice_difficulty'], $GLOBALS['meta'][$new_id]['practice_verified_at']);
+
 check('import: the sample files decode, validate without errors and carry the required fields', (static function () use ($imp) {
     $ok = true;
     foreach (glob(__DIR__ . '/../../wp-plugin/omochix-core/sample/practice/*.json') as $file) {

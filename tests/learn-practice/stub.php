@@ -100,7 +100,14 @@ function esc_url_raw($u, $p = []) { return preg_match('#^https?://#i', (string) 
 function absint($v) { return abs((int) $v); }
 function wp_strip_all_tags($t) { return trim(strip_tags((string) $t)); }
 function get_post_type_archive_link($t) { return 'https://example.test/learn/practice/'; }
-function is_admin() { return false; }
+function is_admin() { return $GLOBALS['ctx']['is_admin'] ?? false; }
+if (!function_exists('esc_attr')) { function esc_attr($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); } }
+if (!function_exists('admin_url')) { function admin_url($p = '') { return 'https://example.test/wp-admin/' . ltrim($p, '/'); } }
+if (!function_exists('selected')) { function selected($a, $b, $echo = true) { return (string) $a === (string) $b ? ' selected="selected"' : ''; } }
+if (!function_exists('esc_html__')) { function esc_html__($t) { return esc_html($t); } }
+if (!function_exists('esc_html_e')) { function esc_html_e($t) { echo esc_html($t); } }
+if (!function_exists('wp_is_post_autosave')) { function wp_is_post_autosave($id) { return false; } }
+if (!function_exists('wp_is_post_revision')) { function wp_is_post_revision($id) { return false; } }
 function is_tax($t = '') { return $GLOBALS['ctx']['is_tax'] ?? false; }
 function is_post_type_archive($t = '') { return $GLOBALS['ctx']['is_archive'] ?? false; }
 function has_excerpt($p = null) { return false; }
@@ -117,6 +124,7 @@ require $PLUGIN . '/includes/practice-taxonomies.php';
 require $PLUGIN . '/includes/practice-meta-schema.php';
 require $PLUGIN . '/includes/practice-relations.php';
 require $PLUGIN . '/includes/practice-exporter.php';
+require $PLUGIN . '/admin/practice-list-table.php';
 require $PLUGIN . '/includes/practice-importer.php';
 require $THEME . '/inc/learn.php';
 require $THEME . '/inc/learn-composer.php';

@@ -113,3 +113,28 @@
 		}
 	});
 }());
+
+/**
+ * Practice list: populate Quick Edit (difficulty / minutes / verified date)
+ * from the hidden .omochix-practice-quick-data span in the row.
+ */
+(function () {
+	'use strict';
+	if (!window.inlineEditPost || !window.inlineEditPost.edit) return;
+	var originalEdit = window.inlineEditPost.edit;
+	window.inlineEditPost.edit = function (id) {
+		originalEdit.apply(this, arguments);
+		var postId = typeof id === 'object' ? window.inlineEditPost.getId(id) : parseInt(id, 10);
+		if (!postId) return;
+		var rowData = document.querySelector('#post-' + postId + ' .omochix-practice-quick-data');
+		var editRow = document.querySelector('#edit-' + postId);
+		if (!rowData || !editRow) return;
+		var setValue = function (name, value) {
+			var field = editRow.querySelector('[name="omochix_practice_quick[' + name + ']"]');
+			if (field) field.value = value;
+		};
+		setValue('practice_difficulty', rowData.dataset.level || 'beginner');
+		setValue('practice_minutes', rowData.dataset.minutes && rowData.dataset.minutes !== '0' ? rowData.dataset.minutes : '');
+		setValue('practice_verified_at', rowData.dataset.verified || '');
+	};
+}());

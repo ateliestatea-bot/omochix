@@ -50,6 +50,7 @@ require_once OMOCHIX_CORE_DIR . 'admin/practice-meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/save-practice-meta.php';
 require_once OMOCHIX_CORE_DIR . 'admin/practice-json-importer.php';
 require_once OMOCHIX_CORE_DIR . 'admin/practice-json-exporter.php';
+require_once OMOCHIX_CORE_DIR . 'admin/practice-list-table.php';
 
 /**
  * Register plugin data structures.
