@@ -34,6 +34,7 @@ require_once OMOCHIX_CORE_DIR . 'includes/practice-post-type.php';
 require_once OMOCHIX_CORE_DIR . 'includes/practice-taxonomies.php';
 require_once OMOCHIX_CORE_DIR . 'includes/practice-meta-schema.php';
 require_once OMOCHIX_CORE_DIR . 'includes/practice-relations.php';
+require_once OMOCHIX_CORE_DIR . 'includes/practice-exporter.php';
 require_once OMOCHIX_CORE_DIR . 'includes/practice-importer.php';
 require_once OMOCHIX_CORE_DIR . 'admin/meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/relations-meta-box.php';
@@ -48,6 +49,7 @@ require_once OMOCHIX_CORE_DIR . 'admin/prompt-csv-importer.php';
 require_once OMOCHIX_CORE_DIR . 'admin/practice-meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/save-practice-meta.php';
 require_once OMOCHIX_CORE_DIR . 'admin/practice-json-importer.php';
+require_once OMOCHIX_CORE_DIR . 'admin/practice-json-exporter.php';
 
 /**
  * Register plugin data structures.

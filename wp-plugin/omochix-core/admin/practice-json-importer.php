@@ -126,6 +126,9 @@ function omochix_core_render_practice_importer_page() {
 
 		<?php elseif ( $plan ) : ?>
 			<h2><?php esc_html_e( 'dry-run 結果', 'omochix-core' ); ?></h2>
+			<?php if ( 'backup' === ( $plan['source'] ?? 'file' ) ) : ?>
+				<div class="notice notice-info inline"><p><?php esc_html_e( 'バックアップ JSON を読み込みました。反映すると、各教材はバックアップ時点の内容に戻ります（バックアップ時に空だった項目は空に戻り、関連先が削除されていればその関連は外れます）。', 'omochix-core' ); ?></p></div>
+			<?php endif; ?>
 			<dl class="omochix-import-summary">
 				<div><dt><?php esc_html_e( '件数', 'omochix-core' ); ?></dt><dd><?php echo esc_html( number_format_i18n( $plan['summary']['total'] ) ); ?></dd></div>
 				<div><dt><?php esc_html_e( '新規', 'omochix-core' ); ?></dt><dd><?php echo esc_html( number_format_i18n( $plan['summary']['create'] ) ); ?></dd></div>

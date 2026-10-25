@@ -191,6 +191,35 @@ check('import plan: a new item with status publish is never silent', $newpub['er
 omochix_core_practice_import_log('abc', $res2, 7);
 $log = omochix_core_practice_import_get_log();
 check('import log: newest first with counts and slugs', 1 === count($log) && 'abc' === $log[0]['hash'] && 7 === $log[0]['user_id'] && 1 === $log[0]['updated'] && ['login-dashboard'] === $log[0]['slugs']);
+// ------------------------------------------------------- exporter (6A-S1)
+$GLOBALS['posts'][20] = new WP_Post(['ID' => 20, 'post_type' => 'page', 'post_name' => 'web', 'post_title' => 'Webサイト・LP制作']);
+$GLOBALS['meta'][$new_id]['related_prompt_ids'] = [30, 999];
+$GLOBALS['meta'][$new_id]['related_tool_ids']   = [31];
+$GLOBALS['meta'][$new_id]['related_learn_ids']  = [20];
+$GLOBALS['meta'][$new_id]['related_motion_slugs'] = ['fade-up'];
+$exp = omochix_core_practice_export([$new_id, 999, 31]);
+$xi  = $exp['items'][0] ?? [];
+check('export: file shape, one item per practice id, relations as slugs (deleted or foreign ids dropped), no related ids in meta', 1 === $exp['version'] && 'export' === $exp['source'] && 1 === count($exp['items']) && 'login-dashboard' === $xi['slug'] && 'draft' === $xi['status'] && !array_key_exists('related_prompt_ids', $xi['meta']) && ['video-text-to-video-shot-prompts'] === $xi['relations']['prompts'] && ['cursor'] === $xi['relations']['tools'] && ['learn/web'] === $xi['relations']['learn'] && ['corporate-site-line'] === $xi['relations']['practice'] && ['fade-up'] === $xi['relations']['motion'] && ['apps'] === $xi['terms']['learn_field']);
+check('export: empty meta (no invented defaults), empty taxonomies and zero order are left out; integers are typed', !array_key_exists('practice_preview_poster', $xi['meta']) && !array_key_exists('practice_difficulty', $xi['meta']) && !array_key_exists('learn_usecase', $xi['terms']) && !array_key_exists('menu_order', $xi) && is_int($xi['meta']['practice_minutes']));
+$GLOBALS['meta'][$new_id]['related_prompt_ids'] = [30];
+$exp = omochix_core_practice_export([$new_id]);
+$rt  = omochix_core_practice_import_plan(wp_json_encode($exp));
+check('export round-trip: an exported file plans as unchanged with no errors', !is_wp_error($rt) && 'file' === $rt['source'] && [] === $rt['errors'] && 1 === count($rt['rows']) && 'unchanged' === $rt['rows'][0]['action']);
+$x10 = omochix_core_practice_export_item(10);
+check('export: stored rows come out as stored (int refs stay ints, textarea newlines survive), terms as slugs', 9 === $x10['meta']['practice_steps'][2]['prompt'] && "テスト送信\nする" === $x10['meta']['practice_verify'][0]['how'] && 'corporate-site-line' === $x10['slug'] && ['web', 'automation'] === $x10['terms']['learn_field']);
+check('export: scope ids respect status, non-practice ids are ignored', in_array($new_id, omochix_core_practice_export_ids('draft'), true) && !in_array(10, omochix_core_practice_export_ids('draft'), true) && in_array(10, omochix_core_practice_export_ids('all'), true) && [] === omochix_core_practice_export([31])['items']);
+$snap = omochix_core_practice_import_snapshot($new_id);
+$GLOBALS['meta'][$new_id]['practice_summary'] = '書き換え後';
+$GLOBALS['meta'][$new_id]['practice_env'] = ['後から足した環境'];
+$items = omochix_core_practice_export_backup_to_items([$snap, ['nope' => 1]]);
+check('backup → items: a restore is explicit (every meta key and taxonomy present, empties as "" / []), relations as slugs', 1 === count($items) && $snap['meta']['practice_summary'] === $items[0]['meta']['practice_summary'] && [] === $items[0]['meta']['practice_env'] && '' === $items[0]['meta']['practice_outcome'] && [] === $items[0]['terms']['learn_usecase'] && ['cursor'] === $items[0]['relations']['tools'] && array_key_exists('menu_order', $items[0]) && count(omochix_core_get_practice_meta_schema()) - 5 === count($items[0]['meta']));
+$restore = omochix_core_practice_import_plan(wp_json_encode([$snap]));
+$restore_fields = !is_wp_error($restore) && $restore['rows'] ? array_column($restore['rows'][0]['changes'], 'field') : [];
+check('backup json: the importer accepts the snapshot list and plans the restore as an update back to the old values', !is_wp_error($restore) && 'backup' === $restore['source'] && [] === $restore['errors'] && 'update' === $restore['rows'][0]['action'] && in_array('practice_summary', $restore_fields, true) && in_array('practice_env', $restore_fields, true));
+check('backup json: {"backups": [...]} is accepted too, and a plain items file is not mistaken for a backup', !is_wp_error(omochix_core_practice_import_plan(wp_json_encode(['backups' => [$snap]]))) && null === omochix_core_practice_export_detect_backup(['version' => 1, 'items' => [['slug' => 'x']]]) && null === omochix_core_practice_export_detect_backup([['slug' => 'x']]));
+$GLOBALS['meta'][$new_id]['practice_summary'] = '要約';
+unset($GLOBALS['meta'][$new_id]['practice_env']);
+
 check('import: the sample files decode, validate without errors and carry the required fields', (static function () use ($imp) {
     $ok = true;
     foreach (glob(__DIR__ . '/../../wp-plugin/omochix-core/sample/practice/*.json') as $file) {

@@ -75,9 +75,10 @@ function get_post_type($id) { $p = get_post($id); return $p ? $p->post_type : fa
 function get_posts($args) {
     // Name lookups (importer): posts by post_type + post_name; otherwise the canned result.
     if (isset($args['name'])) { foreach ($GLOBALS['posts'] as $p) { if ($p->post_type === ($args['post_type'] ?? $p->post_type) && $p->post_name === $args['name']) { return ($args['fields'] ?? '') === 'ids' ? [$p->ID] : [$p]; } } return []; }
-    if (isset($args['post_type']) && 'learn_practice' === $args['post_type'] && ($args['fields'] ?? '') === 'ids' && !isset($GLOBALS['query_result'])) { return array_keys(array_filter($GLOBALS['posts'], static fn($p) => 'learn_practice' === $p->post_type)); }
+    if (isset($args['post_type']) && 'learn_practice' === $args['post_type'] && ($args['fields'] ?? '') === 'ids' && !isset($GLOBALS['query_result'])) { $st = isset($args['post_status']) ? (array) $args['post_status'] : null; return array_keys(array_filter($GLOBALS['posts'], static fn($p) => 'learn_practice' === $p->post_type && (null === $st || in_array($p->post_status, $st, true)))); }
     return $GLOBALS['query_result'] ?? [];
 }
+function get_page_uri($p) { $p = get_post($p); return $p ? ($GLOBALS['pages_by_id'][$p->ID] ?? $p->post_name) : ''; }
 function get_post_field($field, $id) { $p = get_post($id); return $p ? ($p->$field ?? '') : ''; }
 function wp_insert_post($a, $wp_error = false) { $id = max(array_keys($GLOBALS['posts'] ?: [0])) + 1; $GLOBALS['posts'][$id] = new WP_Post(['ID' => $id, 'post_type' => $a['post_type'], 'post_name' => $a['post_name'], 'post_title' => $a['post_title'] ?? '', 'post_status' => $a['post_status'] ?? 'draft', 'post_excerpt' => $a['post_excerpt'] ?? '', 'post_content' => $a['post_content'] ?? '', 'menu_order' => $a['menu_order'] ?? 0]); $GLOBALS['inserted'][] = $id; return $id; }
 function wp_update_post($a, $wp_error = false) { $p = $GLOBALS['posts'][$a['ID']] ?? null; if (!$p) { return 0; } foreach ($a as $k => $v) { if ('ID' !== $k) { $p->$k = is_string($v) ? stripslashes($v) : $v; } } return $a['ID']; }
@@ -115,6 +116,7 @@ require $PLUGIN . '/includes/practice-post-type.php';
 require $PLUGIN . '/includes/practice-taxonomies.php';
 require $PLUGIN . '/includes/practice-meta-schema.php';
 require $PLUGIN . '/includes/practice-relations.php';
+require $PLUGIN . '/includes/practice-exporter.php';
 require $PLUGIN . '/includes/practice-importer.php';
 require $THEME . '/inc/learn.php';
 require $THEME . '/inc/learn-composer.php';

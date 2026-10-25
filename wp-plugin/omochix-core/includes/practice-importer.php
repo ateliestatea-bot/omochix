@@ -92,6 +92,11 @@ function omochix_core_practice_import_decode( $contents ) {
 	if ( null === $decoded || JSON_ERROR_NONE !== json_last_error() ) {
 		return new WP_Error( 'invalid_json', sprintf( __( 'JSONの構文が正しくありません：%s', 'omochix-core' ), json_last_error_msg() ) );
 	}
+	// An import backup (the before-snapshot list the importer hands out) is a restore: it becomes explicit items.
+	$backups = is_array( $decoded ) && function_exists( 'omochix_core_practice_export_detect_backup' ) ? omochix_core_practice_export_detect_backup( $decoded ) : null;
+	if ( $backups ) {
+		$decoded = array( 'version' => 1, 'source' => 'backup', 'items' => omochix_core_practice_export_backup_to_items( $backups ) );
+	}
 	if ( ! is_array( $decoded ) || ! isset( $decoded['items'] ) || ! is_array( $decoded['items'] ) ) {
 		return new WP_Error( 'invalid_shape', __( 'JSONのトップレベルに "items" 配列が必要です（例：{"version": 1, "items": [ {"slug": "…", "title": "…"} ]}）。', 'omochix-core' ) );
 	}
@@ -479,6 +484,7 @@ function omochix_core_practice_import_plan( $contents ) {
 		'warnings' => $warnings,
 		'lint'     => $lint,
 		'hash'     => $hash,
+		'source'   => isset( $decoded['source'] ) && 'backup' === $decoded['source'] ? 'backup' : 'file',
 		'summary'  => array( 'total' => count( $decoded['items'] ), 'create' => $count( 'create' ), 'update' => $count( 'update' ), 'unchanged' => $count( 'unchanged' ), 'error_rows' => max( 0, count( $decoded['items'] ) - count( $rows ) ) ),
 	);
 }
