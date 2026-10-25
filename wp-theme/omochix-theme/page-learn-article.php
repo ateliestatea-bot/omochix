@@ -55,14 +55,20 @@ while (have_posts()) :
     ]);
     $omochix_siblings = $omochix_siblings_query->posts;
 
+    // Learn Phase 5: a field hub (learn/web, learn/apps, ...) is reached by
+    // field, so the sibling-order NEXT and 関連記事 (which would point at
+    // unrelated Learn sections) are replaced by the other field hubs.
+    $omochix_is_field_hub = function_exists('omochix_learn_practice_is_field_hub') && omochix_learn_practice_is_field_hub($omochix_learn_post);
+    $omochix_other_hubs   = $omochix_is_field_hub ? omochix_learn_practice_other_field_hubs($omochix_learn_post->post_name) : [];
+
     $omochix_next_post = null;
-    foreach ($omochix_siblings_query->posts as $omochix_sibling) {
+    foreach ($omochix_is_field_hub ? [] : $omochix_siblings_query->posts as $omochix_sibling) {
         if ((int) $omochix_sibling->menu_order > (int) $omochix_learn_post->menu_order) {
             $omochix_next_post = $omochix_sibling;
             break;
         }
     }
-    $omochix_related_posts = array_slice(array_filter($omochix_siblings, static function ($sibling) use ($omochix_next_post) {
+    $omochix_related_posts = $omochix_is_field_hub ? [] : array_slice(array_filter($omochix_siblings, static function ($sibling) use ($omochix_next_post) {
         return !$omochix_next_post || $sibling->ID !== $omochix_next_post->ID;
     }), 0, 3);
 
@@ -168,7 +174,24 @@ while (have_posts()) :
             </section>
         <?php endif; ?>
 
-        <?php if ($omochix_related_posts) : ?>
+        <?php if ($omochix_other_hubs) : ?>
+            <section class="learn-article__related learn-article__related--hubs" aria-labelledby="learn-related-title">
+                <div class="learn-article__container">
+                    <header class="learn-hub__section-header">
+                        <h2 id="learn-related-title"><?php esc_html_e('他の分野', 'omochix'); ?></h2>
+                    </header>
+                    <div class="learn-related__grid">
+                        <?php foreach ($omochix_other_hubs as $omochix_hub) : ?>
+                            <article class="learn-related-card">
+                                <a href="<?php echo esc_url($omochix_hub['url']); ?>">
+                                    <h3><?php echo esc_html($omochix_hub['name']); ?></h3>
+                                </a>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </section>
+        <?php elseif ($omochix_related_posts) : ?>
             <section class="learn-article__related" aria-labelledby="learn-related-title">
                 <div class="learn-article__container">
                     <header class="learn-hub__section-header">

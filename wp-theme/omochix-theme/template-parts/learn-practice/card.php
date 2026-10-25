@@ -23,14 +23,19 @@ $omochix_field   = $omochix_item['fields'] ? $omochix_item['fields'][0] : null;
 $omochix_poster  = $omochix_item['preview']['poster'] ? wp_get_attachment_image($omochix_item['preview']['poster'], 'medium_large', false, ['loading' => 'lazy', 'alt' => '']) : get_the_post_thumbnail($omochix_item['post'], 'medium_large', ['loading' => 'lazy', 'alt' => '']);
 $omochix_ai      = array_slice($omochix_item['ai'], 0, 3);
 ?>
+<?php
+// The whole card is one target: the title link is stretched over the card with
+// CSS (::after), so there is exactly one link and one tab stop per card and no
+// nested or duplicate links. The media block is plain markup.
+?>
 <article class="practice-card practice-card--<?php echo esc_attr($omochix_size); ?>" data-practice-card>
-    <a class="practice-card__media" href="<?php echo esc_url($omochix_item['url']); ?>" tabindex="-1" aria-hidden="true">
+    <div class="practice-card__media" aria-hidden="true">
         <?php if ($omochix_poster) : ?>
             <?php echo $omochix_poster; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_get_attachment_image output. ?>
         <?php else : ?>
             <span class="practice-card__placeholder practice-card__placeholder--<?php echo esc_attr($omochix_format ?: 'lesson'); ?>"><?php echo esc_html($omochix_format ? omochix_learn_practice_format_label($omochix_format) : ''); ?></span>
         <?php endif; ?>
-    </a>
+    </div>
     <div class="practice-card__body">
         <div class="practice-card__meta">
             <?php if ($omochix_field) : ?><span class="practice-badge practice-badge--field"><?php echo esc_html($omochix_field->name); ?></span><?php endif; ?>

@@ -19,7 +19,7 @@
 .practice-btn--ghost { color: var(--color-primary); background: transparent; }
 .practice-btn--ghost:hover { background: color-mix(in srgb, var(--color-primary) 8%, transparent); }
 .practice-btn.is-done { color: #fff; background: #1f8f5f; border-color: #1f8f5f; }
-.practice-btn:focus-visible, .practice-filter__chip:focus-visible, .practice-filter__segment:focus-visible, .practice-card__title a:focus-visible, .practice-outline a:focus-visible, .practice-links a:focus-visible {
+.practice-btn:focus-visible, .practice-filter__chip:focus-visible, .practice-filter__segment:focus-visible, .practice-outline a:focus-visible, .practice-links a:focus-visible {
     outline: 2px solid var(--color-primary); outline-offset: 3px;
 }
 .practice-badge { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 9px; font-size: 11.5px; font-weight: 700; line-height: 1.2; border-radius: 999px; background: var(--color-bg); border: 1px solid var(--color-line); color: var(--color-text); text-decoration: none; }
@@ -67,9 +67,15 @@
 .practice-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 @media (min-width: 640px) { .practice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1024px) { .practice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.practice-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); transition: transform var(--motion-base, 220ms) var(--ease-out, ease), box-shadow var(--motion-base, 220ms) var(--ease-out, ease); }
-.practice-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md, 0 12px 32px rgba(0, 0, 0, 0.12)); }
-.practice-card__media { display: block; aspect-ratio: 16 / 9; background: var(--color-bg); overflow: hidden; }
+.practice-card { position: relative; display: flex; flex-direction: column; min-width: 0; overflow: hidden; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); transition: transform var(--motion-base, 220ms) var(--ease-out, ease), box-shadow var(--motion-base, 220ms) var(--ease-out, ease), border-color var(--motion-base, 220ms) var(--ease-out, ease); }
+.practice-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md, 0 12px 32px rgba(0, 0, 0, 0.12)); border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-line)); }
+/* Whole-card target: the title link's ::after covers the card (one link, one tab stop; the keyboard ring is drawn on the card). */
+.practice-card__title a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.practice-card__title a:focus { outline: none; }
+.practice-card:focus-within { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.practice-card:has(.practice-card__title a:focus:not(:focus-visible)) { outline: none; }
+.practice-card:hover .practice-card__title a { color: var(--color-primary); }
+.practice-card__media { display: block; aspect-ratio: 16 / 9; background: var(--color-bg); overflow: hidden; pointer-events: none; }
 .practice-card__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .practice-card__placeholder { display: grid; place-items: center; width: 100%; height: 100%; color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; background: linear-gradient(135deg, var(--color-primary), #2563eb); }
 .practice-card__placeholder--project { background: linear-gradient(135deg, var(--color-primary), #d97706); }
@@ -100,6 +106,9 @@
 .learn-article .practice-related, .learn-hub .practice-related, .prompt-detail .practice-related, .tool-detail .practice-related { width: min(100% - 32px, 1120px); margin-inline: auto; }
 /* Learn articles and field hubs: the block sits between two ruled sections, so it carries its own symmetric padding (56px on desktop, 32px on phones) instead of a top margin. */
 .learn-article .practice-related { margin-top: 0; padding-block: clamp(32px, 6vw, 56px); }
+
+/* Field hubs: the "other fields" links lay out as a grid instead of the one-column article list. */
+.learn-article__related--hubs .learn-related__grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 
 /* --- single ---------------------------------------------------------- */
 .practice { padding-block: clamp(32px, 7vw, 56px) var(--section-space, 80px); }
