@@ -92,6 +92,11 @@ function omochix_core_practice_import_decode( $contents ) {
 	if ( null === $decoded || JSON_ERROR_NONE !== json_last_error() ) {
 		return new WP_Error( 'invalid_json', sprintf( __( 'JSONの構文が正しくありません：%s', 'omochix-core' ), json_last_error_msg() ) );
 	}
+	// An import backup (the before-snapshot list the importer hands out) is a restore: it becomes explicit items.
+	$backups = is_array( $decoded ) && function_exists( 'omochix_core_practice_export_detect_backup' ) ? omochix_core_practice_export_detect_backup( $decoded ) : null;
+	if ( $backups ) {
+		$decoded = array( 'version' => 1, 'source' => 'backup', 'items' => omochix_core_practice_export_backup_to_items( $backups ) );
+	}
 	if ( ! is_array( $decoded ) || ! isset( $decoded['items'] ) || ! is_array( $decoded['items'] ) ) {
 		return new WP_Error( 'invalid_shape', __( 'JSONのトップレベルに "items" 配列が必要です（例：{"version": 1, "items": [ {"slug": "…", "title": "…"} ]}）。', 'omochix-core' ) );
 	}
@@ -479,8 +484,23 @@ function omochix_core_practice_import_plan( $contents ) {
 		'warnings' => $warnings,
 		'lint'     => $lint,
 		'hash'     => $hash,
+		'source'   => isset( $decoded['source'] ) && 'backup' === $decoded['source'] ? 'backup' : 'file',
 		'summary'  => array( 'total' => count( $decoded['items'] ), 'create' => $count( 'create' ), 'update' => $count( 'update' ), 'unchanged' => $count( 'unchanged' ), 'error_rows' => max( 0, count( $decoded['items'] ) - count( $rows ) ) ),
 	);
+}
+
+/**
+ * Record the post's current state (fields and revisioned meta) as a revision,
+ * so an import update can be undone from the Revisions screen like an
+ * editor save. WordPress skips it when nothing changed since the last one.
+ *
+ * @param int $post_id Post ID.
+ * @return void
+ */
+function omochix_core_practice_import_revision( $post_id ) {
+	if ( function_exists( 'wp_save_post_revision' ) ) {
+		wp_save_post_revision( $post_id );
+	}
 }
 
 /** Full before-snapshot of a practice post for the downloadable rollback JSON. */
@@ -524,6 +544,7 @@ function omochix_core_practice_import_execute( $rows ) {
 		$post_id = (int) $row['post_id'];
 		if ( $post_id ) {
 			$result['backups'][] = omochix_core_practice_import_snapshot( $post_id );
+			omochix_core_practice_import_revision( $post_id ); // the state before this run, as a revision (meta included)
 			if ( $item['post'] ) {
 				$updated = wp_update_post( array_merge( array( 'ID' => $post_id ), wp_slash( $item['post'] ) ), true );
 				if ( is_wp_error( $updated ) ) {
@@ -548,6 +569,9 @@ function omochix_core_practice_import_execute( $rows ) {
 		}
 		foreach ( $item['terms'] as $taxonomy => $slugs ) {
 			wp_set_object_terms( $post_id, $slugs, $taxonomy, false );
+		}
+		if ( $row['post_id'] ) {
+			omochix_core_practice_import_revision( $post_id ); // the state after this run
 		}
 		$result['slugs'][] = $row['slug'];
 		$written[ $row['slug'] ] = $post_id;

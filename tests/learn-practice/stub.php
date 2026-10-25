@@ -52,7 +52,7 @@ $GLOBALS['posts'] = [];      // post_id => WP_Post
 $GLOBALS['options'] = [];
 
 class WP_Term { public $term_id, $name, $slug, $taxonomy, $count = 0, $description = ''; function __construct($a) { foreach ($a as $k => $v) { $this->$k = $v; } } }
-class WP_Error {}
+class WP_Error { public $code, $message, $data; function __construct($code = '', $message = '', $data = null) { $this->code = $code; $this->message = $message; $this->data = $data; } function get_error_message() { return $this->message; } function get_error_code() { return $this->code; } }
 class WP_Query { public $posts = []; public $found_posts = 0; function __construct($args = []) { $GLOBALS['last_query'] = $args; $this->posts = $GLOBALS['query_result'] ?? []; } }
 
 function register_post_type($name, $args) { $GLOBALS['registered']['post_types'][$name] = $args; }
@@ -75,9 +75,10 @@ function get_post_type($id) { $p = get_post($id); return $p ? $p->post_type : fa
 function get_posts($args) {
     // Name lookups (importer): posts by post_type + post_name; otherwise the canned result.
     if (isset($args['name'])) { foreach ($GLOBALS['posts'] as $p) { if ($p->post_type === ($args['post_type'] ?? $p->post_type) && $p->post_name === $args['name']) { return ($args['fields'] ?? '') === 'ids' ? [$p->ID] : [$p]; } } return []; }
-    if (isset($args['post_type']) && 'learn_practice' === $args['post_type'] && ($args['fields'] ?? '') === 'ids' && !isset($GLOBALS['query_result'])) { return array_keys(array_filter($GLOBALS['posts'], static fn($p) => 'learn_practice' === $p->post_type)); }
+    if (isset($args['post_type']) && 'learn_practice' === $args['post_type'] && ($args['fields'] ?? '') === 'ids' && !isset($GLOBALS['query_result'])) { $st = isset($args['post_status']) ? (array) $args['post_status'] : null; return array_keys(array_filter($GLOBALS['posts'], static fn($p) => 'learn_practice' === $p->post_type && (null === $st || in_array($p->post_status, $st, true)))); }
     return $GLOBALS['query_result'] ?? [];
 }
+function get_page_uri($p) { $p = get_post($p); return $p ? ($GLOBALS['pages_by_id'][$p->ID] ?? $p->post_name) : ''; }
 function get_post_field($field, $id) { $p = get_post($id); return $p ? ($p->$field ?? '') : ''; }
 function wp_insert_post($a, $wp_error = false) { $id = max(array_keys($GLOBALS['posts'] ?: [0])) + 1; $GLOBALS['posts'][$id] = new WP_Post(['ID' => $id, 'post_type' => $a['post_type'], 'post_name' => $a['post_name'], 'post_title' => $a['post_title'] ?? '', 'post_status' => $a['post_status'] ?? 'draft', 'post_excerpt' => $a['post_excerpt'] ?? '', 'post_content' => $a['post_content'] ?? '', 'menu_order' => $a['menu_order'] ?? 0]); $GLOBALS['inserted'][] = $id; return $id; }
 function wp_update_post($a, $wp_error = false) { $p = $GLOBALS['posts'][$a['ID']] ?? null; if (!$p) { return 0; } foreach ($a as $k => $v) { if ('ID' !== $k) { $p->$k = is_string($v) ? stripslashes($v) : $v; } } return $a['ID']; }
@@ -99,7 +100,20 @@ function esc_url_raw($u, $p = []) { return preg_match('#^https?://#i', (string) 
 function absint($v) { return abs((int) $v); }
 function wp_strip_all_tags($t) { return trim(strip_tags((string) $t)); }
 function get_post_type_archive_link($t) { return 'https://example.test/learn/practice/'; }
-function is_admin() { return false; }
+function is_admin() { return $GLOBALS['ctx']['is_admin'] ?? false; }
+if (!function_exists('set_transient')) { function set_transient($k, $v, $ttl = 0) { $GLOBALS['transients'][$k] = $v; return true; } }
+if (!function_exists('get_transient')) { function get_transient($k) { return $GLOBALS['transients'][$k] ?? false; } }
+if (!function_exists('delete_transient')) { function delete_transient($k) { unset($GLOBALS['transients'][$k]); return true; } }
+if (!function_exists('wp_verify_nonce')) { function wp_verify_nonce($n, $a) { return 'valid' === $n; } }
+if (!function_exists('get_current_user_id')) { function get_current_user_id() { return 1; } }
+function wp_save_post_revision($id) { $GLOBALS['revisions'][] = (int) $id; return 1; }
+if (!function_exists('esc_attr')) { function esc_attr($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); } }
+if (!function_exists('admin_url')) { function admin_url($p = '') { return 'https://example.test/wp-admin/' . ltrim($p, '/'); } }
+if (!function_exists('selected')) { function selected($a, $b, $echo = true) { return (string) $a === (string) $b ? ' selected="selected"' : ''; } }
+if (!function_exists('esc_html__')) { function esc_html__($t) { return esc_html($t); } }
+if (!function_exists('esc_html_e')) { function esc_html_e($t) { echo esc_html($t); } }
+if (!function_exists('wp_is_post_autosave')) { function wp_is_post_autosave($id) { return false; } }
+if (!function_exists('wp_is_post_revision')) { function wp_is_post_revision($id) { return false; } }
 function is_tax($t = '') { return $GLOBALS['ctx']['is_tax'] ?? false; }
 function is_post_type_archive($t = '') { return $GLOBALS['ctx']['is_archive'] ?? false; }
 function has_excerpt($p = null) { return false; }
@@ -115,6 +129,10 @@ require $PLUGIN . '/includes/practice-post-type.php';
 require $PLUGIN . '/includes/practice-taxonomies.php';
 require $PLUGIN . '/includes/practice-meta-schema.php';
 require $PLUGIN . '/includes/practice-relations.php';
+require $PLUGIN . '/includes/practice-exporter.php';
+require $PLUGIN . '/admin/practice-list-table.php';
+require $PLUGIN . '/includes/practice-publish-guard.php';
+require $PLUGIN . '/admin/save-practice-meta.php';
 require $PLUGIN . '/includes/practice-importer.php';
 require $THEME . '/inc/learn.php';
 require $THEME . '/inc/learn-composer.php';

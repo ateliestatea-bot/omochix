@@ -397,3 +397,26 @@
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
+
+/* --- Learn Practice list (Phase 6A-S2) ------------------------------- */
+.post-type-learn_practice .column-practice_level,
+.post-type-learn_practice .column-practice_minutes,
+.post-type-learn_practice .column-practice_verified,
+.post-type-learn_practice .column-practice_missing { width: 9%; }
+.post-type-learn_practice .column-practice_field,
+.post-type-learn_practice .column-practice_format { width: 12%; }
+.post-type-learn_practice .column-practice_slug { width: 14%; }
+.omochix-muted { color: #8c8f94; }
+.omochix-badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1.6; white-space: nowrap; }
+.omochix-badge--ok { color: #1d6d3a; background: #e3f3e8; }
+.omochix-badge--warn { color: #8a5a00; background: #fdf1d6; }
+.omochix-badge--error { color: #a3261c; background: #fbe4e2; }
+.omochix-practice-level--intermediate { font-weight: 600; }
+.omochix-practice-level--advanced { font-weight: 700; }
+
+/* --- Learn Practice JSON fields (Phase 6A-S5) ------------------------ */
+.omochix-json-tools { display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; }
+.omochix-json-status { font-size: 12px; }
+.omochix-json-status--ok { color: #1d6d3a; }
+.omochix-json-status--error { color: #a3261c; font-weight: 600; }
+textarea.code.is-invalid { border-color: #d63638; box-shadow: 0 0 0 1px #d63638; }

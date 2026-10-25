@@ -80,7 +80,12 @@ function omochix_core_practice_rows_field( $post, $key, $label, $example, $rows 
 	$id = 'omochix-' . str_replace( '_', '-', $key );
 	?>
 	<p><label for="<?php echo esc_attr( $id ); ?>"><strong><?php echo esc_html( $label ); ?></strong></label></p>
-	<textarea class="widefat code" id="<?php echo esc_attr( $id ); ?>" name="omochix_core_practice_meta[<?php echo esc_attr( $key ); ?>]" rows="<?php echo (int) $rows; ?>" spellcheck="false"><?php echo esc_textarea( omochix_core_practice_rows_json( omochix_core_practice_editor_value( $post, $key ) ) ); ?></textarea>
+	<textarea class="widefat code" id="<?php echo esc_attr( $id ); ?>" name="omochix_core_practice_meta[<?php echo esc_attr( $key ); ?>]" rows="<?php echo (int) $rows; ?>" spellcheck="false" data-json-rows><?php echo esc_textarea( omochix_core_practice_rows_json( omochix_core_practice_editor_value( $post, $key ) ) ); ?></textarea>
+	<p class="omochix-json-tools" data-json-tools="<?php echo esc_attr( $id ); ?>">
+		<button type="button" class="button button-small" data-json-format><?php esc_html_e( '整形', 'omochix-core' ); ?></button>
+		<button type="button" class="button button-small" data-json-validate><?php esc_html_e( '検証', 'omochix-core' ); ?></button>
+		<span class="omochix-json-status" data-json-status aria-live="polite"></span>
+	</p>
 	<p class="description"><?php esc_html_e( 'JSON の配列で入力します。例:', 'omochix-core' ); ?> <code><?php echo esc_html( $example ); ?></code></p>
 	<?php
 }
@@ -298,10 +303,14 @@ function omochix_core_practice_admin_notices() {
 		return;
 	}
 	$keys = get_transient( 'omochix_core_practice_json_error_' . $post_id );
-	if ( ! $keys ) {
-		return;
+	if ( $keys ) {
+		delete_transient( 'omochix_core_practice_json_error_' . $post_id );
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'JSON として読めなかったため、前回の値を保持しました: %s', 'omochix-core' ), implode( ', ', array_map( 'sanitize_key', (array) $keys ) ) ) ) . '</p></div>';
 	}
-	delete_transient( 'omochix_core_practice_json_error_' . $post_id );
-	echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'JSON として読めなかったため、前回の値を保持しました: %s', 'omochix-core' ), implode( ', ', array_map( 'sanitize_key', (array) $keys ) ) ) ) . '</p></div>';
+	$secret_keys = get_transient( 'omochix_core_practice_secret_error_' . $post_id );
+	if ( $secret_keys ) {
+		delete_transient( 'omochix_core_practice_secret_error_' . $post_id );
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( '秘密情報らしき文字列（API キー・トークン・Webhook URL・秘密鍵など）が含まれていたため保存しませんでした（前回の値を保持）: %s。プレースホルダー（＜ここに貼る：…＞）に置き換えてください。', 'omochix-core' ), implode( ', ', array_map( 'sanitize_key', (array) $secret_keys ) ) ) ) . '</p></div>';
+	}
 }
 add_action( 'admin_notices', 'omochix_core_practice_admin_notices' );
