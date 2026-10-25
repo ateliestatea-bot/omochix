@@ -138,3 +138,74 @@
 		setValue('practice_verified_at', rowData.dataset.verified || '');
 	};
 }());
+
+/**
+ * Practice JSON fields (Phase 6A-S5): 整形 / 検証 buttons and a live status
+ * for the rows textareas. The server still keeps the stored value when a
+ * field cannot be parsed; this only tells the editor before saving.
+ */
+(function () {
+	'use strict';
+	var strings = (window.omochixCorePractice && window.omochixCorePractice.strings) || {};
+	var T = function (key, fallback) { return strings[key] || fallback; };
+
+	function parseRows(text) {
+		var trimmed = text.trim();
+		if (trimmed === '') return { ok: true, empty: true, value: [] };
+		try {
+			var value = JSON.parse(trimmed);
+			if (!Array.isArray(value)) return { ok: false, message: T('notArray', 'JSON の配列（[ … ]）ではありません') };
+			for (var i = 0; i < value.length; i++) {
+				if (!value[i] || typeof value[i] !== 'object' || Array.isArray(value[i])) {
+					return { ok: false, message: T('rowNotObject', '行 ' + (i + 1) + ' がオブジェクト（{ … }）ではありません').replace('%d', String(i + 1)) };
+				}
+			}
+			return { ok: true, value: value, count: value.length };
+		} catch (error) {
+			return { ok: false, message: String(error.message || error) };
+		}
+	}
+
+	function report(tools, textarea, result) {
+		var status = tools.querySelector('[data-json-status]');
+		textarea.classList.toggle('is-invalid', !result.ok);
+		if (!status) return;
+		status.className = 'omochix-json-status ' + (result.ok ? 'omochix-json-status--ok' : 'omochix-json-status--error');
+		if (!result.ok) {
+			status.textContent = T('invalid', '読めません：') + result.message;
+		} else if (result.empty) {
+			status.textContent = T('empty', '空（保存すると項目を消します）');
+		} else {
+			status.textContent = T('valid', '%d 件の行').replace('%d', String(result.count));
+		}
+	}
+
+	document.querySelectorAll('[data-json-tools]').forEach(function (tools) {
+		var textarea = document.getElementById(tools.getAttribute('data-json-tools'));
+		if (!textarea) return;
+		var validate = function () { report(tools, textarea, parseRows(textarea.value)); };
+		var formatBtn = tools.querySelector('[data-json-format]');
+		var validateBtn = tools.querySelector('[data-json-validate]');
+		if (validateBtn) validateBtn.addEventListener('click', validate);
+		if (formatBtn) formatBtn.addEventListener('click', function () {
+			var result = parseRows(textarea.value);
+			if (result.ok && !result.empty) textarea.value = JSON.stringify(result.value, null, 2);
+			report(tools, textarea, result);
+		});
+		textarea.addEventListener('change', validate);
+	});
+
+	// Before saving, point at the first unparsable field (the server keeps its stored value).
+	var form = document.getElementById('post');
+	if (form) form.addEventListener('submit', function () {
+		var first = null;
+		document.querySelectorAll('[data-json-tools]').forEach(function (tools) {
+			var textarea = document.getElementById(tools.getAttribute('data-json-tools'));
+			if (!textarea) return;
+			var result = parseRows(textarea.value);
+			report(tools, textarea, result);
+			if (!result.ok && !first) first = textarea;
+		});
+		if (first) first.scrollIntoView({ block: 'center' });
+	});
+}());

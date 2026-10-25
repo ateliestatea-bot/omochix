@@ -413,3 +413,10 @@
 .omochix-badge--error { color: #a3261c; background: #fbe4e2; }
 .omochix-practice-level--intermediate { font-weight: 600; }
 .omochix-practice-level--advanced { font-weight: 700; }
+
+/* --- Learn Practice JSON fields (Phase 6A-S5) ------------------------ */
+.omochix-json-tools { display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; }
+.omochix-json-status { font-size: 12px; }
+.omochix-json-status--ok { color: #1d6d3a; }
+.omochix-json-status--error { color: #a3261c; font-weight: 600; }
+textarea.code.is-invalid { border-color: #d63638; box-shadow: 0 0 0 1px #d63638; }
