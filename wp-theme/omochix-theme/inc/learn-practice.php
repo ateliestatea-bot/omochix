@@ -104,6 +104,44 @@ function omochix_learn_practice_fields($with_empty = true) {
 }
 
 /**
+ * Whether a Learn page is a field hub: a direct child of the Learn page whose
+ * slug is a learn_field term ("learn/web", "learn/apps", ...). Hubs are
+ * navigated by field, not by the article NEXT / sibling order.
+ *
+ * @param WP_Post|int|null $page Page.
+ * @return bool
+ */
+function omochix_learn_practice_is_field_hub($page) {
+    $page = get_post($page);
+    if (!$page instanceof WP_Post || 'page' !== $page->post_type || !omochix_learn_practice_enabled()) {
+        return false;
+    }
+    return (int) $page->post_parent === (int) omochix_get_learn_page_id() && taxonomy_exists('learn_field') && (bool) term_exists($page->post_name, 'learn_field');
+}
+
+/**
+ * The other field hubs, in field order, as [url, name] pairs: the Motion
+ * Gallery for "motion", the published hub pages for the rest. Used instead of
+ * NEXT / 関連記事 on a hub page.
+ *
+ * @param string $except_slug Field slug to leave out (the current hub).
+ * @return array<int, array{url: string, name: string}>
+ */
+function omochix_learn_practice_other_field_hubs($except_slug = '') {
+    $out = [];
+    foreach (omochix_learn_practice_fields(true) as $slug => $term) {
+        if ($slug === $except_slug) {
+            continue;
+        }
+        $url = omochix_learn_practice_field_hub_url($slug);
+        if ($url) {
+            $out[] = ['url' => $url, 'name' => $term->name];
+        }
+    }
+    return $out;
+}
+
+/**
  * The published Learn page acting as a field's hub ("learn/{field slug}").
  * "motion" is special: its hub is the Motion Gallery page.
  *
@@ -127,11 +165,11 @@ function omochix_learn_practice_field_hub_url($field_slug) {
  * become '' so a mistyped URL shows the full list instead of an empty one.
  *
  * @param array<string, mixed> $source Usually $_GET.
- * @return array{field: string, format: string, level: string, ai: string, tech: string, q: string}
+ * @return array{field: string, format: string, level: string, ai: string, tech: string, usecase: string, q: string}
  */
 function omochix_learn_practice_sanitize_filters(array $source) {
-    $filters = ['field' => '', 'format' => '', 'level' => '', 'ai' => '', 'tech' => '', 'q' => ''];
-    foreach (['field', 'format', 'ai', 'tech'] as $key) {
+    $filters = ['field' => '', 'format' => '', 'level' => '', 'ai' => '', 'tech' => '', 'usecase' => '', 'q' => ''];
+    foreach (['field', 'format', 'ai', 'tech', 'usecase'] as $key) {
         $value = isset($source[$key]) ? sanitize_title((string) wp_unslash($source[$key])) : '';
         if ('' !== $value && taxonomy_exists(OMOCHIX_LEARN_PRACTICE_TAXONOMIES[$key]) && term_exists($value, OMOCHIX_LEARN_PRACTICE_TAXONOMIES[$key])) {
             $filters[$key] = $value;
@@ -186,8 +224,8 @@ function omochix_learn_practice_pre_get_posts($query) {
     $query->set('posts_per_page', OMOCHIX_LEARN_PRACTICE_PER_PAGE);
     $query->set('orderby', ['menu_order' => 'ASC', 'date' => 'DESC']);
 
-    $tax_query = (array) $query->get('tax_query');
-    foreach (['field', 'format', 'ai', 'tech'] as $key) {
+    $tax_query = array_filter((array) $query->get('tax_query'), 'is_array'); // get() returns '' when unset
+    foreach (['field', 'format', 'ai', 'tech', 'usecase'] as $key) {
         if ('' !== $filters[$key]) {
             $tax_query[] = ['taxonomy' => OMOCHIX_LEARN_PRACTICE_TAXONOMIES[$key], 'field' => 'slug', 'terms' => $filters[$key]];
         }

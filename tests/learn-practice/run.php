@@ -95,6 +95,25 @@ $_GET = ['field' => 'web', 'level' => 'beginner', 'q' => 'form', 'tech' => 'verc
 omochix_learn_practice_pre_get_posts($q);
 check('archive query: tax_query AND over field/tech, level via meta, keyword via s, 12 per page', 12 === $q->vars['posts_per_page'] && 'AND' === $q->vars['tax_query']['relation'] && 2 === count(array_filter($q->vars['tax_query'], 'is_array')) && 'beginner' === $q->vars['meta_query'][0]['value'] && 'form' === $q->vars['s']);
 $_GET = [];
+// Phase 5C: usecase is a filter like the other taxonomies (only when the term exists).
+$GLOBALS['terms']['learn_usecase']['portfolio'] = ['name' => 'ポートフォリオ'];
+$fu = omochix_learn_practice_sanitize_filters(['usecase' => 'portfolio', 'field' => 'web']);
+$fx = omochix_learn_practice_sanitize_filters(['usecase' => 'nope']);
+check('filters: usecase is sanitized against learn_usecase and appears in the url', 'portfolio' === $fu['usecase'] && '' === $fx['usecase'] && 'https://example.test/learn/practice/?field=web&usecase=portfolio' === omochix_learn_practice_url($fu));
+$q2 = new class { public $vars = []; function is_main_query() { return true; } function is_post_type_archive($t) { return true; } function is_tax($t) { return false; } function get($k) { return $this->vars[$k] ?? ''; } function set($k, $v) { $this->vars[$k] = $v; } };
+$_GET = ['usecase' => 'portfolio'];
+omochix_learn_practice_pre_get_posts($q2);
+$clauses = array_values(array_filter($q2->vars['tax_query'], 'is_array'));
+check('archive query: usecase filters through tax_query (a single clause gets no relation)', 1 === count($clauses) && !isset($q2->vars['tax_query']['relation']) && 'learn_usecase' === $clauses[0]['taxonomy'] && 'portfolio' === $clauses[0]['terms']);
+$_GET = [];
+
+// Phase 5A: field hubs are the Learn children whose slug is a field term.
+$hub = new WP_Post(['ID' => 20, 'post_name' => 'web', 'post_parent' => 1, 'post_type' => 'page']);
+$article = new WP_Post(['ID' => 21, 'post_name' => 'github', 'post_parent' => 5, 'post_type' => 'page']);
+$section = new WP_Post(['ID' => 22, 'post_name' => 'basics', 'post_parent' => 1, 'post_type' => 'page']);
+check('field hub: learn/web is a hub, learn/basics and a deep article are not', omochix_learn_practice_is_field_hub($hub) && !omochix_learn_practice_is_field_hub($section) && !omochix_learn_practice_is_field_hub($article) && !omochix_learn_practice_is_field_hub(null));
+$others = omochix_learn_practice_other_field_hubs('web');
+check('field hub: the other hubs list skips the current one, keeps field order and maps motion to the gallery', !in_array('Webサイト・LP制作', array_column($others, 'name'), true) && in_array('https://example.test/learn/motion/', array_column($others, 'url'), true) && count($others) >= 1 && count($others) === count(array_filter($others, static fn($h) => '' !== $h['url'])));
 
 // ------------------------------------------------------------------ brief
 $brief = omochix_learn_practice_brief(10, 'claude-code');

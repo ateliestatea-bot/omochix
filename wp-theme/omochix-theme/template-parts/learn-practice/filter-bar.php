@@ -1,7 +1,7 @@
 <?php
 /**
- * Practice list filter bar: field chips, format segments, level / AI / tech
- * selects, keyword, reset and result count. A plain GET form; JS only
+ * Practice list filter bar: field chips, format segments, level / AI / tech /
+ * usecase selects, keyword, reset and result count. A plain GET form; JS only
  * auto-submits selects and hides the submit button.
  *
  * Args:
@@ -22,6 +22,7 @@ $omochix_other   = array_diff_key($omochix_filters, ['field' => true]);
 $omochix_fields  = omochix_learn_practice_fields(false);
 $omochix_ai      = omochix_learn_practice_terms('learn_ai');
 $omochix_tech    = omochix_learn_practice_terms('learn_tech');
+$omochix_usecase = omochix_learn_practice_terms('learn_usecase');
 ?>
 <form class="practice-filter" method="get" action="<?php echo esc_url($omochix_list); ?>" data-practice-filter aria-label="<?php esc_attr_e('教材の絞り込み', 'omochix'); ?>">
     <div class="practice-filter__chips" role="group" aria-label="<?php esc_attr_e('分野', 'omochix'); ?>">
@@ -65,6 +66,14 @@ $omochix_tech    = omochix_learn_practice_terms('learn_tech');
                 <select name="tech" data-practice-auto>
                     <option value=""><?php esc_html_e('すべて', 'omochix'); ?></option>
                     <?php foreach ($omochix_tech as $omochix_slug => $omochix_term) : ?><option value="<?php echo esc_attr($omochix_slug); ?>" <?php selected($omochix_filters['tech'], $omochix_slug); ?>><?php echo esc_html($omochix_term->name); ?></option><?php endforeach; ?>
+                </select>
+            </label>
+        <?php endif; ?>
+        <?php if ($omochix_usecase) : ?>
+            <label class="practice-filter__select"><span><?php esc_html_e('用途', 'omochix'); ?></span>
+                <select name="usecase" data-practice-auto>
+                    <option value=""><?php esc_html_e('すべて', 'omochix'); ?></option>
+                    <?php foreach ($omochix_usecase as $omochix_slug => $omochix_term) : ?><option value="<?php echo esc_attr($omochix_slug); ?>" <?php selected($omochix_filters['usecase'], $omochix_slug); ?>><?php echo esc_html($omochix_term->name); ?></option><?php endforeach; ?>
                 </select>
             </label>
         <?php endif; ?>
