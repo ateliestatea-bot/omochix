@@ -359,12 +359,14 @@ function omochix_core_save_practice_inline_meta( $post_id ) {
 	if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
 		return;
 	}
+	// Quick edit arrives as an AJAX POST; bulk edit is the list form, which WordPress submits as GET
+	// (core itself reads it from $_REQUEST), so the bulk values are read from $_REQUEST.
 	$is_quick = isset( $_POST['_inline_edit'], $_POST['omochix_practice_quick'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_inline_edit'] ) ), 'inlineeditnonce' );
-	$is_bulk  = isset( $_POST['_wpnonce'], $_POST['omochix_practice_bulk'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'bulk-posts' );
+	$is_bulk  = ! $is_quick && isset( $_REQUEST['_wpnonce'], $_REQUEST['omochix_practice_bulk'], $_REQUEST['bulk_edit'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'bulk-posts' );
 	if ( ! $is_quick && ! $is_bulk ) {
 		return;
 	}
-	$submitted = $is_quick ? $_POST['omochix_practice_quick'] : $_POST['omochix_practice_bulk']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per key below.
+	$submitted = $is_quick ? $_POST['omochix_practice_quick'] : $_REQUEST['omochix_practice_bulk']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per key below.
 	if ( ! is_array( $submitted ) ) {
 		return;
 	}

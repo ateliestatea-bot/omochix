@@ -77,7 +77,10 @@ function omochix_core_practice_rows_json( $rows ) {
  * @return void
  */
 function omochix_core_practice_rows_field( $post, $key, $label, $example, $rows = 10 ) {
-	$id = 'omochix-' . str_replace( '_', '-', $key );
+	// "omochix-field-…": the meta box containers already use "omochix-practice-…" as their ids,
+	// so a field id built from the key alone would collide with its own panel (and the JSON
+	// tools / label would address the <div> instead of the textarea).
+	$id = 'omochix-field-' . str_replace( '_', '-', $key );
 	?>
 	<p><label for="<?php echo esc_attr( $id ); ?>"><strong><?php echo esc_html( $label ); ?></strong></label></p>
 	<textarea class="widefat code" id="<?php echo esc_attr( $id ); ?>" name="omochix_core_practice_meta[<?php echo esc_attr( $key ); ?>]" rows="<?php echo (int) $rows; ?>" spellcheck="false" data-json-rows><?php echo esc_textarea( omochix_core_practice_rows_json( omochix_core_practice_editor_value( $post, $key ) ) ); ?></textarea>

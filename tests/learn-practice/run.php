@@ -251,6 +251,13 @@ $w2 = omochix_core_practice_apply_inline_meta($new_id, ['practice_difficulty' =>
 check('quick edit: an unknown level falls back, an empty minutes clears, an unparsable date keeps the stored one', ['practice_difficulty', 'practice_minutes'] === $w2 && 'beginner' === $GLOBALS['meta'][$new_id]['practice_difficulty'] && !isset($GLOBALS['meta'][$new_id]['practice_minutes']) && '2026-10-25' === $GLOBALS['meta'][$new_id]['practice_verified_at']);
 $w3 = omochix_core_practice_apply_inline_meta($new_id, ['practice_difficulty' => '', 'practice_minutes' => '99', 'practice_verified_at' => ''], true);
 check('bulk edit: only difficulty is allowed and "" leaves it unchanged', [] === $w3 && 'beginner' === $GLOBALS['meta'][$new_id]['practice_difficulty'] && !isset($GLOBALS['meta'][$new_id]['practice_minutes']));
+$_REQUEST = ['_wpnonce' => 'valid', 'bulk_edit' => '更新', 'omochix_practice_bulk' => ['practice_difficulty' => 'advanced']]; $_POST = [];
+omochix_core_save_practice_inline_meta($new_id);
+check('bulk edit: the list form is a GET submission, so the handler reads the bulk values from the request (not only $_POST)', 'advanced' === $GLOBALS['meta'][$new_id]['practice_difficulty']);
+$_REQUEST = ['_wpnonce' => 'nope', 'bulk_edit' => '更新', 'omochix_practice_bulk' => ['practice_difficulty' => 'beginner']];
+omochix_core_save_practice_inline_meta($new_id);
+check('bulk edit: a bad nonce writes nothing', 'advanced' === $GLOBALS['meta'][$new_id]['practice_difficulty']);
+$_REQUEST = []; $GLOBALS['meta'][$new_id]['practice_difficulty'] = 'beginner';
 unset($GLOBALS['meta'][$new_id]['practice_difficulty'], $GLOBALS['meta'][$new_id]['practice_verified_at']);
 
 // ------------------------------------------------ meta revisions (6A-S4)
@@ -261,6 +268,14 @@ $rev_after = $GLOBALS['revisions'];
 $GLOBALS['revisions'] = [];
 omochix_core_practice_import_execute($imp([['slug' => 'rev-new-item', 'title' => 'New']])['rows']);
 check('import revisions: an update records the post before and after the run; a create records nothing extra', [$new_id, $new_id] === $rev_after && [] === $GLOBALS['revisions']);
+$GLOBALS['posts'][900] = new WP_Post(['ID' => 900, 'post_type' => 'revision', 'post_parent' => 10, 'post_title' => $GLOBALS['posts'][10]->post_title, 'post_content' => $GLOBALS['posts'][10]->post_content, 'post_excerpt' => $GLOBALS['posts'][10]->post_excerpt]);
+foreach (array_keys(omochix_core_get_practice_meta_schema()) as $rk) { if (isset($GLOBALS['meta'][10][$rk])) { $GLOBALS['meta'][900][$rk] = $GLOBALS['meta'][10][$rk]; } }
+check('revision change check: a revision carrying the same fields and meta is "unchanged" even though the post answers defaults for missing keys', false === omochix_core_practice_revision_has_changed(true, $GLOBALS['posts'][900], $GLOBALS['posts'][10]));
+$GLOBALS['meta'][900]['practice_minutes'] = '999';
+check('revision change check: a differing meta value is a change; another post type keeps core\'s verdict', true === omochix_core_practice_revision_has_changed(false, $GLOBALS['posts'][900], $GLOBALS['posts'][10]) && true === omochix_core_practice_revision_has_changed(true, $GLOBALS['posts'][900], $GLOBALS['posts'][30]));
+$GLOBALS['meta'][900]['practice_minutes'] = $GLOBALS['meta'][10]['practice_minutes']; $GLOBALS['posts'][900]->post_title = 'other';
+check('revision change check: a differing title is a change', true === omochix_core_practice_revision_has_changed(false, $GLOBALS['posts'][900], $GLOBALS['posts'][10]));
+unset($GLOBALS['posts'][900], $GLOBALS['meta'][900]);
 unset($GLOBALS['meta'][$new_id]['practice_outcome']);
 
 // ------------------------------------------------- publish guard (6A-S3)

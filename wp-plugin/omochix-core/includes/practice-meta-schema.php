@@ -333,6 +333,58 @@ function omochix_core_practice_rest_schema( $field ) {
 }
 
 /**
+ * Normalised form of a practice meta value for change detection: missing,
+ * "", [], 0 and "0" are all "empty"; arrays compare by their JSON.
+ *
+ * @param mixed $value Stored value.
+ * @return string
+ */
+function omochix_core_practice_revision_normalize( $value ) {
+	if ( null === $value || '' === $value || array() === $value || 0 === $value || '0' === $value || false === $value ) {
+		return '';
+	}
+	return is_array( $value ) ? (string) wp_json_encode( $value ) : (string) $value;
+}
+
+/**
+ * Decide whether a practice post differs from its latest revision.
+ *
+ * Core compares revisioned meta with get_post_meta( $id, $key ) on both sides;
+ * the post answers with the registered default ([""] / [0] / [[]]) for keys it
+ * does not have while the revision answers [], so every save looked changed and
+ * each editor save produced two revisions. Compare single values, normalised.
+ *
+ * @param bool    $post_has_changed Core's verdict.
+ * @param WP_Post $latest_revision  Latest revision.
+ * @param WP_Post $post             The post.
+ * @return bool
+ */
+function omochix_core_practice_revision_has_changed( $post_has_changed, $latest_revision, $post ) {
+	if ( ! $post instanceof WP_Post || OMOCHIX_CORE_PRACTICE_POST_TYPE !== $post->post_type || ! $latest_revision instanceof WP_Post ) {
+		return $post_has_changed;
+	}
+	$fields = function_exists( '_wp_post_revision_fields' ) ? array_keys( _wp_post_revision_fields( $post ) ) : array( 'post_title', 'post_content', 'post_excerpt' );
+	foreach ( $fields as $field ) {
+		$a = (string) ( $post->$field ?? '' );
+		$b = (string) ( $latest_revision->$field ?? '' );
+		if ( function_exists( 'normalize_whitespace' ) ) {
+			$a = normalize_whitespace( $a );
+			$b = normalize_whitespace( $b );
+		}
+		if ( $a !== $b ) {
+			return true;
+		}
+	}
+	foreach ( array_keys( omochix_core_get_practice_meta_schema() ) as $key ) {
+		if ( omochix_core_practice_revision_normalize( get_post_meta( $post->ID, $key, true ) ) !== omochix_core_practice_revision_normalize( get_post_meta( $latest_revision->ID, $key, true ) ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+add_filter( 'wp_save_post_revision_post_has_changed', 'omochix_core_practice_revision_has_changed', 10, 3 );
+
+/**
  * Register all public, typed Learn Practice meta.
  *
  * @return void
