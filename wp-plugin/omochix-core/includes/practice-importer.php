@@ -489,6 +489,20 @@ function omochix_core_practice_import_plan( $contents ) {
 	);
 }
 
+/**
+ * Record the post's current state (fields and revisioned meta) as a revision,
+ * so an import update can be undone from the Revisions screen like an
+ * editor save. WordPress skips it when nothing changed since the last one.
+ *
+ * @param int $post_id Post ID.
+ * @return void
+ */
+function omochix_core_practice_import_revision( $post_id ) {
+	if ( function_exists( 'wp_save_post_revision' ) ) {
+		wp_save_post_revision( $post_id );
+	}
+}
+
 /** Full before-snapshot of a practice post for the downloadable rollback JSON. */
 function omochix_core_practice_import_snapshot( $post_id ) {
 	$post = get_post( $post_id );
@@ -530,6 +544,7 @@ function omochix_core_practice_import_execute( $rows ) {
 		$post_id = (int) $row['post_id'];
 		if ( $post_id ) {
 			$result['backups'][] = omochix_core_practice_import_snapshot( $post_id );
+			omochix_core_practice_import_revision( $post_id ); // the state before this run, as a revision (meta included)
 			if ( $item['post'] ) {
 				$updated = wp_update_post( array_merge( array( 'ID' => $post_id ), wp_slash( $item['post'] ) ), true );
 				if ( is_wp_error( $updated ) ) {
@@ -554,6 +569,9 @@ function omochix_core_practice_import_execute( $rows ) {
 		}
 		foreach ( $item['terms'] as $taxonomy => $slugs ) {
 			wp_set_object_terms( $post_id, $slugs, $taxonomy, false );
+		}
+		if ( $row['post_id'] ) {
+			omochix_core_practice_import_revision( $post_id ); // the state after this run
 		}
 		$result['slugs'][] = $row['slug'];
 		$written[ $row['slug'] ] = $post_id;

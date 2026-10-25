@@ -349,6 +349,9 @@ function omochix_core_register_practice_post_meta() {
 				'show_in_rest'      => 'array' === $field['type'] ? array( 'schema' => omochix_core_practice_rest_schema( $field ) ) : true,
 				'sanitize_callback' => 'omochix_core_sanitize_registered_practice_meta',
 				'auth_callback'     => 'omochix_core_auth_registered_practice_meta',
+				// Phase 6A: every save (editor, quick edit, importer) keeps the meta in the
+				// post revision, and "この版に戻す" restores it with the post fields (WP 6.4+).
+				'revisions_enabled' => true,
 			)
 		);
 	}

@@ -23,6 +23,7 @@ check('seed: 8 fields, 5 formats, 10 ai, 14 tech; idempotent', 8 === count($GLOB
 check('seed: learn_ai slugs match ai_tool post names in style (lowercase, hyphen)', !array_filter(array_keys($GLOBALS['terms']['learn_ai']), static fn($s) => !preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $s)));
 $schema = omochix_core_get_practice_meta_schema();
 check('meta: every schema key is registered on learn_practice with sanitize and auth callbacks', count($schema) === count($GLOBALS['registered']['meta']['learn_practice']) && !array_filter($GLOBALS['registered']['meta']['learn_practice'], static fn($a) => 'omochix_core_sanitize_registered_practice_meta' !== $a['sanitize_callback'] || 'omochix_core_auth_registered_practice_meta' !== $a['auth_callback'] || true !== $a['single']));
+check('meta: every schema key is revisioned (revisions_enabled) so editor, quick-edit and import saves can be restored', !array_filter($GLOBALS['registered']['meta']['learn_practice'], static fn($a) => true !== ($a['revisions_enabled'] ?? false)));
 $steps_rest = $GLOBALS['registered']['meta']['learn_practice']['practice_steps']['show_in_rest']['schema'];
 check('meta: rows fields expose an object schema in REST (string keys, nullable ints), id arrays are integer items', 'object' === $steps_rest['items']['type'] && ['integer', 'null'] === $steps_rest['items']['properties']['prompt']['type'] && 'string' === $steps_rest['items']['properties']['title']['type'] && false === $steps_rest['items']['additionalProperties'] && 'integer' === $GLOBALS['registered']['meta']['learn_practice']['related_tool_ids']['show_in_rest']['schema']['items']['type']);
 check('flush: once per rewrite version, seeding terms', (omochix_core_practice_maybe_flush_rewrite_rules() ?? true) && 1 === ($GLOBALS['flushed'] ?? 0) && (omochix_core_practice_maybe_flush_rewrite_rules() ?? true) && 1 === $GLOBALS['flushed'] && '1' === $GLOBALS['options']['omochix_core_practice_rewrite_version']);
@@ -251,6 +252,16 @@ check('quick edit: an unknown level falls back, an empty minutes clears, an unpa
 $w3 = omochix_core_practice_apply_inline_meta($new_id, ['practice_difficulty' => '', 'practice_minutes' => '99', 'practice_verified_at' => ''], true);
 check('bulk edit: only difficulty is allowed and "" leaves it unchanged', [] === $w3 && 'beginner' === $GLOBALS['meta'][$new_id]['practice_difficulty'] && !isset($GLOBALS['meta'][$new_id]['practice_minutes']));
 unset($GLOBALS['meta'][$new_id]['practice_difficulty'], $GLOBALS['meta'][$new_id]['practice_verified_at']);
+
+// ------------------------------------------------ meta revisions (6A-S4)
+$GLOBALS['revisions'] = [];
+$rev_plan = $imp([['slug' => 'login-dashboard', 'meta' => ['practice_outcome' => 'リビジョン用']]]);
+omochix_core_practice_import_execute($rev_plan['rows']);
+$rev_after = $GLOBALS['revisions'];
+$GLOBALS['revisions'] = [];
+omochix_core_practice_import_execute($imp([['slug' => 'rev-new-item', 'title' => 'New']])['rows']);
+check('import revisions: an update records the post before and after the run; a create records nothing extra', [$new_id, $new_id] === $rev_after && [] === $GLOBALS['revisions']);
+unset($GLOBALS['meta'][$new_id]['practice_outcome']);
 
 // ------------------------------------------------- publish guard (6A-S3)
 $GLOBALS['transients'] = [];

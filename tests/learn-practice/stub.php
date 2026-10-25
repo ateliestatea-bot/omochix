@@ -106,6 +106,7 @@ if (!function_exists('get_transient')) { function get_transient($k) { return $GL
 if (!function_exists('delete_transient')) { function delete_transient($k) { unset($GLOBALS['transients'][$k]); return true; } }
 if (!function_exists('wp_verify_nonce')) { function wp_verify_nonce($n, $a) { return 'valid' === $n; } }
 if (!function_exists('get_current_user_id')) { function get_current_user_id() { return 1; } }
+function wp_save_post_revision($id) { $GLOBALS['revisions'][] = (int) $id; return 1; }
 if (!function_exists('esc_attr')) { function esc_attr($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'); } }
 if (!function_exists('admin_url')) { function admin_url($p = '') { return 'https://example.test/wp-admin/' . ltrim($p, '/'); } }
 if (!function_exists('selected')) { function selected($a, $b, $echo = true) { return (string) $a === (string) $b ? ' selected="selected"' : ''; } }
