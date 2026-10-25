@@ -252,6 +252,52 @@ $w3 = omochix_core_practice_apply_inline_meta($new_id, ['practice_difficulty' =>
 check('bulk edit: only difficulty is allowed and "" leaves it unchanged', [] === $w3 && 'beginner' === $GLOBALS['meta'][$new_id]['practice_difficulty'] && !isset($GLOBALS['meta'][$new_id]['practice_minutes']));
 unset($GLOBALS['meta'][$new_id]['practice_difficulty'], $GLOBALS['meta'][$new_id]['practice_verified_at']);
 
+// ------------------------------------------------- publish guard (6A-S3)
+$GLOBALS['transients'] = [];
+$b10  = omochix_core_practice_publish_blockers(omochix_core_practice_effective_meta(10, []), ['title' => 'ok']);
+$bnew = omochix_core_practice_publish_blockers(omochix_core_practice_effective_meta($new_id, []), ['title' => 'uses sk-' . str_repeat('a', 30)]);
+check('guard: the complete fixture has no blockers; the minimal item lists missing keys and a secret in the title', [] === $b10['missing'] && [] === $b10['secrets'] && in_array('practice_outcome', $bnew['missing'], true) && 1 === count($bnew['secrets']) && 'title' === $bnew['secrets'][0]['path']);
+$eff = omochix_core_practice_effective_meta($new_id, ['practice_outcome' => '完成', 'practice_steps' => '{bad json', 'related_prompt_ids' => [1], 'nope' => 'x']);
+check('guard: submitted fields overlay stored meta; unparsable JSON rows, relation ids and unknown keys are ignored', '完成' === $eff['practice_outcome'] && $eff['practice_steps'] === get_post_meta($new_id, 'practice_steps', true) && [30] === $eff['related_prompt_ids'] && !array_key_exists('nope', $eff));
+$publish = ['post_type' => 'learn_practice', 'post_status' => 'publish', 'post_title' => 'T', 'post_content' => '', 'post_excerpt' => ''];
+$d1 = omochix_core_practice_guard_insert_data($publish, ['ID' => $new_id]);
+check('guard (classic): an incomplete draft asked to publish is held as draft and the reasons are remembered', 'draft' === $d1['post_status'] && 'blocked' === $GLOBALS['transients'][OMOCHIX_CORE_PRACTICE_GUARD_TRANSIENT . $new_id]['type'] && str_contains(implode(' ', $GLOBALS['transients'][OMOCHIX_CORE_PRACTICE_GUARD_TRANSIENT . $new_id]['lines']), 'practice_outcome'));
+$fill = ['practice_summary' => '要約', 'practice_minutes' => '30', 'practice_outcome' => '完成', 'practice_prompts' => '[{"title":"a","for":"claude-code","body":"b"}]', 'practice_steps' => '[{"title":"s","body":"<p>x</p>"}]', 'practice_verify' => '[{"title":"v","how":"h","expect":"e"}]', 'practice_safety' => 'x', 'practice_verified_at' => '2026-10-25', 'practice_sources' => '[{"label":"l","url":"https://example.test/"}]'];
+$_POST['omochix_core_practice_meta'] = $fill;
+$d2 = omochix_core_practice_guard_insert_data($publish, ['ID' => $new_id]);
+check('guard (classic): the meta-box fields submitted with the same request count, so a complete form publishes', 'publish' === $d2['post_status']);
+$_POST = [];
+$GLOBALS['posts'][$new_id]->post_status = 'publish';
+$d3 = omochix_core_practice_guard_insert_data(array_merge($publish, ['post_title' => 'sk-' . str_repeat('b', 30)]), ['ID' => $new_id]);
+check('guard (classic): a live item is never demoted; the gap is remembered as a warning', 'publish' === $d3['post_status'] && 'warn' === $GLOBALS['transients'][OMOCHIX_CORE_PRACTICE_GUARD_TRANSIENT . $new_id]['type']);
+$GLOBALS['posts'][$new_id]->post_status = 'draft';
+$d4 = omochix_core_practice_guard_insert_data(['post_type' => 'learn_practice', 'post_status' => 'draft'], ['ID' => $new_id]);
+$d5 = omochix_core_practice_guard_insert_data(['post_type' => 'post', 'post_status' => 'publish'], ['ID' => 5]);
+check('guard (classic): saving a draft, or another post type, is never touched', 'draft' === $d4['post_status'] && 'publish' === $d5['post_status']);
+$prep = (object) ['ID' => $new_id, 'post_status' => 'publish', 'post_title' => 'T'];
+$r1 = omochix_core_practice_guard_rest($prep, new ArrayObject(['meta' => []]));
+check('guard (REST): publishing an incomplete item returns a WP_Error that asks for 下書き保存 first', is_wp_error($r1) && 'omochix_practice_blocked' === $r1->get_error_code() && str_contains($r1->get_error_message(), '下書き保存') && 400 === $r1->data['status']);
+$fill_arrays = array_map(static fn($v) => is_string($v) && str_starts_with($v, '[') ? json_decode($v, true) : $v, $fill);
+$r2 = omochix_core_practice_guard_rest($prep, new ArrayObject(['meta' => $fill_arrays]));
+$r3 = omochix_core_practice_guard_rest((object) ['ID' => 10, 'post_status' => 'publish'], new ArrayObject([]));
+check('guard (REST): meta sent with the request counts, and a complete item passes', $r2 === $prep && !is_wp_error($r3));
+$GLOBALS['posts'][$new_id]->post_status = 'publish';
+$r4 = omochix_core_practice_guard_rest($prep, new ArrayObject(['meta' => []]));
+$GLOBALS['posts'][$new_id]->post_status = 'draft';
+$r5 = omochix_core_practice_guard_rest((object) ['ID' => $new_id, 'post_status' => 'draft'], new ArrayObject([]));
+$r6 = omochix_core_practice_guard_rest((object) ['ID' => $new_id, 'post_status' => 'publish', 'post_title' => 'token = ' . str_repeat('Z', 30)], new ArrayObject(['meta' => $fill_arrays]));
+check('guard (REST): a live item and a draft save pass; a secret-looking title is refused with the placeholder hint', !is_wp_error($r4) && !is_wp_error($r5) && is_wp_error($r6) && str_contains($r6->get_error_message(), 'プレースホルダー'));
+$before_prompts = get_post_meta($new_id, 'practice_prompts', true);
+$_POST = ['omochix_core_practice_nonce' => 'valid', 'omochix_core_practice_meta' => ['practice_summary' => '新しい要約', 'practice_prompts' => '[{"title":"k","for":"claude-code","body":"sk-' . str_repeat('c', 30) . '"}]']];
+omochix_core_save_practice_meta($new_id);
+check('save lint: a key with a secret-looking value keeps its stored value and is reported; the other keys save', '新しい要約' === $GLOBALS['meta'][$new_id]['practice_summary'] && $before_prompts === get_post_meta($new_id, 'practice_prompts', true) && ['practice_prompts'] === $GLOBALS['transients']['omochix_core_practice_secret_error_' . $new_id]);
+$_POST = ['omochix_core_practice_nonce' => 'nope', 'omochix_core_practice_meta' => ['practice_summary' => '不正']];
+omochix_core_save_practice_meta($new_id);
+check('save: a bad nonce writes nothing', '新しい要約' === $GLOBALS['meta'][$new_id]['practice_summary']);
+$_POST = [];
+$GLOBALS['meta'][$new_id]['practice_summary'] = '要約';
+$GLOBALS['transients'] = [];
+
 check('import: the sample files decode, validate without errors and carry the required fields', (static function () use ($imp) {
     $ok = true;
     foreach (glob(__DIR__ . '/../../wp-plugin/omochix-core/sample/practice/*.json') as $file) {

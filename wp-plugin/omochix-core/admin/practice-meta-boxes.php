@@ -298,10 +298,14 @@ function omochix_core_practice_admin_notices() {
 		return;
 	}
 	$keys = get_transient( 'omochix_core_practice_json_error_' . $post_id );
-	if ( ! $keys ) {
-		return;
+	if ( $keys ) {
+		delete_transient( 'omochix_core_practice_json_error_' . $post_id );
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'JSON として読めなかったため、前回の値を保持しました: %s', 'omochix-core' ), implode( ', ', array_map( 'sanitize_key', (array) $keys ) ) ) ) . '</p></div>';
 	}
-	delete_transient( 'omochix_core_practice_json_error_' . $post_id );
-	echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'JSON として読めなかったため、前回の値を保持しました: %s', 'omochix-core' ), implode( ', ', array_map( 'sanitize_key', (array) $keys ) ) ) ) . '</p></div>';
+	$secret_keys = get_transient( 'omochix_core_practice_secret_error_' . $post_id );
+	if ( $secret_keys ) {
+		delete_transient( 'omochix_core_practice_secret_error_' . $post_id );
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( '秘密情報らしき文字列（API キー・トークン・Webhook URL・秘密鍵など）が含まれていたため保存しませんでした（前回の値を保持）: %s。プレースホルダー（＜ここに貼る：…＞）に置き換えてください。', 'omochix-core' ), implode( ', ', array_map( 'sanitize_key', (array) $secret_keys ) ) ) ) . '</p></div>';
+	}
 }
 add_action( 'admin_notices', 'omochix_core_practice_admin_notices' );

@@ -45,7 +45,8 @@ function omochix_core_save_practice_meta( $post_id ) {
 		$relation_fields = array_map( 'sanitize_key', wp_unslash( $_POST['omochix_core_practice_relation_fields'] ) );
 	}
 
-	$json_errors = array();
+	$json_errors   = array();
+	$secret_errors = array();
 	foreach ( omochix_core_get_practice_meta_schema() as $key => $field ) {
 		if ( 'post_id_array' === $field['sanitize'] ) {
 			if ( ! in_array( $key, $relation_fields, true ) ) {
@@ -68,6 +69,14 @@ function omochix_core_save_practice_meta( $post_id ) {
 		}
 
 		$value = omochix_core_sanitize_practice_meta_value( $submitted[ $key ], $key );
+		// Phase 6A: a secret-looking string (API key, token, webhook URL, private key, JWT…)
+		// never reaches the database from the editor; the stored value is kept and the key reported.
+		$findings = array();
+		omochix_core_practice_import_lint_secrets( $value, $key, $findings );
+		if ( $findings ) {
+			$secret_errors[] = $key;
+			continue;
+		}
 		if ( '' === $value || array() === $value || null === $value || ( 0 === $value && 'practice_minutes' !== $key ) ) {
 			delete_post_meta( $post_id, $key );
 			continue;
@@ -79,6 +88,9 @@ function omochix_core_save_practice_meta( $post_id ) {
 
 	if ( $json_errors ) {
 		set_transient( 'omochix_core_practice_json_error_' . $post_id, $json_errors, MINUTE_IN_SECONDS * 5 );
+	}
+	if ( $secret_errors ) {
+		set_transient( 'omochix_core_practice_secret_error_' . $post_id, array_values( array_unique( $secret_errors ) ), MINUTE_IN_SECONDS * 5 );
 	}
 }
 add_action( 'save_post_' . OMOCHIX_CORE_PRACTICE_POST_TYPE, 'omochix_core_save_practice_meta' );

@@ -36,6 +36,7 @@ require_once OMOCHIX_CORE_DIR . 'includes/practice-meta-schema.php';
 require_once OMOCHIX_CORE_DIR . 'includes/practice-relations.php';
 require_once OMOCHIX_CORE_DIR . 'includes/practice-exporter.php';
 require_once OMOCHIX_CORE_DIR . 'includes/practice-importer.php';
+require_once OMOCHIX_CORE_DIR . 'includes/practice-publish-guard.php';
 require_once OMOCHIX_CORE_DIR . 'admin/meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'admin/relations-meta-box.php';
 require_once OMOCHIX_CORE_DIR . 'admin/timeline-meta-box.php';
