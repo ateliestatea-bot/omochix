@@ -500,13 +500,15 @@ function omochix_core_save_ai_tool_inline_meta( $post_id ) {
 		return;
 	}
 
+	// Quick edit is AJAX POST; WordPress sends the list-table bulk form as GET.
+	// Match the request path used by the Learn Practice bulk editor.
 	$is_quick = isset( $_POST['_inline_edit'], $_POST['omochix_quick_meta'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_inline_edit'] ) ), 'inlineeditnonce' );
-	$is_bulk  = isset( $_POST['_wpnonce'], $_POST['omochix_bulk_meta'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'bulk-posts' );
+	$is_bulk  = ! $is_quick && isset( $_REQUEST['_wpnonce'], $_REQUEST['omochix_bulk_meta'], $_REQUEST['bulk_edit'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'bulk-posts' );
 	if ( ! $is_quick && ! $is_bulk ) {
 		return;
 	}
 
-	$submitted = $is_quick ? $_POST['omochix_quick_meta'] : $_POST['omochix_bulk_meta'];
+	$submitted = $is_quick ? $_POST['omochix_quick_meta'] : $_REQUEST['omochix_bulk_meta']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per key below.
 	if ( ! is_array( $submitted ) ) {
 		return;
 	}

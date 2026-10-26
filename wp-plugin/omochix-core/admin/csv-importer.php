@@ -380,16 +380,32 @@ function omochix_core_execute_csv_import( $rows, $new_post_status = 'draft' ) {
 			$summary['errors'][] = array( 'line' => $row['line'], 'reason' => __( '既存ツールを更新する権限がありません。', 'omochix-core' ) );
 			continue;
 		}
-		$post_data = array(
-			'ID'         => $post_id,
-			'post_type'  => 'ai_tool',
-			'post_title' => $row['title'],
-			'post_name'  => $row['slug'],
-		);
-		if ( ! $post_id ) {
-			$post_data['post_status'] = $new_post_status;
+		if ( $post_id ) {
+			// wp_update_post() merges into the stored post, so status, content
+			// and excerpt survive; wp_insert_post() would reset them to defaults.
+			$result = wp_update_post(
+				wp_slash(
+					array(
+						'ID'         => $post_id,
+						'post_title' => $row['title'],
+						'post_name'  => $row['slug'],
+					)
+				),
+				true
+			);
+		} else {
+			$result = wp_insert_post(
+				wp_slash(
+					array(
+						'post_type'   => 'ai_tool',
+						'post_title'  => $row['title'],
+						'post_name'   => $row['slug'],
+						'post_status' => $new_post_status,
+					)
+				),
+				true
+			);
 		}
-		$result = wp_insert_post( wp_slash( $post_data ), true );
 		if ( is_wp_error( $result ) ) {
 			$summary['errors'][] = array( 'line' => $row['line'], 'reason' => $result->get_error_message() );
 			continue;
