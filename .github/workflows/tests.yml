@@ -76,6 +76,9 @@ jobs:
           exit $status
 
       - name: Node tests
+        # Still report the JS results when an earlier step failed (the job stays
+        # failed), but not when the run was cancelled.
+        if: ${{ !cancelled() }}
         run: |
           status=0
           for test in \

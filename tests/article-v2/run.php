@@ -31,8 +31,10 @@ function wp_strip_all_tags($s) { $s = preg_replace('@<(script|style)[^>]*?>.*?</
 require $THEME . '/inc/article-v2.php';
 
 $PHPMSGS = []; set_error_handler(static function ($no, $str, $file, $line) { global $PHPMSGS; $PHPMSGS[] = "$no $str"; return true; });
-$pass = 0; $fail = 0;
+$pass = 0; $fail = 0; $skip = 0;
 function check($name, $cond) { global $pass, $fail; if ($cond) { $pass++; echo "PASS $name\n"; } else { $fail++; echo "FAIL $name\n"; } }
+// A check that cannot run on this PHP is counted and shown as SKIP, never as PASS.
+function skip($name, $reason) { global $skip; $skip++; echo "SKIP $name ($reason)\n"; }
 function post($content, $extra = []) { static $id = 100; return new WP_Post(['ID' => ++$id, 'post_content' => $content] + $extra); }
 function ctx($post, $singular = true) { $GLOBALS['ctx'] = ['singular' => $singular, 'queried' => $post, 'posts' => [$post]]; $GLOBALS['enqueued'] = []; }
 
@@ -195,17 +197,27 @@ $long = $wr . '<p class="' . str_repeat('a ', 250000) . '">x</p></div>';
 check('perf: a 500 KB attribute value stays under 250 ms', max($time(fn() => omochix_article_v2_detect($long)), $time(fn() => omochix_article_v2_prepare($long))) < 0.25);
 // ------------------------------------------------ hardening (independent review of PR #16)
 $wrap = '<div class="omx2-article">';
+// The per-call peak needs memory_reset_peak_usage() (PHP 8.2+). Without it the peak would
+// include everything since startup, so the memory limit is skipped there, not loosened.
+$can_measure_peak = function_exists('memory_reset_peak_usage');
 foreach (['tiny tags <b>' => '<b>', 'tiny tags <i/>' => '<i/>', 'comments <!---->' => '<!---->', 'closers </b>' => '</b>'] as $label => $unit) {
     $flood = $wrap . str_repeat($unit, (int) floor((OMOCHIX_ARTICLE_V2_MAX_BYTES - 40) / strlen($unit))) . '</div>';
     $res = [];
     foreach (['detect', 'prepare', 'lead'] as $fn) {
-        memory_reset_peak_usage(); $base = memory_get_usage();
+        if ($can_measure_peak) { memory_reset_peak_usage(); }
+        $base = memory_get_usage();
         $t0 = microtime(true); $r = ('omochix_article_v2_' . $fn)($flood); $dt = microtime(true) - $t0;
         $res[$fn] = [$r, memory_get_peak_usage() - $base, $dt];
     }
     $peakMb = max(array_map(static fn($x) => $x[1], $res)) / 1048576;
-    echo sprintf("INFO %s %d KB: peak +%.1f MB, worst %.1f ms\n", $label, strlen($flood) / 1024, $peakMb, max(array_map(static fn($x) => $x[2], $res)) * 1000);
-    check("memory: $label flood of ~1 MB stays under +16 MB (was ~+76 MB)", $peakMb < 16);
+    $worstMs = max(array_map(static fn($x) => $x[2], $res)) * 1000;
+    if ($can_measure_peak) {
+        echo sprintf("INFO %s %d KB: peak +%.1f MB, worst %.1f ms\n", $label, strlen($flood) / 1024, $peakMb, $worstMs);
+        check("memory: $label flood of ~1 MB stays under +16 MB (was ~+76 MB)", $peakMb < 16);
+    } else {
+        echo sprintf("INFO %s %d KB: peak n/a, worst %.1f ms\n", $label, strlen($flood) / 1024, $worstMs);
+        skip("memory: $label flood of ~1 MB stays under +16 MB", 'needs memory_reset_peak_usage(), PHP 8.2+');
+    }
     check("memory: $label flood is refused safely (detect false, prepare original, lead empty)", false === $res['detect'][0] && $flood === $res['prepare'][0] && '' === $res['lead'][0]);
 }
 $many = $wrap . str_repeat('<p>x</p>', 9000) . '</div>'; // 18,000 tokens: below the limit
@@ -319,5 +331,5 @@ if ($legacyJson && is_readable($legacyJson)) {
     check('legacy corpus: no article would receive render-time changes', 0 === $changed);
 } else { echo "SKIP legacy corpus (set OMX_LEGACY_JSON to a REST dump of existing posts)\n"; }
 
-echo "\n$pass passed, $fail failed\n";
+echo "\n$pass passed, $fail failed" . ($skip ? ", $skip skipped" : '') . "\n";
 exit($fail ? 1 : 0);
