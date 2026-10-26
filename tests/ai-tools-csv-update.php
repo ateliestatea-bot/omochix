@@ -47,7 +47,7 @@ function csv_reset_store() {
 		),
 	);
 	$GLOBALS['csv_next_id'] = 100;
-	$GLOBALS['csv_meta']    = array( 12 => array( 'pricing_type' => 'free' ) );
+	$GLOBALS['csv_meta']    = array( 12 => array( 'pricing_type' => 'free', 'rating_overall' => 4.2 ) );
 	$GLOBALS['csv_terms']   = array();
 	$GLOBALS['csv_calls']   = array();
 	$GLOBALS['csv_depth']   = 0;
@@ -64,8 +64,23 @@ function wp_unslash( $value ) { return $value; }
 function is_wp_error( $value ) { return $value instanceof WP_Error; }
 function wp_reset_postdata() {}
 function get_post_field( $field, $post_id ) { return $GLOBALS['csv_posts'][ $post_id ][ $field ] ?? null; }
-function omochix_core_sanitize_meta_value( $value, $key ) { return $value; }
-function update_post_meta( $post_id, $key, $value ) { $GLOBALS['csv_meta'][ $post_id ][ $key ] = $value; }
+function sanitize_text_field( $value ) { return trim( strip_tags( (string) $value ) ); }
+function sanitize_textarea_field( $value ) { return trim( strip_tags( (string) $value ) ); }
+function absint( $value ) { return abs( (int) $value ); }
+function esc_url_raw( $url, $protocols = null ) { return preg_match( '#^https?://#', (string) $url ) ? (string) $url : ''; }
+
+/** The rating rule of omochix_core_sanitize_meta_value() ("rating" in meta-schema.php). */
+function csv_sanitize_rating( $value ) {
+	if ( '' === $value || ! is_numeric( $value ) ) {
+		return 0;
+	}
+	return round( min( 5, max( 1, (float) $value ) ), 1 );
+}
+function omochix_core_sanitize_meta_value( $value, $key ) { return 'rating_overall' === $key ? csv_sanitize_rating( $value ) : $value; }
+/** Registered meta runs the same sanitizer inside update_post_meta(), so a stored 0 becomes 1.0. */
+function update_post_meta( $post_id, $key, $value ) {
+	$GLOBALS['csv_meta'][ $post_id ][ $key ] = 'rating_overall' === $key ? csv_sanitize_rating( $value ) : $value;
+}
 function delete_post_meta( $post_id, $key ) { unset( $GLOBALS['csv_meta'][ $post_id ][ $key ] ); }
 
 /** Mirrors wp_insert_post(): unspecified fields get core defaults, even on update. */
@@ -202,6 +217,78 @@ $meta_before                      = $GLOBALS['csv_meta'];
 $GLOBALS['csv_caps']['edit_post'] = false;
 $result                           = omochix_core_execute_csv_import( array( csv_row( 'existing-tool', 'Disallowed update' ) ), 'draft' );
 check_csv( 'insufficient permission reports an error and changes nothing', 1 === count( $result['errors'] ) && 0 === $result['updated'] && $before === $GLOBALS['csv_posts'] && $meta_before === $GLOBALS['csv_meta'] && array() === $GLOBALS['csv_calls'] );
+
+// rating_overall goes through the real row normalizer and the import, as the admin page does:
+// rows with errors are reported and never executed.
+function csv_raw_row( $slug, $title, $rating ) {
+	return array(
+		'title'             => $title,
+		'slug'              => $slug,
+		'company_name'      => 'Example',
+		'official_url'      => 'https://example.com',
+		'short_description' => 'Text',
+		'pricing_type'      => 'paid',
+		'japanese_support'  => 'full',
+		'tool_status'       => 'active',
+		'rating_overall'    => $rating,
+		'is_featured'       => '0',
+		'display_order'     => '1',
+		'category'          => '',
+		'feature'           => '',
+		'tag'               => '',
+		'platform'          => '',
+	);
+}
+function csv_import_raw( $raw_rows ) {
+	$rows   = array();
+	$errors = 0;
+	foreach ( $raw_rows as $index => $raw ) {
+		$normalized = omochix_core_normalize_csv_row( $raw, $index + 2 );
+		if ( $normalized['errors'] ) {
+			++$errors;
+			continue;
+		}
+		$rows[] = $normalized['row'];
+	}
+	$result = $rows ? omochix_core_execute_csv_import( $rows, 'draft' ) : array( 'created' => 0, 'updated' => 0, 'errors' => array() );
+	return array( $errors, $result );
+}
+function csv_has_rating( $post_id ) {
+	return array_key_exists( 'rating_overall', $GLOBALS['csv_meta'][ $post_id ] ?? array() );
+}
+
+csv_reset_store();
+list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'new-tool', 'New unrated', '' ) ) );
+check_csv( 'blank rating: new tool is created unrated', 0 === $errors && 1 === $result['created'] && ! csv_has_rating( 100 ) );
+
+csv_reset_store();
+list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'existing-tool', 'Rated tool', '' ) ) );
+check_csv( 'blank rating: existing rating 4.2 is kept', 0 === $errors && 1 === $result['updated'] && 4.2 === $GLOBALS['csv_meta'][12]['rating_overall'] && 'Rated tool' === $GLOBALS['csv_posts'][12]['post_title'] );
+
+csv_reset_store();
+list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'draft-tool', 'Unrated tool', '' ) ) );
+check_csv( 'blank rating: existing unrated tool stays unrated', 0 === $errors && 1 === $result['updated'] && ! csv_has_rating( 20 ) );
+
+csv_reset_store();
+csv_import_raw( array( csv_raw_row( 'existing-tool', 'Rated tool', '1.0' ), csv_raw_row( 'draft-tool', 'Unrated tool', '5' ) ) );
+check_csv( 'ratings 1.0 and 5.0 are saved', 1.0 === $GLOBALS['csv_meta'][12]['rating_overall'] && 5.0 === $GLOBALS['csv_meta'][20]['rating_overall'] );
+
+csv_reset_store();
+csv_import_raw( array( csv_raw_row( 'existing-tool', 'Rated tool', '4.55' ) ) );
+check_csv( 'rating 4.55 is rounded to 4.6', 4.6 === $GLOBALS['csv_meta'][12]['rating_overall'] );
+
+foreach ( array( '0', '5.1', 'abc' ) as $bad_rating ) {
+	csv_reset_store();
+	$before      = $GLOBALS['csv_posts'];
+	$meta_before = $GLOBALS['csv_meta'];
+	list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'existing-tool', 'Should not change', $bad_rating ) ) );
+	check_csv( "rating \"{$bad_rating}\" is a row error and changes nothing", 1 === $errors && 0 === $result['updated'] && $before === $GLOBALS['csv_posts'] && $meta_before === $GLOBALS['csv_meta'] && array() === $GLOBALS['csv_calls'] );
+}
+
+// An invalid row next to a valid one: only the valid row is applied.
+csv_reset_store();
+list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'existing-tool', 'Should not change', '9' ), csv_raw_row( 'draft-tool', 'Valid row', '3.5' ) ) );
+check_csv( 'invalid row leaves its tool untouched while the valid row applies', 1 === $errors && 1 === $result['updated'] && 'Original title' === $GLOBALS['csv_posts'][12]['post_title'] && 4.2 === $GLOBALS['csv_meta'][12]['rating_overall'] && 3.5 === $GLOBALS['csv_meta'][20]['rating_overall'] );
 
 if ( $GLOBALS['csv_failures'] ) {
 	fwrite( STDERR, "AI Tools CSV update regression tests failed: {$GLOBALS['csv_failures']} check(s).\n" );

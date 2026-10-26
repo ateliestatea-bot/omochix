@@ -206,7 +206,9 @@ function omochix_core_normalize_csv_row( $row, $line ) {
 	if ( '' !== $rating && ( ! is_numeric( $rating ) || (float) $rating < 1 || (float) $rating > 5 ) ) {
 		$errors[] = __( 'rating_overallは1.0〜5.0で入力してください。', 'omochix-core' );
 	}
-	$rating = '' === $rating ? 0 : round( (float) $rating, 1 );
+	// A blank rating stays '' ("not specified"); the importer then leaves the
+	// stored rating alone. Casting it to 0 would be clamped to 1.0 on save.
+	$rating = '' === $rating ? '' : round( (float) $rating, 1 );
 
 	$featured_raw = strtolower( trim( $row['is_featured'] ) );
 	$true_values  = array( '1', 'true', 'yes', 'on' );
@@ -412,8 +414,13 @@ function omochix_core_execute_csv_import( $rows, $new_post_status = 'draft' ) {
 		}
 		$post_id = (int) $result;
 		foreach ( $meta_keys as $key ) {
+			// No rating in the CSV: new tools stay unrated and existing ratings
+			// are kept. Ratings are only removed from the edit screen.
+			if ( 'rating_overall' === $key && '' === $row[ $key ] ) {
+				continue;
+			}
 			$value = omochix_core_sanitize_meta_value( $row[ $key ], $key );
-			if ( ( in_array( $key, array( 'company_name', 'official_url', 'short_description' ), true ) && '' === $value ) || ( 'rating_overall' === $key && 0 === $value ) ) {
+			if ( in_array( $key, array( 'company_name', 'official_url', 'short_description' ), true ) && '' === $value ) {
 				delete_post_meta( $post_id, $key );
 			} else {
 				update_post_meta( $post_id, $key, $value );
