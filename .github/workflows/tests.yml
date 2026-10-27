@@ -1,0 +1,93 @@
+# Run the repository's own PHP and Node test scripts on every pull request and
+# on pushes to main. Read-only: no secrets, no deploy, no production access.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # 8.1 is the minimum in the plugin and theme headers; 8.3 is current.
+        php: ['8.1', '8.3']
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, ctype
+          coverage: none
+          tools: none
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # The JS tests only use Node built-ins; 24.14.1 is the version they pass on locally.
+          node-version: '24.14.1'
+          package-manager-cache: false
+
+      - name: Lint PHP
+        run: |
+          status=0
+          while IFS= read -r -d '' file; do
+            if ! out=$(php -l "$file" 2>&1); then
+              echo "$out"
+              status=1
+            fi
+          done < <(git ls-files -z '*.php')
+          exit $status
+
+      - name: PHP tests
+        run: |
+          status=0
+          for test in \
+            tests/ai-tools-csv-update.php \
+            tests/ai-tools-inline.php \
+            tests/learn-practice/run.php \
+            tests/learn-gallery/run.php \
+            tests/learn-composer/run.php \
+            tests/article-v2/run.php \
+            tests/editorial-home/run.php
+          do
+            echo "::group::$test"
+            php "$test" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - name: Node tests
+        # Still report the JS results when an earlier step failed (the job stays
+        # failed), but not when the run was cancelled.
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          for test in \
+            tests/learn-composer/core-parity.js \
+            tests/learn-gallery/params-parity.js \
+            tests/editorial-home/menu-contrast.js
+          do
+            echo "::group::$test"
+            node "$test" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
