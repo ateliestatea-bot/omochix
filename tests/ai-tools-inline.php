@@ -23,7 +23,19 @@ function omochix_core_get_meta_schema() {
 		'is_featured' => array( 'type' => 'boolean' ),
 	);
 }
-function omochix_core_sanitize_meta_value( $value, $key ) { return 'is_featured' === $key ? (bool) $value : $value; }
+/** Mirrors the rating / nonnegative_integer rules of omochix_core_sanitize_meta_value() in meta-schema.php. */
+function omochix_core_sanitize_meta_value( $value, $key ) {
+	if ( 'is_featured' === $key ) {
+		return (bool) $value;
+	}
+	if ( 'rating_overall' === $key ) {
+		return ( '' === $value || ! is_numeric( $value ) ) ? 0 : round( min( 5, max( 1, (float) $value ) ), 1 );
+	}
+	if ( 'display_order' === $key ) {
+		return max( 0, abs( (int) $value ) );
+	}
+	return $value;
+}
 $GLOBALS['tool_writes'] = 0;
 function update_post_meta( $id, $key, $value ) { ++$GLOBALS['tool_writes']; $GLOBALS['tool_meta'][ $key ] = $value; }
 function delete_post_meta( $id, $key ) { ++$GLOBALS['tool_writes']; unset( $GLOBALS['tool_meta'][ $key ] ); }
@@ -86,5 +98,42 @@ $_REQUEST                 = array_merge(
 );
 omochix_core_save_ai_tool_inline_meta( 12 );
 check( 'quick edit takes precedence over bulk input', 'freemium' === $GLOBALS['tool_meta']['pricing_type'] && 'active' === $GLOBALS['tool_meta']['tool_status'] );
+
+// ---- P5C: quick edit rating and display order -------------------------------------------
+function quick_save( $rating, $order ) {
+	$GLOBALS['tool_can_edit'] = true;
+	$GLOBALS['tool_meta']     = array( 'rating_overall' => 4.2, 'display_order' => 7 );
+	$GLOBALS['tool_writes']   = 0;
+	$_POST    = array( '_inline_edit' => 'test-inlineeditnonce', 'omochix_quick_meta' => array( 'rating_overall' => $rating, 'display_order' => $order ) );
+	$_REQUEST = $_POST;
+	omochix_core_save_ai_tool_inline_meta( 12 );
+	return $GLOBALS['tool_meta'];
+}
+
+$meta = quick_save( '', '12' );
+check( 'quick edit: blank rating deletes it; order 12 is saved', ! array_key_exists( 'rating_overall', $meta ) && 12 === $meta['display_order'] );
+$meta = quick_save( '4.55', '0' );
+check( 'quick edit: rating 4.55 is saved as 4.6; order 0 is saved', 4.6 === $meta['rating_overall'] && 0 === $meta['display_order'] );
+$meta = quick_save( '1', '3' );
+check( 'quick edit: rating 1 (lower bound) is saved', 1.0 === $meta['rating_overall'] );
+$meta = quick_save( '5', '3' );
+check( 'quick edit: rating 5 (upper bound) is saved', 5.0 === $meta['rating_overall'] );
+foreach ( array( '0', '0.9', '7', '5.01', 'abc', '-1' ) as $bad_rating ) {
+	$meta = quick_save( $bad_rating, '7' );
+	check( "quick edit: rating \"{$bad_rating}\" keeps the stored 4.2", 4.2 === $meta['rating_overall'] );
+}
+foreach ( array( '', '-3', '12.5', 'x', '1e2', ' ' ) as $bad_order ) {
+	$meta = quick_save( '4.2', $bad_order );
+	check( "quick edit: order \"{$bad_order}\" keeps the stored 7", 7 === $meta['display_order'] );
+}
+$meta = quick_save( array( '5' ), array( '1' ) );
+check( 'quick edit: non-scalar rating and order keep the stored values', 4.2 === $meta['rating_overall'] && 7 === $meta['display_order'] );
+
+$GLOBALS['tool_meta']   = array( 'rating_overall' => 4.2, 'display_order' => 7 );
+$GLOBALS['tool_writes'] = 0;
+$_POST    = array();
+$_REQUEST = array( '_wpnonce' => 'test-bulk-posts', 'bulk_edit' => 'Update', 'omochix_bulk_meta' => array( 'rating_overall' => '1', 'display_order' => '99' ) );
+omochix_core_save_ai_tool_inline_meta( 12 );
+check( 'bulk edit never writes rating or display order', 4.2 === $GLOBALS['tool_meta']['rating_overall'] && 7 === $GLOBALS['tool_meta']['display_order'] && 0 === $GLOBALS['tool_writes'] );
 
 echo "AI Tools inline edit regression tests passed.\n";

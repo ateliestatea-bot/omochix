@@ -454,8 +454,8 @@ function omochix_core_ai_tool_quick_edit( $column_name, $post_type ) {
 			<label><span class="title"><?php esc_html_e( '提供状況', 'omochix-core' ); ?></span><select name="omochix_quick_meta[tool_status]">
 				<?php foreach ( omochix_core_get_tool_status_labels() as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option><?php endforeach; ?>
 			</select></label>
-			<label><span class="title"><?php esc_html_e( '編集部評価', 'omochix-core' ); ?></span><span class="input-text-wrap"><input type="number" name="omochix_quick_meta[rating_overall]" min="1" max="5" step="0.1"></span></label>
-			<label><span class="title"><?php esc_html_e( '表示順', 'omochix-core' ); ?></span><span class="input-text-wrap"><input type="number" name="omochix_quick_meta[display_order]" min="0" step="1"></span></label>
+			<label><span class="title"><?php esc_html_e( '編集部評価', 'omochix-core' ); ?></span><span class="input-text-wrap"><input type="number" name="omochix_quick_meta[rating_overall]" min="1" max="5" step="0.1" data-omochix-error="<?php esc_attr_e( '編集部評価は1.0〜5.0の数値で入力してください。空欄にすると評価を削除します。', 'omochix-core' ); ?>" data-omochix-confirm="<?php esc_attr_e( '現在の評価を削除します。よろしいですか？', 'omochix-core' ); ?>"></span></label>
+			<label><span class="title"><?php esc_html_e( '表示順', 'omochix-core' ); ?></span><span class="input-text-wrap"><input type="number" name="omochix_quick_meta[display_order]" min="0" step="1" data-omochix-error="<?php esc_attr_e( '表示順は0以上の整数で入力してください。', 'omochix-core' ); ?>"></span></label>
 			<label class="inline-edit-featured"><span class="title"><?php esc_html_e( '注目ツール', 'omochix-core' ); ?></span><input type="hidden" name="omochix_quick_meta[is_featured]" value="0"><input type="checkbox" name="omochix_quick_meta[is_featured]" value="1"> <span><?php esc_html_e( '注目に設定', 'omochix-core' ); ?></span></label>
 		</div>
 	</fieldset>
@@ -527,6 +527,22 @@ function omochix_core_save_ai_tool_inline_meta( $post_id ) {
 		}
 		if ( 'is_featured' === $key && ! in_array( $submitted[ $key ], array( '0', '1', 0, 1, false, true ), true ) ) {
 			continue;
+		}
+		// Quick edit posts by AJAX, so the inputs' min/max/step are not enforced.
+		// Out-of-range or non-numeric values keep the stored value instead of
+		// being clamped or turned into a delete.
+		if ( 'rating_overall' === $key || 'display_order' === $key ) {
+			$raw = is_scalar( $submitted[ $key ] ) ? trim( (string) $submitted[ $key ] ) : null;
+			if ( 'rating_overall' === $key && '' === $raw ) {
+				delete_post_meta( $post_id, $key );
+				continue;
+			}
+			$valid = 'rating_overall' === $key
+				? null !== $raw && is_numeric( $raw ) && (float) $raw >= 1 && (float) $raw <= 5
+				: null !== $raw && ctype_digit( $raw );
+			if ( ! $valid ) {
+				continue;
+			}
 		}
 		$value = omochix_core_sanitize_meta_value( $submitted[ $key ], $key );
 		if ( 'rating_overall' === $key && 0 === $value ) {
