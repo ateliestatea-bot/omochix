@@ -48,7 +48,9 @@ function csv_reset_store() {
 	);
 	$GLOBALS['csv_next_id'] = 100;
 	$GLOBALS['csv_meta']    = array( 12 => array( 'pricing_type' => 'free', 'rating_overall' => 4.2 ) );
-	$GLOBALS['csv_terms']   = array();
+	$GLOBALS['csv_terms']   = array( 12 => array( 'ai_tool_platform' => array( 42, 36 ) ) );
+	$GLOBALS['csv_term_inserts'] = array();
+	$GLOBALS['csv_missing_terms'] = array();
 	$GLOBALS['csv_calls']   = array();
 	$GLOBALS['csv_depth']   = 0;
 	$GLOBALS['csv_caps']    = array( 'edit_post' => true, 'publish_posts' => true );
@@ -64,6 +66,8 @@ function wp_unslash( $value ) { return $value; }
 function is_wp_error( $value ) { return $value instanceof WP_Error; }
 function wp_reset_postdata() {}
 function get_post_field( $field, $post_id ) { return $GLOBALS['csv_posts'][ $post_id ][ $field ] ?? null; }
+function get_post_status( $post_id ) { return $GLOBALS['csv_posts'][ $post_id ]['post_status'] ?? false; }
+function get_post_meta( $post_id, $key, $single = false ) { return $GLOBALS['csv_meta'][ $post_id ][ $key ] ?? ''; }
 function sanitize_text_field( $value ) { return trim( strip_tags( (string) $value ) ); }
 function sanitize_textarea_field( $value ) { return trim( strip_tags( (string) $value ) ); }
 function absint( $value ) { return abs( (int) $value ); }
@@ -124,7 +128,15 @@ function wp_update_post( $postarr = array(), $wp_error = false ) {
 
 function term_exists( $name, $taxonomy ) { return false; }
 function sanitize_title( $value ) { return strtolower( (string) $value ); }
-function wp_insert_term( $name, $taxonomy, $args ) { return array( 'term_id' => 23 ); }
+function wp_insert_term( $name, $taxonomy, $args ) { $GLOBALS['csv_term_inserts'][] = array( $taxonomy, $name ); return array( 'term_id' => 23 ); }
+/** Platform terms as seeded by omochix_core_insert_initial_terms() (IDs as on production). */
+function get_term_by( $field, $value, $taxonomy ) {
+	$ids = array( 'web' => 36, 'windows' => 37, 'macos' => 38, 'linux' => 39, 'ios' => 40, 'android' => 41, 'api' => 42, 'chrome-extension' => 43, 'slack' => 44, 'discord' => 45 );
+	if ( 'slug' !== $field || 'ai_tool_platform' !== $taxonomy || ! isset( $ids[ $value ] ) || in_array( $value, $GLOBALS['csv_missing_terms'], true ) ) {
+		return false;
+	}
+	return (object) array( 'term_id' => $ids[ $value ], 'slug' => $value );
+}
 function wp_set_object_terms( $post_id, $term_ids, $taxonomy, $append = false ) {
 	$GLOBALS['csv_terms'][ $post_id ][ $taxonomy ] = $term_ids;
 	return $term_ids;
@@ -132,8 +144,15 @@ function wp_set_object_terms( $post_id, $term_ids, $taxonomy, $append = false ) 
 
 class WP_Query {
 	public $posts;
-	public function __construct( $args ) { $this->posts = array_keys( $GLOBALS['csv_posts'] ); }
+	public function __construct( $args ) {
+		$statuses    = (array) ( $args['post_status'] ?? 'publish' );
+		$this->posts = array_keys( array_filter( $GLOBALS['csv_posts'], static function ( $post ) use ( $args, $statuses ) {
+			return $args['post_type'] === $post['post_type'] && in_array( $post['post_status'], $statuses, true );
+		} ) );
+	}
 }
+
+require __DIR__ . '/../wp-plugin/omochix-core/includes/taxonomies.php';
 
 require getenv( 'OMOCHIX_CSV_IMPORTER' ) ?: __DIR__ . '/../wp-plugin/omochix-core/admin/csv-importer.php';
 
@@ -220,8 +239,8 @@ check_csv( 'insufficient permission reports an error and changes nothing', 1 ===
 
 // rating_overall goes through the real row normalizer and the import, as the admin page does:
 // rows with errors are reported and never executed.
-function csv_raw_row( $slug, $title, $rating ) {
-	return array(
+function csv_raw_row( $slug, $title, $rating, $extra = array() ) {
+	return $extra + array(
 		'title'             => $title,
 		'slug'              => $slug,
 		'company_name'      => 'Example',
@@ -289,6 +308,96 @@ foreach ( array( '0', '5.1', 'abc' ) as $bad_rating ) {
 csv_reset_store();
 list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'existing-tool', 'Should not change', '9' ), csv_raw_row( 'draft-tool', 'Valid row', '3.5' ) ) );
 check_csv( 'invalid row leaves its tool untouched while the valid row applies', 1 === $errors && 1 === $result['updated'] && 'Original title' === $GLOBALS['csv_posts'][12]['post_title'] && 4.2 === $GLOBALS['csv_meta'][12]['rating_overall'] && 3.5 === $GLOBALS['csv_meta'][20]['rating_overall'] );
+
+// ---- P5C: platform values ------------------------------------------------------------
+function csv_platform_terms( $post_id ) { return $GLOBALS['csv_terms'][ $post_id ]['ai_tool_platform'] ?? null; }
+function csv_platform_inserts() { return array_filter( $GLOBALS['csv_term_inserts'], static function ( $insert ) { return 'ai_tool_platform' === $insert[0]; } ); }
+
+csv_reset_store();
+list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'existing-tool', 'Rated tool', '', array( 'platform' => 'Web, iOS, android, MACOS, Windows, linux' ) ) ) );
+check_csv( 'platform: the six environments are accepted by slug or name, any case', 0 === $errors && 1 === $result['updated'] && array( 36, 40, 41, 38, 37, 39 ) === csv_platform_terms( 12 ) );
+
+csv_reset_store();
+csv_import_raw( array( csv_raw_row( 'existing-tool', 'Rated tool', '', array( 'platform' => 'web、Web, ios' ) ) ) );
+check_csv( 'platform: duplicates collapse and legacy terms (API) are replaced', array( 36, 40 ) === csv_platform_terms( 12 ) );
+
+foreach ( array( 'Mac', 'API', 'Slack', 'ウェブ', 'Web / iOS', 'chrome-extension', 'web, Mac' ) as $bad_platform ) {
+	csv_reset_store();
+	$before      = $GLOBALS['csv_posts'];
+	$meta_before = $GLOBALS['csv_meta'];
+	$term_before = $GLOBALS['csv_terms'];
+	list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'existing-tool', 'Should not change', '4.9', array( 'platform' => $bad_platform, 'company_name' => 'Changed Co' ) ) ) );
+	check_csv( "platform \"{$bad_platform}\" is a row error and changes nothing", 1 === $errors && 0 === $result['updated'] && $before === $GLOBALS['csv_posts'] && $meta_before === $GLOBALS['csv_meta'] && $term_before === $GLOBALS['csv_terms'] && array() === $GLOBALS['csv_calls'] && array() === $GLOBALS['csv_term_inserts'] );
+}
+
+csv_reset_store();
+list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'existing-tool', 'Kept platform', '', array( 'platform' => '' ) ) ) );
+check_csv( 'platform: blank keeps the current terms and still updates the other fields', 0 === $errors && 1 === $result['updated'] && array( 42, 36 ) === csv_platform_terms( 12 ) && 'Kept platform' === $GLOBALS['csv_posts'][12]['post_title'] );
+
+csv_reset_store();
+csv_import_raw( array( csv_raw_row( 'new-tool', 'New, no platform', '', array( 'platform' => '' ) ) ) );
+check_csv( 'platform: blank on a new tool sets no platform terms', isset( $GLOBALS['csv_posts'][100] ) && null === csv_platform_terms( 100 ) );
+
+csv_reset_store();
+$GLOBALS['csv_meta'][12]['supported_devices'] = array( 'Web', 'iOS', 'Android' );
+csv_import_raw( array( csv_raw_row( 'existing-tool', 'Devices kept', '', array( 'platform' => 'windows' ) ) ) );
+check_csv( 'platform: supported_devices is never changed', array( 'Web', 'iOS', 'Android' ) === $GLOBALS['csv_meta'][12]['supported_devices'] && array( 37 ) === csv_platform_terms( 12 ) );
+
+csv_reset_store();
+csv_import_raw( array( csv_raw_row( 'existing-tool', 'A', '', array( 'platform' => 'web, ios' ) ), csv_raw_row( 'new-tool', 'B', '', array( 'platform' => 'linux' ) ) ) );
+check_csv( 'platform: no platform term is ever created from a CSV', array() === csv_platform_inserts() && array( 39 ) === csv_platform_terms( 100 ) );
+
+// A preview saved by an older version may hold names, or a missing term: refused before any write.
+csv_reset_store();
+$before = $GLOBALS['csv_posts'];
+$stale  = omochix_core_normalize_csv_row( csv_raw_row( 'existing-tool', 'Stale', '', array( 'platform' => 'web' ) ), 2 )['row'];
+$stale['ai_tool_platform'] = array( 'Web', 'Mac' );
+$result = omochix_core_execute_csv_import( array( $stale ), 'draft' );
+check_csv( 'platform: an old preview holding "Mac" is refused at execution and changes nothing', 1 === count( $result['errors'] ) && $before === $GLOBALS['csv_posts'] && array( 42, 36 ) === csv_platform_terms( 12 ) && array() === $GLOBALS['csv_calls'] );
+csv_reset_store();
+$GLOBALS['csv_missing_terms'] = array( 'linux' );
+list( $errors, $result ) = csv_import_raw( array( csv_raw_row( 'existing-tool', 'Missing term', '', array( 'platform' => 'linux' ) ) ) );
+check_csv( 'platform: a missing environment term is an error, not created', 1 === count( $result['errors'] ) && array() === csv_platform_inserts() && 'Original title' === $GLOBALS['csv_posts'][12]['post_title'] );
+
+// ---- P5C: tools in the trash -------------------------------------------------------------
+function csv_add_trashed( $id, $name, $desired ) {
+	$GLOBALS['csv_posts'][ $id ] = array( 'ID' => $id, 'post_type' => 'ai_tool', 'post_name' => $name, 'post_title' => 'Trashed', 'post_status' => 'trash', 'post_content' => '<p>Trashed body.</p>', 'post_excerpt' => 'Trashed excerpt.' );
+	if ( $desired ) {
+		$GLOBALS['csv_meta'][ $id ]['_wp_desired_post_slug'] = $desired;
+	}
+}
+
+foreach ( array( 'with _wp_desired_post_slug' => 'gone-tool', 'name suffix only' => '' ) as $label => $desired ) {
+	csv_reset_store();
+	csv_add_trashed( 30, 'gone-tool__trashed', $desired );
+	$before = $GLOBALS['csv_posts'];
+	$result = omochix_core_execute_csv_import( array( omochix_core_normalize_csv_row( csv_raw_row( 'gone-tool', 'Gone tool', '' ), 2 )['row'] ), 'publish' );
+	check_csv( "trash ({$label}): same slug is a row error; nothing is published, created or restored", 1 === count( $result['errors'] ) && 0 === $result['created'] && 0 === $result['updated'] && $before === $GLOBALS['csv_posts'] && 100 === $GLOBALS['csv_next_id'] && array() === $GLOBALS['csv_calls'] && 'trash' === $GLOBALS['csv_posts'][30]['post_status'] );
+}
+
+csv_reset_store();
+csv_add_trashed( 31, 'old-tool', '' ); // trashed before WordPress added the __trashed suffix
+$before = $GLOBALS['csv_posts'];
+$result = omochix_core_execute_csv_import( array( omochix_core_normalize_csv_row( csv_raw_row( 'old-tool', 'Old tool', '' ), 2 )['row'] ), 'publish' );
+check_csv( 'trash: a trashed post that kept its slug is not edited either', 1 === count( $result['errors'] ) && $before === $GLOBALS['csv_posts'] && array() === $GLOBALS['csv_calls'] );
+
+$normalized = omochix_core_normalize_csv_row( csv_raw_row( 'gone-tool__trashed', 'X', '' ), 2 );
+check_csv( 'trash: a "__trashed" slug in the CSV is a row error', null === $normalized['row'] && 1 === count( $normalized['errors'] ) );
+
+csv_reset_store();
+csv_add_trashed( 30, 'existing-tool__trashed', 'existing-tool' );
+$result = omochix_core_execute_csv_import( array( omochix_core_normalize_csv_row( csv_raw_row( 'existing-tool', 'Live tool', '' ), 2 )['row'] ), 'draft' );
+check_csv( 'trash: a live tool with the same slug is still updated; the trashed copy is untouched', 1 === $result['updated'] && 'Live tool' === $GLOBALS['csv_posts'][12]['post_title'] && 'trash' === $GLOBALS['csv_posts'][30]['post_status'] && 'Trashed' === $GLOBALS['csv_posts'][30]['post_title'] );
+
+csv_reset_store();
+csv_add_trashed( 30, 'draft-tool__trashed', 'draft-tool' );
+$result = omochix_core_execute_csv_import( array( omochix_core_normalize_csv_row( csv_raw_row( 'draft-tool', 'Draft retitled', '' ), 2 )['row'] ), 'publish' );
+check_csv( 'trash: a draft tool with the same slug is updated and stays draft; the trashed copy is untouched', 1 === $result['updated'] && 0 === $result['created'] && 'Draft retitled' === $GLOBALS['csv_posts'][20]['post_title'] && 'draft' === $GLOBALS['csv_posts'][20]['post_status'] && 'trash' === $GLOBALS['csv_posts'][30]['post_status'] && 100 === $GLOBALS['csv_next_id'] );
+
+csv_reset_store();
+csv_add_trashed( 30, 'gone-tool__trashed', 'gone-tool' );
+$result = omochix_core_execute_csv_import( array( omochix_core_normalize_csv_row( csv_raw_row( 'brand-new', 'Brand new', '' ), 2 )['row'] ), 'publish' );
+check_csv( 'trash: unrelated new slugs are still created as before', 1 === $result['created'] && 'publish' === $GLOBALS['csv_posts'][100]['post_status'] );
 
 if ( $GLOBALS['csv_failures'] ) {
 	fwrite( STDERR, "AI Tools CSV update regression tests failed: {$GLOBALS['csv_failures']} check(s).\n" );

@@ -163,6 +163,86 @@ function omochix_core_csv_term_names( $value ) {
 }
 
 /**
+ * Map a CSV platform value to one of the environment slugs.
+ *
+ * Accepts the slug or the starter term's display name (web / Web, macos /
+ * macOS …), case-insensitively. Anything else (Mac, API, Slack, ウェブ) is not a
+ * supported environment and returns ''.
+ *
+ * @param string $value Platform value from the CSV.
+ * @return string Environment slug or ''.
+ */
+function omochix_core_csv_platform_slug( $value ) {
+	$value = strtolower( trim( (string) $value ) );
+	$names = omochix_core_get_initial_terms()['ai_tool_platform'];
+	foreach ( omochix_core_get_environment_platform_slugs() as $slug ) {
+		if ( $value === $slug || ( isset( $names[ $slug ] ) && strtolower( $names[ $slug ] ) === $value ) ) {
+			return $slug;
+		}
+	}
+	return '';
+}
+
+/**
+ * Map trashed AI tools to the slug they had before trashing.
+ *
+ * WordPress renames a trashed post to "{slug}__trashed" and keeps the
+ * original in _wp_desired_post_slug, so the CSV slug never matches it
+ * directly and the import would create a second tool instead.
+ *
+ * @return array<string, int> Original slug => trashed post ID.
+ */
+function omochix_core_csv_trashed_tool_slugs() {
+	$query = new WP_Query(
+		array(
+			'post_type'      => 'ai_tool',
+			'post_status'    => 'trash',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'orderby'        => 'ID',
+			'order'          => 'ASC',
+		)
+	);
+	$slugs = array();
+	foreach ( $query->posts as $post_id ) {
+		$slug = (string) get_post_meta( $post_id, '_wp_desired_post_slug', true );
+		if ( '' === $slug ) {
+			$slug = (string) preg_replace( '/__trashed(-\d+)?$/', '', (string) get_post_field( 'post_name', $post_id ) );
+		}
+		if ( '' !== $slug ) {
+			$slugs[ $slug ] = (int) $post_id;
+		}
+	}
+	wp_reset_postdata();
+	return $slugs;
+}
+
+/**
+ * Error for a row whose slug belongs to a tool in the trash, or null.
+ *
+ * @param string             $slug     Row slug.
+ * @param array<string, int> $existing Slugs => IDs from omochix_core_existing_tool_slugs() (trash included).
+ * @param array<string, int> $trashed  Original slugs of trashed tools => IDs.
+ * @return string|null
+ */
+function omochix_core_csv_trashed_conflict( $slug, $existing, $trashed ) {
+	if ( isset( $existing[ $slug ] ) ) {
+		// A live tool owns the slug: update it. Only a trashed match (an old
+		// post that kept its slug in the trash) is refused.
+		$post_id = $existing[ $slug ];
+		if ( 'trash' !== get_post_status( $post_id ) ) {
+			return null;
+		}
+	} elseif ( isset( $trashed[ $slug ] ) ) {
+		$post_id = $trashed[ $slug ];
+	} else {
+		return null;
+	}
+	return sprintf( __( 'ゴミ箱に同じslugのツール（ID %1$d）があります。復元するか完全に削除してから取り込んでください。', 'omochix-core' ), $post_id );
+}
+
+/**
  * Validate and normalize one CSV row.
  *
  * @param array<string, string> $row Associative raw row.
@@ -179,6 +259,8 @@ function omochix_core_normalize_csv_row( $row, $line ) {
 	}
 	if ( '' === $slug ) {
 		$errors[] = __( 'slugは必須です。半角英数字を推奨します。', 'omochix-core' );
+	} elseif ( preg_match( '/__trashed(-\d+)?$/', $slug ) ) {
+		$errors[] = __( 'slugの末尾に「__trashed」は使えません（ゴミ箱内のツール名です）。', 'omochix-core' );
 	}
 
 	$official_url = '' === trim( $row['official_url'] ) ? '' : esc_url_raw( $row['official_url'], array( 'http', 'https' ) );
@@ -223,6 +305,23 @@ function omochix_core_normalize_csv_row( $row, $line ) {
 		$errors[] = __( 'display_orderは0以上の整数で入力してください。', 'omochix-core' );
 	}
 
+	// Platform: only the environment terms, as slugs. null means the cell was
+	// blank and the tool keeps its current platform terms.
+	$platforms = null;
+	$platform_values = omochix_core_csv_term_names( $row['platform'] );
+	if ( $platform_values ) {
+		$platforms = array();
+		foreach ( $platform_values as $value ) {
+			$platform_slug = omochix_core_csv_platform_slug( $value );
+			if ( '' === $platform_slug ) {
+				$errors[] = sprintf( __( 'platformの値「%s」は使えません。web、ios、android、macos、windows、linux のいずれかを指定してください。', 'omochix-core' ), $value );
+				continue;
+			}
+			$platforms[] = $platform_slug;
+		}
+		$platforms = array_values( array_unique( $platforms ) );
+	}
+
 	if ( $errors ) {
 		return array( 'row' => null, 'errors' => $errors );
 	}
@@ -244,7 +343,7 @@ function omochix_core_normalize_csv_row( $row, $line ) {
 			'ai_tool_category'   => omochix_core_csv_term_names( $row['category'] ),
 			'ai_tool_feature'    => omochix_core_csv_term_names( $row['feature'] ),
 			'ai_tool_tag'        => omochix_core_csv_term_names( $row['tag'] ),
-			'ai_tool_platform'   => omochix_core_csv_term_names( $row['platform'] ),
+			'ai_tool_platform'   => $platforms,
 		),
 		'errors' => array(),
 	);
@@ -362,6 +461,28 @@ function omochix_core_import_tool_terms( $post_id, $taxonomy, $names ) {
 }
 
 /**
+ * Resolve CSV platform values to existing environment term IDs.
+ *
+ * Never creates terms. Values are re-checked here because a preview saved by
+ * an older version may still hold display names instead of slugs.
+ *
+ * @param string[] $values Platform slugs (or names from an older preview).
+ * @return int[]|WP_Error
+ */
+function omochix_core_csv_platform_term_ids( $values ) {
+	$term_ids = array();
+	foreach ( $values as $value ) {
+		$slug = omochix_core_csv_platform_slug( $value );
+		$term = '' === $slug ? false : get_term_by( 'slug', $slug, 'ai_tool_platform' );
+		if ( ! $term ) {
+			return new WP_Error( 'omochix_csv_platform', sprintf( __( 'platformの値「%s」は使えません。web、ios、android、macos、windows、linux のいずれかを指定してください。', 'omochix-core' ), $value ) );
+		}
+		$term_ids[] = (int) $term->term_id;
+	}
+	return array_values( array_unique( $term_ids ) );
+}
+
+/**
  * Import validated rows and return a summary.
  *
  * @param array<int, array<string, mixed>> $rows            Valid rows.
@@ -370,6 +491,7 @@ function omochix_core_import_tool_terms( $post_id, $taxonomy, $names ) {
  */
 function omochix_core_execute_csv_import( $rows, $new_post_status = 'draft' ) {
 	$existing        = omochix_core_existing_tool_slugs();
+	$trashed         = omochix_core_csv_trashed_tool_slugs();
 	$summary         = array( 'total' => count( $rows ), 'created' => 0, 'updated' => 0, 'errors' => array() );
 	$meta_keys       = array( 'company_name', 'official_url', 'short_description', 'pricing_type', 'japanese_support', 'tool_status', 'rating_overall', 'is_featured', 'display_order' );
 	$new_post_status = omochix_core_csv_new_post_status( $new_post_status );
@@ -378,9 +500,24 @@ function omochix_core_execute_csv_import( $rows, $new_post_status = 'draft' ) {
 		// Each normalized row is independent; release the local copy as it is consumed.
 		unset( $rows[ $row_index ] );
 		$post_id = isset( $existing[ $row['slug'] ] ) ? $existing[ $row['slug'] ] : 0;
+		// A trashed tool is never restored, recreated or edited from a CSV row.
+		$trash_error = omochix_core_csv_trashed_conflict( $row['slug'], $existing, $trashed );
+		if ( null !== $trash_error ) {
+			$summary['errors'][] = array( 'line' => $row['line'], 'reason' => $trash_error );
+			continue;
+		}
 		if ( $post_id && ! current_user_can( 'edit_post', $post_id ) ) {
 			$summary['errors'][] = array( 'line' => $row['line'], 'reason' => __( '既存ツールを更新する権限がありません。', 'omochix-core' ) );
 			continue;
+		}
+		// Resolve platform terms before writing anything, so a bad value leaves the row untouched.
+		$platform_ids = null;
+		if ( ! empty( $row['ai_tool_platform'] ) ) {
+			$platform_ids = omochix_core_csv_platform_term_ids( (array) $row['ai_tool_platform'] );
+			if ( is_wp_error( $platform_ids ) ) {
+				$summary['errors'][] = array( 'line' => $row['line'], 'reason' => $platform_ids->get_error_message() );
+				continue;
+			}
 		}
 		if ( $post_id ) {
 			// wp_update_post() merges into the stored post, so status, content
@@ -429,7 +566,16 @@ function omochix_core_execute_csv_import( $rows, $new_post_status = 'draft' ) {
 
 		$term_error = false;
 		foreach ( array( 'ai_tool_category', 'ai_tool_feature', 'ai_tool_tag', 'ai_tool_platform' ) as $taxonomy ) {
-			$term_result = omochix_core_import_tool_terms( $post_id, $taxonomy, $row[ $taxonomy ] );
+			if ( 'ai_tool_platform' === $taxonomy ) {
+				// Blank platform keeps the current terms; never create platform terms.
+				if ( null === $platform_ids ) {
+					continue;
+				}
+				$term_result = wp_set_object_terms( $post_id, $platform_ids, $taxonomy, false );
+				$term_result = is_wp_error( $term_result ) ? $term_result : true;
+			} else {
+				$term_result = omochix_core_import_tool_terms( $post_id, $taxonomy, $row[ $taxonomy ] );
+			}
 			if ( is_wp_error( $term_result ) ) {
 				$summary['errors'][] = array( 'line' => $row['line'], 'reason' => sprintf( __( '%1$sの登録に失敗しました：%2$s', 'omochix-core' ), $taxonomy, $term_result->get_error_message() ) );
 				$term_error = true;
@@ -520,11 +666,19 @@ function omochix_core_render_csv_import_page() {
 				$preview = null;
 			} else {
 				$existing = omochix_core_existing_tool_slugs();
+				$trashed  = omochix_core_csv_trashed_tool_slugs();
 				$created  = 0;
 				$updated  = 0;
-				foreach ( $preview['rows'] as $row ) {
+				foreach ( $preview['rows'] as $index => $row ) {
+					$trash_error = omochix_core_csv_trashed_conflict( $row['slug'], $existing, $trashed );
+					if ( null !== $trash_error ) {
+						$preview['errors'][] = array( 'line' => $row['line'], 'reason' => $trash_error );
+						unset( $preview['rows'][ $index ] );
+						continue;
+					}
 					isset( $existing[ $row['slug'] ] ) ? ++$updated : ++$created;
 				}
+				$preview['rows'] = array_values( $preview['rows'] );
 				$preview['summary'] = array(
 					'total'   => count( $preview['rows'] ) + omochix_core_csv_error_row_count( $preview['errors'] ),
 					'created' => $created,

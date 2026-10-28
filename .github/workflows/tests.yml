@@ -84,7 +84,8 @@ jobs:
           for test in \
             tests/learn-composer/core-parity.js \
             tests/learn-gallery/params-parity.js \
-            tests/editorial-home/menu-contrast.js
+            tests/editorial-home/menu-contrast.js \
+            tests/ai-tools-quick-edit.js
           do
             echo "::group::$test"
             node "$test" || status=1
