@@ -21,10 +21,10 @@ function has_error(array $errors, $needle) { foreach ($errors as $e) { if (false
 $loaded = omochix_learn_gallery_load_catalog_from_file(omochix_learn_gallery_catalog_file());
 check('load: shipped catalog is valid', $loaded['ok'] && [] === $loaded['errors']);
 $catalog = omochix_learn_gallery_get_catalog();
-check('load: 23 items in 6 categories', 23 === count($catalog['items']) && 6 === count($catalog['categories']));
-check('load: categories ordered by order', array_keys($catalog['categories']) === ['entrance', 'text', 'ui', 'scroll', 'ambient', 'camera']);
-check('load: category counts', array_sum(array_column($catalog['categories'], 'count')) === 23 && 4 === $catalog['categories']['ui']['count'] && 3 === $catalog['categories']['camera']['count']);
-check('load: items ordered by id', array_values(array_column($catalog['items'], 'id')) === array_map(static fn($i) => sprintf('%03d', $i), range(1, 23)));
+check('load: 53 items in 8 categories (cta and loading added for the 53-item expansion)', 53 === count($catalog['items']) && 8 === count($catalog['categories']));
+check('load: categories ordered by order', array_keys($catalog['categories']) === ['entrance', 'text', 'cta', 'ui', 'scroll', 'ambient', 'loading', 'camera']);
+check('load: category counts', array_sum(array_column($catalog['categories'], 'count')) === 53 && 10 === $catalog['categories']['text']['count'] && 10 === $catalog['categories']['ui']['count'] && 3 === $catalog['categories']['camera']['count'] && 6 === $catalog['categories']['cta']['count'] && 10 === $catalog['categories']['scroll']['count'] && 6 === $catalog['categories']['ambient']['count'] && 4 === $catalog['categories']['loading']['count']);
+check('load: items ordered by id', array_values(array_column($catalog['items'], 'id')) === array_map(static fn($i) => sprintf('%03d', $i), range(1, 53)));
 check('load: featured defaults to boolean', is_bool($catalog['items']['fade-up']['featured']) && false === $catalog['items']['fade-up']['featured'] && true === $catalog['items']['pop-in']['featured']);
 check('load: stage from file', ['width' => 320, 'height' => 180] === $catalog['stage']);
 $missing = omochix_learn_gallery_load_catalog_from_file('/nonexistent/catalog.json');
@@ -59,16 +59,16 @@ check('validate: summary too long', has_error(errors_for(static function (&$d) {
 check('validate: a valid mutation stays valid', [] === errors_for(static function (&$d) { $d['items'][0]['tags'] = []; unset($d['items'][0]['featured'], $d['items'][0]['related']); }));
 
 // ---------------------------------------------------------------- queries
-check('items: no filter returns all', 23 === count(omochix_learn_gallery_get_items()));
-check('items: cat filter', ['toggle-switch', 'button-press', 'toast', 'skeleton-loading'] === array_keys(omochix_learn_gallery_get_items(['cat' => 'ui'])));
-check('items: level filter', ['particles'] === array_keys(omochix_learn_gallery_get_items(['level' => 'advanced'])));
-check('items: tech filter', ['count-up', 'particles'] === array_keys(omochix_learn_gallery_get_items(['tech' => 'js'])));
+check('items: no filter returns all', 53 === count(omochix_learn_gallery_get_items()));
+check('items: cat filter', ['toggle-switch', 'button-press', 'toast', 'skeleton-loading', 'tilt-card', 'flip-card', 'accordion', 'tabs-indicator', 'drawer-menu', 'check-draw'] === array_keys(omochix_learn_gallery_get_items(['cat' => 'ui'])));
+check('items: level filter', ['particles', 'magnetic-button', 'scramble-text', 'scroll-driven-bar', 'section-pin', 'tilt-card'] === array_keys(omochix_learn_gallery_get_items(['level' => 'advanced'])));
+check('items: tech filter', ['count-up', 'particles', 'magnetic-button', 'morph-submit', 'scramble-text', 'scroll-driven-bar', 'tilt-card'] === array_keys(omochix_learn_gallery_get_items(['tech' => 'js'])));
 check('items: keyword matches Japanese name', isset(omochix_learn_gallery_get_items(['q' => 'ポップ'])['pop-in']));
 check('items: keyword matches #id', ['stagger'] === array_keys(omochix_learn_gallery_get_items(['q' => '#003'])));
 check('items: keyword matches English name case-insensitively', isset(omochix_learn_gallery_get_items(['q' => 'TYPEWRITER'])['typewriter']));
 check('items: keyword matches tag', isset(omochix_learn_gallery_get_items(['q' => 'Canvas'])['particles']));
 check('items: multiple keywords are ANDed', ['pop-in'] === array_keys(omochix_learn_gallery_get_items(['q' => 'pop 登場'])) && [] === omochix_learn_gallery_get_items(['q' => 'pop canvas']));
-check('items: combined filters', ['count-up'] === array_keys(omochix_learn_gallery_get_items(['cat' => 'text', 'tech' => 'js'])));
+check('items: combined filters', ['count-up', 'scramble-text'] === array_keys(omochix_learn_gallery_get_items(['cat' => 'text', 'tech' => 'js'])));
 check('items: no match is empty', [] === omochix_learn_gallery_get_items(['q' => 'zzzz-not-there']));
 check('item: lookup by slug', 'ポップイン' === omochix_learn_gallery_get_item('pop-in')['name']['ja'] && null === omochix_learn_gallery_get_item('nope'));
 check('category: lookup', '登場・退場' === omochix_learn_gallery_get_category('entrance')['name'] && null === omochix_learn_gallery_get_category('x'));
@@ -150,7 +150,7 @@ check('template: assembling it like the browser does reproduces the PHP document
 // ------------------------------------------------------------- playground
 check('params: normalized definitions for the three prototypes', ['cycle', 'overshoot', 'color', 'badge_delay'] === array_column($item['params'], 'key') && ['target', 'duration', 'easing', 'size'] === array_column($jsItem['params'], 'key') && 5 === count(omochix_learn_gallery_get_item('gradient-shift')['params']));
 check('params: every range reaches max and default from min in whole steps (native <input type=range> snaps the same way)', [] === array_filter(array_merge(...array_map(static fn($i) => array_map(static fn($d) => [$i['slug'], $d], $i['params']), array_values(omochix_learn_gallery_get_items()))), static function ($pair) { $d = $pair[1]; if ('range' !== $d['type']) { return false; } $n = ($d['max'] - $d['min']) / $d['step']; $m = ($d['default'] - $d['min']) / $d['step']; return abs($n - round($n)) > 1e-6 || abs($m - round($m)) > 1e-6; }));
-check('params: every shipped sample is adjustable with 3 to 5 controls', [] === array_filter(omochix_learn_gallery_get_items(), static fn($i) => count($i['params']) < 3 || count($i['params']) > 5) && 23 === count(array_filter(omochix_learn_gallery_get_items(), static fn($i) => [] !== $i['params'])));
+check('params: every shipped sample is adjustable with 3 to 5 controls', [] === array_filter(omochix_learn_gallery_get_items(), static fn($i) => count($i['params']) < 3 || count($i['params']) > 5) && 53 === count(array_filter(omochix_learn_gallery_get_items(), static fn($i) => [] !== $i['params'])));
 // Defaults preserve the shipped look: every var(--p-x, fallback) in a sample's CSS
 // must fall back to the default's own value (or to a theme variable for colours).
 $fallbackIssues = [];

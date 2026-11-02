@@ -18,7 +18,7 @@ var spawnSync = require('child_process').spawnSync;
 var root = path.resolve(__dirname, '..', '..');
 var P = require(path.join(root, 'wp-theme/omochix-theme/assets/js/learn-params.js'));
 
-var php = spawnSync('php', [path.join(__dirname, 'params-fixture.php')], { encoding: 'utf8' });
+var php = spawnSync('php', [path.join(__dirname, 'params-fixture.php')], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }); // the fixture carries every sample's code: well past Node's 1MB default
 if (php.status !== 0) {
     process.stderr.write('params-fixture.php failed:\n' + (php.stderr || php.stdout));
     process.exit(2);
