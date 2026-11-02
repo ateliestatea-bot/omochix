@@ -74,6 +74,7 @@
 3. 公開後に`/learn/motion/`と`/learn/motion/pop-in/`が200、`/learn/motion/nope/`が404になることを確認する。詳細URLはテーマが初回に自動で書き換えルールを反映するが、404になる場合は12のパーマリンクflushを行う。
 4. `/learn/`のヒーローに「動く見本を見る」が出ること、未公開の間は出ないことを確認する。
 5. 見本とPromptの関連（`assets/data/motion/catalog.json`の`related.prompts`）は公開済みPromptのslugにだけ効く。本番のslugと照合し、一致しないものは外すか差し替える。
+6. テーマ1.27.0以降（Motion 50 拡張）：`/learn/motion/`に 53 件・8 カテゴリ（「ボタン・CTA」「ローディング・待機」のチップが増える）が出ること、`/learn/motion/magnetic-button/`（JS 見本）と`/learn/motion/liquid-fill/`（最後の 053）が200になること、`/learn/motion/compose/`のピッカーに新規見本が出ることを確認する。DB 変更はなく、戻すときは`catalog.json`を1.26.0の版に戻すだけでよい。
 
 ### 8c. Motion Composer（動きを組み合わせる）ページ
 

@@ -379,6 +379,6 @@ Phase 1C 検証（Local複製サイト）：一覧20件の再生、Prompt詳細�
 
 - `/learn/motion/` 固定ページの作成・公開は運営者の操作です（本番DBは触りません）。
 - 新しい rewrite rule はテーマ更新後に一度だけ `flush_rewrite_rules()` が走る仕組みにしていますが、反映されない場合は「設定 → パーマリンク」を保存し直してください。
-- 見本の本数・カテゴリ名はPhase 1のサンプル（20件・5カテゴリ）です。コンテンツ方針に合わせて追加・改名できます（`catalog.json` のみ）。
+- 見本の本数・カテゴリ名はPhase 1のサンプル（20件・5カテゴリ）から始まり、2026年11月の Motion 50 拡張で 53 件・8 カテゴリ（`cta`「ボタン・CTA」と `loading`「ローディング・待機」を追加、`ui`〜`camera` の order を繰り下げ）になりました。設計・監査・実装計画は `docs/motion/` を参照。コンテンツ方針に合わせて追加・改名できます（`catalog.json` のみ。テストの件数・順序は `tests/learn-gallery/run.php` と `tests/learn-composer/run.php` で固定しているので同時に更新する）。
 - 詳細ページのOGP画像は未定（Default OGPに依存）。
 - Playground・Videoの仕様は未定（予約フィールドのみ）。

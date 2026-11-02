@@ -1,18 +1,20 @@
 {
   "version": 1,
-  "updated": "2026-10-21",
+  "updated": "2026-11-03",
   "stage": { "width": 320, "height": 180 },
   "categories": [
     { "slug": "entrance", "name": "登場・退場", "description": "要素が現れる・消えるときの動き。ページやアプリの第一印象を決めます。", "order": 1 },
     { "slug": "text", "name": "テキスト・数字", "description": "文字や数字に動きをつけて、読ませたいところへ目を導きます。", "order": 2 },
-    { "slug": "ui", "name": "UIパーツの動き", "description": "ボタンやスイッチ、通知など、操作の手応えを作る小さな動き。", "order": 3 },
-    { "slug": "scroll", "name": "スクロール演出", "description": "スクロールに合わせて要素を見せる、LPやWebサイトの定番演出。", "order": 4 },
-    { "slug": "ambient", "name": "背景・雰囲気", "description": "主役を邪魔せずに画面へ奥行きや空気感を足す、背景の動き。", "order": 5 },
+    { "slug": "cta", "name": "ボタン・CTA", "description": "クリックしてほしいボタンやリンクに、押したくなる動きと手応えを足します。", "order": 3 },
+    { "slug": "ui", "name": "UIパーツの動き", "description": "ボタンやスイッチ、通知など、操作の手応えを作る小さな動き。", "order": 4 },
+    { "slug": "scroll", "name": "スクロール演出", "description": "スクロールに合わせて要素を見せる、LPやWebサイトの定番演出。", "order": 5 },
+    { "slug": "ambient", "name": "背景・雰囲気", "description": "主役を邪魔せずに画面へ奥行きや空気感を足す、背景の動き。", "order": 6 },
+    { "slug": "loading", "name": "ローディング・待機", "description": "読み込みや処理を待つ間に、止まっていないことを伝える小さな動き。", "order": 7 },
     {
       "slug": "camera",
       "name": "カメラワーク",
       "description": "動画やヒーロー映像で使うカメラの動きを、Web 上で CSS として再現した見本。動画生成AIへ指示するときの語彙の確認にも使えます。",
-      "order": 6
+      "order": 8
     }
   ],
   "items": [
@@ -924,6 +926,2919 @@
           {
             "key": "color",
             "label": "カードの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "024",
+      "slug": "magnetic-button",
+      "category": "cta",
+      "name": {
+        "ja": "マグネットボタン",
+        "en": "Magnetic button"
+      },
+      "summary": "ポインタに吸い寄せられて少し追従する",
+      "description": "ボタンの近くにポインタが来ると、磁石のようにその方向へ少しだけ寄っていき、離れると元の位置へ戻ります。見本では擬似ポインタがボタンの周りを周回して動きを見せます。「ボタンの押し込み」が押した瞬間の変形なのに対し、こちらは押す前の誘い込みです。",
+      "level": "advanced",
+      "tech": [
+        "css",
+        "js"
+      ],
+      "tags": [
+        "CTA",
+        "ボタン",
+        "ポインタ",
+        "追従",
+        "JavaScript"
+      ],
+      "preview": {
+        "html": "<div class=\"mg\"><button type=\"button\" class=\"mg__btn\" tabindex=\"-1\">無料ではじめる</button><span class=\"mg__ptr\" aria-hidden=\"true\"></span></div>",
+        "css": ".mg{position:relative;width:320px;height:180px}\n.mg__btn{position:absolute;left:50%;top:50%;margin:-26px 0 0 -90px;width:180px;height:52px;border:0;border-radius:999px;background:var(--p-color,var(--primary));color:#fff;font:700 16px/52px system-ui,sans-serif;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.18);transition:transform .18s cubic-bezier(.2,.8,.2,1);will-change:transform}\n.mg__ptr{position:absolute;left:0;top:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid var(--text);opacity:.45;pointer-events:none}\n:root[data-reduced] .mg__ptr{display:none}",
+        "js": "var btn=omx.root.querySelector('.mg__btn');var ptr=omx.root.querySelector('.mg__ptr');var real=null;var realAt=-9;var last=0;omx.root.addEventListener('pointermove',function(e){var r=omx.root.getBoundingClientRect();real={x:(e.clientX-r.left)/(r.width/320),y:(e.clientY-r.top)/(r.height/180)};realAt=last;});omx.root.addEventListener('pointerleave',function(){real=null;});function place(x,y){var dx=x-160,dy=y-90;var d=Math.sqrt(dx*dx+dy*dy);var radius=Number(omx.param('radius',110));var strength=Number(omx.param('strength',0.3));var k=d<radius?(1-d/radius)*strength:0;btn.style.transform='translate('+(dx*k).toFixed(1)+'px,'+(dy*k).toFixed(1)+'px)';}if(omx.reduced){ptr.style.display='none';}omx.animate(function(t){last=t;var x,y;if(real&&t-realAt<1.5){x=real.x;y=real.y;ptr.style.opacity='0';}else{var cycle=Number(omx.param('cycle',4));var a=t/cycle*Math.PI*2;x=160+Math.cos(a)*118;y=90+Math.sin(a)*52;ptr.style.opacity='.45';}ptr.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';place(x,y);});"
+      },
+      "prompt": {
+        "ask": "主要ボタンを、ポインタが近づくとその方向へ少し吸い寄せられる「マグネットボタン」にして。",
+        "spec": [
+          "pointermove でポインタとボタン中心の距離を測り、半径（約110px）の内側なら距離に比例してボタンを translate する（最大で距離の30%）",
+          "外に出たら transform を 0 に戻す。戻りは約0.18秒の transition",
+          "追従の計算は requestAnimationFrame で行い、タブが隠れているときは止める",
+          "タッチ端末（hover: none）では追従を無効にし、通常のボタンとして振る舞う",
+          "prefers-reduced-motion の環境では追従しない"
+        ],
+        "use": "LP の主要 CTA、申し込み・無料ではじめる系のボタンを 1 つだけ目立たせたいとき。"
+      },
+      "related": {
+        "prompts": [
+          "development-prototype-brief-for-ai-builders"
+        ],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "strength",
+            "label": "吸い寄せの強さ（倍率）",
+            "type": "range",
+            "min": 0.1,
+            "max": 0.6,
+            "step": 0.05,
+            "default": 0.3,
+            "unit": "",
+            "target": "js",
+            "prompt": "吸い寄せは距離の{value}倍まで"
+          },
+          {
+            "key": "radius",
+            "label": "反応する半径",
+            "type": "range",
+            "min": 60,
+            "max": 160,
+            "step": 10,
+            "default": 110,
+            "unit": "px",
+            "target": "js",
+            "prompt": "反応する半径は{value}"
+          },
+          {
+            "key": "cycle",
+            "label": "見本の周回の長さ",
+            "type": "range",
+            "min": 2,
+            "max": 8,
+            "step": 0.5,
+            "default": 4,
+            "unit": "s",
+            "target": "js",
+            "prompt": "デモの擬似ポインタは{value}で1周する"
+          },
+          {
+            "key": "color",
+            "label": "ボタンの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "025",
+      "slug": "shine-button",
+      "category": "cta",
+      "name": {
+        "ja": "シャインボタン",
+        "en": "Shine sweep button"
+      },
+      "summary": "斜めの光がボタンの上を横切る",
+      "description": "ボタンの表面を、細い斜めのハイライトが左から右へ一定間隔で通り抜けます。「ライトスイープ」がカード全体に広い光を当てるのに対し、こちらはボタンの文字の上だけを通る細い光で、押せることを静かに知らせます。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "CTA",
+        "ボタン",
+        "光",
+        "ハイライト"
+      ],
+      "preview": {
+        "html": "<button type=\"button\" class=\"sh\" tabindex=\"-1\">今すぐ申し込む</button>",
+        "css": ".sh{position:relative;overflow:hidden;padding:0 40px;height:54px;border:0;border-radius:14px;background:var(--p-color,var(--primary));color:#fff;font:700 17px/54px system-ui,sans-serif;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.18)}\n.sh::after{content:\"\";position:absolute;top:-40%;left:0;width:var(--p-width,60px);height:180%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.75),rgba(255,255,255,0));transform:translateX(-140px) rotate(var(--p-angle,20deg));animation:sh-sweep var(--p-cycle,2.6s) cubic-bezier(.4,0,.2,1) infinite}\n@keyframes sh-sweep{0%,55%{transform:translateX(-140px) rotate(var(--p-angle,20deg))}100%{transform:translateX(320px) rotate(var(--p-angle,20deg))}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "ボタンの上を斜めの光が2〜3秒おきに通り抜けるシャイン効果を付けて。",
+        "spec": [
+          "ボタンに overflow: hidden を付け、::after で白の半透明グラデーション（幅は約60px）を作る",
+          "::after を少し傾け（約20度）、translateX でボタンの左外から右外へ動かす",
+          "1周期（約2.6秒）のうち前半は左外で待機し、後半で一気に通過する",
+          "prefers-reduced-motion の環境ではアニメーションを止める"
+        ],
+        "use": "申し込み・購入などの主要ボタンに、派手すぎない注目を集めたいとき。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "光の間隔",
+            "type": "range",
+            "min": 1.5,
+            "max": 6,
+            "step": 0.1,
+            "default": 2.6,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "光は{value}おきに通る"
+          },
+          {
+            "key": "width",
+            "label": "光の幅",
+            "type": "range",
+            "min": 20,
+            "max": 120,
+            "step": 5,
+            "default": 60,
+            "unit": "px",
+            "css_var": "--p-width",
+            "prompt": "光の幅は{value}"
+          },
+          {
+            "key": "angle",
+            "label": "光の角度",
+            "type": "range",
+            "min": 0,
+            "max": 40,
+            "step": 5,
+            "default": 20,
+            "unit": "deg",
+            "css_var": "--p-angle",
+            "prompt": "光の傾きは{value}"
+          },
+          {
+            "key": "color",
+            "label": "ボタンの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "026",
+      "slug": "pulse-ring",
+      "category": "cta",
+      "name": {
+        "ja": "パルスリング",
+        "en": "Pulse ring CTA"
+      },
+      "summary": "ボタンの外側に波紋が広がって消える",
+      "description": "丸いボタンの外側から、同じ色の輪が広がりながら薄れていきます。「ボタンの押し込み」の波紋が押した後の内側に出るのに対し、こちらは押す前に外側へ広がり続けて注目を集めます。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "CTA",
+        "ボタン",
+        "波紋",
+        "注目"
+      ],
+      "preview": {
+        "html": "<div class=\"pr\"><button type=\"button\" class=\"pr__btn\" tabindex=\"-1\">▶</button></div>",
+        "css": ".pr{position:relative;width:96px;height:96px}\n.pr__btn{position:absolute;inset:0;border:0;border-radius:50%;background:var(--p-color,var(--primary));color:#fff;font:700 30px/96px system-ui,sans-serif;cursor:pointer;z-index:1}\n.pr::before,.pr::after{content:\"\";position:absolute;inset:0;border-radius:50%;background:var(--p-color,var(--primary));opacity:0;animation:pr-pulse var(--p-cycle,2s) ease-out infinite}\n.pr::after{animation-delay:calc(var(--p-cycle,2s) / -2);opacity:0;--pr-on:var(--p-ring2,1)}\n@keyframes pr-pulse{0%{transform:scale(1);opacity:.55}100%{transform:scale(var(--p-spread,2.2));opacity:0}}\n.pr::after{animation-name:pr-pulse2}\n@keyframes pr-pulse2{0%{transform:scale(1);opacity:calc(.55 * var(--p-ring2,1))}100%{transform:scale(var(--p-spread,2.2));opacity:0}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "再生ボタンの周りに、波紋のような輪が広がって消えるパルスを付けて。",
+        "spec": [
+          "ボタンの親要素に ::before と ::after で同じ大きさの円を作り、ボタンの下に重ねる",
+          "輪は scale(1)→scale(2.2)、不透明度 .55→0 を約2秒で繰り返す（ease-out）",
+          "2つ目の輪は周期の半分だけ遅らせて、常にどちらかが広がっているようにする",
+          "prefers-reduced-motion の環境では輪を止める"
+        ],
+        "use": "動画の再生、音声の録音開始、チャットの開始など、1つの丸いボタンへ視線を集めたいとき。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1周期の長さ",
+            "type": "range",
+            "min": 1,
+            "max": 4,
+            "step": 0.1,
+            "default": 2,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "輪は{value}で1周する"
+          },
+          {
+            "key": "spread",
+            "label": "広がり（倍率）",
+            "type": "range",
+            "min": 1.5,
+            "max": 3,
+            "step": 0.1,
+            "default": 2.2,
+            "unit": "",
+            "css_var": "--p-spread",
+            "prompt": "輪はボタンの{value}倍まで広がる"
+          },
+          {
+            "key": "rings",
+            "label": "輪の数",
+            "type": "select",
+            "options": [
+              {
+                "value": "one",
+                "label": "1本",
+                "css": "0"
+              },
+              {
+                "value": "two",
+                "label": "2本",
+                "css": "1"
+              }
+            ],
+            "default": "two",
+            "css_var": "--p-ring2",
+            "prompt": "輪は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "ボタンの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "027",
+      "slug": "arrow-nudge",
+      "category": "cta",
+      "name": {
+        "ja": "矢印ナッジ",
+        "en": "Arrow nudge link"
+      },
+      "summary": "矢印が前後に動き、下線が伸びる",
+      "description": "テキストリンクの矢印が小さく前後に揺れて「次へ進める」ことを示し、同時に下線が左から伸びます。マーカー線が本文の強調なのに対し、こちらはクリックできる導線のための動きです。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "CTA",
+        "リンク",
+        "矢印",
+        "下線"
+      ],
+      "preview": {
+        "html": "<a class=\"an\" href=\"#\" tabindex=\"-1\">料金プランを見る<span class=\"an__arrow\" aria-hidden=\"true\">→</span></a>",
+        "css": ".an{position:relative;display:inline-flex;align-items:center;gap:10px;padding:6px 2px;color:var(--p-color,var(--primary));font:700 22px/1.3 system-ui,sans-serif;text-decoration:none}\n.an::after{content:\"\";position:absolute;left:0;bottom:0;height:var(--p-thick,2px);width:100%;background:currentColor;transform:scaleX(0);transform-origin:left;animation:an-line var(--p-cycle,1.8s) ease-in-out infinite}\n.an__arrow{display:inline-block;animation:an-nudge var(--p-cycle,1.8s) ease-in-out infinite}\n@keyframes an-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(var(--p-distance,6px))}}\n@keyframes an-line{0%{transform:scaleX(0)}45%,70%{transform:scaleX(1)}100%{transform:scaleX(0);transform-origin:right}}\n@media (hover:hover){.an:hover .an__arrow{transform:translateX(var(--p-distance,6px))}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "テキストリンクの矢印が前後に小さく動いて、下線が左から伸びる動きを付けて。",
+        "spec": [
+          "矢印は span に分け、translateX(0)→(約6px)→(0) を約1.8秒で繰り返す（ease-in-out）",
+          "下線は ::after を scaleX(0)→1 で左から伸ばし、しばらく保ってから右へ縮める（transform-origin を切り替える）",
+          "hover できる端末では hover 時に矢印を前に出したままにする",
+          "prefers-reduced-motion の環境では矢印を止め、下線は表示したままにする"
+        ],
+        "use": "「詳しく見る」「料金プランを見る」など、次のページへ誘導するテキストリンク。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1周期の長さ",
+            "type": "range",
+            "min": 1,
+            "max": 4,
+            "step": 0.1,
+            "default": 1.8,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "1周期は{value}"
+          },
+          {
+            "key": "distance",
+            "label": "矢印の移動量",
+            "type": "range",
+            "min": 2,
+            "max": 14,
+            "step": 1,
+            "default": 6,
+            "unit": "px",
+            "css_var": "--p-distance",
+            "prompt": "矢印は{value}前に動く"
+          },
+          {
+            "key": "thick",
+            "label": "下線の太さ",
+            "type": "range",
+            "min": 1,
+            "max": 4,
+            "step": 1,
+            "default": 2,
+            "unit": "px",
+            "css_var": "--p-thick",
+            "prompt": "下線の太さは{value}"
+          },
+          {
+            "key": "color",
+            "label": "リンクの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "028",
+      "slug": "morph-submit",
+      "category": "cta",
+      "name": {
+        "ja": "送信ボタンの状態変化",
+        "en": "Morphing submit button"
+      },
+      "summary": "送信→処理中→完了へ形が変わる",
+      "description": "「送信する」のボタンを押すと丸く縮んでスピナーになり、処理が終わると緑のチェックに変わって、しばらくして元に戻ります。トースト通知が別の場所に出るのに対し、ボタンそのものが結果を伝えます。見本では 3 つの状態を周期的に切り替えています。",
+      "level": "intermediate",
+      "tech": [
+        "css",
+        "js"
+      ],
+      "tags": [
+        "CTA",
+        "ボタン",
+        "送信",
+        "状態",
+        "フィードバック",
+        "JavaScript"
+      ],
+      "preview": {
+        "html": "<button type=\"button\" class=\"ms\" data-state=\"idle\" tabindex=\"-1\"><span class=\"ms__label\">送信する</span><span class=\"ms__spin\" aria-hidden=\"true\"></span><span class=\"ms__check\" aria-hidden=\"true\">✓</span></button>",
+        "css": ".ms{position:relative;display:grid;place-items:center;width:180px;height:52px;border:0;border-radius:var(--p-radius,14px);background:var(--p-color,var(--primary));color:#fff;font:700 16px/1 system-ui,sans-serif;cursor:pointer;transition:width .35s cubic-bezier(.2,.8,.2,1),border-radius .35s,background .3s}\n.ms>span{grid-area:1/1;transition:opacity .2s,transform .2s}\n.ms__spin{width:22px;height:22px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;opacity:0;animation:ms-spin .8s linear infinite}\n.ms__check{font-size:24px;opacity:0;transform:scale(.4)}\n.ms[data-state=busy]{width:52px;border-radius:999px}\n.ms[data-state=busy] .ms__label{opacity:0;transform:scale(.6)}\n.ms[data-state=busy] .ms__spin{opacity:1}\n.ms[data-state=done]{width:52px;border-radius:999px;background:var(--p-success,#1f8f5f)}\n.ms[data-state=done] .ms__label{opacity:0}\n.ms[data-state=done] .ms__check{opacity:1;transform:scale(1)}\n@keyframes ms-spin{to{transform:rotate(360deg)}}",
+        "js": "var btn=omx.root.querySelector('.ms');function set(s){if(btn.getAttribute('data-state')!==s)btn.setAttribute('data-state',s);}if(omx.reduced){set('done');}omx.animate(function(t){var busy=Number(omx.param('busy',1.4));var done=Number(omx.param('done',1.6));var idle=1.6;var loop=idle+busy+done;var p=t%loop;set(p<idle?'idle':p<idle+busy?'busy':'done');});"
+      },
+      "prompt": {
+        "ask": "送信ボタンを、押すと丸くなってスピナー、完了でチェックに変わる 3 状態のボタンにして。",
+        "spec": [
+          "ボタンに data-state（idle / busy / done）を持たせ、CSS で幅・角丸・背景色を transition する（約0.35秒）",
+          "busy では幅を高さと同じにして正円にし、ラベルを消してスピナー（border の回転）を出す",
+          "done では背景を成功色に変え、チェックを scale(.4)→1 で出す",
+          "送信処理の Promise が解決したら done にし、1.5秒ほどで idle に戻す",
+          "prefers-reduced-motion の環境ではスピナーの回転を止め、状態の切替だけ行う"
+        ],
+        "use": "フォーム送信、保存、購読など、1 つのボタンで結果まで伝えたいとき。"
+      },
+      "related": {
+        "prompts": [
+          "development-prototype-brief-for-ai-builders"
+        ],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "busy",
+            "label": "処理中の長さ",
+            "type": "range",
+            "min": 0.6,
+            "max": 3,
+            "step": 0.1,
+            "default": 1.4,
+            "unit": "s",
+            "target": "js",
+            "prompt": "処理中の表示は{value}"
+          },
+          {
+            "key": "done",
+            "label": "完了表示の長さ",
+            "type": "range",
+            "min": 0.6,
+            "max": 3,
+            "step": 0.1,
+            "default": 1.6,
+            "unit": "s",
+            "target": "js",
+            "prompt": "完了の表示は{value}"
+          },
+          {
+            "key": "radius",
+            "label": "角丸",
+            "type": "range",
+            "min": 4,
+            "max": 26,
+            "step": 2,
+            "default": 14,
+            "unit": "px",
+            "css_var": "--p-radius",
+            "prompt": "通常時の角丸は{value}"
+          },
+          {
+            "key": "color",
+            "label": "ボタンの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          },
+          {
+            "key": "success",
+            "label": "完了の色",
+            "type": "color",
+            "default": "#1f8f5f",
+            "css_var": "--p-success"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "029",
+      "slug": "fab-expand",
+      "category": "cta",
+      "name": {
+        "ja": "展開する FAB",
+        "en": "Expanding FAB"
+      },
+      "summary": "丸いボタンから小さなボタンが扇状に出る",
+      "description": "右下の丸いボタン（FAB）が回転しながら開き、3 つの小さなボタンが時間差で弧を描いて現れ、しばらくして同じ順で戻ります。トグルスイッチが 1 つの状態を切り替えるのに対し、こちらは複数の行動の入り口を開閉します。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "CTA",
+        "FAB",
+        "メニュー",
+        "展開",
+        "時間差"
+      ],
+      "preview": {
+        "html": "<div class=\"fb\"><button type=\"button\" class=\"fb__mini\" style=\"--i:1;--x:-1;--y:-.12\" tabindex=\"-1\">✎</button><button type=\"button\" class=\"fb__mini\" style=\"--i:2;--x:-.75;--y:-.75\" tabindex=\"-1\">☆</button><button type=\"button\" class=\"fb__mini\" style=\"--i:3;--x:-.12;--y:-1\" tabindex=\"-1\">⤴</button><button type=\"button\" class=\"fb__main\" tabindex=\"-1\">＋</button></div>",
+        "css": ".fb{position:absolute;right:28px;bottom:22px;width:56px;height:56px}\n.fb__main{position:absolute;inset:0;border:0;border-radius:50%;background:var(--p-color,var(--primary));color:#fff;font:400 30px/56px system-ui,sans-serif;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.2);animation:fb-rot var(--p-cycle,4s) ease-in-out infinite}\n.fb__mini{position:absolute;left:8px;top:8px;width:40px;height:40px;border:0;border-radius:50%;background:var(--surface);color:var(--p-color,var(--primary));font:700 18px/40px system-ui,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.18);cursor:pointer;opacity:0;transform:translate(0,0) scale(.4);animation:fb-out var(--p-cycle,4s) cubic-bezier(.34,1.4,.64,1) calc(var(--i) * var(--p-stagger,.08s)) infinite}\n@keyframes fb-rot{0%,12%{transform:rotate(0)}22%,74%{transform:rotate(135deg)}84%,100%{transform:rotate(0)}}\n@keyframes fb-out{0%,12%{opacity:0;transform:translate(0,0) scale(.4)}24%,72%{opacity:1;transform:translate(calc(var(--x) * var(--p-dist,70px)),calc(var(--y) * var(--p-dist,70px))) scale(1)}84%,100%{opacity:0;transform:translate(0,0) scale(.4)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "右下の丸い＋ボタンを押すと、小さなボタンが 3 つ扇状に広がって出る FAB メニューにして。",
+        "spec": [
+          "メインの＋ボタンは開くときに rotate(135deg) して×に見せる",
+          "小ボタンは同じ位置に重ね、開くと translate で左上方向へ弧状（角度 180°/135°/90°）に移動し、scale(.4)→1 と不透明度 0→1 で出す",
+          "小ボタンは 1 つずつ約80ms ずらす。戻りは逆順",
+          "実装では開閉をクリックで切り替え、aria-expanded を更新する",
+          "prefers-reduced-motion の環境では移動と拡大を省き、表示/非表示だけにする"
+        ],
+        "use": "モバイルの新規作成・共有・ブックマークなど、画面右下に複数の操作をまとめたいとき。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [
+          "cursor"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "開閉1回の長さ",
+            "type": "range",
+            "min": 2.5,
+            "max": 8,
+            "step": 0.5,
+            "default": 4,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "開いて閉じるまで{value}"
+          },
+          {
+            "key": "dist",
+            "label": "広がる距離",
+            "type": "range",
+            "min": 50,
+            "max": 90,
+            "step": 5,
+            "default": 70,
+            "unit": "px",
+            "css_var": "--p-dist",
+            "prompt": "小ボタンは{value}まで広がる"
+          },
+          {
+            "key": "stagger",
+            "label": "時間差",
+            "type": "range",
+            "min": 0,
+            "max": 0.2,
+            "step": 0.02,
+            "default": 0.08,
+            "unit": "s",
+            "css_var": "--p-stagger",
+            "prompt": "小ボタンは{value}ずつ遅らせて出す"
+          },
+          {
+            "key": "color",
+            "label": "ボタンの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "030",
+      "slug": "split-letters",
+      "category": "text",
+      "name": {
+        "ja": "一文字ずつ登場",
+        "en": "Split letters"
+      },
+      "summary": "文字が1つずつ下から浮き上がる",
+      "description": "見出しの文字を 1 文字ずつ span に分け、左から順に少し下から浮き上がらせます。タイプライターが幅を伸ばして文字を出すのに対し、こちらは各文字が独立して動くので、行き過ぎのあるイージングや色の変化も付けられます。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "テキスト",
+        "見出し",
+        "時間差",
+        "登場",
+        "span"
+      ],
+      "preview": {
+        "html": "<h1 class=\"sl\" aria-label=\"つくる、ためす、はじめる\"><span style=\"--i:0\">つ</span><span style=\"--i:1\">く</span><span style=\"--i:2\">る</span><span style=\"--i:3\">、</span><span style=\"--i:4\">た</span><span style=\"--i:5\">め</span><span style=\"--i:6\">す</span><span style=\"--i:7\">、</span><span style=\"--i:8\">は</span><span style=\"--i:9\">じ</span><span style=\"--i:10\">め</span><span style=\"--i:11\">る</span></h1>",
+        "css": ".sl{margin:0;font:800 25px/1.2 system-ui,sans-serif;letter-spacing:-.03em;color:var(--text);white-space:nowrap}\n.sl span{display:inline-block;opacity:0;transform:translateY(var(--p-rise,18px));animation:sl-up var(--p-cycle,3.2s) var(--p-ease,cubic-bezier(.34,1.56,.64,1)) calc(var(--i) * var(--p-gap,.06s)) infinite}\n@keyframes sl-up{0%{opacity:0;transform:translateY(var(--p-rise,18px))}16%,70%{opacity:1;transform:translateY(0)}82%,100%{opacity:0;transform:translateY(calc(var(--p-rise,18px) * -.5))}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "見出しの文字を1文字ずつ、左から順に下から浮き上がらせて。",
+        "spec": [
+          "見出しの文字を1文字ずつ span に分け、各 span に --i（0始まりの番号）を付ける",
+          "span は inline-block にし、opacity 0 / translateY(18px) から 0 へ動かす",
+          "animation-delay を calc(var(--i) * .06s) にして左から順に出す",
+          "見出し全体には aria-label で元の文章を付け、分割した span は読み上げに影響しないようにする",
+          "prefers-reduced-motion の環境では分割アニメーションを止めて最初から表示する"
+        ],
+        "use": "ヒーローのキャッチコピー、セクションの大見出しの第一印象。"
+      },
+      "related": {
+        "prompts": [
+          "video-text-to-video-shot-prompts"
+        ],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回の長さ",
+            "type": "range",
+            "min": 2,
+            "max": 6,
+            "step": 0.1,
+            "default": 3.2,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "登場から退場までの1周期は{value}"
+          },
+          {
+            "key": "gap",
+            "label": "文字の間隔",
+            "type": "range",
+            "min": 0.02,
+            "max": 0.16,
+            "step": 0.01,
+            "default": 0.06,
+            "unit": "s",
+            "css_var": "--p-gap",
+            "prompt": "文字ごとに{value}ずつ遅らせる"
+          },
+          {
+            "key": "rise",
+            "label": "浮き上がる距離",
+            "type": "range",
+            "min": 6,
+            "max": 40,
+            "step": 2,
+            "default": 18,
+            "unit": "px",
+            "css_var": "--p-rise",
+            "prompt": "文字は{value}下から浮き上がる"
+          },
+          {
+            "key": "ease",
+            "label": "動き方",
+            "type": "select",
+            "options": [
+              {
+                "value": "smooth",
+                "label": "なめらか",
+                "css": "ease-out"
+              },
+              {
+                "value": "spring",
+                "label": "少し弾む",
+                "css": "cubic-bezier(.34,1.56,.64,1)"
+              }
+            ],
+            "default": "spring",
+            "css_var": "--p-ease",
+            "prompt": "動き方は「{value}」"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "031",
+      "slug": "gradient-text",
+      "category": "text",
+      "name": {
+        "ja": "流れる文字グラデーション",
+        "en": "Gradient text"
+      },
+      "summary": "文字の中だけをグラデーションが流れる",
+      "description": "見出しの文字の内側だけに 2 色のグラデーションを敷き、それをゆっくり横に流します。「流れるグラデーション」が背景全面を動かすのに対し、こちらは background-clip: text で文字の形に切り抜きます。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "テキスト",
+        "グラデーション",
+        "見出し",
+        "background-clip"
+      ],
+      "preview": {
+        "html": "<h1 class=\"gt\">AIで、つくる人へ。</h1>",
+        "css": ".gt{margin:0;font:800 34px/1.2 system-ui,sans-serif;letter-spacing:-.03em;background:linear-gradient(var(--p-angle,90deg),var(--p-from,#6e4bff),var(--p-to,#2563eb),var(--p-from,#6e4bff));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:gt-flow var(--p-cycle,4s) linear infinite}\n@keyframes gt-flow{to{background-position:200% 0}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "見出しの文字の中だけを、2色のグラデーションがゆっくり流れるようにして。",
+        "spec": [
+          "見出しに linear-gradient（色A→色B→色A）を背景として敷き、background-size を 200% 100% にする",
+          "background-clip: text と color: transparent（-webkit-text-fill-color も）で文字の形に切り抜く",
+          "background-position を 0 → 200% へ linear で動かし、infinite で繰り返す（約4秒）",
+          "色のコントラストは本文より強めに取り、小さい文字には使わない",
+          "prefers-reduced-motion の環境では流れを止め、グラデーションだけ残す"
+        ],
+        "use": "ヒーローの見出し、ブランド名、数字の強調。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1周の長さ",
+            "type": "range",
+            "min": 2,
+            "max": 10,
+            "step": 0.5,
+            "default": 4,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "グラデーションは{value}で1周する"
+          },
+          {
+            "key": "from",
+            "label": "色1",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-from"
+          },
+          {
+            "key": "to",
+            "label": "色2",
+            "type": "color",
+            "default": "#2563eb",
+            "css_var": "--p-to"
+          },
+          {
+            "key": "angle",
+            "label": "角度",
+            "type": "range",
+            "min": 0,
+            "max": 180,
+            "step": 15,
+            "default": 90,
+            "unit": "deg",
+            "css_var": "--p-angle",
+            "prompt": "グラデーションの角度は{value}"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "032",
+      "slug": "scramble-text",
+      "category": "text",
+      "name": {
+        "ja": "文字スクランブル",
+        "en": "Text scramble"
+      },
+      "summary": "乱れた文字が左から正しい文字に確定する",
+      "description": "ランダムな文字がせわしなく入れ替わり、左から順に正しい文字へ確定していきます。暗号が解読されるような演出で、「ワードスワップ」が単語全体を入れ替えるのに対し、文字単位で確定していくのが違いです。",
+      "level": "advanced",
+      "tech": [
+        "css",
+        "js"
+      ],
+      "tags": [
+        "テキスト",
+        "スクランブル",
+        "JavaScript",
+        "見出し",
+        "解読"
+      ],
+      "preview": {
+        "html": "<p class=\"sc\" data-text=\"OMOCHIX LEARN\" aria-label=\"OMOCHIX LEARN\"><span class=\"sc__out\" aria-hidden=\"true\">OMOCHIX LEARN</span></p>",
+        "css": ".sc{margin:0;font:800 30px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;color:var(--p-color,var(--primary))}\n.sc__out{white-space:pre}",
+        "js": "var el=omx.root.querySelector('.sc');var out=omx.root.querySelector('.sc__out');var text=el.getAttribute('data-text')||'';var sets={alnum:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',symbol:'!<>-_\\\\/[]{}=+*^?#',kana:'アイウエオカキクケコサシスセソタチツテトナニヌネノ'};var seed=1;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}function frame(t){var resolve=Number(omx.param('resolve',2.4));var speed=Number(omx.param('speed',12));var chars=sets[omx.param('charset','alnum')]||sets.alnum;var hold=1.6;var loop=resolve+hold;var p=(t%loop)/resolve;var s='';var step=Math.floor(t*speed);seed=step+1;for(var i=0;i<text.length;i++){var ch=text.charAt(i);var at=i/text.length;if(ch===' '){s+=' ';}else if(p>=1||at<p){s+=ch;}else{s+=chars.charAt(Math.floor(rnd()*chars.length));}}out.textContent=s;}if(omx.reduced){out.textContent=text;}else{omx.animate(frame);}"
+      },
+      "prompt": {
+        "ask": "見出しの文字が乱数の文字から左から順に確定していく「スクランブル」演出を付けて。",
+        "spec": [
+          "元の文章を data-text に持たせ、表示用の span を別に用意する（元の文章は aria-label で読み上げに渡す）",
+          "requestAnimationFrame の経過時間 t から、確定した割合 p = t / 解決時間 を求め、左から p の位置までは正しい文字、それより右は乱数の文字にする",
+          "乱数の文字は 1 秒に約12回だけ入れ替える（毎フレームは速すぎる）",
+          "確定後は 1.6 秒ほど保ってから繰り返す（実装では 1 回だけでよい）",
+          "prefers-reduced-motion の環境では最初から正しい文字を表示する"
+        ],
+        "use": "ヒーローの見出し、ローディング後のブランド名表示、技術系サービスの演出。"
+      },
+      "related": {
+        "prompts": [
+          "development-prototype-brief-for-ai-builders"
+        ],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "resolve",
+            "label": "確定までの時間",
+            "type": "range",
+            "min": 1,
+            "max": 5,
+            "step": 0.1,
+            "default": 2.4,
+            "unit": "s",
+            "target": "js",
+            "prompt": "左端から右端まで{value}で確定する"
+          },
+          {
+            "key": "speed",
+            "label": "乱数の速さ（回/秒）",
+            "type": "range",
+            "min": 4,
+            "max": 30,
+            "step": 1,
+            "default": 12,
+            "unit": "",
+            "target": "js",
+            "prompt": "乱数の文字は1秒に{value}回入れ替える"
+          },
+          {
+            "key": "charset",
+            "label": "乱数の文字",
+            "type": "select",
+            "options": [
+              {
+                "value": "alnum",
+                "label": "英数字"
+              },
+              {
+                "value": "symbol",
+                "label": "記号"
+              },
+              {
+                "value": "kana",
+                "label": "カタカナ"
+              }
+            ],
+            "default": "alnum",
+            "target": "js",
+            "prompt": "乱数の文字は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "文字の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "033",
+      "slug": "underline-draw",
+      "category": "text",
+      "name": {
+        "ja": "下線が描かれる",
+        "en": "Drawing underline"
+      },
+      "summary": "見出しの下に線が左から描かれる",
+      "description": "見出しの下に、左から右へ線が描かれてしばらく残り、右へ消えていきます。「マーカー線」が文字の背景を塗るのに対し、こちらは文字の下の細い線で、hover できる端末では hover でも同じ線が出ます。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "テキスト",
+        "下線",
+        "見出し",
+        "hover"
+      ],
+      "preview": {
+        "html": "<h2 class=\"ud\">はじめかたガイド</h2>",
+        "css": ".ud{position:relative;display:inline-block;margin:0;padding-bottom:8px;font:700 30px/1.2 system-ui,sans-serif;letter-spacing:-.02em;color:var(--text)}\n.ud::after{content:\"\";position:absolute;left:0;bottom:0;width:100%;height:var(--p-thick,3px);border-radius:var(--p-round,999px);background:var(--p-color,var(--primary));transform:scaleX(0);transform-origin:left;animation:ud-draw var(--p-cycle,3s) ease-in-out infinite}\n@keyframes ud-draw{0%{transform:scaleX(0);transform-origin:left}30%,65%{transform:scaleX(1);transform-origin:left}66%{transform-origin:right}100%{transform:scaleX(0);transform-origin:right}}\n@media (hover:hover){.ud:hover::after{animation:none;transform:scaleX(1)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "見出しの下線が左から描かれて、しばらくしてから右へ消える動きを付けて。hover 時は線を出したままに。",
+        "spec": [
+          "見出しを inline-block にし、::after で高さ 3px の線を作る",
+          "transform: scaleX(0)→1 で左から描く（transform-origin: left）。消えるときは transform-origin: right に切り替えて右へ縮める",
+          "1周期は約3秒。線は少なくとも1秒は見せる",
+          "hover できる端末では hover 時にアニメーションを止めて scaleX(1) にする",
+          "prefers-reduced-motion の環境では線を表示したままにする"
+        ],
+        "use": "セクション見出し、ナビゲーションの現在位置、リンクの強調。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1周期の長さ",
+            "type": "range",
+            "min": 1.5,
+            "max": 6,
+            "step": 0.1,
+            "default": 3,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "描いて消えるまで{value}"
+          },
+          {
+            "key": "thick",
+            "label": "線の太さ",
+            "type": "range",
+            "min": 1,
+            "max": 8,
+            "step": 1,
+            "default": 3,
+            "unit": "px",
+            "css_var": "--p-thick",
+            "prompt": "線の太さは{value}"
+          },
+          {
+            "key": "round",
+            "label": "線の端",
+            "type": "select",
+            "options": [
+              {
+                "value": "round",
+                "label": "丸い",
+                "css": "999px"
+              },
+              {
+                "value": "square",
+                "label": "四角",
+                "css": "0"
+              }
+            ],
+            "default": "round",
+            "css_var": "--p-round",
+            "prompt": "線の端は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "線の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "034",
+      "slug": "marquee-ticker",
+      "category": "text",
+      "name": {
+        "ja": "流れるティッカー",
+        "en": "Marquee ticker"
+      },
+      "summary": "帯状の文字列が途切れず横に流れる",
+      "description": "ニュースやお客様ロゴのように、文字の帯が右から左へ途切れなく流れ続けます。同じ内容を 2 つ並べて半分だけ移動させるので、継ぎ目が見えません。端は少しぼかして自然に消えます。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "テキスト",
+        "ティッカー",
+        "マーキー",
+        "無限ループ",
+        "ロゴ"
+      ],
+      "preview": {
+        "html": "<div class=\"mq\"><div class=\"mq__track\"><span>新機能リリース ✦ 事例を公開しました ✦ 無料プランあり ✦ 今週のおすすめ ✦ </span><span aria-hidden=\"true\">新機能リリース ✦ 事例を公開しました ✦ 無料プランあり ✦ 今週のおすすめ ✦ </span></div></div>",
+        "css": ".mq{width:300px;overflow:hidden;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);-webkit-mask:linear-gradient(90deg,transparent,#000 var(--p-fade,12%),#000 calc(100% - var(--p-fade,12%)),transparent);mask:linear-gradient(90deg,transparent,#000 var(--p-fade,12%),#000 calc(100% - var(--p-fade,12%)),transparent)}\n.mq__track{display:flex;width:max-content;animation:mq-run var(--p-cycle,12s) linear infinite;animation-direction:var(--p-dir,normal)}\n.mq__track span{display:inline-block;padding-right:var(--p-gap,24px);font:600 17px/1 system-ui,sans-serif;color:var(--text);white-space:nowrap}\n@keyframes mq-run{to{transform:translateX(-50%)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "お知らせの文字列が途切れずに横へ流れ続けるティッカーを作って。",
+        "spec": [
+          "トラックを display:flex、width:max-content にし、同じ内容の span を2つ並べる（2つ目は aria-hidden）",
+          "トラック全体を translateX(0)→(-50%) に linear で動かし、infinite で繰り返すと継ぎ目なく流れる",
+          "外側は overflow:hidden にし、mask-image の左右グラデーションで端をぼかす",
+          "速さは周期で調整する（約12秒で1周）",
+          "prefers-reduced-motion の環境では流れを止め、先頭を表示する"
+        ],
+        "use": "お知らせの帯、導入企業ロゴの並び、実績の数字の横流し。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1周の長さ",
+            "type": "range",
+            "min": 4,
+            "max": 30,
+            "step": 1,
+            "default": 12,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "1周{value}の速さで流す"
+          },
+          {
+            "key": "dir",
+            "label": "向き",
+            "type": "select",
+            "options": [
+              {
+                "value": "left",
+                "label": "右から左",
+                "css": "normal"
+              },
+              {
+                "value": "right",
+                "label": "左から右",
+                "css": "reverse"
+              }
+            ],
+            "default": "left",
+            "css_var": "--p-dir",
+            "prompt": "流れる向きは「{value}」"
+          },
+          {
+            "key": "gap",
+            "label": "項目の間隔",
+            "type": "range",
+            "min": 8,
+            "max": 64,
+            "step": 4,
+            "default": 24,
+            "unit": "px",
+            "css_var": "--p-gap",
+            "prompt": "項目の間隔は{value}"
+          },
+          {
+            "key": "fade",
+            "label": "端のぼかし幅",
+            "type": "range",
+            "min": 0,
+            "max": 30,
+            "step": 2,
+            "default": 12,
+            "unit": "%",
+            "css_var": "--p-fade",
+            "prompt": "端は{value}の幅でぼかす"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "035",
+      "slug": "number-flip",
+      "category": "text",
+      "name": {
+        "ja": "数字のめくり",
+        "en": "Number flip"
+      },
+      "summary": "各桁が縦に滑って次の数字になる",
+      "description": "オドメーターのように、各桁が縦にスライドして次の数字へ切り替わります。「カウントアップ」が 1 つの数を補間して増やすのに対し、こちらは桁ごとの CSS アニメーションだけで動き、桁ごとに少し時間差を付けます。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "数字",
+        "オドメーター",
+        "スライド",
+        "実績",
+        "桁"
+      ],
+      "preview": {
+        "html": "<div class=\"nf\" aria-label=\"1280\"><span class=\"nf__digit\" style=\"--d:1;--i:0\"><i>0</i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i>8</i><i>9</i></span><span class=\"nf__digit\" style=\"--d:2;--i:1\"><i>0</i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i>8</i><i>9</i></span><span class=\"nf__digit\" style=\"--d:8;--i:2\"><i>0</i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i>8</i><i>9</i></span><span class=\"nf__digit\" style=\"--d:0;--i:3\"><i>0</i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i>8</i><i>9</i></span><span class=\"nf__unit\">件</span></div>",
+        "css": ".nf{display:flex;align-items:baseline;gap:4px;font:800 var(--p-size,52px)/1 system-ui,sans-serif;letter-spacing:-.03em;color:var(--p-color,var(--text));font-variant-numeric:tabular-nums}\n.nf__digit{display:inline-block;height:1em;overflow:hidden;line-height:1;contain:paint}\n.nf__digit i{display:block;font-style:normal;height:1em;line-height:1;animation:nf-roll var(--p-cycle,3s) var(--p-ease,cubic-bezier(.2,.8,.2,1)) calc(var(--i) * var(--p-stagger,.08s)) infinite;transform:translateY(0)}\n.nf__unit{font-size:.4em;font-weight:700;color:var(--muted);margin-left:4px}\n@keyframes nf-roll{0%,10%{transform:translateY(0)}40%,80%{transform:translateY(calc(var(--d) * -1em))}100%{transform:translateY(0)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "実績の数字を、桁ごとに縦にめくれて切り替わるオドメーター風にして。",
+        "spec": [
+          "桁ごとに高さ 1em・overflow:hidden の枠を作り、中に 0〜9 を縦に並べる",
+          "目標の数字 d に対して translateY(calc(d * -1em)) まで滑らせる（約1秒、ease-out）",
+          "桁ごとに約80ms ずつ遅らせて、右へ波のように動かす",
+          "font-variant-numeric: tabular-nums で桁幅を揃える",
+          "数字全体には aria-label で最終的な値を付ける",
+          "prefers-reduced-motion の環境では最初から最終的な数字を表示する"
+        ],
+        "use": "導入社数・ダウンロード数などの実績、カウンター、スコア表示。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回の長さ",
+            "type": "range",
+            "min": 2,
+            "max": 6,
+            "step": 0.1,
+            "default": 3,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "めくって戻るまで{value}"
+          },
+          {
+            "key": "stagger",
+            "label": "桁の時間差",
+            "type": "range",
+            "min": 0,
+            "max": 0.3,
+            "step": 0.02,
+            "default": 0.08,
+            "unit": "s",
+            "css_var": "--p-stagger",
+            "prompt": "桁ごとに{value}ずつ遅らせる"
+          },
+          {
+            "key": "size",
+            "label": "数字の大きさ",
+            "type": "range",
+            "min": 32,
+            "max": 72,
+            "step": 2,
+            "default": 52,
+            "unit": "px",
+            "css_var": "--p-size",
+            "prompt": "数字の大きさは{value}"
+          },
+          {
+            "key": "ease",
+            "label": "めくり方",
+            "type": "select",
+            "options": [
+              {
+                "value": "soft",
+                "label": "なめらか",
+                "css": "cubic-bezier(.2,.8,.2,1)"
+              },
+              {
+                "value": "spring",
+                "label": "少し弾む",
+                "css": "cubic-bezier(.34,1.3,.64,1)"
+              }
+            ],
+            "default": "soft",
+            "css_var": "--p-ease",
+            "prompt": "めくり方は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "数字の色",
+            "type": "color",
+            "default": "#101010",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "036",
+      "slug": "scroll-scale-in",
+      "category": "scroll",
+      "name": {
+        "ja": "スクロールで拡大登場",
+        "en": "Scale-in on scroll"
+      },
+      "summary": "画面に入った画像が少し拡大しながら現れる",
+      "description": "ページを下へスクロールすると、見えてきた画像ブロックが 0.9 倍から等倍へ広がりながら浮かび上がります。「スクロールでフェードイン」が透明度と上方向の移動なのに対し、こちらは拡大とぼかしの解除で奥から手前へ来るように見せます。見本の中では自動でページを送っています。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "スクロール",
+        "拡大",
+        "画像",
+        "登場",
+        "LP"
+      ],
+      "preview": {
+        "html": "<div class=\"ss\"><div class=\"ss__page\"><figure class=\"ss__img\" style=\"--i:0\"></figure><figure class=\"ss__img ss__img--b\" style=\"--i:1\"></figure><figure class=\"ss__img ss__img--c\" style=\"--i:2\"></figure><figure class=\"ss__img\" style=\"--i:3\"></figure></div></div>",
+        "css": ".ss{width:240px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.ss__page{display:grid;gap:14px;padding:14px;animation:ss-scroll var(--p-cycle,6s) cubic-bezier(.65,0,.35,1) infinite}\n.ss__img{margin:0;height:110px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--blue));opacity:0;transform:scale(var(--p-from,.9));filter:blur(var(--p-blur,0px));animation:ss-in var(--p-cycle,6s) ease-out calc(var(--i) * var(--p-stagger,1.1s)) infinite}\n.ss__img--b{background:linear-gradient(135deg,var(--amber),var(--primary))}\n.ss__img--c{background:linear-gradient(135deg,var(--blue),#0ea5a4)}\n@keyframes ss-scroll{0%,10%{transform:translateY(0)}90%,100%{transform:translateY(-372px)}}\n@keyframes ss-in{0%{opacity:0;transform:scale(var(--p-from,.9));filter:blur(var(--p-blur,0px))}14%,100%{opacity:1;transform:scale(1);filter:blur(0)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "スクロールで画面に入った画像を、少し小さい状態から拡大しながら表示して。",
+        "spec": [
+          "IntersectionObserver で要素が画面に入ったら is-visible クラスを付ける（threshold 0.2 程度）",
+          "初期状態は opacity 0、transform: scale(.9)。is-visible で opacity 1、scale(1) に約0.6秒の transition で遷移する",
+          "必要なら filter: blur(4px)→0 も重ねて奥から来るように見せる",
+          "一度表示したら observer を解除し、再度隠れても戻さない",
+          "prefers-reduced-motion の環境では最初から表示する"
+        ],
+        "use": "LP の画像・スクリーンショット、ギャラリー、事例カードの登場。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回のスクロールの長さ",
+            "type": "range",
+            "min": 3,
+            "max": 12,
+            "step": 0.5,
+            "default": 6,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}でページを1回送る"
+          },
+          {
+            "key": "from",
+            "label": "開始の縮小率",
+            "type": "range",
+            "min": 0.6,
+            "max": 1,
+            "step": 0.02,
+            "default": 0.9,
+            "unit": "",
+            "css_var": "--p-from",
+            "prompt": "登場前の大きさは{value}倍"
+          },
+          {
+            "key": "blur",
+            "label": "登場前のぼかし",
+            "type": "range",
+            "min": 0,
+            "max": 8,
+            "step": 1,
+            "default": 0,
+            "unit": "px",
+            "css_var": "--p-blur",
+            "prompt": "登場前は{value}ぼかす"
+          },
+          {
+            "key": "stagger",
+            "label": "ブロックの時間差",
+            "type": "range",
+            "min": 0.5,
+            "max": 2,
+            "step": 0.1,
+            "default": 1.1,
+            "unit": "s",
+            "css_var": "--p-stagger",
+            "prompt": "ブロックごとに{value}ずつ遅れて現れる"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "037",
+      "slug": "scroll-snap-cards",
+      "category": "scroll",
+      "name": {
+        "ja": "スナップするカード列",
+        "en": "Scroll-snap cards"
+      },
+      "summary": "横に並ぶカードが1枚ずつ止まる",
+      "description": "横スクロールのカード列が、1 枚ごとにぴたりと止まるように移動します。CSS の scroll-snap で作るので、コピー先では指やトラックパッドで実際に操作できます。見本の中では自動で 1 枚ずつ送っています。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "スクロール",
+        "横スクロール",
+        "カード",
+        "scroll-snap",
+        "カルーセル"
+      ],
+      "preview": {
+        "html": "<div class=\"sn\"><div class=\"sn__track\"><div class=\"sn__card\">1</div><div class=\"sn__card\">2</div><div class=\"sn__card\">3</div><div class=\"sn__card\">4</div></div><div class=\"sn__dots\"><i></i><i></i><i></i><i></i></div></div>",
+        "css": ".sn{width:260px}\n.sn__track{display:flex;gap:var(--p-gap,12px);padding:0 calc((260px - var(--p-width,180px)) / 2);animation:sn-step var(--p-cycle,8s) cubic-bezier(.65,0,.35,1) infinite}\n.sn__card{flex:0 0 var(--p-width,180px);height:120px;border-radius:14px;background:var(--p-color,var(--primary));color:#fff;font:800 36px/120px system-ui,sans-serif;text-align:center;box-shadow:0 10px 24px rgba(0,0,0,.14)}\n.sn__card:nth-child(2){background:var(--blue)}\n.sn__card:nth-child(3){background:var(--amber)}\n.sn__card:nth-child(4){background:#0ea5a4}\n.sn__dots{display:flex;justify-content:center;gap:6px;margin-top:12px}\n.sn__dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}\n@keyframes sn-step{0%,20%{transform:translateX(0)}25%,45%{transform:translateX(calc(-1 * (var(--p-width,180px) + var(--p-gap,12px))))}50%,70%{transform:translateX(calc(-2 * (var(--p-width,180px) + var(--p-gap,12px))))}75%,95%{transform:translateX(calc(-3 * (var(--p-width,180px) + var(--p-gap,12px))))}100%{transform:translateX(0)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "横に並ぶカードを、1枚ずつぴたりと止まる横スクロールのカルーセルにして。",
+        "spec": [
+          "外側に overflow-x: auto と scroll-snap-type: x mandatory を付ける",
+          "各カードに scroll-snap-align: center（または start）を付け、flex で横に並べる",
+          "カード幅は固定（約180px）、左右の余白で中央に止まるようにする",
+          "スクロールバーは -webkit-scrollbar と scrollbar-width で目立たなくする",
+          "自動送りが必要なら scrollTo({left, behavior:'smooth'}) を setInterval ではなく IntersectionObserver と組み合わせて行う",
+          "prefers-reduced-motion の環境では自動送りをしない"
+        ],
+        "use": "事例・プラン・レビューの横並び表示、モバイルのカルーセル。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1周の長さ",
+            "type": "range",
+            "min": 4,
+            "max": 16,
+            "step": 0.5,
+            "default": 8,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "4枚を{value}で1周する"
+          },
+          {
+            "key": "width",
+            "label": "カードの幅",
+            "type": "range",
+            "min": 120,
+            "max": 220,
+            "step": 10,
+            "default": 180,
+            "unit": "px",
+            "css_var": "--p-width",
+            "prompt": "カードの幅は{value}"
+          },
+          {
+            "key": "gap",
+            "label": "カードの間隔",
+            "type": "range",
+            "min": 4,
+            "max": 32,
+            "step": 4,
+            "default": 12,
+            "unit": "px",
+            "css_var": "--p-gap",
+            "prompt": "カードの間隔は{value}"
+          },
+          {
+            "key": "color",
+            "label": "1枚目の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "038",
+      "slug": "scroll-driven-bar",
+      "category": "scroll",
+      "name": {
+        "ja": "スクロール連動バー",
+        "en": "Scroll-driven bars"
+      },
+      "summary": "スクロール量に直結して棒グラフが伸びる",
+      "description": "ページのスクロール位置に合わせて、棒グラフが伸び縮みします。対応ブラウザでは CSS の animation-timeline: scroll() だけで動き、非対応ブラウザでは同梱の小さな JS が scrollTop から同じ値を書き込みます。「読了プログレスバー」が 1 本の線なのに対し、複数の棒を段階的に動かします。",
+      "level": "advanced",
+      "tech": [
+        "css",
+        "js"
+      ],
+      "tags": [
+        "スクロール",
+        "scroll-driven",
+        "グラフ",
+        "animation-timeline",
+        "JavaScript"
+      ],
+      "preview": {
+        "html": "<div class=\"sd\"><div class=\"sd__scroller\"><div class=\"sd__spacer\"></div></div><div class=\"sd__bars\"><i style=\"--i:0\"></i><i style=\"--i:1\"></i><i style=\"--i:2\"></i><i style=\"--i:3\"></i><i style=\"--i:4\"></i></div><p class=\"sd__hint\">↓ scroll</p></div>",
+        "css": ".sd{position:relative;width:280px;height:160px;timeline-scope:--sd}\n.sd__scroller{position:absolute;right:0;top:0;width:72px;height:160px;overflow-y:auto;border-radius:10px;background:var(--surface);border:1px solid var(--line);scrollbar-width:thin;scroll-timeline:--sd block}\n.sd__spacer{height:480px;background:repeating-linear-gradient(0deg,transparent 0 22px,var(--line) 22px 23px)}\n.sd__bars{position:absolute;left:0;bottom:16px;display:flex;align-items:flex-end;gap:10px;height:var(--p-height,120px)}\n.sd__bars i{display:block;width:22px;height:100%;border-radius:6px 6px 0 0;background:var(--p-color,var(--primary));opacity:calc(.5 + var(--i) * .12);transform:scaleY(var(--sd-p,0));transform-origin:bottom}\n.sd__hint{position:absolute;right:0;bottom:-6px;margin:0;width:72px;text-align:center;font:600 11px/1 system-ui,sans-serif;color:var(--muted)}\n@supports (animation-timeline: scroll()){.sd__bars i{animation:sd-grow linear both;animation-timeline:--sd;animation-range:0 calc((var(--i) + 1) * 20%)}}\n@keyframes sd-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}",
+        "js": "var scroller=omx.root.querySelector('.sd__scroller');var bars=omx.root.querySelectorAll('.sd__bars i');var supported=!!(window.CSS&&CSS.supports&&CSS.supports('animation-timeline: scroll()'));function paint(){var max=scroller.scrollHeight-scroller.clientHeight;var p=max>0?scroller.scrollTop/max:0;for(var i=0;i<bars.length;i++){var seg=(i+1)/bars.length;bars[i].style.setProperty('--sd-p',String(Math.max(0,Math.min(1,p/seg))));}}var expected=-1,last=0,manualAt=-99;scroller.addEventListener('scroll',function(){if(Math.abs(scroller.scrollTop-expected)>1)manualAt=last;if(!supported)paint();});function go(top){expected=top;scroller.scrollTop=top;}if(omx.reduced){go(scroller.scrollHeight-scroller.clientHeight);if(!supported)paint();}else{omx.animate(function(t){last=t;if(t-manualAt<2.5)return;var cycle=Number(omx.param('cycle',6));var p=(t%cycle)/cycle;var ease=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;go(Math.round((scroller.scrollHeight-scroller.clientHeight)*ease));});}if(!supported)paint();"
+      },
+      "prompt": {
+        "ask": "ページのスクロール量に合わせて、棒グラフが順番に伸びていく演出を付けて。",
+        "spec": [
+          "対応ブラウザでは animation-timeline: scroll() を使い、棒ごとに animation-range をずらして（0〜20%、0〜40%…）順番に伸ばす",
+          "@supports (animation-timeline: scroll()) で囲み、非対応ブラウザでは scroll イベントで scrollTop / 最大値 を求め、CSS 変数に書いて transform: scaleY に使う",
+          "棒は transform-origin: bottom、scaleY(0→1) で伸ばす",
+          "scroll イベントは requestAnimationFrame でまとめ、毎回 DOM を読まない",
+          "prefers-reduced-motion の環境では最初から伸びた状態にする"
+        ],
+        "use": "実績や比較のグラフをスクロールで見せる、サービス紹介の数字セクション。"
+      },
+      "related": {
+        "prompts": [
+          "development-web-performance-investigation"
+        ],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "見本の自動スクロールの長さ",
+            "type": "range",
+            "min": 3,
+            "max": 12,
+            "step": 0.5,
+            "default": 6,
+            "unit": "s",
+            "target": "js",
+            "prompt": "見本では{value}で上下に1往復スクロールする"
+          },
+          {
+            "key": "height",
+            "label": "棒の最大の高さ",
+            "type": "range",
+            "min": 60,
+            "max": 140,
+            "step": 10,
+            "default": 120,
+            "unit": "px",
+            "css_var": "--p-height",
+            "prompt": "棒の最大の高さは{value}"
+          },
+          {
+            "key": "color",
+            "label": "棒の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "039",
+      "slug": "reveal-lines",
+      "category": "scroll",
+      "name": {
+        "ja": "行ごとに読み進む",
+        "en": "Reveal lines on scroll"
+      },
+      "summary": "読み進んだ行だけが濃くなる",
+      "description": "本文の行が薄い色で並び、スクロールで通過した行から順に濃くなっていきます。読んでいる場所が自然に分かり、長い文章でも視線が迷いません。見本の中では自動でページを送っています。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "スクロール",
+        "本文",
+        "読み進み",
+        "強調",
+        "テキスト"
+      ],
+      "preview": {
+        "html": "<div class=\"rl\"><div class=\"rl__page\"><p style=\"--i:0\">作りたい物を1文で決める</p><p style=\"--i:1\">AIに見本と指示を渡す</p><p style=\"--i:2\">動いたら1か所だけ直す</p><p style=\"--i:3\">スマホでも確認する</p><p style=\"--i:4\">公開して翌日見直す</p><p style=\"--i:5\">次の見本へ進む</p></div></div>",
+        "css": ".rl{width:260px;height:150px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.rl__page{padding:18px 20px;animation:rl-scroll var(--p-cycle,7s) cubic-bezier(.65,0,.35,1) infinite}\n.rl__page p{margin:0 0 14px;font:600 15px/1.5 system-ui,sans-serif;color:var(--text);opacity:var(--p-dim,.25);animation:rl-on var(--p-cycle,7s) ease calc(var(--i) * var(--p-step,.9s)) infinite}\n.rl__page p::before{content:\"\";display:inline-block;width:6px;height:6px;margin:0 8px 2px 0;border-radius:50%;background:var(--p-color,var(--primary));opacity:0;animation:rl-dot var(--p-cycle,7s) ease calc(var(--i) * var(--p-step,.9s)) infinite}\n@keyframes rl-scroll{0%,14%{transform:translateY(0)}86%,100%{transform:translateY(-110px)}}\n@keyframes rl-on{0%,8%{opacity:var(--p-dim,.25)}16%,100%{opacity:1}}\n@keyframes rl-dot{0%,8%{opacity:0;transform:scale(.4)}16%,100%{opacity:1;transform:scale(1)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "本文の各行が、スクロールで読み進んだところから濃くなっていく演出を付けて。",
+        "spec": [
+          "段落ごとに IntersectionObserver を付け、画面の中央より上に入ったら is-read クラスを付ける（rootMargin で判定位置を調整）",
+          "初期状態は opacity .25、is-read で 1 に約0.4秒で遷移する",
+          "行頭に小さな点を出して、読み進みの目印にする（任意）",
+          "上へ戻ったときも is-read は外さない（読んだ場所が分かるようにする）",
+          "prefers-reduced-motion の環境では最初から全行を濃くする"
+        ],
+        "use": "ストーリー仕立ての LP、手順の説明、ロングフォーム記事のリード。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回のスクロールの長さ",
+            "type": "range",
+            "min": 4,
+            "max": 14,
+            "step": 0.5,
+            "default": 7,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}でページを1回送る"
+          },
+          {
+            "key": "dim",
+            "label": "未読の薄さ",
+            "type": "range",
+            "min": 0.1,
+            "max": 0.6,
+            "step": 0.05,
+            "default": 0.25,
+            "unit": "",
+            "css_var": "--p-dim",
+            "prompt": "未読の行の不透明度は{value}"
+          },
+          {
+            "key": "step",
+            "label": "行の間隔（時間）",
+            "type": "range",
+            "min": 0.4,
+            "max": 1.6,
+            "step": 0.1,
+            "default": 0.9,
+            "unit": "s",
+            "css_var": "--p-step",
+            "prompt": "行は{value}ごとに濃くなる"
+          },
+          {
+            "key": "color",
+            "label": "目印の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "040",
+      "slug": "back-to-top",
+      "category": "scroll",
+      "name": {
+        "ja": "トップへ戻るボタン",
+        "en": "Back-to-top button"
+      },
+      "summary": "下へ進むと右下にボタンが現れる",
+      "description": "ページを一定量スクロールすると、右下に「↑」の丸いボタンがふわりと現れ、上に戻ると消えます。「追従ヘッダー」が常に上部に残るのに対し、こちらは必要なときだけ現れる補助ボタンです。見本の中では自動でページを送っています。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "スクロール",
+        "ボタン",
+        "トップへ戻る",
+        "出現",
+        "モバイル"
+      ],
+      "preview": {
+        "html": "<div class=\"bt\"><div class=\"bt__page\"><i></i><i></i><i></i><i></i><i></i><i></i></div><button type=\"button\" class=\"bt__btn\" tabindex=\"-1\" aria-label=\"トップへ戻る\">↑</button></div>",
+        "css": ".bt{position:relative;width:240px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.bt__page{display:grid;gap:12px;padding:16px;animation:bt-scroll var(--p-cycle,6s) cubic-bezier(.65,0,.35,1) infinite}\n.bt__page i{display:block;height:46px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}\n.bt__btn{position:absolute;right:12px;bottom:12px;width:var(--p-size,40px);height:var(--p-size,40px);border:0;border-radius:50%;background:var(--p-color,var(--primary));color:#fff;font:700 18px/1 system-ui,sans-serif;box-shadow:0 8px 20px rgba(0,0,0,.2);opacity:0;transform:translateY(12px) scale(.8);animation:bt-show var(--p-cycle,6s) ease-out infinite;cursor:pointer}\n@keyframes bt-scroll{0%,12%{transform:translateY(0)}60%,80%{transform:translateY(-200px)}100%{transform:translateY(0)}}\n@keyframes bt-show{0%,20%{opacity:0;transform:translateY(12px) scale(.8)}30%,82%{opacity:1;transform:translateY(0) scale(1)}92%,100%{opacity:0;transform:translateY(12px) scale(.8)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "一定量スクロールしたら右下に「トップへ戻る」ボタンが現れて、押すと上へ戻るようにして。",
+        "spec": [
+          "ボタンは position: fixed で右下に置き、初期は opacity 0、translateY(12px)、pointer-events: none",
+          "scroll イベント（requestAnimationFrame でまとめる）で window.scrollY が 400px を超えたら is-visible を付け、opacity 1、translateY(0) に約0.25秒で遷移",
+          "クリックで window.scrollTo({top:0, behavior:'smooth'})",
+          "aria-label「トップへ戻る」を付け、キーボードでも押せるようにする",
+          "prefers-reduced-motion の環境では behavior: 'auto' で戻し、出現の移動も省く"
+        ],
+        "use": "長い記事、商品一覧、FAQ ページ。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回のスクロールの長さ",
+            "type": "range",
+            "min": 3,
+            "max": 12,
+            "step": 0.5,
+            "default": 6,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}で下へ行って戻る"
+          },
+          {
+            "key": "size",
+            "label": "ボタンの大きさ",
+            "type": "range",
+            "min": 32,
+            "max": 56,
+            "step": 2,
+            "default": 40,
+            "unit": "px",
+            "css_var": "--p-size",
+            "prompt": "ボタンの直径は{value}"
+          },
+          {
+            "key": "color",
+            "label": "ボタンの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "041",
+      "slug": "section-pin",
+      "category": "scroll",
+      "name": {
+        "ja": "セクションの固定と切替",
+        "en": "Pinned section"
+      },
+      "summary": "左の見出しが固定され、右の内容だけ流れる",
+      "description": "左側の見出しは position: sticky で画面に留まり、右側の内容だけがスクロールで流れていきます。項目が切り替わるたびに見出しの番号も変わります。「追従ヘッダー」が画面上部の帯を固定するのに対し、こちらはセクションの一部を固定して読ませる LP の定番レイアウトです。見本の中では自動でページを送っています。",
+      "level": "advanced",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "スクロール",
+        "sticky",
+        "固定",
+        "レイアウト",
+        "LP"
+      ],
+      "preview": {
+        "html": "<div class=\"sp\"><div class=\"sp__pin\"><b class=\"sp__num\"><i>01</i><i>02</i><i>03</i></b><span>できること</span></div><div class=\"sp__page\"><div class=\"sp__item\">見本を見て選ぶ</div><div class=\"sp__item\">プロンプトを渡す</div><div class=\"sp__item\">コードを貼って公開</div></div></div>",
+        "css": ".sp{position:relative;width:280px;height:160px;overflow:hidden;border-radius:12px;background:var(--surface);border:1px solid var(--line)}\n.sp__page{display:grid;gap:14px;padding:14px 14px 14px calc(var(--p-pin,110px) + 28px);animation:sp-scroll var(--p-cycle,7s) cubic-bezier(.65,0,.35,1) infinite}\n.sp__pin{position:absolute;left:14px;top:14px;width:var(--p-pin,110px);height:132px;display:grid;align-content:start;gap:4px;font:700 12px/1.3 system-ui,sans-serif;color:var(--muted)}\n.sp__num{display:block;height:34px;overflow:hidden;font:800 32px/34px system-ui,sans-serif;color:var(--p-color,var(--primary));letter-spacing:-.04em}\n.sp__num i{display:block;height:34px;font-style:normal;animation:sp-num var(--p-cycle,7s) var(--p-ease,cubic-bezier(.2,.8,.2,1)) infinite}\n.sp__item{height:132px;display:grid;place-items:center;border-radius:10px;background:var(--bg);border:1px solid var(--line);font:700 14px/1.4 system-ui,sans-serif;color:var(--text);text-align:center;padding:0 12px}\n@keyframes sp-scroll{0%,12%{transform:translateY(0)}38%,52%{transform:translateY(-146px)}78%,92%{transform:translateY(-292px)}100%{transform:translateY(-292px)}}\n@keyframes sp-num{0%,20%{transform:translateY(0)}38%,60%{transform:translateY(-34px)}78%,100%{transform:translateY(-68px)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "左の見出しを固定したまま、右の内容だけがスクロールで切り替わるセクションを作って。",
+        "spec": [
+          "2 カラムの grid にし、左カラムに position: sticky; top: 見出しの余白; align-self: start を付ける",
+          "右カラムは項目を縦に並べ、各項目の高さを画面の高さに近づける（min-height: 70vh など）",
+          "IntersectionObserver で右の項目が中央に来たら、左の番号・見出しを切り替える（番号は縦スライドで切替）",
+          "モバイル（767px 以下）では sticky を解除して 1 カラムに戻す",
+          "prefers-reduced-motion の環境では番号の切替をフェードだけにする"
+        ],
+        "use": "サービスの特長を 3〜4 項目で順に見せる LP、機能紹介のセクション。"
+      },
+      "related": {
+        "prompts": [
+          "development-prototype-brief-for-ai-builders"
+        ],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回のスクロールの長さ",
+            "type": "range",
+            "min": 4,
+            "max": 14,
+            "step": 0.5,
+            "default": 7,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}で3項目を送る"
+          },
+          {
+            "key": "pin",
+            "label": "固定カラムの幅",
+            "type": "range",
+            "min": 80,
+            "max": 140,
+            "step": 10,
+            "default": 110,
+            "unit": "px",
+            "css_var": "--p-pin",
+            "prompt": "固定カラムの幅は{value}"
+          },
+          {
+            "key": "ease",
+            "label": "番号の切替",
+            "type": "select",
+            "options": [
+              {
+                "value": "soft",
+                "label": "なめらか",
+                "css": "cubic-bezier(.2,.8,.2,1)"
+              },
+              {
+                "value": "spring",
+                "label": "少し弾む",
+                "css": "cubic-bezier(.34,1.3,.64,1)"
+              }
+            ],
+            "default": "soft",
+            "css_var": "--p-ease",
+            "prompt": "番号の切替は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "番号の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "042",
+      "slug": "tilt-card",
+      "category": "ui",
+      "name": {
+        "ja": "傾くカード",
+        "en": "3D tilt card"
+      },
+      "summary": "ポインタの位置に合わせてカードが奥行きをもって傾く",
+      "description": "カードの上でポインタを動かすと、その位置に向かってカードが 3D に傾き、光沢が追いかけます。「磁石のように吸い付くボタン」がボタン自体の位置を動かすのに対し、こちらは rotateX / rotateY で向きを変えます。見本では擬似ポインタが周回し、実際にポインタを乗せるとそちらに従います。",
+      "level": "advanced",
+      "tech": [
+        "css",
+        "js"
+      ],
+      "tags": [
+        "カード",
+        "3D",
+        "傾き",
+        "ポインタ",
+        "JavaScript",
+        "hover"
+      ],
+      "preview": {
+        "html": "<div class=\"tc\"><div class=\"tc__card\"><span class=\"tc__shine\"></span><b>PRO</b><small>3D tilt</small></div><span class=\"tc__ptr\" aria-hidden=\"true\"></span></div>",
+        "css": ".tc{position:relative;width:320px;height:180px;display:grid;place-items:center;perspective:700px}\n.tc__card{position:relative;width:200px;height:120px;border-radius:16px;background:var(--p-color,var(--primary));color:#fff;display:grid;align-content:end;padding:16px;box-sizing:border-box;box-shadow:0 18px 36px rgba(0,0,0,.22);transform-style:preserve-3d;transition:transform var(--p-return,0.6s) cubic-bezier(.2,.8,.2,1);overflow:hidden}\n.tc__card b{font:800 22px/1 system-ui,sans-serif;transform:translateZ(30px)}\n.tc__card small{font:600 12px/1.4 system-ui,sans-serif;opacity:.8;transform:translateZ(20px)}\n.tc__shine{position:absolute;inset:-60%;background:radial-gradient(circle at var(--tc-x,50%) var(--tc-y,50%),rgba(255,255,255,var(--p-shine,0.35)),transparent 45%);pointer-events:none}\n.tc__ptr{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:var(--text);opacity:.4;pointer-events:none}",
+        "js": "var card=omx.root.querySelector('.tc__card');var ptr=omx.root.querySelector('.tc__ptr');var real=null;var realAt=-9;var last=0;omx.root.addEventListener('pointermove',function(e){var r=omx.root.getBoundingClientRect();real={x:(e.clientX-r.left)/(r.width/320),y:(e.clientY-r.top)/(r.height/180)};realAt=last;});omx.root.addEventListener('pointerleave',function(){real=null;});function tilt(x,y){var max=Number(omx.param('angle',14));var nx=(x-160)/160,ny=(y-90)/90;card.style.transform='rotateX('+(-ny*max).toFixed(2)+'deg) rotateY('+(nx*max).toFixed(2)+'deg)';card.style.setProperty('--tc-x',(50+nx*40).toFixed(1)+'%');card.style.setProperty('--tc-y',(50+ny*40).toFixed(1)+'%');}if(omx.reduced){ptr.style.display='none';tilt(200,60);}omx.animate(function(t){last=t;var x,y;if(real&&t-realAt<1.5){x=real.x;y=real.y;ptr.style.opacity='0';}else{var cycle=Number(omx.param('cycle',5));var a=t/cycle*Math.PI*2;x=160+Math.cos(a)*120;y=90+Math.sin(a)*60;ptr.style.opacity='.4';}ptr.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';tilt(x,y);});"
+      },
+      "prompt": {
+        "ask": "カードにポインタを乗せると、その位置に向かって 3D に傾いて光沢が動くようにして。",
+        "spec": [
+          "親に perspective: 700px、カードに transform-style: preserve-3d と transition: transform .6s を付ける",
+          "pointermove でカード内の相対位置（-1〜1）を求め、rotateX(-y × 最大角度) rotateY(x × 最大角度) を style.transform に書く（最大角度は 14deg 程度）",
+          "光沢は radial-gradient の中心を CSS 変数（--x, --y）で動かす",
+          "pointerleave で transform を空に戻し、transition で元に戻す",
+          "文字などの子要素に translateZ(20〜30px) を付けて浮かせる",
+          "タッチ端末（hover: none）ではポインタ追従を付けず、静止状態にする",
+          "prefers-reduced-motion の環境では傾けない"
+        ],
+        "use": "プラン・商品・プロフィールのカード、ポートフォリオのサムネイル。"
+      },
+      "related": {
+        "prompts": [
+          "development-prototype-brief-for-ai-builders"
+        ],
+        "tools": [
+          "cursor",
+          "claude-code"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "angle",
+            "label": "最大の傾き",
+            "type": "range",
+            "min": 4,
+            "max": 30,
+            "step": 1,
+            "default": 14,
+            "unit": "deg",
+            "target": "js",
+            "prompt": "傾きは最大{value}"
+          },
+          {
+            "key": "return",
+            "label": "戻る時間",
+            "type": "range",
+            "min": 0.2,
+            "max": 1.2,
+            "step": 0.1,
+            "default": 0.6,
+            "unit": "s",
+            "css_var": "--p-return",
+            "prompt": "ポインタが離れたら{value}で戻る"
+          },
+          {
+            "key": "cycle",
+            "label": "見本の周回の長さ",
+            "type": "range",
+            "min": 2,
+            "max": 10,
+            "step": 0.5,
+            "default": 5,
+            "unit": "s",
+            "target": "js",
+            "prompt": "デモの擬似ポインタは{value}で1周する"
+          },
+          {
+            "key": "shine",
+            "label": "光沢の強さ",
+            "type": "range",
+            "min": 0,
+            "max": 0.6,
+            "step": 0.05,
+            "default": 0.35,
+            "unit": "",
+            "css_var": "--p-shine",
+            "prompt": "光沢の不透明度は{value}"
+          },
+          {
+            "key": "color",
+            "label": "カードの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "043",
+      "slug": "flip-card",
+      "category": "ui",
+      "name": {
+        "ja": "裏返るカード",
+        "en": "Flip card"
+      },
+      "summary": "カードが裏返って裏面の内容を見せる",
+      "description": "カードが Y 軸で半回転し、表から裏へ切り替わります。表裏を 2 枚重ねて backface-visibility: hidden で見えない面を隠すのがポイントです。「傾くカード」が向きを少し変えるだけなのに対し、こちらは完全に裏返して別の内容を見せます。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "カード",
+        "裏返し",
+        "3D",
+        "flip",
+        "hover"
+      ],
+      "preview": {
+        "html": "<div class=\"fc\"><div class=\"fc__inner\"><div class=\"fc__face fc__front\"><b>表</b><small>hover / tap</small></div><div class=\"fc__face fc__back\"><b>裏</b><small>詳細はこちら</small></div></div></div>",
+        "css": ".fc{width:180px;height:120px;perspective:800px}\n.fc__inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:fc-flip var(--p-cycle,4s) infinite;animation-timing-function:ease-in-out}\n.fc__face{position:absolute;inset:0;display:grid;place-content:center;gap:4px;text-align:center;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;color:#fff;box-shadow:0 12px 28px rgba(0,0,0,.18)}\n.fc__face b{font:800 24px/1 system-ui,sans-serif}\n.fc__face small{font:600 12px/1.4 system-ui,sans-serif;opacity:.85}\n.fc__front{background:var(--primary)}\n.fc__back{background:var(--p-back,#2563eb);transform:var(--p-axis,rotateY(180deg))}\n@keyframes fc-flip{0%,40%{transform:none}50%,90%{transform:var(--p-axis,rotateY(180deg))}100%{transform:none}}\n@media (hover:hover){.fc:hover .fc__inner{animation-play-state:paused;transform:var(--p-axis,rotateY(180deg));transition:transform var(--p-speed,0.6s)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "カードにマウスを乗せる（タップする）と裏返って、裏面の内容が見えるようにして。",
+        "spec": [
+          "外側に perspective: 800px、内側の .inner に transform-style: preserve-3d と transition: transform .6s を付ける",
+          "表と裏を position: absolute で重ね、両方に backface-visibility: hidden を付ける",
+          "裏面は最初から rotateY(180deg) にしておく",
+          "hover（または is-flipped クラス）で .inner を rotateY(180deg) にする",
+          "タッチ端末ではクリックで is-flipped を付け外しする（JS 数行）",
+          "prefers-reduced-motion の環境では transition を無くして瞬時に切り替える"
+        ],
+        "use": "メンバー紹介、料金プランの詳細、クイズの答え、商品の裏面情報。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "表→裏→表の周期",
+            "type": "range",
+            "min": 2,
+            "max": 8,
+            "step": 0.5,
+            "default": 4,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}で表裏を1往復する"
+          },
+          {
+            "key": "speed",
+            "label": "回転にかける時間（hover）",
+            "type": "range",
+            "min": 0.3,
+            "max": 1.2,
+            "step": 0.1,
+            "default": 0.6,
+            "unit": "s",
+            "css_var": "--p-speed",
+            "prompt": "hover で裏返る時間は{value}"
+          },
+          {
+            "key": "axis",
+            "label": "回転の向き",
+            "type": "select",
+            "options": [
+              {
+                "value": "y",
+                "label": "横に回る",
+                "css": "rotateY(180deg)"
+              },
+              {
+                "value": "x",
+                "label": "縦に回る",
+                "css": "rotateX(180deg)"
+              }
+            ],
+            "default": "y",
+            "css_var": "--p-axis",
+            "prompt": "カードは「{value}」ように裏返す"
+          },
+          {
+            "key": "back",
+            "label": "裏面の色",
+            "type": "color",
+            "default": "#2563eb",
+            "css_var": "--p-back"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "044",
+      "slug": "accordion",
+      "category": "ui",
+      "name": {
+        "ja": "アコーディオン",
+        "en": "Accordion"
+      },
+      "summary": "質問を押すと答えの高さが滑らかに開く",
+      "description": "FAQ のように、見出しを押すと下の本文が滑らかに開閉します。height: auto へのアニメーションは効かないため、grid-template-rows を 0fr から 1fr へ変えて中身の高さに合わせて開くのがコツです。「展開するフローティングボタン」が丸いメニューを扇状に広げるのに対し、こちらは縦の本文領域を開きます。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "アコーディオン",
+        "FAQ",
+        "開閉",
+        "grid",
+        "高さ"
+      ],
+      "preview": {
+        "html": "<div class=\"ac\"><div class=\"ac__item\"><div class=\"ac__head\"><span>返品はできますか？</span><i class=\"ac__arrow\"></i></div><div class=\"ac__body\"><div class=\"ac__inner\">到着から 14 日以内なら未使用品に限り可能です。マイページから手続きできます。</div></div></div><div class=\"ac__item\"><div class=\"ac__head\"><span>送料はいくらですか？</span><i class=\"ac__arrow\"></i></div><div class=\"ac__body\"></div></div></div>",
+        "css": ".ac{width:270px;font:600 13px/1.5 system-ui,sans-serif;color:var(--text)}\n.ac__item{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:8px;overflow:hidden}\n.ac__head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px}\n.ac__arrow{width:8px;height:8px;border-right:2px solid var(--p-color,var(--primary));border-bottom:2px solid var(--p-color,var(--primary));transform:rotate(45deg);transition:transform .3s}\n.ac__body{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--p-speed,0.4s) cubic-bezier(.2,.8,.2,1)}\n.ac__inner{min-height:0;overflow:hidden;padding:0 14px;font-weight:500;color:var(--muted);opacity:0;transition:opacity .3s,padding var(--p-speed,0.4s)}\n.ac__item:first-child .ac__body{animation:ac-open var(--p-cycle,4s) infinite}\n.ac__item:first-child .ac__inner{animation:ac-inner var(--p-cycle,4s) infinite}\n.ac__item:first-child .ac__arrow{animation:ac-arrow var(--p-cycle,4s) infinite}\n@keyframes ac-open{0%,15%{grid-template-rows:0fr}30%,75%{grid-template-rows:1fr}90%,100%{grid-template-rows:0fr}}\n@keyframes ac-inner{0%,15%{opacity:0;padding:0 14px}30%,75%{opacity:1;padding:0 14px 12px}90%,100%{opacity:0;padding:0 14px}}\n@keyframes ac-arrow{0%,15%{transform:rotate(45deg)}30%,75%{transform:rotate(calc(45deg + var(--p-arrow,180deg)))}90%,100%{transform:rotate(45deg)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "FAQ の見出しを押すと、答えが高さごと滑らかに開閉するアコーディオンにして。",
+        "spec": [
+          "本文の外側を display: grid; grid-template-rows: 0fr にし、内側に min-height: 0; overflow: hidden を付ける",
+          "開くときは外側を grid-template-rows: 1fr にし、transition: grid-template-rows .4s で高さが中身に合わせて伸びる",
+          "見出しは button 要素にし、aria-expanded を true/false で切り替える（JS 数行）",
+          "矢印は border で作り、rotate(45deg) → rotate(225deg) で向きを変える",
+          "同時に開けるのは 1 つだけにする場合は、他の aria-expanded を false にする",
+          "prefers-reduced-motion の環境では transition を無くす"
+        ],
+        "use": "FAQ、仕様の折りたたみ、設定画面の詳細セクション。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [
+          "claude-code"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "開閉の周期",
+            "type": "range",
+            "min": 2,
+            "max": 8,
+            "step": 0.5,
+            "default": 4,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}で開いて閉じる"
+          },
+          {
+            "key": "speed",
+            "label": "開く速さ",
+            "type": "range",
+            "min": 0.2,
+            "max": 1,
+            "step": 0.1,
+            "default": 0.4,
+            "unit": "s",
+            "css_var": "--p-speed",
+            "prompt": "開閉にかける時間は{value}"
+          },
+          {
+            "key": "arrow",
+            "label": "矢印の動き",
+            "type": "select",
+            "options": [
+              {
+                "value": "flip",
+                "label": "上下に反転",
+                "css": "180deg"
+              },
+              {
+                "value": "none",
+                "label": "動かさない",
+                "css": "0deg"
+              }
+            ],
+            "default": "flip",
+            "css_var": "--p-arrow",
+            "prompt": "矢印は「{value}」"
+          },
+          {
+            "key": "color",
+            "label": "矢印の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "045",
+      "slug": "tabs-indicator",
+      "category": "ui",
+      "name": {
+        "ja": "滑るタブ下線",
+        "en": "Sliding tab indicator"
+      },
+      "summary": "選んだタブの下へ下線が横に滑る",
+      "description": "タブを切り替えると、下線が選んだタブの位置まで横に滑って移動します。下線は 1 本だけ用意し、transform: translateX とwidth で動かすので軽く、タブ数が増えても同じ作りです。「下線が描かれる」が 1 本の線を左から描くのに対し、こちらは線そのものが移動します。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "タブ",
+        "下線",
+        "インジケーター",
+        "切替",
+        "ナビゲーション"
+      ],
+      "preview": {
+        "html": "<div class=\"tb\"><div class=\"tb__tabs\"><span>概要</span><span>料金</span><span>比較</span><span>FAQ</span><i class=\"tb__bar\"></i></div><div class=\"tb__panel\"><i></i><i></i></div></div>",
+        "css": ".tb{width:280px;font:700 14px/1 system-ui,sans-serif;color:var(--text)}\n.tb__tabs{position:relative;display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}\n.tb__tabs span{padding:12px 0;text-align:center;color:var(--muted);animation:tb-on var(--p-cycle,6s) infinite}\n.tb__tabs span:nth-child(2){animation-delay:calc(var(--p-cycle,6s) * .25)}\n.tb__tabs span:nth-child(3){animation-delay:calc(var(--p-cycle,6s) * .5)}\n.tb__tabs span:nth-child(4){animation-delay:calc(var(--p-cycle,6s) * .75)}\n.tb__bar{position:absolute;left:0;bottom:-1px;width:25%;height:var(--p-thick,3px);border-radius:3px 3px 0 0;background:var(--p-color,var(--primary));animation:tb-slide var(--p-cycle,6s) infinite;animation-timing-function:cubic-bezier(.2,.8,.2,1)}\n.tb__panel{display:grid;gap:8px;padding:14px 4px 0}\n.tb__panel i{display:block;height:10px;border-radius:5px;background:var(--line)}\n.tb__panel i:last-child{width:60%}\n@keyframes tb-slide{0%,20%{transform:translateX(0)}25%,45%{transform:translateX(100%)}50%,70%{transform:translateX(200%)}75%,95%{transform:translateX(300%)}100%{transform:translateX(0)}}\n@keyframes tb-on{0%,20%{color:var(--text)}25%,100%{color:var(--muted)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "タブを切り替えたとき、下線が選んだタブの位置へ横に滑って移動するようにして。",
+        "spec": [
+          "タブは button を横に並べ、親を position: relative にする",
+          "下線は 1 つだけ position: absolute で置き、transition: transform .35s, width .35s を付ける",
+          "クリック時に選んだタブの offsetLeft と offsetWidth を読み、下線の transform: translateX() と width に書く（JS 数行）",
+          "選択中のタブに aria-selected=\"true\" を付け、色を var(--text) にする",
+          "ウィンドウの resize 時にも位置を取り直す",
+          "prefers-reduced-motion の環境では transition を無くす"
+        ],
+        "use": "商品ページのタブ、設定画面、記事カテゴリの切替。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "4タブを1周する時間",
+            "type": "range",
+            "min": 3,
+            "max": 12,
+            "step": 0.5,
+            "default": 6,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}で4つのタブを1周する"
+          },
+          {
+            "key": "thick",
+            "label": "下線の太さ",
+            "type": "range",
+            "min": 2,
+            "max": 6,
+            "step": 1,
+            "default": 3,
+            "unit": "px",
+            "css_var": "--p-thick",
+            "prompt": "下線の太さは{value}"
+          },
+          {
+            "key": "color",
+            "label": "下線の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "046",
+      "slug": "drawer-menu",
+      "category": "ui",
+      "name": {
+        "ja": "スライドメニュー",
+        "en": "Slide-in drawer"
+      },
+      "summary": "横からメニューが出て背景が暗くなる",
+      "description": "ハンバーガーを押すと、左から縦のメニューが滑り込み、背景が暗くなります。メニューの項目は少しずつ時間差で現れます。「追従ヘッダー」が常に見える帯を作るのに対し、こちらは必要なときだけ開く画面外のメニューです。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "メニュー",
+        "ドロワー",
+        "ナビゲーション",
+        "モバイル",
+        "オーバーレイ"
+      ],
+      "preview": {
+        "html": "<div class=\"dm\"><div class=\"dm__bar\"><i class=\"dm__burger\"></i><span>OmochiX</span></div><div class=\"dm__dim\"></div><nav class=\"dm__panel\"><a style=\"--i:0\">ホーム</a><a style=\"--i:1\">AIツール</a><a style=\"--i:2\">ニュース</a><a style=\"--i:3\">学ぶ</a></nav></div>",
+        "css": ".dm{position:relative;width:260px;height:160px;overflow:hidden;border-radius:12px;background:var(--bg);border:1px solid var(--line);font:700 13px/1 system-ui,sans-serif;color:var(--text)}\n.dm__bar{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--line)}\n.dm__burger{width:18px;height:2px;background:var(--text);box-shadow:0 -6px 0 var(--text),0 6px 0 var(--text)}\n.dm__dim{position:absolute;inset:0;background:#000;opacity:0;animation:dm-dim var(--p-cycle,5s) infinite}\n.dm__panel{position:absolute;left:0;top:0;bottom:0;width:var(--p-width,150px);background:var(--surface);box-shadow:4px 0 24px rgba(0,0,0,.18);padding:18px 16px;box-sizing:border-box;display:grid;align-content:start;gap:14px;transform:translateX(-100%);animation:dm-slide var(--p-cycle,5s) cubic-bezier(.2,.8,.2,1) infinite}\n.dm__panel a{opacity:0;transform:translateX(-12px);animation:dm-item var(--p-cycle,5s) ease-out infinite;animation-delay:calc(var(--i) * var(--p-stagger,0.07s))}\n@keyframes dm-slide{0%,12%{transform:translateX(-100%)}22%,70%{transform:translateX(0)}80%,100%{transform:translateX(-100%)}}\n@keyframes dm-dim{0%,12%{opacity:0}22%,70%{opacity:var(--p-dim,0.45)}80%,100%{opacity:0}}\n@keyframes dm-item{0%,16%{opacity:0;transform:translateX(-12px)}26%,70%{opacity:1;transform:translateX(0)}78%,100%{opacity:0;transform:translateX(-12px)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "ハンバーガーボタンを押すと、左からメニューが滑り込んで背景が暗くなるようにして。",
+        "spec": [
+          "メニューは position: fixed で左に置き、初期は transform: translateX(-100%)、transition: transform .35s",
+          "背景の暗幕は position: fixed; inset: 0; background: #000; opacity 0 → .45 に遷移、pointer-events で閉じているときは無効化",
+          "ボタンのクリックで body に is-menu-open を付け外しし、aria-expanded を更新する（JS 数行）",
+          "メニュー項目は transition-delay を 1 つずつ 70ms ずらして順に現れる",
+          "暗幕のクリックと Esc キーで閉じ、開いている間は body を overflow: hidden にする",
+          "prefers-reduced-motion の環境では transition を無くす"
+        ],
+        "use": "モバイルのグローバルナビ、管理画面のサイドメニュー、フィルターパネル。"
+      },
+      "related": {
+        "prompts": [
+          "development-prototype-brief-for-ai-builders"
+        ],
+        "tools": [
+          "cursor"
+        ],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "開閉の周期",
+            "type": "range",
+            "min": 3,
+            "max": 10,
+            "step": 0.5,
+            "default": 5,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}で開いて閉じる"
+          },
+          {
+            "key": "width",
+            "label": "メニューの幅",
+            "type": "range",
+            "min": 110,
+            "max": 200,
+            "step": 10,
+            "default": 150,
+            "unit": "px",
+            "css_var": "--p-width",
+            "prompt": "メニューの幅は{value}"
+          },
+          {
+            "key": "dim",
+            "label": "背景の暗さ",
+            "type": "range",
+            "min": 0.1,
+            "max": 0.8,
+            "step": 0.05,
+            "default": 0.45,
+            "unit": "",
+            "css_var": "--p-dim",
+            "prompt": "背景は不透明度{value}で暗くする"
+          },
+          {
+            "key": "stagger",
+            "label": "項目の時間差",
+            "type": "range",
+            "min": 0,
+            "max": 0.2,
+            "step": 0.01,
+            "default": 0.07,
+            "unit": "s",
+            "css_var": "--p-stagger",
+            "prompt": "項目は{value}ずつ遅れて現れる"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "047",
+      "slug": "check-draw",
+      "category": "ui",
+      "name": {
+        "ja": "チェックが描かれる",
+        "en": "Drawing checkmark"
+      },
+      "summary": "丸とチェックが線で描かれて成功を伝える",
+      "description": "送信完了などの成功表示として、丸が一筆で描かれ、続けてチェックマークが描かれます。SVG の stroke-dasharray と stroke-dashoffset で線の見える長さを変えるだけの仕組みです。「変形する送信ボタン」の最後に出る状態だけを、どこでも使える部品として独立させました。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "チェック",
+        "成功",
+        "完了",
+        "SVG",
+        "stroke",
+        "フィードバック"
+      ],
+      "preview": {
+        "html": "<div class=\"ck\"><svg viewBox=\"0 0 64 64\" width=\"96\" height=\"96\" aria-hidden=\"true\"><circle class=\"ck__circle\" cx=\"32\" cy=\"32\" r=\"28\"/><path class=\"ck__mark\" d=\"M19 33 L28 42 L46 23\"/></svg><p class=\"ck__text\">送信しました</p></div>",
+        "css": ".ck{display:grid;justify-items:center;gap:8px}\n.ck svg{overflow:visible}\n.ck__circle,.ck__mark{fill:none;stroke:var(--p-color,var(--primary));stroke-width:var(--p-thick,4px);stroke-linecap:round;stroke-linejoin:round}\n.ck__circle{stroke-dasharray:176;stroke-dashoffset:176;transform:rotate(-90deg);transform-origin:center;animation:ck-circle var(--p-cycle,3s) infinite;animation-timing-function:ease-out}\n.ck__mark{stroke-dasharray:40;stroke-dashoffset:40;animation:ck-mark var(--p-cycle,3s) infinite;animation-timing-function:ease-out}\n.ck__text{margin:0;font:700 14px/1 system-ui,sans-serif;color:var(--text);opacity:0;animation:ck-text var(--p-cycle,3s) infinite}\n@keyframes ck-circle{0%{stroke-dashoffset:176}20%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:176}}\n@keyframes ck-mark{0%,18%{stroke-dashoffset:40}32%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:40}}\n@keyframes ck-text{0%,26%{opacity:0;transform:translateY(4px)}38%,85%{opacity:1;transform:translateY(0)}100%{opacity:0}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "送信が完了したら、丸とチェックマークが線で描かれるアニメーションを出して。",
+        "spec": [
+          "SVG に circle（r=28）と path（チェックの折れ線）を置き、fill: none、stroke-linecap: round にする",
+          "circle は stroke-dasharray: 176; stroke-dashoffset: 176 を初期値にし、is-done で dashoffset 0 へ .5s で遷移（176 ≒ 円周）",
+          "path は stroke-dasharray: 40; stroke-dashoffset: 40 を初期値にし、circle の後に .3s 遅らせて 0 へ遷移",
+          "circle は transform: rotate(-90deg); transform-origin: center で上から描き始める",
+          "文字は少し遅れてフェードインする",
+          "prefers-reduced-motion の環境では transition を無くし、最初から描かれた状態にする"
+        ],
+        "use": "フォーム送信完了、支払い成功、タスク完了のトースト。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "描画から消えるまでの周期",
+            "type": "range",
+            "min": 2,
+            "max": 6,
+            "step": 0.5,
+            "default": 3,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "見本では{value}で描いて消える"
+          },
+          {
+            "key": "thick",
+            "label": "線の太さ",
+            "type": "range",
+            "min": 2,
+            "max": 8,
+            "step": 1,
+            "default": 4,
+            "unit": "px",
+            "css_var": "--p-thick",
+            "prompt": "線の太さは{value}"
+          },
+          {
+            "key": "color",
+            "label": "線の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "048",
+      "slug": "dot-grid-wave",
+      "category": "ambient",
+      "name": {
+        "ja": "ドットの波",
+        "en": "Dot grid wave"
+      },
+      "summary": "格子状のドットが波のように上下する",
+      "description": "等間隔に並んだドットが、位置に応じて少しずつ遅れて上下し、画面全体に波が走ります。各ドットの行と列の番号（--i / --j）から animation-delay を計算するだけで、JavaScript は使いません。「ふわふわ浮かぶパーティクル」が Canvas で自由に漂うのに対し、こちらは整った格子の規則的な波です。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "背景",
+        "ドット",
+        "波",
+        "グリッド",
+        "装飾"
+      ],
+      "preview": {
+        "html": "<div class=\"dg\"><i style=\"--i:0;--j:0\"></i><i style=\"--i:1;--j:0\"></i><i style=\"--i:2;--j:0\"></i><i style=\"--i:3;--j:0\"></i><i style=\"--i:4;--j:0\"></i><i style=\"--i:5;--j:0\"></i><i style=\"--i:6;--j:0\"></i><i style=\"--i:7;--j:0\"></i><i style=\"--i:8;--j:0\"></i><i style=\"--i:9;--j:0\"></i><i style=\"--i:0;--j:1\"></i><i style=\"--i:1;--j:1\"></i><i style=\"--i:2;--j:1\"></i><i style=\"--i:3;--j:1\"></i><i style=\"--i:4;--j:1\"></i><i style=\"--i:5;--j:1\"></i><i style=\"--i:6;--j:1\"></i><i style=\"--i:7;--j:1\"></i><i style=\"--i:8;--j:1\"></i><i style=\"--i:9;--j:1\"></i><i style=\"--i:0;--j:2\"></i><i style=\"--i:1;--j:2\"></i><i style=\"--i:2;--j:2\"></i><i style=\"--i:3;--j:2\"></i><i style=\"--i:4;--j:2\"></i><i style=\"--i:5;--j:2\"></i><i style=\"--i:6;--j:2\"></i><i style=\"--i:7;--j:2\"></i><i style=\"--i:8;--j:2\"></i><i style=\"--i:9;--j:2\"></i><i style=\"--i:0;--j:3\"></i><i style=\"--i:1;--j:3\"></i><i style=\"--i:2;--j:3\"></i><i style=\"--i:3;--j:3\"></i><i style=\"--i:4;--j:3\"></i><i style=\"--i:5;--j:3\"></i><i style=\"--i:6;--j:3\"></i><i style=\"--i:7;--j:3\"></i><i style=\"--i:8;--j:3\"></i><i style=\"--i:9;--j:3\"></i><i style=\"--i:0;--j:4\"></i><i style=\"--i:1;--j:4\"></i><i style=\"--i:2;--j:4\"></i><i style=\"--i:3;--j:4\"></i><i style=\"--i:4;--j:4\"></i><i style=\"--i:5;--j:4\"></i><i style=\"--i:6;--j:4\"></i><i style=\"--i:7;--j:4\"></i><i style=\"--i:8;--j:4\"></i><i style=\"--i:9;--j:4\"></i></div>",
+        "css": ".dg{display:grid;grid-template-columns:repeat(10,var(--p-gap,26px));grid-auto-rows:var(--p-gap,26px);place-items:center}\n.dg i{display:block;width:6px;height:6px;border-radius:50%;background:var(--p-color,var(--primary));animation:dg-wave var(--p-cycle,2.4s) ease-in-out infinite;animation-delay:calc((var(--i) + var(--j)) * var(--p-cycle,2.4s) / -14)}\n@keyframes dg-wave{0%,100%{transform:translateY(calc(var(--p-amp,8px) * -1)) scale(.8);opacity:.45}50%{transform:translateY(var(--p-amp,8px)) scale(1.2);opacity:1}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "背景に、格子状に並んだドットが波のように上下する装飾を付けて。",
+        "spec": [
+          "ドットを display: grid で等間隔に並べる（列数と行数は画面に合わせて）",
+          "各ドットに --i（列）と --j（行）をインラインで持たせる",
+          "transform: translateY(-8px → 8px) と opacity の keyframes を 2.4 秒で往復させる",
+          "animation-delay を calc((var(--i) + var(--j)) * -0.17s) のように負の値で位置ごとにずらし、斜めに波が走るようにする",
+          "背景として使うときは position: absolute; inset: 0; pointer-events: none; z-index: 0 にする",
+          "prefers-reduced-motion の環境ではアニメーションを止める"
+        ],
+        "use": "ヒーロー背景、セクションの区切り、ローディング画面の装飾。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "波の周期",
+            "type": "range",
+            "min": 1.2,
+            "max": 5,
+            "step": 0.1,
+            "default": 2.4,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "1つのドットは{value}で上下を1往復する"
+          },
+          {
+            "key": "amp",
+            "label": "上下の振れ幅",
+            "type": "range",
+            "min": 2,
+            "max": 12,
+            "step": 1,
+            "default": 8,
+            "unit": "px",
+            "css_var": "--p-amp",
+            "prompt": "ドットは上下に{value}振れる"
+          },
+          {
+            "key": "gap",
+            "label": "ドットの間隔",
+            "type": "range",
+            "min": 18,
+            "max": 32,
+            "step": 2,
+            "default": 26,
+            "unit": "px",
+            "css_var": "--p-gap",
+            "prompt": "ドットの間隔は{value}"
+          },
+          {
+            "key": "color",
+            "label": "ドットの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "049",
+      "slug": "ripple-rings",
+      "category": "ambient",
+      "name": {
+        "ja": "広がる波紋",
+        "en": "Ripple rings"
+      },
+      "summary": "中心から同心円がゆっくり広がって薄れる",
+      "description": "水面に落ちた雫のように、中心から輪が等間隔で広がり、大きくなりながら薄れて消えます。同じ輪を 3〜4 つ用意して animation-delay をずらすだけです。「脈打つボタンの輪」がボタンの周りだけで 1 つ光るのに対し、こちらは背景全面に連続した波紋を作ります。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "背景",
+        "波紋",
+        "同心円",
+        "リング",
+        "装飾"
+      ],
+      "preview": {
+        "html": "<div class=\"rr\"><i style=\"--i:0\"></i><i style=\"--i:1\"></i><i style=\"--i:2\"></i><i style=\"--i:3\"></i><b></b></div>",
+        "css": ".rr{position:relative;width:320px;height:180px;display:grid;place-items:center;overflow:hidden}\n.rr i{position:absolute;width:24px;height:24px;border-radius:50%;border:var(--p-thick,2px) solid var(--p-color,var(--primary));opacity:0;animation:rr-ring var(--p-cycle,4s) linear infinite;animation-delay:calc(var(--i) * var(--p-cycle,4s) / var(--p-count,4))}\n.rr b{width:10px;height:10px;border-radius:50%;background:var(--p-color,var(--primary))}\n@keyframes rr-ring{0%{transform:scale(.3);opacity:.9}100%{transform:scale(12);opacity:0}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "背景の中心から、同心円の波紋がゆっくり広がって消え続ける装飾を付けて。",
+        "spec": [
+          "中心に position: absolute で置いた同じ円を 4 つ用意する（border のみ、背景は透明）",
+          "transform: scale(.3 → 12) と opacity .9 → 0 を 4 秒 linear で繰り返す",
+          "animation-delay を 0s、1s、2s、3s とずらして途切れなく広がるようにする",
+          "親に overflow: hidden と pointer-events: none を付け、背景として使う",
+          "色はテーマのアクセント、線の太さは 2px 程度",
+          "prefers-reduced-motion の環境ではアニメーションを止めて 1 つの輪だけ表示する"
+        ],
+        "use": "位置情報・通知・接続中を示す背景、ヒーローの装飾、アプリの待機画面。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1つの輪が消えるまで",
+            "type": "range",
+            "min": 2,
+            "max": 8,
+            "step": 0.5,
+            "default": 4,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "輪は{value}で広がって消える"
+          },
+          {
+            "key": "count",
+            "label": "輪の数",
+            "type": "select",
+            "options": [
+              {
+                "value": "2",
+                "label": "2つ",
+                "css": "2"
+              },
+              {
+                "value": "3",
+                "label": "3つ",
+                "css": "3"
+              },
+              {
+                "value": "4",
+                "label": "4つ",
+                "css": "4"
+              }
+            ],
+            "default": "4",
+            "css_var": "--p-count",
+            "prompt": "同時に出る輪は{value}"
+          },
+          {
+            "key": "thick",
+            "label": "線の太さ",
+            "type": "range",
+            "min": 1,
+            "max": 4,
+            "step": 0.5,
+            "default": 2,
+            "unit": "px",
+            "css_var": "--p-thick",
+            "prompt": "輪の線の太さは{value}"
+          },
+          {
+            "key": "color",
+            "label": "輪の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "050",
+      "slug": "spinner-ring",
+      "category": "loading",
+      "name": {
+        "ja": "リングスピナー",
+        "en": "Ring spinner"
+      },
+      "summary": "一部が欠けた円がくるくる回る",
+      "description": "読み込み中を示す最小の表示です。conic-gradient で描いた円を mask で輪にし、欠けた部分を作って回転させるだけで、画像もSVGも使いません。回転の速さ・太さ・欠けの大きさを変えるだけで印象が変わります。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "ローディング",
+        "スピナー",
+        "回転",
+        "待機",
+        "conic-gradient"
+      ],
+      "preview": {
+        "html": "<div class=\"sr\"><i class=\"sr__ring\"></i><span class=\"sr__text\">読み込み中…</span></div>",
+        "css": ".sr{display:grid;justify-items:center;gap:14px}\n.sr__ring{width:var(--p-size,48px);height:var(--p-size,48px);border-radius:50%;background:conic-gradient(var(--p-color,var(--primary)) calc(100% - var(--p-gap,25%)),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - var(--p-thick,5px)),#000 calc(100% - var(--p-thick,5px) + 1px));mask:radial-gradient(farthest-side,transparent calc(100% - var(--p-thick,5px)),#000 calc(100% - var(--p-thick,5px) + 1px));animation:sr-spin var(--p-cycle,1s) linear infinite}\n.sr__text{font:600 12px/1 system-ui,sans-serif;color:var(--muted)}\n@keyframes sr-spin{to{transform:rotate(1turn)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "読み込み中を示す、一部が欠けた輪がくるくる回るスピナーを作って。",
+        "spec": [
+          "48px の正方形に border-radius: 50% を付け、background に conic-gradient(色 75%, transparent 0) を指定する",
+          "mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)) で中を抜いて輪にする",
+          "transform: rotate(1turn) を 1 秒 linear で無限に繰り返す",
+          "role=\"status\" と aria-label=\"読み込み中\" を付ける",
+          "prefers-reduced-motion の環境では回転を止めて静止した輪にする"
+        ],
+        "use": "ボタン押下後の待機、データ取得中のカード、ページ遷移の間。"
+      },
+      "related": {
+        "prompts": [
+          "development-web-performance-investigation"
+        ],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回転の時間",
+            "type": "range",
+            "min": 0.5,
+            "max": 2.5,
+            "step": 0.1,
+            "default": 1,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "スピナーは{value}で1回転する"
+          },
+          {
+            "key": "thick",
+            "label": "輪の太さ",
+            "type": "range",
+            "min": 2,
+            "max": 10,
+            "step": 1,
+            "default": 5,
+            "unit": "px",
+            "css_var": "--p-thick",
+            "prompt": "輪の太さは{value}"
+          },
+          {
+            "key": "gap",
+            "label": "欠けの大きさ",
+            "type": "range",
+            "min": 10,
+            "max": 60,
+            "step": 5,
+            "default": 25,
+            "unit": "%",
+            "css_var": "--p-gap",
+            "prompt": "輪の{value}を欠けさせる"
+          },
+          {
+            "key": "color",
+            "label": "輪の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "051",
+      "slug": "dots-bounce",
+      "category": "loading",
+      "name": {
+        "ja": "跳ねる3点",
+        "en": "Bouncing dots"
+      },
+      "summary": "3つの点が順番に跳ねる「入力中」表示",
+      "description": "チャットの「相手が入力中…」でおなじみの、3 つの点が順に跳ねる表示です。同じアニメーションを animation-delay だけずらして 3 つ並べます。「順番に登場」が要素の登場を 1 回だけずらすのに対し、こちらは待機中ずっと繰り返す表示です。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "ローディング",
+        "入力中",
+        "チャット",
+        "ドット",
+        "待機"
+      ],
+      "preview": {
+        "html": "<div class=\"db\"><div class=\"db__bubble\"><i style=\"--i:0\"></i><i style=\"--i:1\"></i><i style=\"--i:2\"></i></div></div>",
+        "css": ".db__bubble{display:flex;align-items:center;gap:6px;height:44px;padding:0 16px;border-radius:22px 22px 22px 6px;background:var(--surface);border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.08)}\n.db__bubble i{display:block;width:var(--p-size,9px);height:var(--p-size,9px);border-radius:50%;background:var(--p-color,var(--primary));animation:db-bounce var(--p-cycle,1.2s) ease-in-out infinite;animation-delay:calc(var(--i) * var(--p-cycle,1.2s) / 6)}\n@keyframes db-bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(calc(var(--p-height,8px) * -1));opacity:1}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "チャットの「入力中」のように、3つの点が順番に跳ねるローディング表示を作って。",
+        "spec": [
+          "吹き出しの中に 9px の円を 3 つ flex で並べる（gap 6px）",
+          "transform: translateY(0 → -8px → 0) と opacity .5 → 1 を 1.2 秒で繰り返す",
+          "animation-delay を 0s、.2s、.4s とずらす",
+          "role=\"status\" と aria-label=\"入力中\" を付け、点自体は aria-hidden にする",
+          "prefers-reduced-motion の環境では跳ねずに opacity の点滅だけにする"
+        ],
+        "use": "チャット UI の入力中表示、AI の応答待ち、コメント送信中。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [
+          "claude"
+        ],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "1回跳ねる周期",
+            "type": "range",
+            "min": 0.6,
+            "max": 2.4,
+            "step": 0.1,
+            "default": 1.2,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "点は{value}ごとに跳ねる"
+          },
+          {
+            "key": "height",
+            "label": "跳ねる高さ",
+            "type": "range",
+            "min": 3,
+            "max": 14,
+            "step": 1,
+            "default": 8,
+            "unit": "px",
+            "css_var": "--p-height",
+            "prompt": "点は{value}跳ねる"
+          },
+          {
+            "key": "size",
+            "label": "点の大きさ",
+            "type": "range",
+            "min": 5,
+            "max": 14,
+            "step": 1,
+            "default": 9,
+            "unit": "px",
+            "css_var": "--p-size",
+            "prompt": "点の直径は{value}"
+          },
+          {
+            "key": "color",
+            "label": "点の色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "052",
+      "slug": "progress-stripes",
+      "category": "loading",
+      "name": {
+        "ja": "流れる縞のバー",
+        "en": "Striped progress"
+      },
+      "summary": "バーの中の斜め縞が流れ続ける",
+      "description": "終わりの見えない処理中を示す「不確定プログレスバー」です。repeating-linear-gradient で斜めの縞を描き、background-position を動かすだけで縞が流れます。「読了プログレスバー」が読んだ量を示すのに対し、こちらは割合が分からない待機を伝えます。",
+      "level": "beginner",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "ローディング",
+        "プログレスバー",
+        "縞",
+        "処理中",
+        "background-position"
+      ],
+      "preview": {
+        "html": "<div class=\"ps\"><div class=\"ps__label\"><span>アップロード中</span><span>処理中…</span></div><div class=\"ps__track\"><div class=\"ps__bar\"></div></div></div>",
+        "css": ".ps{width:240px;display:grid;gap:8px}\n.ps__label{display:flex;justify-content:space-between;font:600 12px/1 system-ui,sans-serif;color:var(--muted)}\n.ps__track{height:14px;border-radius:var(--p-radius,7px);background:var(--line);overflow:hidden}\n.ps__bar{height:100%;width:70%;border-radius:inherit;background:repeating-linear-gradient(-45deg,var(--p-color,var(--primary)) 0 var(--p-stripe,12px),color-mix(in srgb,var(--p-color,var(--primary)) 70%,#fff) var(--p-stripe,12px) calc(var(--p-stripe,12px) * 2));background-size:calc(var(--p-stripe,12px) * 2.83) 100%;animation:ps-flow var(--p-cycle,1s) linear infinite}\n@keyframes ps-flow{to{background-position:calc(var(--p-stripe,12px) * 2.83) 0}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "処理中を示す、斜めの縞が流れ続けるプログレスバーを作って。",
+        "spec": [
+          "トラック（背景）は高さ 14px、border-radius 7px、overflow: hidden",
+          "バーの background に repeating-linear-gradient(-45deg, 色 0 12px, 薄い色 12px 24px) を指定し、background-size を縞 1 周期分（約 34px）にする",
+          "background-position を 1 周期分動かす keyframes を 1 秒 linear で繰り返す",
+          "role=\"progressbar\" を付け、割合が分かるときは aria-valuenow を更新する",
+          "prefers-reduced-motion の環境では縞を止める"
+        ],
+        "use": "ファイルのアップロード、書き出し処理、バッチ実行の待機。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": []
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "縞が1周期分流れる時間",
+            "type": "range",
+            "min": 0.4,
+            "max": 3,
+            "step": 0.1,
+            "default": 1,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "縞は{value}で1周期分流れる"
+          },
+          {
+            "key": "stripe",
+            "label": "縞の幅",
+            "type": "range",
+            "min": 6,
+            "max": 20,
+            "step": 2,
+            "default": 12,
+            "unit": "px",
+            "css_var": "--p-stripe",
+            "prompt": "縞1本の幅は{value}"
+          },
+          {
+            "key": "radius",
+            "label": "バーの角丸",
+            "type": "range",
+            "min": 0,
+            "max": 7,
+            "step": 1,
+            "default": 7,
+            "unit": "px",
+            "css_var": "--p-radius",
+            "prompt": "バーの角丸は{value}"
+          },
+          {
+            "key": "color",
+            "label": "バーの色",
+            "type": "color",
+            "default": "#6e4bff",
+            "css_var": "--p-color"
+          }
+        ]
+      },
+      "video": null
+    },
+    {
+      "id": "053",
+      "slug": "liquid-fill",
+      "category": "loading",
+      "name": {
+        "ja": "液体が満ちる",
+        "en": "Liquid fill"
+      },
+      "summary": "円の中で波打つ液面が上がっていく",
+      "description": "丸い容器の中で、液体の水面が波打ちながらゆっくり上がっていきます。波は角丸の四角を回転させて作り、液面の高さは translateY で動かします。「カウントアップ」が数字で進捗を示すのに対し、こちらは量が満ちていく絵で進捗を伝えます。",
+      "level": "intermediate",
+      "tech": [
+        "css"
+      ],
+      "tags": [
+        "ローディング",
+        "進捗",
+        "液体",
+        "波",
+        "円"
+      ],
+      "preview": {
+        "html": "<div class=\"lf\"><div class=\"lf__cup\"><div class=\"lf__liquid\"><i class=\"lf__wave\"></i><i class=\"lf__wave lf__wave--b\"></i></div></div></div>",
+        "css": ".lf__cup{position:relative;width:120px;height:120px;border-radius:50%;border:4px solid var(--p-color,var(--primary));overflow:hidden;background:var(--surface);display:grid;place-items:center}\n.lf__liquid{position:absolute;left:0;right:0;top:0;bottom:0;transform:translateY(100%);animation:lf-rise var(--p-cycle,5s) ease-in-out infinite}\n.lf__wave{position:absolute;left:50%;top:-5px;width:240px;height:240px;margin-left:-120px;border-radius:var(--p-round,42%);background:var(--p-color,var(--primary));opacity:.9;animation:lf-spin var(--p-wave,3s) linear infinite}\n.lf__wave--b{border-radius:38%;opacity:.5;animation-duration:calc(var(--p-wave,3s) * 1.4)}\n@keyframes lf-rise{0%,8%{transform:translateY(100%)}70%,92%{transform:translateY(calc(100% - var(--p-fill,75%)))}100%{transform:translateY(100%)}}\n@keyframes lf-spin{to{transform:rotate(1turn)}}",
+        "js": ""
+      },
+      "prompt": {
+        "ask": "丸い容器の中で、波打つ液面が上がっていく進捗表示を作って。",
+        "spec": [
+          "120px の円（border と overflow: hidden）の中に、液体用の要素を position: absolute で置く",
+          "液体の中に 240px の角丸四角（border-radius: 42%）を 2 つ重ね、transform: rotate(1turn) を 3 秒と 4.2 秒で回して波に見せる",
+          "液体全体を translateY(100% → 25%) で上げると、満ちていくように見える（進捗 75% なら 25% の位置）",
+          "進捗を JS から更新するときは、CSS 変数（--fill）に割合を書いて translateY で使う",
+          "prefers-reduced-motion の環境では波の回転を止め、液面だけを動かす（または静止）"
+        ],
+        "use": "アップロードや生成の進捗、目標達成率の表示、ゲージ風のダッシュボード。"
+      },
+      "related": {
+        "prompts": [],
+        "tools": [],
+        "learn": [
+          "learn/development"
+        ]
+      },
+      "playground": {
+        "params": [
+          {
+            "key": "cycle",
+            "label": "満ちるまでの周期",
+            "type": "range",
+            "min": 3,
+            "max": 10,
+            "step": 0.5,
+            "default": 5,
+            "unit": "s",
+            "css_var": "--p-cycle",
+            "prompt": "液面は{value}で満ちて戻る"
+          },
+          {
+            "key": "wave",
+            "label": "波の速さ",
+            "type": "range",
+            "min": 1.5,
+            "max": 6,
+            "step": 0.5,
+            "default": 3,
+            "unit": "s",
+            "css_var": "--p-wave",
+            "prompt": "波は{value}で1回転する"
+          },
+          {
+            "key": "fill",
+            "label": "満ちる割合",
+            "type": "range",
+            "min": 30,
+            "max": 100,
+            "step": 5,
+            "default": 75,
+            "unit": "%",
+            "css_var": "--p-fill",
+            "prompt": "最終的に{value}まで満ちる"
+          },
+          {
+            "key": "color",
+            "label": "液体の色",
             "type": "color",
             "default": "#6e4bff",
             "css_var": "--p-color"
