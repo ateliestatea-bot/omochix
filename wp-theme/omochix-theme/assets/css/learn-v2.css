@@ -425,6 +425,10 @@ a.motion-chip--tag:hover { color: var(--color-text); }
     /* Full-screen sheet; no entrance animation (a frozen first frame would leave it invisible). */
     .motion-dialog { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; border: 0; border-radius: 0; }
     .motion-dialog[open] { animation: none; }
+    /* 8 category chips: one horizontally scrollable row instead of 5 wrapped rows (Motion 50, M3). */
+    .motion-filter__chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .motion-filter__chips::-webkit-scrollbar { display: none; }
+    .motion-filter__chip { flex: 0 0 auto; scroll-snap-align: start; }
 }
 
 /* --- Playground (adjustable parameters) -------------------------------- */
