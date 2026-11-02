@@ -18,7 +18,7 @@
         soft: 'cubic-bezier(.2,.8,.2,1)', back: 'cubic-bezier(.34,1.56,.64,1)'
     };
     var HEX = /^#[0-9a-fA-F]{6}$/;
-    var PROPERTIES = ['opacity', 'transform', 'clip-path', 'fill', 'fill-opacity', 'stroke', 'stroke-opacity', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset'];
+    var PROPERTIES = ['opacity', 'transform', 'filter', 'clip-path', 'fill', 'fill-opacity', 'stroke', 'stroke-opacity', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset'];
 
     /** Clamp, snap and type-check values against the preset's parameter list. */
     function sanitizeParams(preset, input) {
@@ -75,7 +75,7 @@
     }
 
     // These animate each shape, so their cost grows with the logo's shape count.
-    var SHAPE_PRESETS = ['logo-draw', 'logo-draw-fill', 'logo-color-shift', 'logo-dash-flow'];
+    var SHAPE_PRESETS = ['logo-draw', 'logo-draw-fill', 'logo-color-shift', 'logo-dash-flow', 'logo-shine'];
 
     var ENTRANCE_END = 'end';
     var LOOP_START = 'start';
@@ -227,6 +227,41 @@
                 });
             }) };
         },
+        /* filter and 3D go on the <svg> element ('stage'): WebKit does not paint CSS filter on inner SVG
+           elements, and inner elements flatten 3D. It is also far cheaper (docs/motion/SVG-MOTION-S1C-RESULT.md). */
+        'logo-focus': function (p) {
+            return { rest: ENTRANCE_END, tracks: [track('stage', 0, [
+                frame(0, { opacity: '0', filter: 'blur(' + p.blur + 'px)' }),
+                frame(1, { opacity: '1', filter: 'blur(0px)' })
+            ], { duration: p.duration, easing: EASINGS['ease-out'] })] };
+        },
+        'logo-flip': function (p) {
+            var axis = p.axis === 'X' ? 'rotateX' : 'rotateY';
+            return { rest: ENTRANCE_END, tracks: [track('stage', 0, [
+                frame(0, { opacity: '0', transform: 'perspective(' + p.depth + 'px) ' + axis + '(' + p.angle + 'deg)' }),
+                frame(0.3, { opacity: '1', transform: 'perspective(' + p.depth + 'px) ' + axis + '(' + round(p.angle * 0.7) + 'deg)' }),
+                frame(1, { opacity: '1', transform: 'perspective(' + p.depth + 'px) ' + axis + '(0deg)' })
+            ], { duration: p.duration, easing: EASINGS['ease-out'] })] };
+        },
+        'logo-shine': function (p, layout) {
+            var active = round(1 - p.rest);
+            var travel = round(layout.width * 1.8);
+            return {
+                rest: LOOP_START,
+                setup: [{ target: { kind: 'overlay', index: 0 }, styles: { opacity: String(p.strength) } }],
+                tracks: [track('overlay', 0, [
+                    frame(0, { transform: 'translateX(0px)' }),
+                    frame(active, { transform: 'translateX(' + travel + 'px)' }),
+                    frame(1, { transform: 'translateX(' + travel + 'px)' })
+                ], { duration: p.duration, iterations: Infinity, easing: EASINGS['ease-in-out'] })]
+            };
+        },
+        'logo-glow': function (p) {
+            return { rest: LOOP_START, tracks: [track('stage', 0, [
+                frame(0, { filter: 'drop-shadow(0px 0px 0px ' + p.color + ')' }),
+                frame(1, { filter: 'drop-shadow(0px 0px ' + p.size + 'px ' + p.color + ')' })
+            ], { duration: p.duration, iterations: Infinity, direction: 'alternate', easing: EASINGS['ease-in-out'] })] };
+        },
         'logo-dash-flow': function (p, layout) {
             var dash = p.dash;
             return {
@@ -266,6 +301,8 @@
     function selector(target) {
         var index = Number(target.index);
         if (!isFinite(index) || index < 0) throw new Error('Bad target');
+        if (target.kind === 'stage') return '[data-omx-stage]';
+        if (target.kind === 'overlay') return '[data-omx-overlay]';
         if (target.kind === 'root') return '[data-omx-root]';
         if (target.kind === 'part') return '[data-omx-part="' + index + '"]';
         if (target.kind === 'geometry') return '[data-omx-geometry="' + index + '"]';
@@ -276,7 +313,7 @@
     function isValidPlan(plan) {
         if (!plan || !Array.isArray(plan.tracks) || !Array.isArray(plan.setup)) return false;
         var valueOk = function (value) { return /^[a-zA-Z0-9 .,()%#+-]{1,80}$/.test(String(value)) && !/url/i.test(String(value)); };
-        var targetOk = function (t) { return t && ['root', 'part', 'geometry'].indexOf(t.kind) !== -1 && Number.isInteger(t.index) && t.index >= 0; };
+        var targetOk = function (t) { return t && ['stage', 'overlay', 'root', 'part', 'geometry'].indexOf(t.kind) !== -1 && Number.isInteger(t.index) && t.index >= 0; };
         var propsOk = function (props) {
             return Object.keys(props || {}).every(function (key) { return PROPERTIES.indexOf(key) !== -1 && valueOk(props[key]); });
         };
@@ -307,7 +344,7 @@
      */
     function planToCss(plan, options) {
         var animate = !options || options.animate !== false;
-        var out = ['[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}'];
+        var out = ['[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}[data-omx-stage]{transform-origin:center}'];
         plan.setup.forEach(function (s) { out.push(selector(s.target) + '{' + declarations(s.styles) + '}'); });
         if (!animate) {
             restingStyles(plan).forEach(function (r) { out.push(selector(r.target) + '{' + declarations(r.styles) + '}'); });

@@ -44,15 +44,22 @@
 
     var frameEl = null;
     var frameReady = false;
+    var mountedOverlay = false;
     var playing = false;
     var thumbsMoving = !reducedQuery.matches;
 
-    function stageFor(sampleId) {
-        if (stages[sampleId]) return stages[sampleId];
+    function needsOverlay(presetId) {
+        return presets[presetId].structure === 'overlay';
+    }
+
+    /* A stage with the shine band is a different document, so it is prepared and mounted only when needed. */
+    function stageFor(sampleId, overlay) {
+        var key = sampleId + (overlay ? '+overlay' : '');
+        if (stages[key]) return stages[key];
         var sample = data.samples.filter(function (s) { return s.id === sampleId; })[0];
         var normalized = Safety.normalize(sample.svg, { prefix: 'omx-' + sampleId + '-' });
-        stages[sampleId] = Frame.prepare(normalized.svg, data.budget);
-        return stages[sampleId];
+        stages[key] = Frame.prepare(normalized.svg, Object.assign({ overlay: !!overlay }, data.budget));
+        return stages[key];
     }
 
     function paramsFor(presetId) {
@@ -60,7 +67,7 @@
     }
 
     function currentPlan() {
-        return Compile.buildPlan(presets[state.preset], paramsFor(state.preset), stageFor(state.sample).layout);
+        return Compile.buildPlan(presets[state.preset], paramsFor(state.preset), stageFor(state.sample, needsOverlay(state.preset)).layout);
     }
 
     function announce(message) {
@@ -133,8 +140,9 @@
         frameReady = false;
         if (frameEl) frameEl.remove();
         var stage;
+        mountedOverlay = needsOverlay(state.preset);
         try {
-            stage = stageFor(state.sample);
+            stage = stageFor(state.sample, mountedOverlay);
             var srcdoc = Frame.buildDocument(stage.svg, { theme: document.documentElement.dataset.theme });
             frameEl = document.createElement('iframe');
             frameEl.setAttribute('sandbox', 'allow-scripts');
@@ -246,7 +254,7 @@
     function thumbUri(presetId, moving) {
         var sample = data.samples[0];
         var normalized = Safety.normalize(sample.svg, { prefix: THUMB_PREFIX });
-        var stage = Frame.prepare(normalized.svg, data.budget);
+        var stage = Frame.prepare(normalized.svg, Object.assign({ overlay: needsOverlay(presetId) }, data.budget));
         var plan = Compile.buildPlan(presets[presetId], {}, stage.layout);
         return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(Frame.animatedSvg(stage.svg, plan, moving));
     }
@@ -273,7 +281,8 @@
         renderParams();
         saveState();
         if (!options || !options.silent) {
-            sendPlan(!reducedQuery.matches);
+            if (mountedOverlay !== needsOverlay(id)) mountFrame();
+            else sendPlan(!reducedQuery.matches);
             announce(preset.name);
         }
     }

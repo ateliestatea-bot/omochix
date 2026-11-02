@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset=utf-8><title>effects</title><script src="head.js"></script><style>body{margin:0;background:#fff}iframe{border:0;display:block}</style></head><body><div id=h></div><script>
+// Measures candidates for P07, P08, P12 and P18 before they are built: does it paint, and what does it cost.
+function logo(n, opts) { let s = ''; for (let i = 0; i < n; i++) s += '<path d="M' + (i * 7 % 280 + 10) + ' ' + (i * 13 % 140 + 20) + 'c3 0 6 3 6 6s-3 6-6 6-6-3-6-6 3-6 6-6z" fill="hsl(' + (i % 360) + ' 70% 50%)"/>'; return s; }
+const big = '<rect x="90" y="40" width="140" height="100" rx="12" fill="#6e4bff"/><circle cx="160" cy="90" r="26" fill="#fff"/>';
+const EFFECTS = {
+  none: { css: '', el: 'g', kf: null },
+  'blur-g': { el: 'g', kf: [{ filter: 'blur(8px)' }, { filter: 'blur(0px)' }] },
+  'blur-svg': { el: 'svg', kf: [{ filter: 'blur(8px)' }, { filter: 'blur(0px)' }] },
+  'shadow-g': { el: 'g', kf: [{ filter: 'drop-shadow(0 0 0px #6e4bff)' }, { filter: 'drop-shadow(0 0 16px #ff2d78)' }] },
+  'shadow-svg': { el: 'svg', kf: [{ filter: 'drop-shadow(0 0 0px #6e4bff)' }, { filter: 'drop-shadow(0 0 16px #ff2d78)' }] },
+  'rotY-g': { el: 'g', kf: [{ transform: 'perspective(400px) rotateY(80deg)' }, { transform: 'perspective(400px) rotateY(0deg)' }] },
+  'rotY-svg': { el: 'svg', kf: [{ transform: 'perspective(400px) rotateY(80deg)' }, { transform: 'perspective(400px) rotateY(0deg)' }] },
+  'translate-g': { el: 'g', kf: [{ transform: 'translateX(-40px)' }, { transform: 'translateX(40px)' }] }
+};
+function doc(body, effect, mode) {
+  const e = EFFECTS[effect]; const n = 'n' + Math.random().toString(36).slice(2);
+  const sel = e.el === 'svg' ? 'svg' : '[data-root]';
+  const anim = e.kf ? 'var el=document.querySelector(' + JSON.stringify(sel) + ');var a=el.animate(' + JSON.stringify(e.kf) + ',{duration:1000,fill:"both",iterations:' + (mode === 'run' ? 'Infinity,direction:"alternate"' : '1') + '});' + (mode === 'run' ? '' : 'a.pause();a.currentTime=' + (mode === 'mid' ? 500 : 0) + ';') : '';
+  const counter = mode === 'run' ? 'var c=[],l=0,s=0;function t(x){if(!s){s=x;l=x}c.push(x-l);l=x;if(x-s<3000)requestAnimationFrame(t);else{c.sort(function(a,b){return a-b});parent.postMessage({fps:+(c.length/((x-s)/1000)).toFixed(1),p95:Math.round(c[Math.floor(c.length*.95)])},"*")}}setTimeout(function(){requestAnimationFrame(t)},300);' : '';
+  return '<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-' + n + '\'; style-src \'unsafe-inline\'; img-src data:"><style>html,body{margin:0;height:100%;overflow:hidden}svg{display:block;width:100%;height:100%}[data-root],svg{transform-box:fill-box;transform-origin:center}svg{transform-box:border-box}</style></head><body><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><g data-root="">' + body + '</g></svg>' + SC + ' nonce="' + n + '">' + anim + counter + SE + '</body></html>';
+}
+let cur;
+window.show = async (effect, mode, w, hh) => { h.textContent = ''; cur = document.createElement('iframe'); cur.id = 'f'; cur.setAttribute('sandbox', 'allow-scripts'); cur.width = w || 640; cur.height = hh || 360; cur.srcdoc = doc(big, effect, mode); h.append(cur); await wait(250); };
+window.cost = (n, effect, w, hh) => new Promise(done => { h.textContent = ''; const f = document.createElement('iframe'); f.id = 'f'; f.setAttribute('sandbox', 'allow-scripts'); f.width = w; f.height = hh; f.srcdoc = doc(logo(n) + big, effect, 'run'); const L = e => { if (e.source === f.contentWindow && e.data.fps) { removeEventListener('message', L); done(e.data); } }; addEventListener('message', L); h.append(f); });
+window.prepareClick = async () => { h.textContent = ''; };
+window.costAfterClick = (n, effect, w, hh) => new Promise(async done => { h.textContent = ''; const f = document.createElement('iframe'); f.id = 'f'; f.setAttribute('sandbox', 'allow-scripts'); f.width = w; f.height = hh; f.srcdoc = doc(logo(n) + big, effect, 'run'); const L = e => { if (e.source === f.contentWindow && e.data.fps) { removeEventListener('message', L); done(e.data); } }; addEventListener('message', L); h.append(f); });
+window.diff = (a, b) => Promise.all([a, b].map(u => new Promise((res, rej) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, c.width, c.height).data); }; i.onerror = rej; i.src = 'data:image/png;base64,' + u; }))).then(([p, q]) => { let n = 0; for (let i = 0; i < p.length; i += 4) if (Math.abs(p[i] - q[i]) + Math.abs(p[i + 1] - q[i + 1]) + Math.abs(p[i + 2] - q[i + 2]) > 24) n++; return +(n / (p.length / 4) * 100).toFixed(2); });
+// mask-type:alpha, needed for a shine clipped to the logo's own shape (P12)
+window.maskDoc = (variant) => { h.textContent = ''; const n = 'n' + Math.random().toString(36).slice(2); const logoMarkup = '<rect x="90" y="40" width="140" height="100" rx="12" fill="#6e4bff"/>'; const mask = variant === 'alpha' ? '<mask id="m" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="180">' + logoMarkup + '</mask>' : '<filter id="w"><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/></filter><mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="180"><g filter="url(#w)">' + logoMarkup + '</g></mask>'; const f = document.createElement('iframe'); f.id = 'f'; f.setAttribute('sandbox', 'allow-scripts'); f.width = 640; f.height = 360; f.srcdoc = '<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'"><style>html,body{margin:0;height:100%}svg{display:block;width:100%;height:100%}</style></head><body><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><defs>' + mask + '</defs>' + logoMarkup + '<rect width="320" height="180" fill="#ffffff" mask="url(#m)"/></svg></body></html>'; h.append(f); return wait(200); };
+document.title = 'READY';
+</script></body></html>

@@ -15,7 +15,9 @@
     var SVG_NS = 'http://www.w3.org/2000/svg';
     var NON_DRAWING = ['defs', 'style', 'title', 'desc', 'symbol'];
     var GEOMETRY = 'path,rect,circle,ellipse,line,polyline,polygon';
-    var EXTRA_ATTRIBUTE = /^data-omx-(?:root|part|geometry)$/;
+    var EXTRA_ATTRIBUTE = /^data-omx-(?:stage|root|part|geometry|overlay)$/;
+    var OVERLAY_MASK = 'omxoverlay-mask';
+    var OVERLAY_GRADIENT = 'omxoverlay-gradient';
 
     function viewBoxOf(svg) {
         var parts = (svg.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
@@ -27,8 +29,9 @@
 
     /**
      * @param {string} normalizedSvg Output of OmxSvgSafety.normalize().
-     * @param {{maxParts?: number, maxShapes?: number}} [options] Above maxParts the logo animates as one
+     * @param {{maxParts?: number, maxShapes?: number, overlay?: boolean}} [options] Above maxParts the logo animates as one
      *     part; above maxShapes the presets that animate each shape are unavailable (layout.tooManyShapes).
+     *     overlay:true adds a light band clipped to the logo's own shape, for logo-shine.
      * @return {{svg: string, layout: object}}
      */
     function prepare(normalizedSvg, options) {
@@ -38,6 +41,7 @@
         if (!svg.hasAttribute('viewBox')) svg.setAttribute('viewBox', viewBox.join(' '));
         svg.removeAttribute('width');
         svg.removeAttribute('height');
+        svg.setAttribute('data-omx-stage', '');
 
         var drawing = Array.prototype.filter.call(svg.children, function (child) {
             return NON_DRAWING.indexOf(child.localName) === -1;
@@ -80,6 +84,8 @@
             fillOpacity.push(element.getAttribute('fill-opacity') || '1');
         });
 
+        if (options && options.overlay && geometry.length <= (options.maxShapes || Infinity)) addOverlay(doc, svg, rootGroup, viewBox);
+
         return {
             svg: new XMLSerializer().serializeToString(svg),
             layout: {
@@ -92,6 +98,42 @@
                 fillOpacity: fillOpacity
             }
         };
+    }
+
+    /* A copy of the logo is the mask (its alpha, so any fill colour works); the band moves behind that mask. */
+    function addOverlay(doc, svg, rootGroup, viewBox) {
+        function make(name, attributes) {
+            var element = doc.createElementNS(SVG_NS, name);
+            Object.keys(attributes).forEach(function (key) { element.setAttribute(key, attributes[key]); });
+            return element;
+        }
+        var defs = make('defs', {});
+        var gradient = make('linearGradient', { id: OVERLAY_GRADIENT, x1: '0', y1: '0', x2: '1', y2: '0.35' });
+        [['0', '0'], ['0.5', '1'], ['1', '0']].forEach(function (stop) {
+            gradient.appendChild(make('stop', { offset: stop[0], 'stop-color': '#ffffff', 'stop-opacity': stop[1] }));
+        });
+        var mask = make('mask', {
+            id: OVERLAY_MASK, style: 'mask-type:alpha', maskUnits: 'userSpaceOnUse',
+            x: String(viewBox[0]), y: String(viewBox[1]), width: String(viewBox[2]), height: String(viewBox[3])
+        });
+        var copy = rootGroup.cloneNode(true);
+        [copy].concat(Array.prototype.slice.call(copy.querySelectorAll('*'))).forEach(function (element) {
+            Array.prototype.slice.call(element.attributes).forEach(function (attribute) {
+                if (attribute.name === 'id' || attribute.name.indexOf('data-omx-') === 0) element.removeAttribute(attribute.name);
+            });
+        });
+        mask.appendChild(copy);
+        defs.appendChild(gradient);
+        defs.appendChild(mask);
+        var holder = make('g', { mask: 'url(#' + OVERLAY_MASK + ')' });
+        // Starts fully left of the logo, so at rest the logo looks untouched.
+        var band = make('rect', {
+            'data-omx-overlay': '', x: String(viewBox[0] - viewBox[2] * 0.6), y: String(viewBox[1] - viewBox[3] * 0.2),
+            width: String(viewBox[2] * 0.6), height: String(viewBox[3] * 1.4), fill: 'url(#' + OVERLAY_GRADIENT + ')'
+        });
+        holder.appendChild(band);
+        svg.appendChild(defs);
+        svg.appendChild(holder);
     }
 
     function nonce() {
@@ -119,6 +161,8 @@
         document.addEventListener('click', function (event) { event.preventDefault(); report('omx:stage-click'); }, true);
 
         function select(target) {
+            if (target.kind === 'stage') return svg;
+            if (target.kind === 'overlay') return svg.querySelector('[data-omx-overlay]');
             if (target.kind === 'root') return svg.querySelector('[data-omx-root]');
             var attribute = target.kind === 'part' ? 'data-omx-part' : 'data-omx-geometry';
             return svg.querySelector('[' + attribute + '="' + Number(target.index) + '"]');
@@ -136,9 +180,10 @@
         function clear() {
             running.forEach(function (a) { a.cancel(); });
             running = [];
-            Array.prototype.forEach.call(svg.querySelectorAll('[data-omx-root],[data-omx-part],[data-omx-geometry]'), function (el) {
+            Array.prototype.forEach.call(svg.querySelectorAll('[data-omx-overlay],[data-omx-root],[data-omx-part],[data-omx-geometry]'), function (el) {
                 el.removeAttribute('style');
             });
+            svg.style.removeProperty('opacity');
         }
         function report(type, extra) {
             var data = { type: type, playing: running.some(function (a) { return a.playState === 'running'; }), time: running.length ? Number(running[0].currentTime) || 0 : 0 };
@@ -236,7 +281,7 @@
             '<meta http-equiv="Content-Security-Policy" content="' + contentSecurityPolicy(value) + '">' +
             '<style>html,body{height:100%;margin:0;background:transparent}body{display:grid;place-items:center;overflow:hidden}' +
             'svg{display:block;width:100%;height:100%;overflow:hidden}' +
-            '[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}</style>' +
+            '[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}[data-omx-stage]{transform-origin:center}</style>' +
             '</head><body>' + preparedSvg +
             '<script nonce="' + value + '">' + runtime.replace(/<\/script/gi, '<\\/script') + '</' + 'script></body></html>';
     }

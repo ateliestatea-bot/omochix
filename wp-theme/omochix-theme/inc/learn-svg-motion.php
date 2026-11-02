@@ -82,6 +82,26 @@ function omochix_svg_motion_template_include($template) {
 }
 add_filter('template_include', 'omochix_svg_motion_template_include', 8);
 
+/**
+ * Keeps the studio out of the sibling list on Learn articles. page-learn-article.php
+ * builds its related list and NEXT link from a WP_Query of the pages under the same
+ * parent, so a new child of Learn would otherwise change existing articles. Only that
+ * kind of query is affected: the main query and the sitemap still find the page.
+ *
+ * @param WP_Query $query Query about to run.
+ */
+function omochix_svg_motion_exclude_from_siblings($query) {
+    if (is_admin() || $query->is_main_query() || 'page' !== $query->get('post_type')) {
+        return;
+    }
+    $page_id = omochix_svg_motion_page_id();
+    if (!$page_id || !function_exists('omochix_get_learn_page_id') || (int) $query->get('post_parent') !== omochix_get_learn_page_id()) {
+        return;
+    }
+    $query->set('post__not_in', array_merge((array) $query->get('post__not_in'), [$page_id]));
+}
+add_action('pre_get_posts', 'omochix_svg_motion_exclude_from_siblings');
+
 function omochix_svg_motion_enqueue_assets() {
     if (!omochix_svg_motion_is_request()) {
         return;

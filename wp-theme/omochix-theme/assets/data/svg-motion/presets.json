@@ -630,6 +630,168 @@
           "default": "#6e4bff"
         }
       ]
+    },
+    {
+      "ref": "P07",
+      "id": "logo-focus",
+      "name": "ピント合わせ",
+      "description": "ぼやけた状態から、ピントが合うように現れる。",
+      "category": "entrance",
+      "structure": "stage",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 900,
+          "unit": "ms"
+        },
+        {
+          "key": "blur",
+          "label": "ぼかしの量",
+          "type": "range",
+          "min": 1,
+          "max": 24,
+          "step": 1,
+          "default": 10,
+          "unit": "px"
+        }
+      ]
+    },
+    {
+      "ref": "P08",
+      "id": "logo-flip",
+      "name": "3D 反転",
+      "description": "ロゴ全体が奥行きをもって回転して正面を向く。",
+      "category": "entrance",
+      "structure": "stage",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 900,
+          "unit": "ms"
+        },
+        {
+          "key": "angle",
+          "label": "開始の角度",
+          "type": "range",
+          "min": 20,
+          "max": 170,
+          "step": 5,
+          "default": 90,
+          "unit": "deg"
+        },
+        {
+          "key": "depth",
+          "label": "奥行き",
+          "type": "range",
+          "min": 200,
+          "max": 1200,
+          "step": 50,
+          "default": 600,
+          "unit": "px"
+        },
+        {
+          "key": "axis",
+          "label": "回転の軸",
+          "type": "select",
+          "options": [
+            {
+              "value": "Y",
+              "label": "縦軸（左右に回る）"
+            },
+            {
+              "value": "X",
+              "label": "横軸（上下に回る）"
+            }
+          ],
+          "default": "Y"
+        }
+      ]
+    },
+    {
+      "ref": "P12",
+      "id": "logo-shine",
+      "name": "光が走る",
+      "description": "ロゴの形に沿って、斜めの光が横切る。",
+      "category": "loop",
+      "structure": "overlay",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 1000,
+          "max": 8000,
+          "step": 100,
+          "default": 2800,
+          "unit": "ms"
+        },
+        {
+          "key": "rest",
+          "label": "休む割合",
+          "type": "range",
+          "min": 0,
+          "max": 0.8,
+          "step": 0.05,
+          "default": 0.5,
+          "unit": ""
+        },
+        {
+          "key": "strength",
+          "label": "光の強さ",
+          "type": "range",
+          "min": 0.2,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.7,
+          "unit": ""
+        }
+      ]
+    },
+    {
+      "ref": "P18",
+      "id": "logo-glow",
+      "name": "光のパルス",
+      "description": "ロゴの周りの光が、ゆっくり脈打つ。",
+      "category": "loop",
+      "structure": "stage",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 500,
+          "max": 5000,
+          "step": 100,
+          "default": 1400,
+          "unit": "ms"
+        },
+        {
+          "key": "size",
+          "label": "光の広がり",
+          "type": "range",
+          "min": 2,
+          "max": 32,
+          "step": 1,
+          "default": 12,
+          "unit": "px"
+        },
+        {
+          "key": "color",
+          "label": "光の色",
+          "type": "color",
+          "default": "#6e4bff"
+        }
+      ]
     }
   ],
   "samples": [

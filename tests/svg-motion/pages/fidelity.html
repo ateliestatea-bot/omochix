@@ -8,8 +8,8 @@ function ink(a) { let t = 0; for (let i = 0; i < a.length; i += 4) if (a[i] + a[
   const res = { engine, ua: navigator.userAgent, logos: {} };
   for (const k in LOGOS) { const row = {}; try {
     const src = LOGOS[k].replace(/^<\?xml[^>]*\?>/, '');
-    const n = OmxSvgSafety.normalize(LOGOS[k]), p = OmxSvgSafety.normalize(LOGOS[k], { prefix: 'omx1-' }), st = OmxSvgFrame.prepare(p.svg, { maxParts: 200 });
-    const [a, b, c, e] = await Promise.all([raster(sized(src)), raster(sized(n.svg)), raster(sized(p.svg)), raster(sized(st.svg))]);
+    const n = OmxSvgSafety.normalize(LOGOS[k]), p = OmxSvgSafety.normalize(LOGOS[k], { prefix: 'omx1-' }), st = OmxSvgFrame.prepare(p.svg, { maxParts: 200 }), ov = OmxSvgFrame.prepare(p.svg, { maxParts: 200, overlay: true });
+    const [a, b, c, e, o] = await Promise.all([raster(sized(src)), raster(sized(n.svg)), raster(sized(p.svg)), raster(sized(st.svg)), raster(sized(ov.svg))]); row.overlayDiff = diff(a, o); row.overlayClean = !OmxSvgSafety.verify(ov.svg, { extraAttribute: OmxSvgFrame.EXTRA_ATTRIBUTE }).length;
     row.ink = ink(a); row.diff = diff(a, b); row.prefixDiff = diff(a, c); row.preparedDiff = diff(a, e); row.removed = [...new Set(n.report.removed)];
     row.idempotent = OmxSvgSafety.normalize(n.svg).svg === n.svg; row.refs = (n.svg.match(/url\(#|href="#/g) || []).length; row.refsSource = (src.match(/url\(#|href="#/g) || []).length; row.parts = st.layout.parts; row.geometry = st.layout.geometry;
   } catch (e) { row.error = e.code || e.message; } res.logos[k] = row; }
