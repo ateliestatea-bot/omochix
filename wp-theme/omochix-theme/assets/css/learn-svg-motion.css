@@ -1,0 +1,71 @@
+/*
+ * SVG Motion Studio. Reuses the design tokens only; everything here is scoped
+ * to .svg-motion, so no other page is affected (and it is loaded only on this page).
+ */
+.svg-motion { min-height: 100vh; padding-block: clamp(32px, 7vw, 56px) var(--section-space); }
+.svg-motion__container { width: min(100% - 32px, 1200px); margin-inline: auto; }
+.svg-motion__hero { margin-bottom: 28px; }
+.svg-motion .breadcrumb { margin-bottom: 20px; }
+.svg-motion__eyebrow { margin: 0 0 8px; color: var(--color-primary); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; }
+.svg-motion h1 { margin: 0 0 12px; font-size: clamp(1.75rem, 6vw, 2.5rem); line-height: 1.15; letter-spacing: -0.03em; }
+.svg-motion__lead { max-width: 46rem; margin: 0; color: var(--color-muted); font-size: 1.0625rem; line-height: 1.7; }
+.svg-motion__notice { margin: 12px 0 0; padding: 12px 16px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); font-size: 14px; }
+.svg-motion [hidden] { display: none !important; }
+
+.svg-motion__layout { display: grid; gap: 28px; align-items: start; }
+.svg-motion__detail { display: grid; gap: 14px; padding: 16px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); min-width: 0; }
+.svg-motion__stage { position: relative; aspect-ratio: 16 / 10; background: var(--color-bg); border-radius: var(--radius-sm); overflow: hidden; }
+.svg-motion__frame { position: absolute; inset: 0; width: 100%; height: 100%; padding: 6%; box-sizing: border-box; border: 0; }
+.svg-motion__controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.svg-motion__button { min-height: 44px; min-width: 88px; padding: 9px 16px; color: var(--color-text); background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; font-weight: 700; }
+.svg-motion__button--primary { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
+.svg-motion__title { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
+.svg-motion__description { margin: 0; color: var(--color-muted); font-size: 14px; line-height: 1.7; }
+.svg-motion__samples { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; border: 0; }
+.svg-motion__samples legend { padding: 0; margin-bottom: 6px; color: var(--color-muted); font-size: 12px; font-weight: 650; }
+.svg-motion__sample { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px; border: 1px solid var(--color-line); border-radius: var(--radius-pill); cursor: pointer; font-size: 13px; font-weight: 650; }
+.svg-motion__sample:has(input:checked) { border-color: var(--color-primary); }
+.svg-motion__params-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.svg-motion__params-head h3 { margin: 0; font-size: 15px; }
+.svg-motion__params { display: grid; gap: 14px; }
+.svg-motion__param { display: grid; gap: 6px; min-width: 0; }
+.svg-motion__param-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 650; }
+.svg-motion__param output { color: var(--color-muted); font-weight: 600; }
+.svg-motion__param input[type="range"] { width: 100%; min-height: 28px; accent-color: var(--color-primary); }
+.svg-motion__param input[type="color"] { width: 64px; height: 44px; padding: 2px; background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.svg-motion__param select { min-height: 44px; padding: 0 12px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.svg-motion__link { min-height: 44px; padding: 8px 2px; color: var(--color-muted); background: none; border: 0; cursor: pointer; font-size: 13px; font-weight: 650; text-decoration: underline; text-underline-offset: 0.2em; }
+
+.svg-motion__gallery { display: grid; gap: 12px; min-width: 0; }
+.svg-motion__toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.svg-motion__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.svg-motion__chip { min-height: 44px; padding: 8px 16px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-pill); cursor: pointer; font-size: 13px; font-weight: 700; }
+.svg-motion__chip[aria-pressed="true"] { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
+.svg-motion__count { margin: 0; color: var(--color-muted); font-size: 12px; }
+.svg-motion__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.svg-motion__card { position: relative; display: grid; gap: 6px; align-content: start; padding: 12px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); cursor: pointer; min-width: 0; }
+.svg-motion__card input { position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary); }
+.svg-motion__card:has(input:checked) { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
+.svg-motion__card:has(input:focus-visible) { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.svg-motion__thumb { display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--color-bg); border-radius: var(--radius-sm); overflow: hidden; }
+.svg-motion__thumb img { display: block; width: 62%; max-width: 96px; height: auto; aspect-ratio: 1; }
+.svg-motion__card-name { padding-right: 4px; font-size: 14px; font-weight: 700; }
+.svg-motion__badge { justify-self: start; padding: 2px 8px; color: var(--color-muted); background: var(--color-hover); border-radius: var(--radius-pill); font-size: 11px; font-weight: 650; }
+.svg-motion__card-text { color: var(--color-muted); font-size: 12px; line-height: 1.6; }
+
+@media (max-width: 1080px) {
+    /* The preview stays in view while the presets scroll, so a choice shows its effect at once. Order: preview, presets, adjustments. */
+    .svg-motion__layout { gap: 14px; }
+    .svg-motion__detail { display: contents; }
+    .svg-motion__stage { position: sticky; top: calc(var(--header-height) + 8px); z-index: 2; aspect-ratio: auto; height: min(32vh, 260px); border: 1px solid var(--color-line); box-shadow: var(--shadow-sm); }
+    .svg-motion__gallery { order: 1; margin-top: 14px; }
+    .svg-motion__samples, .svg-motion__params-head, .svg-motion__params { order: 2; }
+}
+@media (min-width: 768px) {
+    .svg-motion__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1081px) {
+    .svg-motion__layout { grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); }
+    .svg-motion__detail { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--header-height) + 16px); max-height: calc(100vh - var(--header-height) - 32px); overflow-y: auto; }
+    .svg-motion__gallery { grid-column: 1; grid-row: 1; }
+}

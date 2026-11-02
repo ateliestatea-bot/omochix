@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset=utf-8><title>fps</title><script src="/theme/assets/js/svg-motion/lib/purify.min.js"></script><script src="/theme/assets/js/svg-motion/safety.js"></script><script src="/theme/assets/js/svg-motion/compile.js"></script><script src="/theme/assets/js/svg-motion/frame.js"></script><script src="/fixtures/corpus.js"></script><script src="head.js"></script><style>iframe{width:320px;height:180px;border:1px solid #ccc}</style></head><body><div id=h></div><script>
+// Separates the Safari frame-rate question: top page vs same-origin frame vs sandboxed frame, before and after focus-like actions.
+const mode = new URLSearchParams(location.search);
+const counter = "var f=0;(function t(){f++;requestAnimationFrame(t)})();var seen={},n=0;var el=document.querySelector('[data-omx-root]');setInterval(function(){if(el){seen[getComputedStyle(el).transform]=1}n++},4);setInterval(function(){parent.postMessage({rate:f,distinct:Object.keys(seen).length,ticks:n},'*');f=0;seen={};n=0},1000);";
+const logo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="160" height="160"><g data-omx-root="" style="transform-box:fill-box;transform-origin:center"><circle cx="50" cy="50" r="30" fill="#6e4bff"/></g></svg>';
+const anim = "document.querySelector('[data-omx-root]').animate([{transform:'translateX(-20px)'},{transform:'translateX(20px)'}],{duration:1000,iterations:Infinity,direction:'alternate'});";
+function doc() { return '<!doctype html><body style="margin:0">' + logo + SC + '>' + anim + counter + SE + '</body>'; }
+window.logs = { top: [], same: [], sandbox: [] }; const frames = {};
+addEventListener('message', e => { if (e.data && e.data.rate !== undefined) { for (const k in frames) if (frames[k].contentWindow === e.source) logs[k].push(e.data); } });
+window.topRate = 0; (function t() { window.topFrames = (window.topFrames || 0) + 1; requestAnimationFrame(t); })(); setInterval(() => { window.logs.top.push({ rate: window.topFrames }); window.topFrames = 0; }, 1000);
+for (const k of ['same', 'sandbox']) { const f = document.createElement('iframe'); f.id = k; if (k === 'sandbox') f.setAttribute('sandbox', 'allow-scripts'); f.srcdoc = doc(); h.append(f); frames[k] = f; }
+const median = a => { const s = a.slice().sort((x, y) => x - y); return s[s.length >> 1]; };
+window.sample = async (label) => { for (const k in logs) logs[k].length = 0; await wait(3300); const o = { label }; for (const k in logs) { o[k] = median(logs[k].slice(1).map(x => x.rate)); if (k !== 'top') o[k + 'Values'] = median(logs[k].slice(1).map(x => x.distinct)); } return o; };
+// Real Safari cannot be driven by a test, so it runs the actions a page can do by itself and posts the result.
+if (mode.has('auto')) (async () => { const out = { engine, ua: navigator.userAgent, steps: [] }; await wait(1500); out.steps.push(await sample('initial')); frames.sandbox.focus(); out.steps.push(await sample('iframe.focus()')); frames.sandbox.contentWindow.focus(); out.steps.push(await sample('contentWindow.focus()')); frames.sandbox.contentWindow.postMessage({ type: 'nudge' }, '*'); out.steps.push(await sample('postMessage')); await post('fps-' + engine, out); document.title = 'DONE'; })();
+else document.title = 'READY';
+</script></body></html>

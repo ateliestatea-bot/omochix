@@ -1,0 +1,58 @@
+# Browser tests for SVG Motion Studio. Kept apart from tests.yml so the repository's
+# dependency-free checks stay fast. Read-only: no secrets, no deploy, no production access.
+name: SVG Motion
+
+on:
+  pull_request:
+    paths:
+      - 'wp-theme/omochix-theme/assets/js/svg-motion/**'
+      - 'wp-theme/omochix-theme/assets/data/svg-motion/**'
+      - 'wp-theme/omochix-theme/assets/css/learn-svg-motion.css'
+      - 'wp-theme/omochix-theme/inc/learn-svg-motion.php'
+      - 'wp-theme/omochix-theme/page-learn-svg-motion.php'
+      - 'wp-theme/omochix-theme/assets/data/motion/**'
+      - 'tests/svg-motion/**'
+      - '.github/workflows/svg-motion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: svg-motion-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browsers:
+    name: Chromium, Firefox, WebKit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.3'
+          extensions: mbstring, ctype
+          coverage: none
+          tools: none
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.14.1'
+          package-manager-cache: false
+      - name: Contract and unit checks
+        run: |
+          php tests/svg-motion/contract.php
+          node tests/svg-motion/unit.js
+      - name: Install Playwright
+        working-directory: tests/svg-motion
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium firefox webkit
+      - name: Browser tests
+        working-directory: tests/svg-motion
+        run: node run.js
