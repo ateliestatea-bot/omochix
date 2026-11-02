@@ -1,5 +1,145 @@
 {
-  "version": 1,
+  "version": 2,
+  "common": [
+    {
+      "key": "delay",
+      "label": "開始の遅れ",
+      "type": "range",
+      "min": 0,
+      "max": 2000,
+      "step": 50,
+      "default": 0,
+      "unit": "ms"
+    },
+    {
+      "key": "easing",
+      "label": "動き方",
+      "type": "select",
+      "options": [
+        {
+          "value": "preset",
+          "label": "モーションの標準"
+        },
+        {
+          "value": "linear",
+          "label": "一定"
+        },
+        {
+          "value": "ease",
+          "label": "なめらか"
+        },
+        {
+          "value": "ease-in",
+          "label": "徐々に速く"
+        },
+        {
+          "value": "ease-out",
+          "label": "徐々に遅く"
+        },
+        {
+          "value": "ease-in-out",
+          "label": "ゆっくり始まり終わる"
+        },
+        {
+          "value": "soft",
+          "label": "やわらかく止まる"
+        },
+        {
+          "value": "back",
+          "label": "少し行き過ぎる"
+        }
+      ],
+      "default": "preset"
+    },
+    {
+      "key": "loop",
+      "label": "繰り返し",
+      "type": "select",
+      "options": [
+        {
+          "value": "preset",
+          "label": "モーションの標準"
+        },
+        {
+          "value": "1",
+          "label": "1 回"
+        },
+        {
+          "value": "2",
+          "label": "2 回"
+        },
+        {
+          "value": "3",
+          "label": "3 回"
+        },
+        {
+          "value": "infinite",
+          "label": "繰り返す"
+        }
+      ],
+      "default": "preset"
+    },
+    {
+      "key": "stagger",
+      "label": "図形の時間差",
+      "type": "range",
+      "min": 0,
+      "max": 400,
+      "step": 10,
+      "default": 0,
+      "unit": "ms"
+    },
+    {
+      "key": "opacity",
+      "label": "不透明度",
+      "type": "range",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 1,
+      "unit": ""
+    },
+    {
+      "key": "scale",
+      "label": "大きさ",
+      "type": "range",
+      "min": 0.3,
+      "max": 2,
+      "step": 0.05,
+      "default": 1,
+      "unit": "倍"
+    },
+    {
+      "key": "x",
+      "label": "横の位置",
+      "type": "range",
+      "min": -50,
+      "max": 50,
+      "step": 1,
+      "default": 0,
+      "unit": "%"
+    },
+    {
+      "key": "y",
+      "label": "縦の位置",
+      "type": "range",
+      "min": -50,
+      "max": 50,
+      "step": 1,
+      "default": 0,
+      "unit": "%"
+    },
+    {
+      "key": "rotate",
+      "label": "回転",
+      "type": "range",
+      "min": -180,
+      "max": 180,
+      "step": 5,
+      "default": 0,
+      "unit": "deg"
+    }
+  ],
   "presets": [
     {
       "ref": "P03",

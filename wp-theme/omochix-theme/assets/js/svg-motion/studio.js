@@ -1,88 +1,165 @@
 /**
- * SVG Motion Studio: preset gallery and preview controls.
+ * SVG Motion Studio: taking a logo, applying a preset, adjusting it.
  *
- * Every sample goes through the same safety pipeline a user's file will. The
- * preview runs in a sandboxed frame; thumbnails are <img> elements with CSS
- * animation (no script, no network). State lives in the URL hash and in
- * localStorage, and is validated on the way back in.
+ * Every logo, bundled or the viewer's own, goes through the same pipeline and
+ * reaches the screen only as an image. Text from a file is never written into
+ * this page. Settings and the logo are saved in this browser; the URL carries
+ * only the preset and its values; playback state is never saved.
  */
 (function () {
     'use strict';
 
     var root = document.querySelector('[data-svg-motion]');
     var dataElement = document.getElementById('omx-svg-motion-data');
-    if (!root || !dataElement || !window.OmxSvgSafety || !window.OmxSvgCompile || !window.OmxSvgFrame) return;
+    if (!root || !dataElement || !window.OmxSvgPreview || !window.OmxSvgImport) return;
 
     var data = JSON.parse(dataElement.textContent);
-    var Safety = window.OmxSvgSafety;
     var Compile = window.OmxSvgCompile;
     var Frame = window.OmxSvgFrame;
-    var STORAGE_KEY = 'omx-svg-motion-state';
-    var THUMB_PREFIX = 'omxt-';
+    var Analyze = window.OmxSvgAnalyze;
+    var Import = window.OmxSvgImport;
+    var Store = window.OmxSvgStore;
+    var Safety = window.OmxSvgSafety;
+    var messages = data.messages;
 
-    var reducedQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+    var reduced = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
     // No prototype: a hash or saved state naming __proto__ must not look like a preset.
     var presets = Object.create(null);
     data.presets.forEach(function (preset) { presets[preset.id] = preset; });
 
-    var stages = Object.create(null);
-    var state = { preset: data.presets[0].id, sample: data.samples[0].id, params: Object.create(null) };
+    var settings = { preset: data.presets[0].id, sample: data.samples[0].id, params: Object.create(null), common: {} };
+    var logo = null; // { kind: 'sample'|'user', svg, analysis, stages }
+    var thumbsMoving = !reduced.matches;
+    var thumbUrls = Object.create(null);
+    var saveTimer = 0;
+    var frameRequest = 0;
 
+    function el(name) { return root.querySelector('[data-svgm-' + name + ']'); }
     var els = {
-        stage: root.querySelector('[data-svgm-stage]'),
-        title: root.querySelector('[data-svgm-title]'),
-        description: root.querySelector('[data-svgm-description]'),
-        toggle: root.querySelector('[data-svgm-toggle]'),
-        reset: root.querySelector('[data-svgm-reset]'),
-        defaults: root.querySelector('[data-svgm-defaults]'),
-        params: root.querySelector('[data-svgm-params]'),
-        status: root.querySelector('[data-svgm-status]'),
-        error: root.querySelector('[data-svgm-error]'),
-        thumbsToggle: root.querySelector('[data-svgm-thumbs]'),
-        count: root.querySelector('[data-svgm-count]')
+        stage: el('stage'), title: el('title'), description: el('description'), toggle: el('toggle'), reset: el('reset'),
+        defaults: el('defaults'), params: el('params'), common: el('common'), status: el('status'), error: el('error'),
+        thumbs: el('thumbs'), count: el('count'), file: el('file'), drop: el('drop'), paste: el('paste'), pasteButton: el('paste-button'),
+        logoName: el('logo-name'), warnings: el('warnings'), remove: el('remove'), note: el('note'), storage: el('storage')
     };
 
-    var frameEl = null;
-    var frameReady = false;
-    var mountedOverlay = false;
-    var playing = false;
-    var thumbsMoving = !reducedQuery.matches;
+    var preview = window.OmxSvgPreview.create(els.stage, function (state) { setPlaying(state.playing); });
 
-    function needsOverlay(presetId) {
-        return presets[presetId].structure === 'overlay';
-    }
-
-    /* A stage with the shine band is a different document, so it is prepared and mounted only when needed. */
-    function stageFor(sampleId, overlay) {
-        var key = sampleId + (overlay ? '+overlay' : '');
-        if (stages[key]) return stages[key];
-        var sample = data.samples.filter(function (s) { return s.id === sampleId; })[0];
-        var normalized = Safety.normalize(sample.svg, { prefix: 'omx-' + sampleId + '-' });
-        stages[key] = Frame.prepare(normalized.svg, Object.assign({ overlay: !!overlay }, data.budget));
-        return stages[key];
-    }
-
-    function paramsFor(presetId) {
-        return Compile.sanitizeParams(presets[presetId], state.params[presetId]);
-    }
-
-    function currentPlan() {
-        return Compile.buildPlan(presets[state.preset], paramsFor(state.preset), stageFor(state.sample, needsOverlay(state.preset)).layout);
-    }
-
-    function announce(message) {
-        if (els.status) els.status.textContent = message;
-    }
+    function announce(message) { els.status.textContent = message; }
 
     function showError(message) {
-        if (!els.error) return;
         els.error.textContent = message || '';
         els.error.hidden = !message;
     }
 
-    /* ---------------------------------------------------------------- state */
+    function messageFor(code) {
+        return messages.errors[code] || messages.errors.DEFAULT;
+    }
+
+    function setPlaying(next) {
+        root.setAttribute('data-svgm-playing', next ? 'true' : 'false');
+        els.toggle.textContent = next ? els.toggle.getAttribute('data-pause') : els.toggle.getAttribute('data-play');
+        els.toggle.setAttribute('aria-pressed', next ? 'true' : 'false');
+    }
+
+    /* ---------------------------------------------------------------- logo */
+    function prepare(svg, overlay) {
+        return Frame.prepare(svg, Object.assign({ overlay: !!overlay }, data.budget));
+    }
+
+    function stageFor(overlay) {
+        var key = overlay ? 'overlay' : 'plain';
+        if (!logo.stages[key]) {
+            logo.stages[key] = prepare(logo.svg, overlay);
+            var problems = Frame.verifyPrepared(logo.stages[key].svg);
+            if (problems.length) throw new Safety.SafetyError('VERIFY_FAILED', problems.join('|'));
+        }
+        return logo.stages[key];
+    }
+
+    function needsOverlay(id) {
+        return presets[id].structure === 'overlay';
+    }
+
+    /** A new logo replaces the current one only after everything about it succeeded. */
+    function accept(result, kind, name) {
+        logo = { kind: kind, svg: result.svg, analysis: result.analysis, stages: {} };
+        els.logoName.textContent = name;
+        els.remove.hidden = kind !== 'user';
+        var keys = result.warnings;
+        els.warnings.textContent = '';
+        keys.forEach(function (key) {
+            var item = document.createElement('li');
+            item.textContent = messages.warnings[key];
+            els.warnings.appendChild(item);
+        });
+        els.warnings.hidden = !keys.length;
+        root.setAttribute('data-svgm-logo', kind);
+        refreshAvailability();
+        renderThumbs();
+    }
+
+    function loadText(text, kind, name, prefix) {
+        return Import.fromText(text, { prefix: prefix, prepare: function (svg) { return prepare(svg, false); } }).then(function (result) {
+            accept(result, kind, name);
+            showError('');
+            selectPreset(settings.preset, { announce: false });
+            return true;
+        });
+    }
+
+    function takeUserLogo(promiseOfText, name) {
+        return promiseOfText.then(function (text) {
+            return loadText(text, 'user', name);
+        }).then(function () {
+            announce(messages.loaded);
+            root.setAttribute('data-svgm-last', 'ok');
+            scheduleSave();
+        }, function (error) {
+            // The current logo stays as it was.
+            showError(messageFor(error && error.code));
+            root.setAttribute('data-svgm-last', (error && error.code) || 'DEFAULT');
+        });
+    }
+
+    function loadSample(id) {
+        var sample = data.samples.filter(function (s) { return s.id === id; })[0] || data.samples[0];
+        settings.sample = sample.id;
+        return loadText(sample.svg, 'sample', sample.name);
+    }
+
+    /* ------------------------------------------------------------ settings */
+    function commonValues() {
+        return Compile.sanitizeCommon(data.common, settings.common);
+    }
+
+    function paramsFor(id) {
+        return Compile.sanitizeParams(presets[id], settings.params[id]);
+    }
+
+    function currentPlan() {
+        return Compile.buildPlan(presets[settings.preset], paramsFor(settings.preset), stageFor(needsOverlay(settings.preset)).layout, commonValues());
+    }
+
+    function plainSettings() {
+        var params = {};
+        Object.keys(settings.params).forEach(function (key) { params[key] = settings.params[key]; });
+        return { preset: settings.preset, sample: settings.sample, params: params, common: settings.common };
+    }
+
+    function adopt(saved) {
+        if (!saved || typeof saved !== 'object') return;
+        if (typeof saved.preset === 'string' && presets[saved.preset]) settings.preset = saved.preset;
+        if (data.samples.some(function (s) { return s.id === saved.sample; })) settings.sample = saved.sample;
+        if (saved.params && typeof saved.params === 'object') {
+            Object.keys(saved.params).forEach(function (id) {
+                if (presets[id]) settings.params[id] = Compile.sanitizeParams(presets[id], saved.params[id]);
+            });
+        }
+        settings.common = Compile.sanitizeCommon(data.common, saved.common);
+    }
+
     function readHash() {
-        var out = {};
+        var out = Object.create(null);
         location.hash.replace(/^#/, '').split('&').forEach(function (pair) {
             var at = pair.indexOf('=');
             if (at > 0) {
@@ -92,244 +169,281 @@
         return out;
     }
 
-    function loadState() {
-        var saved = null;
-        try { saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null'); } catch (error) { saved = null; }
-        if (saved && typeof saved === 'object') {
-            if (presets[saved.preset]) state.preset = saved.preset;
-            if (data.samples.some(function (s) { return s.id === saved.sample; })) state.sample = saved.sample;
-            if (saved.params && typeof saved.params === 'object') {
-                Object.keys(saved.params).forEach(function (id) {
-                    if (presets[id]) state.params[id] = Compile.sanitizeParams(presets[id], saved.params[id]);
-                });
-            }
-        }
+    function adoptHash() {
         var hash = readHash();
-        if (presets[hash.p]) {
-            state.preset = hash.p;
+        if (hash.p && presets[hash.p]) {
+            settings.preset = hash.p;
             var values = {};
             presets[hash.p].params.forEach(function (param) {
-                if (Object.prototype.hasOwnProperty.call(hash, param.key)) values[param.key] = hash[param.key];
+                if (param.key in hash) values[param.key] = hash[param.key];
             });
-            if (Object.keys(values).length) state.params[hash.p] = Compile.sanitizeParams(presets[hash.p], values);
+            if (Object.keys(values).length) settings.params[hash.p] = Compile.sanitizeParams(presets[hash.p], values);
         }
-        if (data.samples.some(function (s) { return s.id === hash.s; })) state.sample = hash.s;
+        var common = {};
+        data.common.forEach(function (param) {
+            if ('c.' + param.key in hash) common[param.key] = hash['c.' + param.key];
+        });
+        if (Object.keys(common).length) settings.common = Compile.sanitizeCommon(data.common, Object.assign({}, settings.common, common));
+        return hash;
     }
 
-    function saveState() {
-        try {
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (error) { /* private mode: the hash still carries the state */ }
-        var preset = presets[state.preset];
-        var values = paramsFor(state.preset);
-        var pairs = ['p=' + encodeURIComponent(state.preset), 's=' + encodeURIComponent(state.sample)];
-        preset.params.forEach(function (param) {
+    /** The URL gets the preset and values, and the sample's name. A viewer's logo is never in it. */
+    function writeHash() {
+        var values = paramsFor(settings.preset);
+        var pairs = ['p=' + encodeURIComponent(settings.preset)];
+        if (logo && logo.kind === 'sample') pairs.push('s=' + encodeURIComponent(settings.sample));
+        presets[settings.preset].params.forEach(function (param) {
             if (values[param.key] !== param.default) pairs.push(encodeURIComponent(param.key) + '=' + encodeURIComponent(values[param.key]));
         });
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(window.history.state, '', '#' + pairs.join('&'));
-        }
-    }
-
-    /* -------------------------------------------------------------- preview */
-    function post(message) {
-        if (frameEl && frameEl.contentWindow) frameEl.contentWindow.postMessage(message, '*');
-    }
-
-    function mountFrame() {
-        frameReady = false;
-        if (frameEl) frameEl.remove();
-        var stage;
-        mountedOverlay = needsOverlay(state.preset);
+        var common = commonValues();
+        data.common.forEach(function (param) {
+            if (common[param.key] !== param.default) pairs.push('c.' + param.key + '=' + encodeURIComponent(common[param.key]));
+        });
+        // WebKit allows 100 replaceState calls per 10 seconds and throws beyond that. A slider must not be able to reach it.
         try {
-            stage = stageFor(state.sample, mountedOverlay);
-            var srcdoc = Frame.buildDocument(stage.svg, { theme: document.documentElement.dataset.theme });
-            frameEl = document.createElement('iframe');
-            frameEl.setAttribute('sandbox', 'allow-scripts');
-            frameEl.setAttribute('title', els.stage.getAttribute('data-label') || '');
-            frameEl.className = 'svg-motion__frame';
-            frameEl.srcdoc = srcdoc;
-            els.stage.appendChild(frameEl);
-            showError('');
-        } catch (error) {
-            showError(els.error.getAttribute('data-message'));
-        }
+            if (window.history && window.history.replaceState) window.history.replaceState(window.history.state, '', '#' + pairs.join('&'));
+        } catch (error) { /* the next save tries again */ }
     }
 
-    function sendPlan(autoplay) {
-        if (!frameReady) return;
-        var plan;
-        try {
-            plan = currentPlan();
-        } catch (error) {
-            // A logo over the shape budget cannot use this preset.
-            showError(els.error.getAttribute('data-too-complex'));
-            return;
-        }
-        showError('');
-        post({ type: 'omx:plan', plan: plan, autoplay: !!autoplay });
+    function scheduleSave() {
+        window.clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(function () {
+            writeHash();
+            Store.save(logo && logo.kind === 'user' ? logo.svg : null, plainSettings()).then(function (saved) {
+                root.setAttribute('data-svgm-saved', saved ? String(Date.now()) : 'failed');
+                els.storage.hidden = saved;
+            });
+        }, 200);
     }
 
-    function setPlaying(next) {
-        playing = !!next;
-        root.setAttribute('data-svgm-playing', playing ? 'true' : 'false');
-        if (els.toggle) {
-            els.toggle.textContent = playing ? els.toggle.getAttribute('data-pause') : els.toggle.getAttribute('data-play');
-            els.toggle.setAttribute('aria-pressed', playing ? 'true' : 'false');
-        }
-    }
-
-    window.addEventListener('message', function (event) {
-        if (!frameEl || event.source !== frameEl.contentWindow || !event.data || typeof event.data !== 'object') return;
-        var type = event.data.type;
-        if (type === 'omx:ready') {
-            frameReady = true;
-            sendPlan(!reducedQuery.matches);
-        } else if (type === 'omx:state') {
-            setPlaying(!!event.data.playing);
-        } else if (type === 'omx:finished') {
-            setPlaying(false);
-        } else if (type === 'omx:stage-click') {
-            post({ type: playing ? 'omx:pause' : 'omx:play' });
-        } else if (type === 'omx:rejected') {
-            showError(els.error.getAttribute('data-message'));
-        }
-    });
-
-    /* ----------------------------------------------------------- parameters */
+    /* ------------------------------------------------------------ controls */
     function formatValue(param, value) {
         return param.type === 'range' ? value + (param.unit ? ' ' + param.unit : '') : value;
     }
 
-    function renderParams() {
-        var preset = presets[state.preset];
-        var values = paramsFor(state.preset);
+    function control(param, value, id, attribute, onChange) {
+        var wrap = document.createElement('div');
+        wrap.className = 'svg-motion__param';
+        var label = document.createElement('label');
+        label.setAttribute('for', id);
+        label.textContent = param.label;
+        var head = document.createElement('div');
+        head.className = 'svg-motion__param-head';
+        head.appendChild(label);
+        var output = null;
+        if (param.type !== 'select') {
+            output = document.createElement('output');
+            output.setAttribute('for', id);
+            output.textContent = formatValue(param, value);
+            head.appendChild(output);
+        }
+        var input;
+        if (param.type === 'select') {
+            input = document.createElement('select');
+            param.options.forEach(function (option) {
+                var element = document.createElement('option');
+                element.value = option.value;
+                element.textContent = option.label;
+                input.appendChild(element);
+            });
+        } else {
+            input = document.createElement('input');
+            input.type = param.type;
+            if (param.type === 'range') { input.min = param.min; input.max = param.max; input.step = param.step; }
+        }
+        input.id = id;
+        input.value = value;
+        input.setAttribute(attribute, param.key);
+        input.addEventListener('input', function () {
+            var clean = onChange(input.value);
+            if (output) output.textContent = formatValue(param, clean);
+            queueUpdate();
+        });
+        wrap.appendChild(head);
+        wrap.appendChild(input);
+        return wrap;
+    }
+
+    function renderControls() {
+        var preset = presets[settings.preset];
+        var values = paramsFor(settings.preset);
         els.params.textContent = '';
         preset.params.forEach(function (param) {
-            var id = 'svgm-' + param.key;
-            var wrap = document.createElement('div');
-            wrap.className = 'svg-motion__param';
-            var label = document.createElement('label');
-            label.setAttribute('for', id);
-            label.textContent = param.label;
-            var output = document.createElement('output');
-            output.setAttribute('for', id);
-            output.textContent = formatValue(param, values[param.key]);
-            var head = document.createElement('div');
-            head.className = 'svg-motion__param-head';
-            head.appendChild(label);
-            head.appendChild(output);
-            var input;
-            if (param.type === 'select') {
-                input = document.createElement('select');
-                param.options.forEach(function (option) {
-                    var element = document.createElement('option');
-                    element.value = option.value;
-                    element.textContent = option.label;
-                    input.appendChild(element);
-                });
-            } else {
-                input = document.createElement('input');
-                input.type = param.type;
-                if (param.type === 'range') { input.min = param.min; input.max = param.max; input.step = param.step; }
-            }
-            input.id = id;
-            input.value = values[param.key];
-            input.setAttribute('data-svgm-param', param.key);
-            input.addEventListener('input', function () {
-                var next = paramsFor(state.preset);
-                next[param.key] = input.value;
-                state.params[state.preset] = Compile.sanitizeParams(preset, next);
-                output.textContent = formatValue(param, state.params[state.preset][param.key]);
-                saveState();
-                sendPlan(playing || !reducedQuery.matches);
-            });
-            wrap.appendChild(head);
-            wrap.appendChild(input);
-            els.params.appendChild(wrap);
+            els.params.appendChild(control(param, values[param.key], 'svgm-' + param.key, 'data-svgm-param', function (raw) {
+                var next = paramsFor(settings.preset);
+                next[param.key] = raw;
+                settings.params[settings.preset] = Compile.sanitizeParams(preset, next);
+                return settings.params[settings.preset][param.key];
+            }));
+        });
+        var common = commonValues();
+        var layout = stageFor(needsOverlay(settings.preset)).layout;
+        els.common.textContent = '';
+        data.common.forEach(function (param) {
+            if (param.key === 'stagger' && !Compile.staggerApplies(preset, layout)) return;
+            els.common.appendChild(control(param, common[param.key], 'svgm-c-' + param.key, 'data-svgm-common', function (raw) {
+                var next = commonValues();
+                next[param.key] = raw;
+                settings.common = Compile.sanitizeCommon(data.common, next);
+                return settings.common[param.key];
+            }));
         });
     }
 
-    /* ----------------------------------------------------------- thumbnails */
-    function thumbUri(presetId, moving) {
-        var sample = data.samples[0];
-        var normalized = Safety.normalize(sample.svg, { prefix: THUMB_PREFIX });
-        var stage = Frame.prepare(normalized.svg, Object.assign({ overlay: needsOverlay(presetId) }, data.budget));
-        var plan = Compile.buildPlan(presets[presetId], {}, stage.layout);
-        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(Frame.animatedSvg(stage.svg, plan, moving));
-    }
-
-    function renderThumbs() {
-        Array.prototype.forEach.call(root.querySelectorAll('[data-svgm-thumb]'), function (img) {
-            img.src = thumbUri(img.getAttribute('data-svgm-thumb'), thumbsMoving);
+    /* A slider fires faster than a picture can be built: one update per frame, with the latest values. */
+    function queueUpdate() {
+        if (frameRequest) return;
+        frameRequest = window.requestAnimationFrame(function () {
+            frameRequest = 0;
+            preview.update(currentPlan()).catch(function () { showError(messages.errors.DEFAULT); });
+            scheduleSave();
         });
-        if (els.thumbsToggle) {
-            els.thumbsToggle.textContent = thumbsMoving ? els.thumbsToggle.getAttribute('data-stop') : els.thumbsToggle.getAttribute('data-start');
-            els.thumbsToggle.setAttribute('aria-pressed', thumbsMoving ? 'false' : 'true');
-        }
     }
 
-    /* ------------------------------------------------------------- selection */
+    /* ---------------------------------------------------------- selection */
+    function refreshAvailability() {
+        var plain = stageFor(false).layout;
+        Array.prototype.forEach.call(root.querySelectorAll('[data-svgm-card]'), function (card) {
+            var input = card.querySelector('input');
+            var state = Analyze.availability(presets[input.value], plain, Compile.SHAPE_PRESETS);
+            input.disabled = !state.available;
+            card.classList.toggle('is-disabled', !state.available);
+            var reason = card.querySelector('[data-svgm-reason]');
+            reason.textContent = state.available ? '' : messages.unavailable[state.reason];
+            reason.hidden = state.available;
+        });
+    }
+
     function selectPreset(id, options) {
-        state.preset = id;
+        options = options || {};
+        var state = Analyze.availability(presets[id], stageFor(false).layout, Compile.SHAPE_PRESETS);
+        if (!state.available) {
+            announce(messages.unavailable[state.reason]);
+            id = data.presets.filter(function (p) { return Analyze.availability(p, stageFor(false).layout, Compile.SHAPE_PRESETS).available; })[0].id;
+            state = Analyze.availability(presets[id], stageFor(false).layout, Compile.SHAPE_PRESETS);
+        }
+        settings.preset = id;
         var preset = presets[id];
         var radio = root.querySelector('input[name="svgm-preset"][value="' + id + '"]');
         if (radio) radio.checked = true;
         els.title.textContent = preset.name;
         els.description.textContent = preset.description;
+        els.note.textContent = state.reason === 'onePart' ? messages.onePart : '';
+        els.note.hidden = !els.note.textContent;
         root.setAttribute('data-svgm-preset', id);
-        renderParams();
-        saveState();
-        if (!options || !options.silent) {
-            if (mountedOverlay !== needsOverlay(id)) mountFrame();
-            else sendPlan(!reducedQuery.matches);
-            announce(preset.name);
-        }
+        renderControls();
+        var stage = stageFor(needsOverlay(id));
+        preview.show(stage.svg, currentPlan(), { play: !reduced.matches, alt: preset.name }).catch(function () { showError(messages.errors.DEFAULT); });
+        if (options.announce !== false) announce(preset.name);
+        scheduleSave();
     }
 
+    /* ---------------------------------------------------------- thumbnails */
+    function renderThumb(img) {
+        var id = img.getAttribute('data-svgm-thumb');
+        if (thumbUrls[id]) { URL.revokeObjectURL(thumbUrls[id]); delete thumbUrls[id]; }
+        var preset = presets[id];
+        var stage = stageFor(needsOverlay(id));
+        var plan;
+        try {
+            plan = Compile.buildPlan(preset, {}, stage.layout);
+        } catch (error) {
+            img.removeAttribute('src');
+            return;
+        }
+        var text = Frame.animatedSvg(stage.svg, plan, thumbsMoving ? { animate: true } : { animate: true, time: plan.restTime, frozen: true });
+        thumbUrls[id] = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' }));
+        img.src = thumbUrls[id];
+    }
+
+    var thumbObserver = 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) { thumbObserver.unobserve(entry.target); renderThumb(entry.target); }
+        });
+    }, { rootMargin: '200px 0px' }) : null;
+
+    function renderThumbs() {
+        Array.prototype.forEach.call(root.querySelectorAll('[data-svgm-thumb]'), function (img) {
+            if (thumbObserver) { thumbObserver.unobserve(img); thumbObserver.observe(img); } else renderThumb(img);
+        });
+        els.thumbs.textContent = thumbsMoving ? els.thumbs.getAttribute('data-stop') : els.thumbs.getAttribute('data-start');
+        els.thumbs.setAttribute('aria-pressed', thumbsMoving ? 'false' : 'true');
+    }
+
+    /* -------------------------------------------------------------- events */
     root.addEventListener('change', function (event) {
         var target = event.target;
         if (target.name === 'svgm-preset' && presets[target.value]) {
             selectPreset(target.value);
         } else if (target.name === 'svgm-sample') {
-            state.sample = target.value;
-            saveState();
-            mountFrame();
+            loadSample(target.value).then(function () { scheduleSave(); }, function (error) { showError(messageFor(error && error.code)); });
+        } else if (target === els.file && target.files && target.files[0]) {
+            var file = target.files[0];
+            takeUserLogo(Import.readFile(file), file.name);
+            target.value = '';
         }
     });
 
-    if (els.toggle) els.toggle.addEventListener('click', function () { post({ type: playing ? 'omx:pause' : 'omx:play' }); });
-    if (els.reset) els.reset.addEventListener('click', function () { post({ type: 'omx:reset' }); announce(els.reset.textContent); });
-    if (els.defaults) {
-        els.defaults.addEventListener('click', function () {
-            delete state.params[state.preset];
-            renderParams();
-            saveState();
-            sendPlan(!reducedQuery.matches);
-            announce(els.defaults.textContent);
-        });
-    }
-    if (els.thumbsToggle) {
-        els.thumbsToggle.addEventListener('click', function () {
-            thumbsMoving = !thumbsMoving;
-            renderThumbs();
-        });
-    }
+    els.pasteButton.addEventListener('click', function () {
+        takeUserLogo(Promise.resolve(els.paste.value), messages.pastedName);
+    });
 
-    /* Replays a thumbnail when a viewer points at or focuses its card. */
+    ['dragenter', 'dragover'].forEach(function (name) {
+        els.drop.addEventListener(name, function (event) { event.preventDefault(); els.drop.classList.add('is-over'); });
+    });
+    ['dragleave', 'drop'].forEach(function (name) {
+        els.drop.addEventListener(name, function () { els.drop.classList.remove('is-over'); });
+    });
+    els.drop.addEventListener('drop', function (event) {
+        event.preventDefault();
+        var files = event.dataTransfer && event.dataTransfer.files;
+        if (!files || !files.length) return;
+        if (files.length > 1) { showError(messages.errors.TOO_MANY_FILES); root.setAttribute('data-svgm-last', 'TOO_MANY_FILES'); return; }
+        takeUserLogo(Import.readFile(files[0]), files[0].name);
+    });
+    // A file dropped beside the zone must not navigate away and lose the work.
+    ['dragover', 'drop'].forEach(function (name) {
+        window.addEventListener(name, function (event) {
+            if (event.dataTransfer && Array.prototype.indexOf.call(event.dataTransfer.types || [], 'Files') !== -1) event.preventDefault();
+        });
+    });
+
+    els.remove.addEventListener('click', function () {
+        Store.remove().then(function () {
+            return loadSample(settings.sample);
+        }).then(function () {
+            var sampleRadio = root.querySelector('input[name="svgm-sample"][value="' + settings.sample + '"]');
+            if (sampleRadio) sampleRadio.checked = true;
+            announce(messages.removed);
+            scheduleSave();
+        });
+    });
+
+    els.toggle.addEventListener('click', togglePlayback);
+    els.stage.addEventListener('click', togglePlayback);
+    function togglePlayback() {
+        if (preview.state().playing) preview.pause(); else preview.play();
+    }
+    els.reset.addEventListener('click', function () { preview.reset(); announce(els.reset.textContent); });
+    els.defaults.addEventListener('click', function () {
+        delete settings.params[settings.preset];
+        settings.common = {};
+        renderControls();
+        preview.update(currentPlan());
+        announce(els.defaults.textContent);
+        scheduleSave();
+    });
+    els.thumbs.addEventListener('click', function () { thumbsMoving = !thumbsMoving; renderThumbs(); });
+
     function replayThumb(card) {
         var img = card.querySelector('[data-svgm-thumb]');
-        if (!img || !thumbsMoving) return;
-        var src = img.src;
-        img.src = '';
-        img.src = src;
+        if (img && thumbsMoving && img.getAttribute('src')) { var src = img.src; img.src = ''; img.src = src; }
     }
     Array.prototype.forEach.call(root.querySelectorAll('[data-svgm-card]'), function (card) {
         card.addEventListener('pointerenter', function () { replayThumb(card); });
         card.addEventListener('focusin', function () { replayThumb(card); });
     });
 
-    /* Category filter. */
     Array.prototype.forEach.call(root.querySelectorAll('[data-svgm-filter]'), function (chip) {
         chip.addEventListener('click', function () {
             var category = chip.getAttribute('data-svgm-filter');
@@ -342,17 +456,37 @@
                 card.hidden = !match;
                 if (match) shown++;
             });
-            if (els.count) els.count.textContent = els.count.getAttribute('data-template').replace('%d', shown);
+            els.count.textContent = els.count.getAttribute('data-template').replace('%d', shown);
         });
     });
 
-    /* ------------------------------------------------------------------ boot */
-    loadState();
-    var sampleRadio = root.querySelector('input[name="svgm-sample"][value="' + state.sample + '"]');
-    if (sampleRadio) sampleRadio.checked = true;
-    selectPreset(state.preset, { silent: true });
-    renderThumbs();
+    /* ---------------------------------------------------------------- boot */
+    function ready() {
+        var sampleRadio = root.querySelector('input[name="svgm-sample"][value="' + settings.sample + '"]');
+        if (sampleRadio && logo.kind === 'sample') sampleRadio.checked = true;
+        setPlaying(false);
+        root.setAttribute('data-svgm-ready', 'true');
+    }
+
     setPlaying(false);
-    mountFrame();
-    root.setAttribute('data-svgm-ready', 'true');
+    Store.load().then(function (loaded) {
+        if (loaded.status === 'discarded') announce(messages.discarded);
+        if (loaded.status === 'unavailable') els.storage.hidden = false;
+        var record = loaded.record;
+        if (record) adopt(record.settings);
+        var hash = adoptHash();
+        var wantsSample = hash.s && data.samples.some(function (s) { return s.id === hash.s; });
+        if (wantsSample) settings.sample = hash.s;
+        // Whatever was saved is untrusted: it goes through the whole pipeline again.
+        if (record && record.svg && !wantsSample) {
+            return loadText(record.svg, 'user', messages.savedName, '').then(function () { return true; }, function () {
+                announce(messages.discarded);
+                return Store.remove().then(function () { return loadSample(settings.sample); });
+            });
+        }
+        return loadSample(settings.sample);
+    }).then(ready, function () {
+        showError(messages.errors.DEFAULT);
+        root.setAttribute('data-svgm-ready', 'failed');
+    });
 }());

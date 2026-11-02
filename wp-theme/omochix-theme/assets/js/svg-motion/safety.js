@@ -70,7 +70,8 @@
     var IMAGE_URI = /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+\/=\s]+$/i;
     var LOCAL_REF = /^#[A-Za-z_][\w.:-]*$/;
     var SAFE_SELECTOR = /^[a-zA-Z#.\s,>_0-9*-]+$/;
-    var BANNED_VALUE = /(?:image-set|cross-fade|element\(|paint\(|src\(|expression|@import|javascript:|vbscript:|data:)/i;
+    // var(): custom properties are removed, so a reference would resolve to nothing and break the colour it set.
+    var BANNED_VALUE = /(?:image-set|cross-fade|element\(|paint\(|src\(|var\(|expression|@import|javascript:|vbscript:|data:)/i;
     var ANY_URL = /url\s*\(/ig;
     var LOCAL_URL = /url\(\s*(["']?)#[A-Za-z_][\w.:-]*\1\s*\)/ig;
 

@@ -5,9 +5,13 @@
  * wrapper (CSS transforms replace the transform attribute, so the original
  * transform must stay on an inner element), shapes get pathLength=1.
  *
- * buildDocument() returns the srcdoc for <iframe sandbox="allow-scripts">.
- * The CSP comes first in <head>, with a fresh nonce per frame, so even an SVG
- * that got past sanitizing could not run a script or reach the network.
+ * animatedSvg() gives the stand-alone SVG the studio shows as an image.
+ *
+ * buildDocument() returns the srcdoc for <iframe sandbox="allow-scripts">, with
+ * the CSP first in <head> and a fresh nonce per frame. The studio page does not
+ * use it (WebKit limits such frames to about 22fps until they are clicked). It
+ * stays for the tests that compare the CSS output with WAAPI, and for later
+ * features an image cannot do, such as picking a shape on screen.
  */
 (function (root) {
     'use strict';
@@ -15,7 +19,7 @@
     var SVG_NS = 'http://www.w3.org/2000/svg';
     var NON_DRAWING = ['defs', 'style', 'title', 'desc', 'symbol'];
     var GEOMETRY = 'path,rect,circle,ellipse,line,polyline,polygon';
-    var EXTRA_ATTRIBUTE = /^data-omx-(?:stage|root|part|geometry|overlay)$/;
+    var EXTRA_ATTRIBUTE = /^data-omx-(?:stage|base|root|part|geometry|overlay)$/;
     var OVERLAY_MASK = 'omxoverlay-mask';
     var OVERLAY_GRADIENT = 'omxoverlay-gradient';
 
@@ -67,7 +71,11 @@
         Array.prototype.slice.call(svg.children).forEach(function (child) {
             if (NON_DRAWING.indexOf(child.localName) === -1) rootGroup.appendChild(child);
         });
-        svg.appendChild(rootGroup);
+        // The user's position, size and rotation go here, apart from anything a preset animates.
+        var baseGroup = doc.createElementNS(SVG_NS, 'g');
+        baseGroup.setAttribute('data-omx-base', '');
+        baseGroup.appendChild(rootGroup);
+        svg.appendChild(baseGroup);
 
         var geometry = Array.prototype.filter.call(rootGroup.querySelectorAll(GEOMETRY), function (element) {
             var ancestor = element.closest('clipPath,mask,pattern,marker,defs');
@@ -84,7 +92,7 @@
             fillOpacity.push(element.getAttribute('fill-opacity') || '1');
         });
 
-        if (options && options.overlay && geometry.length <= (options.maxShapes || Infinity)) addOverlay(doc, svg, rootGroup, viewBox);
+        if (options && options.overlay && geometry.length <= (options.maxShapes || Infinity)) addOverlay(doc, svg, baseGroup, rootGroup, viewBox);
 
         return {
             svg: new XMLSerializer().serializeToString(svg),
@@ -101,7 +109,7 @@
     }
 
     /* A copy of the logo is the mask (its alpha, so any fill colour works); the band moves behind that mask. */
-    function addOverlay(doc, svg, rootGroup, viewBox) {
+    function addOverlay(doc, svg, baseGroup, rootGroup, viewBox) {
         function make(name, attributes) {
             var element = doc.createElementNS(SVG_NS, name);
             Object.keys(attributes).forEach(function (key) { element.setAttribute(key, attributes[key]); });
@@ -132,8 +140,8 @@
             width: String(viewBox[2] * 0.6), height: String(viewBox[3] * 1.4), fill: 'url(#' + OVERLAY_GRADIENT + ')'
         });
         holder.appendChild(band);
-        svg.appendChild(defs);
-        svg.appendChild(holder);
+        svg.insertBefore(defs, baseGroup);
+        baseGroup.appendChild(holder);
     }
 
     function nonce() {
@@ -162,6 +170,7 @@
 
         function select(target) {
             if (target.kind === 'stage') return svg;
+            if (target.kind === 'base') return svg.querySelector('[data-omx-base]');
             if (target.kind === 'overlay') return svg.querySelector('[data-omx-overlay]');
             if (target.kind === 'root') return svg.querySelector('[data-omx-root]');
             var attribute = target.kind === 'part' ? 'data-omx-part' : 'data-omx-geometry';
@@ -180,7 +189,7 @@
         function clear() {
             running.forEach(function (a) { a.cancel(); });
             running = [];
-            Array.prototype.forEach.call(svg.querySelectorAll('[data-omx-overlay],[data-omx-root],[data-omx-part],[data-omx-geometry]'), function (el) {
+            Array.prototype.forEach.call(svg.querySelectorAll('[data-omx-base],[data-omx-overlay],[data-omx-root],[data-omx-part],[data-omx-geometry]'), function (el) {
                 el.removeAttribute('style');
             });
             svg.style.removeProperty('opacity');
@@ -281,14 +290,19 @@
             '<meta http-equiv="Content-Security-Policy" content="' + contentSecurityPolicy(value) + '">' +
             '<style>html,body{height:100%;margin:0;background:transparent}body{display:grid;place-items:center;overflow:hidden}' +
             'svg{display:block;width:100%;height:100%;overflow:hidden}' +
-            '[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}[data-omx-stage]{transform-origin:center}</style>' +
+            '[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}[data-omx-stage]{transform-origin:center}[data-omx-base]{transform-box:view-box;transform-origin:center}</style>' +
             '</head><body>' + preparedSvg +
             '<script nonce="' + value + '">' + runtime.replace(/<\/script/gi, '<\\/script') + '</' + 'script></body></html>';
     }
 
-    /** Stand-alone SVG text with CSS animation: for <img>, no script and no network by construction. */
-    function animatedSvg(preparedSvg, plan, animate) {
-        var css = root.OmxSvgCompile.planToCss(plan, { animate: animate });
+    /**
+     * Stand-alone SVG text with CSS animation: for <img>, no script and no network by construction.
+     * @param {string} preparedSvg Verified output of prepare().
+     * @param {object} plan
+     * @param {boolean|{animate?: boolean, time?: number, frozen?: boolean}} [options]
+     */
+    function animatedSvg(preparedSvg, plan, options) {
+        var css = root.OmxSvgCompile.planToCss(plan, typeof options === 'object' ? options : { animate: options });
         var doc = new DOMParser().parseFromString(preparedSvg, 'image/svg+xml');
         var style = doc.createElementNS(SVG_NS, 'style');
         style.textContent = css;
@@ -296,5 +310,10 @@
         return new XMLSerializer().serializeToString(doc);
     }
 
-    root.OmxSvgFrame = { prepare: prepare, buildDocument: buildDocument, animatedSvg: animatedSvg, EXTRA_ATTRIBUTE: EXTRA_ATTRIBUTE };
+    /** Problems in a prepared stage; empty when clean. */
+    function verifyPrepared(preparedSvg) {
+        return root.OmxSvgSafety.verify(preparedSvg, { extraAttribute: EXTRA_ATTRIBUTE });
+    }
+
+    root.OmxSvgFrame = { prepare: prepare, buildDocument: buildDocument, animatedSvg: animatedSvg, verifyPrepared: verifyPrepared, EXTRA_ATTRIBUTE: EXTRA_ATTRIBUTE };
 }(window));

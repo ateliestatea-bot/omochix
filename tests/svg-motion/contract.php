@@ -15,6 +15,7 @@ function get_page_by_path($p, $o = null, $t = 'page') { return $GLOBALS['page'];
 function is_page() { return $GLOBALS['ctx']['is_page']; }
 function get_queried_object_id() { return $GLOBALS['ctx']['id']; }
 function wp_json_encode($d, $f = 0) { return json_encode($d, $f); }
+function __($t, $d = '') { return $t; }
 require $THEME . '/inc/learn-svg-motion.php';
 
 $pass = 0; $fail = 0;
@@ -23,6 +24,8 @@ function check($n, $c) { global $pass, $fail; if ($c) { $pass++; echo "PASS $n\n
 $d = omochix_svg_motion_data();
 check('data: 19 presets and 3 samples', 19 === count($d['presets']) && 3 === count($d['samples']));
 $ids = array_column($d['presets'], 'id');
+check('messages: every error code the scripts can raise has Japanese text', !array_diff(['EMPTY_INPUT','NOT_SVG_FILE','READ_FAILED','NOT_UTF8','TOO_MANY_FILES','TOO_LARGE','PARSE_ERROR','NOT_SVG','DOCTYPE_REJECTED','ELEMENT_LIMIT','DEPTH_LIMIT','PATH_LIMIT','USE_EXPANSION_LIMIT','SANITIZE_FAILED','VERIFY_FAILED','EMPTY_RESULT'], array_keys(omochix_svg_motion_messages()['errors'])));
+check('data: nine common adjustments', ['delay','easing','loop','stagger','opacity','scale','x','y','rotate'] === array_column($d['common'], 'key'));
 check('data: unique ids', count($ids) === count(array_unique($ids)));
 check('scope: S1-B and S1-C presets', ['P01','P02','P03','P04','P05','P06','P07','P08','P09','P10','P11','P12','P13','P14','P15','P16','P17','P18','P19'] === (function ($r) { sort($r); return $r; })(array_column($d['presets'], 'ref')));
 check('scope: P20 is not part of the product', !in_array('P20', array_column($d['presets'], 'ref'), true) && false === stripos(file_get_contents($THEME . '/assets/js/svg-motion/compile.js'), 'morph'));

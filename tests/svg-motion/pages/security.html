@@ -19,7 +19,7 @@
   const norm = {};
   for (const k in ATTACKS) {
     const raw = ATTACKS[k].split('{C}').join(C + '/c/' + run + '/NORM/' + k + '/');
-    try { const r = OmxSvgSafety.normalize(raw, { prefix: 'omx-' }); norm[k] = r.svg; res.norm[k] = { status: 'sanitized', removed: [...new Set(r.report.removed)], hadMarker: ATTACKS[k].includes('omxkeep'), markerInOutput: /id="omx-omxkeep"/.test(r.svg) && /height="4"/.test(r.svg) && /fill="#123456"/.test(r.svg) }; }
+    try { const r = OmxSvgSafety.normalize(raw, { prefix: 'omx-' }); norm[k] = r.svg; res.norm[k] = { status: 'sanitized', removed: [...new Set(r.report.removed)], hadMarker: ATTACKS[k].includes('omxkeep'), markerInOutput: /id="omx-omxkeep"/.test(r.svg) && /height="16"/.test(r.svg) && /fill="#123456"/.test(r.svg) }; }
     catch (e) { norm[k] = null; res.norm[k] = { status: 'rejected', code: e.code || e.message }; }
   }
   for (const k in BOMBS) { const t = performance.now(); try { const r = OmxSvgSafety.normalize(BOMBS[k]); res.bombs[k] = { status: 'sanitized', elements: r.elements, ms: Math.round(performance.now() - t) }; } catch (e) { res.bombs[k] = { status: 'rejected', code: e.code || e.message, ms: Math.round(performance.now() - t) }; } }

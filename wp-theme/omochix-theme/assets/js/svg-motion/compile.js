@@ -20,11 +20,19 @@
     var HEX = /^#[0-9a-fA-F]{6}$/;
     var PROPERTIES = ['opacity', 'transform', 'filter', 'clip-path', 'fill', 'fill-opacity', 'stroke', 'stroke-opacity', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset'];
 
-    /** Clamp, snap and type-check values against the preset's parameter list. */
+    /** Clamp, snap and type-check values against a parameter list. */
     function sanitizeParams(preset, input) {
+        return sanitizeList(preset.params, input);
+    }
+
+    function sanitizeCommon(list, input) {
+        return sanitizeList(list, input);
+    }
+
+    function sanitizeList(list, input) {
         var out = {};
         input = input || {};
-        preset.params.forEach(function (param) {
+        list.forEach(function (param) {
             var value = Object.prototype.hasOwnProperty.call(input, param.key) ? input[param.key] : param.default;
             if (param.type === 'range') {
                 var number = Number(value);
@@ -281,20 +289,64 @@
     /**
      * @param {object} preset Entry of presets.json.
      * @param {object} params Raw values; sanitized here.
+     * @param {object} [commonValues] Sanitized common adjustments (sanitizeCommon).
      * @param {{parts:number, geometry:number, width:number, height:number, ownStroke?:boolean[], fillOpacity?:string[]}} layout
      * @return {{preset:string, rest:string, setup:Array, tracks:Array, length:number}}
      */
-    function buildPlan(preset, params, layout) {
+    function buildPlan(preset, params, layout, commonValues) {
         var builder = BUILDERS[preset.id];
         if (!builder) throw new Error('Unknown preset: ' + preset.id);
-        if (layout.tooManyShapes && SHAPE_PRESETS.indexOf(preset.id) !== -1) throw new Error('TOO_MANY_SHAPES');
+        if (SHAPE_PRESETS.indexOf(preset.id) !== -1) {
+            if (layout.tooManyShapes) throw new Error('TOO_MANY_SHAPES');
+            if (!layout.geometry) throw new Error('NO_SHAPES');
+        }
         var clean = sanitizeParams(preset, params);
-        var plan = builder(clean, layout);
-        var length = 0;
-        plan.tracks.forEach(function (t) {
-            length = Math.max(length, t.delay + t.duration);
+        var built = builder(clean, layout);
+        var plan = { preset: preset.id, rest: built.rest, setup: built.setup || [], tracks: built.tracks };
+        if (commonValues) applyCommon(plan, preset, commonValues, layout);
+        finishTiming(plan);
+        return plan;
+    }
+
+    /** Whether the common stagger does anything for this preset on this logo. */
+    function staggerApplies(preset, layout) {
+        var own = preset.params.some(function (param) { return param.key === 'gap' || param.key === 'phase'; });
+        return !own && layout.geometry > 1 && SHAPE_PRESETS.indexOf(preset.id) !== -1 && preset.id !== 'logo-shine';
+    }
+
+    function applyCommon(plan, preset, values, layout) {
+        plan.tracks.forEach(function (t, index) {
+            if (values.easing !== 'preset' && EASINGS[values.easing]) t.easing = EASINGS[values.easing];
+            if (values.loop !== 'preset') t.iterations = values.loop === 'infinite' ? Infinity : Number(values.loop);
+            t.delay += values.delay;
+            if (values.stagger && staggerApplies(preset, layout)) t.delay += index * values.stagger;
         });
-        return { preset: preset.id, rest: plan.rest, setup: plan.setup || [], tracks: plan.tracks, length: length, loops: plan.rest === LOOP_START };
+        // The pose goes on its own wrapper, so a preset's transform and a user's position never overwrite each other.
+        var pose = [];
+        if (values.x || values.y) pose.push('translate(' + round(layout.width * values.x / 100) + 'px,' + round(layout.height * values.y / 100) + 'px)');
+        if (values.rotate) pose.push('rotate(' + values.rotate + 'deg)');
+        if (values.scale !== 1) pose.push('scale(' + values.scale + ')');
+        var styles = {};
+        if (pose.length) styles.transform = pose.join(' ');
+        if (values.opacity !== 1) styles.opacity = String(values.opacity);
+        if (Object.keys(styles).length) plan.setup.push({ target: { kind: 'base', index: 0 }, styles: styles });
+    }
+
+    /** length: when the last track ends (Infinity for a loop). restTime: the time of the resting pose. */
+    function finishTiming(plan) {
+        var length = 0;
+        var once = 0;
+        var maxDelay = 0;
+        plan.tracks.forEach(function (t) {
+            length = Math.max(length, t.delay + t.duration * t.iterations);
+            once = Math.max(once, t.delay + t.duration);
+            maxDelay = Math.max(maxDelay, t.delay);
+        });
+        plan.length = length;
+        plan.loops = length === Infinity;
+        plan.cycle = once;
+        plan.maxDelay = maxDelay;
+        plan.restTime = plan.rest === 'end' ? (plan.loops ? once : length) : 0;
     }
 
     /* Attribute selector for a target. Numbers only, so a plan cannot smuggle a selector. */
@@ -302,6 +354,7 @@
         var index = Number(target.index);
         if (!isFinite(index) || index < 0) throw new Error('Bad target');
         if (target.kind === 'stage') return '[data-omx-stage]';
+        if (target.kind === 'base') return '[data-omx-base]';
         if (target.kind === 'overlay') return '[data-omx-overlay]';
         if (target.kind === 'root') return '[data-omx-root]';
         if (target.kind === 'part') return '[data-omx-part="' + index + '"]';
@@ -313,7 +366,7 @@
     function isValidPlan(plan) {
         if (!plan || !Array.isArray(plan.tracks) || !Array.isArray(plan.setup)) return false;
         var valueOk = function (value) { return /^[a-zA-Z0-9 .,()%#+-]{1,80}$/.test(String(value)) && !/url/i.test(String(value)); };
-        var targetOk = function (t) { return t && ['stage', 'overlay', 'root', 'part', 'geometry'].indexOf(t.kind) !== -1 && Number.isInteger(t.index) && t.index >= 0; };
+        var targetOk = function (t) { return t && ['stage', 'base', 'overlay', 'root', 'part', 'geometry'].indexOf(t.kind) !== -1 && Number.isInteger(t.index) && t.index >= 0; };
         var propsOk = function (props) {
             return Object.keys(props || {}).every(function (key) { return PROPERTIES.indexOf(key) !== -1 && valueOk(props[key]); });
         };
@@ -340,11 +393,15 @@
     /**
      * CSS for a plan. Same timing and values as the WAAPI preview.
      * @param {object} plan
-     * @param {{animate?: boolean}} [options] animate:false writes only the resting state.
+     * @param {{animate?: boolean, time?: number, frozen?: boolean}} [options] animate:false writes only the
+     *     resting state. time: start at this point of the timeline, through a negative animation-delay.
+     *     frozen: hold there with animation-play-state, which is how an image can pause in place.
      */
     function planToCss(plan, options) {
-        var animate = !options || options.animate !== false;
-        var out = ['[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}[data-omx-stage]{transform-origin:center}'];
+        options = options || {};
+        var animate = options.animate !== false;
+        var time = Number(options.time) || 0;
+        var out = ['[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}[data-omx-stage]{transform-origin:center}[data-omx-base]{transform-box:view-box;transform-origin:center}'];
         plan.setup.forEach(function (s) { out.push(selector(s.target) + '{' + declarations(s.styles) + '}'); });
         if (!animate) {
             restingStyles(plan).forEach(function (r) { out.push(selector(r.target) + '{' + declarations(r.styles) + '}'); });
@@ -355,11 +412,11 @@
             out.push('@keyframes ' + name + '{' + t.frames.map(function (f) {
                 return round(f.offset * 100) + '%{' + declarations(f.props) + '}';
             }).join('') + '}');
-            out.push(selector(t.target) + '{animation:' + name + ' ' + t.duration + 'ms ' + t.easing + ' ' + t.delay + 'ms ' +
-                (t.iterations === Infinity ? 'infinite' : t.iterations) + ' ' + t.direction + ' both}');
+            out.push(selector(t.target) + '{animation:' + name + ' ' + t.duration + 'ms ' + t.easing + ' ' + round(t.delay - time) + 'ms ' +
+                (t.iterations === Infinity ? 'infinite' : t.iterations) + ' ' + t.direction + ' both' + (options.frozen ? ' paused' : '') + '}');
         });
         return out.join('');
     }
 
-    return { buildPlan: buildPlan, sanitizeParams: sanitizeParams, isValidPlan: isValidPlan, restingStyles: restingStyles, planToCss: planToCss, selector: selector, BUILDERS: BUILDERS, EASINGS: EASINGS, PROPERTIES: PROPERTIES };
+    return { buildPlan: buildPlan, sanitizeParams: sanitizeParams, sanitizeCommon: sanitizeCommon, staggerApplies: staggerApplies, SHAPE_PRESETS: SHAPE_PRESETS, isValidPlan: isValidPlan, restingStyles: restingStyles, planToCss: planToCss, selector: selector, BUILDERS: BUILDERS, EASINGS: EASINGS, PROPERTIES: PROPERTIES };
 }));

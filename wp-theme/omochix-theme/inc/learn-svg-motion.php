@@ -4,8 +4,8 @@
  *
  * Page: "/learn/svg-motion/" (a child page of Learn). Nothing is uploaded or
  * stored on the server: no options, posts, REST routes or media uploads. All
- * SVG handling happens in the browser, and display happens only in a sandboxed
- * frame (see assets/js/svg-motion/). Independent of the Motion Gallery.
+ * SVG handling happens in the browser, and a logo reaches the screen only as an
+ * image (see assets/js/svg-motion/). Independent of the Motion Gallery.
  *
  * @package OmochiX
  */
@@ -61,14 +61,59 @@ function omochix_svg_motion_data() {
         $data = $empty;
         return $data;
     }
-    $data = ['presets' => $json['presets'], 'samples' => $json['samples']];
+    $data = ['common' => $json['common'] ?? [], 'presets' => $json['presets'], 'samples' => $json['samples']];
     return $data;
+}
+
+/** What studio.js shows the viewer. Reasons say what happened and, where possible, what to do. */
+function omochix_svg_motion_messages() {
+    return [
+        'errors'      => [
+            'DEFAULT'             => __('この SVG は読み込めませんでした。', 'omochix'),
+            'EMPTY_INPUT'         => __('SVG コードを貼り付けてください。', 'omochix'),
+            'NOT_SVG_FILE'        => __('SVG ファイルを選んでください（拡張子 .svg）。', 'omochix'),
+            'READ_FAILED'         => __('ファイルを読み取れませんでした。もう一度お試しください。', 'omochix'),
+            'NOT_UTF8'            => __('文字コードが UTF-8 ではありません。UTF-8 で書き出してください。', 'omochix'),
+            'TOO_MANY_FILES'      => __('ファイルは 1 つずつ入れてください。', 'omochix'),
+            'NOT_STRING'          => __('SVG として読み取れませんでした。', 'omochix'),
+            'TOO_LARGE'           => __('ファイルが大きすぎます（上限 1MB）。不要な要素を減らしてください。', 'omochix'),
+            'PARSE_ERROR'         => __('SVG として読み取れませんでした。ファイルが壊れていないか確認してください。', 'omochix'),
+            'NOT_SVG'             => __('SVG ではないようです。先頭が svg 要素のデータを入れてください。', 'omochix'),
+            'DOCTYPE_REJECTED'    => __('安全のため、DOCTYPE を含む SVG は読み込めません。書き出しの設定で外してください。', 'omochix'),
+            'ELEMENT_LIMIT'       => __('要素が多すぎます（上限 5,000）。図形をまとめてください。', 'omochix'),
+            'DEPTH_LIMIT'         => __('入れ子が深すぎます（上限 32 段）。グループをまとめてください。', 'omochix'),
+            'PATH_LIMIT'          => __('パスが複雑すぎます。パスを簡略化してください。', 'omochix'),
+            'USE_EXPANSION_LIMIT' => __('参照（use）が多すぎます。参照を減らしてください。', 'omochix'),
+            'SANITIZE_FAILED'     => __('安全に処理できませんでした。別の形式で書き出してお試しください。', 'omochix'),
+            'VERIFY_FAILED'       => __('安全に処理できませんでした。別の形式で書き出してお試しください。', 'omochix'),
+            'EMPTY_RESULT'        => __('表示できる図形がありません。スクリプトや外部参照だけで作られている可能性があります。', 'omochix'),
+        ],
+        'warnings'    => [
+            'text'      => __('文字は閲覧環境のフォントで表示されます。アウトライン化をおすすめします。', 'omochix'),
+            'script'    => __('スクリプトを取り除きました。', 'omochix'),
+            'external'  => __('外部の画像や埋め込み要素を取り除きました。見た目が変わる場合があります。', 'omochix'),
+            'motion'    => __('元のアニメーションは引き継がれません。', 'omochix'),
+            'style'     => __('一部のスタイルを取り除きました。見た目が変わる場合があります。', 'omochix'),
+            'imageOnly' => __('図形がないため、線や図形を使うモーションは選べません。', 'omochix'),
+        ],
+        'unavailable' => [
+            'noShapes'      => __('図形がないロゴには使えません。', 'omochix'),
+            'tooManyShapes' => __('図形が 200 を超えるロゴには使えません。', 'omochix'),
+        ],
+        'onePart'     => __('このロゴはパーツが 1 つなので、全体を 1 つとして動かします。', 'omochix'),
+        'loaded'      => __('ロゴを読み込みました。', 'omochix'),
+        'removed'     => __('保存していたロゴを削除しました。', 'omochix'),
+        'discarded'   => __('保存データを読み込めなかったため、削除しました。', 'omochix'),
+        'pastedName'  => __('貼り付けたロゴ', 'omochix'),
+        'savedName'   => __('保存したロゴ', 'omochix'),
+    ];
 }
 
 /** JSON for studio.js, safe inside a script element. */
 function omochix_svg_motion_data_json() {
-    $data           = omochix_svg_motion_data();
-    $data['budget'] = OMOCHIX_SVG_MOTION_BUDGET;
+    $data             = omochix_svg_motion_data();
+    $data['budget']   = OMOCHIX_SVG_MOTION_BUDGET;
+    $data['messages'] = omochix_svg_motion_messages();
     return (string) wp_json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 }
 
@@ -114,6 +159,10 @@ function omochix_svg_motion_enqueue_assets() {
     wp_enqueue_script('omochix-svg-safety', get_theme_file_uri('/assets/js/svg-motion/safety.js'), ['omochix-dompurify'], $version, true);
     wp_enqueue_script('omochix-svg-compile', get_theme_file_uri('/assets/js/svg-motion/compile.js'), [], $version, true);
     wp_enqueue_script('omochix-svg-frame', get_theme_file_uri('/assets/js/svg-motion/frame.js'), ['omochix-svg-safety', 'omochix-svg-compile'], $version, true);
-    wp_enqueue_script('omochix-svg-studio', get_theme_file_uri('/assets/js/svg-motion/studio.js'), ['omochix-svg-frame'], $version, true);
+    wp_enqueue_script('omochix-svg-analyze', get_theme_file_uri('/assets/js/svg-motion/analyze.js'), [], $version, true);
+    wp_enqueue_script('omochix-svg-import', get_theme_file_uri('/assets/js/svg-motion/import.js'), ['omochix-svg-frame', 'omochix-svg-analyze'], $version, true);
+    wp_enqueue_script('omochix-svg-preview', get_theme_file_uri('/assets/js/svg-motion/preview-image.js'), ['omochix-svg-frame'], $version, true);
+    wp_enqueue_script('omochix-svg-store', get_theme_file_uri('/assets/js/svg-motion/store.js'), [], $version, true);
+    wp_enqueue_script('omochix-svg-studio', get_theme_file_uri('/assets/js/svg-motion/studio.js'), ['omochix-svg-import', 'omochix-svg-preview', 'omochix-svg-store'], $version, true);
 }
 add_action('wp_enqueue_scripts', 'omochix_svg_motion_enqueue_assets', 20);

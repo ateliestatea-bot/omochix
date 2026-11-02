@@ -40,7 +40,7 @@ function get_header() {
 }
 function get_footer() {
     $js = '/wp-theme/omochix-theme/assets/js/svg-motion/';
-    foreach (['lib/purify.min.js', 'safety.js', 'compile.js', 'frame.js', 'studio.js'] as $f) { echo '<script src="' . $js . $f . '"></script>'; }
+    foreach (['lib/purify.min.js', 'safety.js', 'compile.js', 'frame.js', 'analyze.js', 'import.js', 'preview-image.js', 'store.js', 'studio.js'] as $f) { echo '<script src="' . $js . $f . '"></script>'; }
     echo '</body></html>';
 }
 require $THEME . '/inc/learn-svg-motion.php';
