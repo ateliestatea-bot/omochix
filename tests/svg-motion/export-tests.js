@@ -83,7 +83,7 @@ async function exportTests(br, e, fail) {
   // two frames are waited for. A page in a window of its own (own) is front already, and in WebKit six windows fighting for
   // the front stall each other's frames (export 290s against 400s); Firefox, however, paints an unfocused window about once
   // a second, so there the front and the frame wait stay (export 330-520s against 800s without them; measured, S4-0 B-4).
-  const shot = async (p, own) => { for (let i = 0; ; i++) { try { if (!own || e === 'firefox') { await p.bringToFront(); await p.evaluate(() => new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(ok)))); } const box = await p.evaluate(() => { const r = document.getElementById('t').getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; }); return (await p.screenshot({ clip: box, timeout: 10000 })).toString('base64'); } catch (x) { out.shotRetries = (out.shotRetries || 0) + 1; if (i) throw x; } } };
+  const shot = async (p, own, quick) => { for (let i = 0; ; i++) { try { if (!quick && (!own || e === 'firefox')) { await p.bringToFront(); await p.evaluate(() => new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(ok)))); } const box = await p.evaluate(() => { const r = document.getElementById('t').getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; }); return (await p.screenshot({ clip: box, timeout: 10000 })).toString('base64'); } catch (x) { out.shotRetries = (out.shotRetries || 0) + 1; if (i) throw x; } } };
   const keep = (name, shots) => { const d = path.join(R, 'failures', e); fs.mkdirSync(d, { recursive: true }); shots.forEach((b64, i) => { if (b64) fs.writeFileSync(path.join(d, name.replace(/[^\w+-]/g, '_') + '-' + i + '.png'), Buffer.from(b64, 'base64')); }); };
   const diff = (a, b) => hp.evaluate(([x, y]) => __diff(x, y), [a, b]); const raw = (a, b) => hp.evaluate(([x, y]) => __raw(x, y), [a, b]);
   const forms = ['image', 'inline', 'external', 'script', 'object', 'background'];
@@ -109,8 +109,10 @@ async function exportTests(br, e, fail) {
       else if (o) { o.addEventListener('load', () => ok(), { once: true }); o.data = bare(o.getAttribute('data')); }
       else { const t = document.getElementById('t'), u = bare(getComputedStyle(t).backgroundImage.match(/url\("?([^")]+)"?\)/)[1]); const w = new Image(); w.onload = w.onerror = () => { t.style.backgroundImage = 'url("' + u + '")'; requestAnimationFrame(() => ok()); }; w.src = u; }
     }));
-    const span = it.b.loops ? 3000 : Math.min(it.b.length, 1500); if (driven) await setTime(0); else if (REAL_TIME_FORMS.includes(form)) { if (!own) await p.bringToFront(); await restart(); }
-    const t0 = Date.now(); const shots = [await shot(p, own)]; const gap = Date.now() - t0;
+    const span = it.b.loops ? 3000 : Math.min(it.b.length, 1500); if (driven) await setTime(0); else if (REAL_TIME_FORMS.includes(form)) { await p.bringToFront(); await p.evaluate(() => new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(ok)))); await restart(); }
+    // The window is brought to the front and painting before the clock restarts, so the first picture follows at once
+    // (waiting for frames after the restart cost Firefox over a second in a new window: first run, PR #55).
+    const t0 = Date.now(); const shots = [await shot(p, own, !driven && REAL_TIME_FORMS.includes(form))]; const gap = Date.now() - t0;
     // A forced style pass before each picture: WebKit's capture otherwise misses composited filter animation (see S3 design, note 1).
     const force = () => p.evaluate(() => { const docs = [document]; const o = document.querySelector('object'); if (o && o.contentDocument) docs.push(o.contentDocument); docs.forEach(d => { const s = d.querySelector('svg'); if (s) { s.style.visibility = 'hidden'; void s.getBoundingClientRect(); s.style.visibility = ''; } }); });
     for (let i = 1; i <= 6; i++) { if (driven) await setTime(span * i / 6); else await p.waitForTimeout(span / 6); await force(); shots.push(await shot(p, own)); }

@@ -4,6 +4,10 @@
 # One job per engine, in parallel. Pull requests run the fast profile (every security check,
 # every engine; the real-time image checks on the representative logos). The full profile runs
 # on release branches, on a schedule and by hand (see tests/svg-motion/export-tests.js).
+#
+# WebKit runs on macOS: the Linux WebKit build does not apply CSS animation inside an SVG shown
+# as an image (<img>, background), which Safari does (first run, PR #55). Firefox opens three
+# pages at once instead of six: its real-time image checks miss short animations under load.
 name: SVG Motion
 
 on:
@@ -41,14 +45,20 @@ concurrency:
 jobs:
   browsers:
     name: ${{ matrix.engine }}
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        engine: [chromium, firefox, webkit]
+        include:
+          - { engine: chromium, os: ubuntu-24.04, parallel: 6 }
+          - { engine: firefox, os: ubuntu-24.04, parallel: 3 }
+          - { engine: webkit, os: macos-15, parallel: 6 }
     env:
       SVGM_ENGINE: ${{ matrix.engine }}
+      SVGM_PARALLEL: ${{ matrix.parallel }}
+      # macOS can hold 8770 for its sharing service (seen locally); 8790 is free on both runners.
+      SVGM_PORT: '8790'
       SVGM_PROFILE: ${{ github.event_name == 'pull_request' && 'fast' || (github.event_name == 'workflow_dispatch' && inputs.profile || 'full') }}
     steps:
       - name: Check out
