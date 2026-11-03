@@ -1,5 +1,9 @@
 # Browser tests for SVG Motion Studio. Kept apart from tests.yml so the repository's
 # dependency-free checks stay fast. Read-only: no secrets, no deploy, no production access.
+#
+# One job per engine, in parallel. Pull requests run the fast profile (every security check,
+# every engine; the real-time image checks on the representative logos). The full profile runs
+# on release branches, on a schedule and by hand (see tests/svg-motion/export-tests.js).
 name: SVG Motion
 
 on:
@@ -13,20 +17,39 @@ on:
       - 'wp-theme/omochix-theme/assets/data/motion/**'
       - 'tests/svg-motion/**'
       - '.github/workflows/svg-motion.yml'
+  push:
+    branches:
+      - 'release/**'
+  schedule:
+    - cron: '20 18 * * 0' # Sunday 18:20 UTC (Monday 03:20 JST)
   workflow_dispatch:
+    inputs:
+      profile:
+        description: 'fast or full'
+        type: choice
+        options: [full, fast]
+        default: full
 
 permissions:
   contents: read
 
+# A newer push to the same pull request cancels the older run; release and scheduled runs finish.
 concurrency:
-  group: svg-motion-${{ github.ref }}
-  cancel-in-progress: true
+  group: svg-motion-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   browsers:
-    name: Chromium, Firefox, WebKit
+    name: ${{ matrix.engine }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    env:
+      SVGM_ENGINE: ${{ matrix.engine }}
+      SVGM_PROFILE: ${{ github.event_name == 'pull_request' && 'fast' || (github.event_name == 'workflow_dispatch' && inputs.profile || 'full') }}
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -48,11 +71,30 @@ jobs:
         run: |
           php tests/svg-motion/contract.php
           node tests/svg-motion/unit.js
-      - name: Install Playwright
+      - name: Install Playwright (${{ matrix.engine }})
         working-directory: tests/svg-motion
         run: |
           npm ci
-          npx playwright install --with-deps chromium firefox webkit
-      - name: Browser tests
+          npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Browser tests (${{ env.SVGM_PROFILE }})
         working-directory: tests/svg-motion
         run: node run.js
+      - name: Keep the results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: svg-motion-${{ matrix.engine }}-${{ env.SVGM_PROFILE }}
+          path: |
+            tests/svg-motion/results/*.json
+            tests/svg-motion/results/*.png
+            tests/svg-motion/results/failures/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Keep the traces of what failed
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: svg-motion-traces-${{ matrix.engine }}-${{ env.SVGM_PROFILE }}
+          path: tests/svg-motion/results/trace-*.zip
+          if-no-files-found: ignore
+          retention-days: 7

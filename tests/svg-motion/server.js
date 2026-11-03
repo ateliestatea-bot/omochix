@@ -1,6 +1,8 @@
-// Test servers on 127.0.0.1 only. 8770: harness pages, theme assets, fixtures. 8771: canary, where any request is an outbound leak.
+// Test servers on 127.0.0.1 only. 8770 (or SVGM_PORT, when something else holds 8770): harness pages, theme assets, fixtures.
+// 8771: canary, where any request is an outbound leak (fixed: the harness pages name it).
 const http = require('http'), fs = require('fs'), path = require('path');
 const repo = path.join(__dirname, '../..');
+const PORT = Number(process.env.SVGM_PORT) || 8770;
 const routes = { '/exported/': path.join(__dirname, 'results/exported'), '/pages/': path.join(__dirname, 'pages'), '/fixtures/': path.join(__dirname, 'fixtures'), '/theme/': path.join(repo, 'wp-theme/omochix-theme') };
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.css': 'text/css', '.svg': 'image/svg+xml' };
 function start() {
@@ -14,7 +16,8 @@ function start() {
       s.setHeader('Content-Type', types[path.extname(f)] || 'text/plain'); return s.end(fs.readFileSync(f));
     }
     s.statusCode = 404; s.end();
-  }).listen(8770, '127.0.0.1');
+  }).listen(PORT, '127.0.0.1');
+  main.on('error', err => { console.error('harness server: ' + err.code + ' on 127.0.0.1:' + PORT + ' (set SVGM_PORT to another port)'); process.exit(2); });
   const hits = [];
   const canary = http.createServer((q, s) => {
     const u = new URL(q.url, 'http://x');
@@ -26,5 +29,5 @@ function start() {
   canary.listen(8771, '127.0.0.1');
   return () => { main.close(); canary.close(); };
 }
-if (require.main === module) { start(); console.log('http://127.0.0.1:8770/pages/ (Ctrl+C to stop)'); }
-module.exports = { start };
+if (require.main === module) { start(); console.log('http://127.0.0.1:' + PORT + '/pages/ (Ctrl+C to stop)'); }
+module.exports = { start, PORT };

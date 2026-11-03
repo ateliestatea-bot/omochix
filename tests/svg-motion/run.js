@@ -1,14 +1,22 @@
 // SVG Motion Studio browser tests. Run from tests/svg-motion: node run.js [security,fidelity,presets,page,regression]
 // Writes results/ per engine. Exit code 1 on any failure. Starts and stops its own local servers.
 const { chromium, firefox, webkit } = require('playwright'); const fs = require('fs'), path = require('path'), { spawn } = require('child_process');
-const { start } = require('./server.js'); const B = 'http://127.0.0.1:8770/pages'; const REPO = path.join(__dirname, '../..'); const R = path.join(__dirname, 'results'); fs.mkdirSync(R, { recursive: true });
+const { start, PORT } = require('./server.js'); const B = 'http://127.0.0.1:' + PORT + '/pages'; const REPO = path.join(__dirname, '../..'); const R = path.join(__dirname, 'results'); fs.mkdirSync(R, { recursive: true });
 const { pageTests, uploadSecurity } = require('./studio-tests.js');
 const { exportTests } = require('./export-tests.js');
 const only = (process.argv[2] || 'security,upload,fidelity,presets,page,export,regression').split(',');
+// SVGM_ENGINE=chromium|firefox|webkit runs one engine (CI runs the three as parallel jobs). SVGM_PROFILE=fast|full (see export-tests.js).
+const ENGINES = [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]].filter(([n]) => !process.env.SVGM_ENGINE || process.env.SVGM_ENGINE === n);
+if (!ENGINES.length) { console.log('unknown SVGM_ENGINE ' + process.env.SVGM_ENGINE); process.exit(2); }
+const PROFILE = process.env.SVGM_PROFILE === 'fast' ? 'fast' : 'full';
 const failures = [], summary = {}; const fail = (e, m) => { failures.push(e + ': ' + m); console.log('  FAIL ' + m); };
 const read = n => JSON.parse(fs.readFileSync(path.join(R, n + '.json'), 'utf8'));
 const num = v => { const m = String(v).match(/-?\d+(\.\d+)?/g); return m ? m.map(Number) : null; };
 function php(entry, port) { const p = spawn('php', ['-S', '127.0.0.1:' + port, '-t', '.', entry], { cwd: REPO, stdio: 'ignore' }); return p; }
+// Servers are ready when their ports answer, not after a fixed pause: a slow runner must not start the tests early.
+const net = require('net'); const portReady = (port, ms = 15000) => new Promise((ok, no) => { const t0 = Date.now(); (function tryOnce() { const s = net.connect(port, '127.0.0.1'); s.once('connect', () => { s.destroy(); ok(); }); s.once('error', () => { s.destroy(); if (Date.now() - t0 > ms) no(new Error('port ' + port + ' not ready')); else setTimeout(tryOnce, 100); }); })(); });
+// Traces are recorded for every context and kept only for those in which something failed.
+function traced(br, e) { let n = 0; const orig = br.newContext.bind(br); br.newContext = async opts => { const c = await orig(opts); const at = failures.length; await c.tracing.start({ screenshots: true, snapshots: true }); const close = c.close.bind(c); c.close = async () => { const f = path.join(R, 'trace-' + e + '-' + (++n) + '.zip'); try { await c.tracing.stop({ path: f }); if (failures.length === at) fs.unlinkSync(f); } catch (x) { /* a closed context has no trace to keep */ } return close(); }; return c; }; }
 const EXPECT_REJECT = { scriptNs: 'NOT_SVG', xxe: 'DOCTYPE_REJECTED', dtdExt: 'DOCTYPE_REJECTED' };
 const EXPECT_BOMB = { useBomb: /USE_EXPANSION_LIMIT|ELEMENT_LIMIT/, useCycle: 'sanitized', laughs: /DOCTYPE/, deep: /DEPTH/, manyEls: /ELEMENT/, hugeFile: /TOO_LARGE/, hugePath: /PATH/, malformed: /PARSE/, notSvg: /NOT_SVG/, empty: /PARSE/, plain: /PARSE/ };
 
@@ -96,22 +104,23 @@ async function regression(br, e) {
 }
 
 (async () => {
-  const stop = start(); const p1 = php('tests/svg-motion/preview-server.php', 8788), p2 = php('tests/learn-gallery/preview-server.php', 8787); await new Promise(r => setTimeout(r, 800));
+  const stop = start(); const p1 = php('tests/svg-motion/preview-server.php', 8788), p2 = php('tests/learn-gallery/preview-server.php', 8787); await Promise.all([PORT, 8771, 8788, 8787].map(p => portReady(p)));
+  summary.profile = PROFILE; summary.startedAt = new Date().toISOString(); const t0 = Date.now();
   try {
-    for (const [e, t] of [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]]) {
-      const br = await t.launch(); const s = summary[e] = { version: br.version() }; console.log('== ' + e + ' ' + s.version);
+    for (const [e, t] of ENGINES) {
+      const br = await t.launch(); traced(br, e); const s = summary[e] = { version: br.version(), steps: {} }; console.log('== ' + e + ' ' + s.version); const tick = () => { const now = Date.now(); const d = now - (s._t || t0); s._t = now; return Math.round(d / 1000); };
       const ctx = await br.newContext();
-      if (only.includes('security')) { s.security = checkSecurity(e, await pageRun(ctx, e, 'security')); console.log(' security done'); }
-      if (only.includes('fidelity')) { s.fidelity = checkFidelity(e, await pageRun(ctx, e, 'fidelity')); console.log(' fidelity done'); }
+      if (only.includes('security')) { s.security = checkSecurity(e, await pageRun(ctx, e, 'security')); s.steps.security = tick(); console.log(' security done ' + s.steps.security + 's'); }
+      if (only.includes('fidelity')) { s.fidelity = checkFidelity(e, await pageRun(ctx, e, 'fidelity')); s.steps.fidelity = tick(); console.log(' fidelity done ' + s.steps.fidelity + 's'); }
       await ctx.close();
-      if (only.includes('presets')) { s.presets = await presets(br, e); console.log(' presets done'); }
-      if (only.includes('upload')) { const u = await uploadSecurity(br, e, fail); s.upload = { routes: Object.fromEntries(Object.entries(u.routes).map(([k, v]) => [k, { accepted: v.accepted, rejected: Object.keys(v.rejected).length, markerPainted: v.markerPainted, hadMarker: v.hadMarker, exec: v.exec.length }])), canary: u.canary.length, outbound: u.outbound.length, controls: u.controls }; console.log(' upload done'); }
-      if (only.includes('page')) { s.page = await pageTests(br, e, fail); console.log(' page done'); }
-      if (only.includes('export')) { s.export = await exportTests(br, e, fail); console.log(' export done'); }
-      if (only.includes('regression')) { s.regression = await regression(br, e); console.log(' regression done'); }
+      if (only.includes('presets')) { s.presets = await presets(br, e); s.steps.presets = tick(); console.log(' presets done ' + s.steps.presets + 's'); }
+      if (only.includes('upload')) { const u = await uploadSecurity(br, e, fail); s.upload = { routes: Object.fromEntries(Object.entries(u.routes).map(([k, v]) => [k, { accepted: v.accepted, rejected: Object.keys(v.rejected).length, markerPainted: v.markerPainted, hadMarker: v.hadMarker, exec: v.exec.length }])), canary: u.canary.length, outbound: u.outbound.length, controls: u.controls }; s.steps.upload = tick(); console.log(' upload done ' + s.steps.upload + 's'); }
+      if (only.includes('page')) { s.page = await pageTests(br, e, fail); s.steps.page = tick(); console.log(' page done ' + s.steps.page + 's'); }
+      if (only.includes('export')) { s.export = await exportTests(br, e, fail); s.steps.export = tick(); console.log(' export done ' + s.steps.export + 's'); }
+      if (only.includes('regression')) { s.regression = await regression(br, e); s.steps.regression = tick(); console.log(' regression done ' + s.steps.regression + 's'); }
       await br.close();
     }
   } catch (x) { failures.push('runner: ' + (x.stack || x)); console.log(x); } finally { stop(); p1.kill(); p2.kill(); }
-  summary.failures = failures; fs.writeFileSync(path.join(R, 'summary.json'), JSON.stringify(summary, null, 1));
+  summary.failures = failures; summary.seconds = Math.round((Date.now() - t0) / 1000); fs.writeFileSync(path.join(R, 'summary.json'), JSON.stringify(summary, null, 1));
   console.log('\n' + (failures.length ? failures.length + ' FAILED\n' + failures.slice(0, 60).join('\n') : 'ALL PASSED')); process.exit(failures.length ? 1 : 0);
 })();
