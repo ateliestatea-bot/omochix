@@ -11,6 +11,10 @@
 # macOS job turns the system setting off; export-tests.js probes what images see and fails with
 # that reason if it is still on. Firefox opens three pages at once instead of six: its real-time
 # image checks missed short animations under load.
+#
+# Each engine runs as two jobs: "core" (security, upload, fidelity, presets, page, compose, shortcode, the 53 lessons)
+# and "export". Firefox's export is split in two shards (SVGM_SHARD): its real-time image checks alone took most of a
+# 20-minute job (PR #55, MVP-1 run). Every check still runs exactly once per engine.
 name: SVG Motion
 
 on:
@@ -20,6 +24,7 @@ on:
       - 'wp-theme/omochix-theme/assets/data/svg-motion/**'
       - 'wp-theme/omochix-theme/assets/css/learn-svg-motion.css'
       - 'wp-theme/omochix-theme/inc/learn-svg-motion.php'
+      - 'wp-theme/omochix-theme/inc/logo-motion.php'
       - 'wp-theme/omochix-theme/page-learn-svg-motion.php'
       - 'wp-theme/omochix-theme/assets/data/motion/**'
       - 'tests/svg-motion/**'
@@ -47,19 +52,24 @@ concurrency:
 
 jobs:
   browsers:
-    name: ${{ matrix.engine }}
+    name: ${{ matrix.id }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { engine: chromium, os: ubuntu-24.04, parallel: 6 }
-          - { engine: firefox, os: ubuntu-24.04, parallel: 3 }
-          - { engine: webkit, os: macos-15, parallel: 6 }
+          - { id: chromium-core, engine: chromium, os: ubuntu-24.04, parallel: 6, steps: core, shard: '1/1' }
+          - { id: chromium-export, engine: chromium, os: ubuntu-24.04, parallel: 6, steps: export, shard: '1/1' }
+          - { id: firefox-core, engine: firefox, os: ubuntu-24.04, parallel: 3, steps: core, shard: '1/1' }
+          - { id: firefox-export-1, engine: firefox, os: ubuntu-24.04, parallel: 3, steps: export, shard: '1/2' }
+          - { id: firefox-export-2, engine: firefox, os: ubuntu-24.04, parallel: 3, steps: export, shard: '2/2' }
+          - { id: webkit-core, engine: webkit, os: macos-15, parallel: 6, steps: core, shard: '1/1' }
+          - { id: webkit-export, engine: webkit, os: macos-15, parallel: 6, steps: export, shard: '1/1' }
     env:
       SVGM_ENGINE: ${{ matrix.engine }}
       SVGM_PARALLEL: ${{ matrix.parallel }}
+      SVGM_SHARD: ${{ matrix.shard }}
       # macOS can hold 8770 for its sharing service (seen locally); 8790 is free on both runners.
       SVGM_PORT: '8790'
       SVGM_PROFILE: ${{ github.event_name == 'pull_request' && 'fast' || (github.event_name == 'workflow_dispatch' && inputs.profile || 'full') }}
@@ -80,10 +90,12 @@ jobs:
         with:
           node-version: '24.14.1'
           package-manager-cache: false
-      - name: Contract and unit checks
+      - name: Contract, unit and shortcode checks
+        if: matrix.steps == 'core'
         run: |
           php tests/svg-motion/contract.php
           node tests/svg-motion/unit.js
+          php tests/svg-motion/shortcode.php
       - name: Let SVG images animate (macOS Reduce Motion off)
         if: runner.os == 'macOS'
         run: |
@@ -94,14 +106,14 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps ${{ matrix.engine }}
-      - name: Browser tests (${{ env.SVGM_PROFILE }})
+      - name: Browser tests (${{ matrix.steps }}, ${{ env.SVGM_PROFILE }})
         working-directory: tests/svg-motion
-        run: node run.js
+        run: node run.js "${{ matrix.steps == 'core' && 'security,upload,fidelity,presets,page,compose,shortcode,regression' || 'export' }}"
       - name: Keep the results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: svg-motion-${{ matrix.engine }}-${{ env.SVGM_PROFILE }}
+          name: svg-motion-${{ matrix.id }}-${{ env.SVGM_PROFILE }}
           path: |
             tests/svg-motion/results/*.json
             tests/svg-motion/results/*.png
@@ -112,7 +124,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: svg-motion-traces-${{ matrix.engine }}-${{ env.SVGM_PROFILE }}
+          name: svg-motion-traces-${{ matrix.id }}-${{ env.SVGM_PROFILE }}
           path: tests/svg-motion/results/trace-*.zip
           if-no-files-found: ignore
           retention-days: 7

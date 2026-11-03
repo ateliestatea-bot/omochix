@@ -9,6 +9,12 @@ const CSP_PAGE = body => '<!doctype html><html><head><meta charset="utf-8">' + C
 // else, every security check included, runs in both profiles. SVGM_PARALLEL: pages open at once for the standalone checks.
 const PROFILE = process.env.SVGM_PROFILE === 'fast' ? 'fast' : 'full', PAR = Math.max(1, Number(process.env.SVGM_PARALLEL) || 6);
 const REAL_TIME_FORMS = ['image', 'object', 'background'], REPRESENTATIVE = ['sample', 'gradient'];
+// SVGM_SHARD=k/n (CI): this run takes every n-th page of the per-form and CSP queues, starting at k. The checks that run
+// once (preview, reduced motion, two logos, hostile logos, the studio UI) run in shard 1 only, so the shards together
+// cover exactly what one run covers.
+const SHARD = /^([1-9]\d*)\/([1-9]\d*)$/.exec(process.env.SVGM_SHARD || '1/1'), SHARD_K = SHARD ? Number(SHARD[1]) : 1, SHARD_N = SHARD ? Number(SHARD[2]) : 1, FIRST = SHARD_K === 1;
+if (!SHARD || SHARD_K > SHARD_N) { console.log('bad SVGM_SHARD ' + process.env.SVGM_SHARD); process.exit(2); }
+const mine = (q) => SHARD_N > 1 ? q.filter((_, i) => i % SHARD_N === SHARD_K - 1) : q;
 // An edit (S4) laid over three presets of the sample logo: individual transforms on a part and a pinned-origin rotation of the root.
 const EDIT = { duration: 2500, nextId: 3, layers: [
   { id: 'L1', target: { kind: 'part', index: 0 }, start: 100, end: 1500, tracks: [
@@ -28,6 +34,7 @@ const HELPERS = () => {
 
 async function exportTests(br, e, fail) {
   const out = { matrix: {}, ui: {} }; const errors = [];
+  const started = Date.now(); out.timing = {}; out.shard = SHARD_K + '/' + SHARD_N; const mark = k => { out.timing[k] = Math.round((Date.now() - started) / 1000); };
   const failCount = { n: 0 }; const origFail = fail; fail = (x, m) => { failCount.n++; origFail(x, m); }; const failures = () => failCount.n;
   // 1. Generate with the product's own export, from the real studio page.
   const gctx = await br.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true }); const g = await gctx.newPage(); g.on('pageerror', x => errors.push(x.message));
@@ -77,6 +84,7 @@ async function exportTests(br, e, fail) {
   for (const it of list.filter(x => !x.b.edited)) if (JSON.parse(it.b.files.json).schema !== 1) fail(e, 'preset-only settings file is not schema 1 ' + it.id);
   out.matrix.profile = PROFILE;
 
+  mark('generated');
   // 2. Each form on its own page: it moves, it ends (or rests) exactly as the still file, nothing external, no errors.
   const ctx = await br.newContext({ viewport: { width: 700, height: 500 } }); const hp = await ctx.newPage(); await hp.goto(X + 'base.css'); await hp.evaluate(HELPERS);
   // A page screenshot of #t's box: unlike an element screenshot it does not wait for the element to "stabilise", which a
@@ -138,6 +146,7 @@ async function exportTests(br, e, fail) {
   for (const f of ['inline', 'script']) { const d = await runForm(probe, f), rt = await runForm(probe, f, '', { realTime: true }); ctl[f] = { driven: d.moves, real: rt.moves, drivenRest: d.rest, realRest: rt.rest }; if (d.moves <= 0 || rt.moves <= 0) fail(e, 'drive control: ' + f + ' ' + JSON.stringify(ctl[f])); }
   if (ctl.stillMoves > 0) fail(e, 'drive control: a still page moved ' + ctl.stillMoves);
   const queue = []; for (const it of list) for (const form of forms) { if (!(form === 'image' || form === 'inline' || form === 'script' || REPRESENTATIVE.includes(it.logo))) continue; if (PROFILE === 'fast' && REAL_TIME_FORMS.includes(form) && !REPRESENTATIVE.includes(it.logo)) continue; queue.push([it, form]); }
+  queue.splice(0, queue.length, ...mine(queue));
   // Each worker owns a window, so the real-time pages are all front tabs at once.
   const drain = (q, run) => Promise.all(Array.from({ length: PAR }, async () => { const own = await br.newContext({ viewport: { width: 700, height: 500 } }); while (q.length) { const item = q.shift(); await run(item, own); } await own.close(); }));
   const results = {}; await drain(queue, async ([it, form], own) => { results[it.logo + '/' + it.id + '/' + form] = await runForm(it, form, '', { ctx: own }); });
@@ -152,29 +161,36 @@ async function exportTests(br, e, fail) {
     if (failures() > before) keep(k, r.shots); delete r.shots; }
   out.matrix.standalone = Object.keys(results).length; out.matrix.worstRest = Math.max(0, ...Object.values(results).map(r => r.rest || 0));
 
+  mark('standalone');
   // 3. Same picture as the preview at the same moment.
-  let worst = 0; for (const it of list.filter(x => x.logo === 'sample' || x.logo === 'groupsIds')) { const a = await ctx.newPage(); await a.goto(X + it.d + 'frozen.html'); await a.waitForTimeout(80); const b = await ctx.newPage(); await b.goto(X + it.d + 'preview.html'); await b.waitForTimeout(80); const d = await diff(await shot(a), await shot(b)); worst = Math.max(worst, d); if (d > 0) fail(e, 'export differs from preview ' + it.logo + '/' + it.id + ' ' + d); await a.close(); await b.close(); }
+  let worst = 0; if (FIRST) for (const it of list.filter(x => x.logo === 'sample' || x.logo === 'groupsIds')) { const a = await ctx.newPage(); await a.goto(X + it.d + 'frozen.html'); await a.waitForTimeout(80); const b = await ctx.newPage(); await b.goto(X + it.d + 'preview.html'); await b.waitForTimeout(80); const d = await diff(await shot(a), await shot(b)); worst = Math.max(worst, d); if (d > 0) fail(e, 'export differs from preview ' + it.logo + '/' + it.id + ' ' + d); await a.close(); await b.close(); }
   out.matrix.previewWorst = worst;
 
+  mark('preview');
   // 4. CSP: image, external and script move; inline stays a still, unbroken logo.
   const cspQ = []; for (const it of list.filter(x => x.logo === 'sample')) for (const f of ['image', 'external', 'script', 'inline']) cspQ.push([it, f]); const csp = {};
+  cspQ.splice(0, cspQ.length, ...mine(cspQ));
   await drain(cspQ, async ([it, f], own) => { csp[it.id + '/' + f] = await runForm(it, f, 'csp-', { ctx: own }); });
   for (const [k, r] of Object.entries(csp)) { if (r.driven || r.moves > 0) continue; const [id, f] = k.split('/'); const it = list.find(x => x.logo === 'sample' && x.id === id); const own = await br.newContext({ viewport: { width: 700, height: 500 } }); csp[k] = await runForm(it, f, 'csp-', { ctx: own }); await own.close(); out.realTime.retried.push('csp-' + k + ' gap ' + r.gap + '->' + csp[k].gap + ' moves ' + csp[k].moves); }
   for (const [k, r] of Object.entries(csp)) { const inline = k.endsWith('/inline'); if (!inline && r.moves <= 0) fail(e, 'CSP: does not move ' + k); if (inline && r.moves > 0) fail(e, 'CSP: inline should be still ' + k); if (r.ext) fail(e, 'CSP external ' + k); }
   out.matrix.csp = Object.keys(csp).length;
   await ctx.close();
 
+  mark('csp');
+  if (FIRST) {
   // 5. Reduced motion: inline, external and script rest exactly as the still file; the image form switches to the still file.
   const rc = await br.newContext({ reducedMotion: 'reduce', viewport: { width: 700, height: 500 } }); const rp0 = await rc.newPage(); await rp0.goto(X + 'base.css'); await rp0.evaluate(HELPERS); const red = out.reduced = {};
   for (const it of list.filter(x => x.logo === 'sample')) for (const f of ['inline', 'external', 'script', 'image']) { const p = await rc.newPage(); await p.goto(X + it.d + f + '.html'); await p.waitForLoadState('load'); await p.waitForTimeout(150); const a = await shot(p); await p.waitForTimeout(350); const b = await shot(p); const src = f === 'image' ? await p.evaluate(() => document.querySelector('img').currentSrc) : ''; await p.close(); const sp = await rc.newPage(); await sp.goto(X + it.d + 'still.html'); await sp.waitForTimeout(80); const s = await shot(sp); await sp.close(); const moved = await rp0.evaluate(([x, y]) => __raw(x, y), [a, b]); const vs = await rp0.evaluate(([x, y]) => __diff(x, y), [b, s]); const before = failures(); red[it.id + '/' + f] = { moved, vs, src: src.split('/').pop() }; if (moved > 0) fail(e, 'reduced: moves ' + it.id + '/' + f); if (vs > 0.1) fail(e, 'reduced: not the still pose ' + it.id + '/' + f + ' ' + vs); if (f === 'image' && !/-static\.svg$/.test(src)) fail(e, 'reduced: image did not switch to the still file ' + it.id); if (failures() > before) keep('reduced-' + it.id + '-' + f, [a, b, s]); }
   await rc.close();
 
+  mark('reduced');
   // 6. Two logos with the same ids on one page.
   const two = list.filter(x => x.logo === 'gradient' && (x.id === 'logo-breathe' || x.id === 'logo-spin-in')); write('two.html', PAGE('<style>#t{display:flex;width:600px}</style>', two[0].b.snippets.inline + two[1].b.snippets.inline.replace(/#f06|#06f/g, '#00aa00').replace(/stop-color="#ff0066"|stop-color="#0066ff"/g, 'stop-color="#00aa00"'))); const tc = await br.newContext({ viewport: { width: 700, height: 400 } }); const tp = await tc.newPage(); await tp.goto(X + 'two.html'); await tp.waitForTimeout(200); out.two = await tp.evaluate(() => { const ids = [...document.querySelectorAll('[id]')].map(x => x.id); return { ids: ids.length, unique: new Set(ids).size, animations: document.getAnimations().length, names: [...new Set(document.getAnimations().map(a => a.animationName))].length }; }); if (out.two.ids !== out.two.unique || out.two.names < 2) fail(e, 'two logos ' + JSON.stringify(out.two)); await tc.close();
 
   // 6b. A logo's own stylesheet must not reach the page it is pasted into.
   const il = list.find(x => x.logo === 'illustratorLike' && x.id === 'logo-pop'); write('host.html', '<!doctype html><html><head><meta charset="utf-8"></head><body><p class="st0" id="host" style="color:rgb(0, 0, 0)">host</p><svg width="10" height="10"><rect class="st0" id="hostrect" width="10" height="10" fill="rgb(1, 2, 3)"/></svg>' + il.b.snippets.inline + '</body></html>'); const hc = await br.newContext(); const hp2 = await hc.newPage(); await hp2.goto(X + 'host.html'); await hp2.waitForTimeout(100); out.hostPage = await hp2.evaluate(() => ({ text: getComputedStyle(document.getElementById('host')).fill, rect: getComputedStyle(document.getElementById('hostrect')).fill, logoRect: getComputedStyle(document.querySelector('svg[class^="omx-"] .st0')).fill })); if (out.hostPage.rect !== 'rgb(1, 2, 3)' || out.hostPage.logoRect !== 'rgb(227, 6, 19)') fail(e, 'logo CSS leaked or lost ' + JSON.stringify(out.hostPage)); await hc.close();
 
+  mark('two');
   // 7. Hostile logos through the real upload, exported, and placed inline together: the worst a customer site could do.
   const C = 'http://127.0.0.1:8771', run = 'ex' + e + Date.now();
   const hostile = await g.evaluate(async ([A, C, run]) => { const data = JSON.parse(document.getElementById('omx-svg-motion-data').textContent); const out = { inline: [], still: [], keys: [], rejected: 0 }; for (const k in A) { let svg; try { svg = OmxSvgSafety.normalize(A[k].split('{C}').join(C + '/c/' + run + '/' + k + '/'), { prefix: 'omx-' }).svg; } catch (err) { out.rejected++; continue; } let b; try { b = OmxSvgExport.build({ svg, preset: data.presets[0], params: {}, common: {}, commonList: data.common, budget: data.budget, label: '' }); } catch (err) { out.exportFailed = (out.exportFailed || []).concat(k + ':' + err.message.slice(0, 60)); continue; } out.inline.push(b.snippets.inline); out.still.push(b.files.still); out.keys.push([k, A[k].includes('omxkeep')]); } return out; }, [ATTACKS, C, run]);
@@ -190,6 +206,7 @@ async function exportTests(br, e, fail) {
   out.hostile = { exported: hostile.inline.length, rejected: hostile.rejected, hits: hits.length, net: dump.filter(u => !u.includes('/control/')).length, markers: painted + '/' + had, controlHits: controlHits.length, controlNet: dump.filter(u => u.includes('/control/')).length, stayed: stillUrl.endsWith('inline.html') };
   if (out.hostile.hits || out.hostile.net) fail(e, 'exported hostile logos ran or reached out ' + JSON.stringify(out.hostile)); if (!out.hostile.controlHits || !out.hostile.controlNet) fail(e, 'control: detectors dead'); if (had !== 63) fail(e, 'markers expected 63, got ' + had); if (!out.hostile.stayed) fail(e, 'page navigated');
 
+  mark('hostile');
   // 8. The studio UI: usages, copy, download, settings JSON round trip and hostile JSON.
   await g.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
   const up = async (t, n) => { await g.evaluate(() => document.querySelector('[data-svg-motion]').removeAttribute('data-svgm-last')); await g.setInputFiles('[data-svgm-file]', { name: n || 'logo.svg', mimeType: 'image/svg+xml', buffer: Buffer.from(t) }); await g.waitForSelector('[data-svg-motion][data-svgm-last]'); await g.waitForTimeout(120); return g.getAttribute('[data-svg-motion]', 'data-svgm-last'); };
@@ -264,9 +281,12 @@ async function exportTests(br, e, fail) {
   // Negative control: when the export's own check fails, no file and no copy is offered, and the reason shows.
   await r.check('input[name="svgm-usage"][value="image"]', { force: true }); await r.waitForTimeout(200); await r.evaluate(() => { window.__old = [...document.querySelectorAll('[data-svgm-download]')]; window.__verify = OmxSvgSafety.verify; OmxSvgSafety.verify = () => ['forced']; }); await r.fill('[data-svgm-alt]', 'x'); await r.waitForTimeout(400); const failed = await r.evaluate(() => ({ state: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-export'), buttons: document.querySelectorAll('[data-svgm-download]').length, copyDisabled: document.querySelector('[data-svgm-copy]').disabled, jsonDisabled: document.querySelector('[data-svgm-json-download]').disabled, oldButtons: window.__old.length, oldOffered: window.__old.filter(b => b.isConnected && !b.disabled).length, code: document.querySelector('[data-svgm-code]').textContent })); await r.evaluate(() => { OmxSvgSafety.verify = window.__verify; }); await r.fill('[data-svgm-alt]', 'y'); await r.waitForTimeout(400); const recovered = await r.evaluate(() => ({ state: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-export'), buttons: document.querySelectorAll('[data-svgm-download]').length, copyDisabled: document.querySelector('[data-svgm-copy]').disabled, jsonDisabled: document.querySelector('[data-svgm-json-download]').disabled }));
   ui.exportFailed = { failed, recovered: recovered }; if (failed.state !== 'failed' || failed.buttons || !failed.copyDisabled || !failed.jsonDisabled || !failed.oldButtons || failed.oldOffered || !/[ぁ-ん一-龠]/.test(failed.code) || !/^omx-/.test(recovered.state || '') || !recovered.buttons || recovered.copyDisabled || recovered.jsonDisabled) fail(e, 'export failure handling ' + JSON.stringify(ui.exportFailed));
-  await rctx.close(); await gctx.close();
+  await rctx.close();
+  mark('ui');
+  }
+  await gctx.close();
   out.errors = errors; if (errors.length) fail(e, 'export page errors ' + errors.slice(0, 2));
   fs.writeFileSync(path.join(R, 'export-' + e + '.json'), JSON.stringify(out, null, 1));
-  return { generated: out.generated, standalone: out.matrix.standalone, csp: out.matrix.csp, previewWorst: out.matrix.previewWorst, worstRest: out.matrix.worstRest, hostile: out.hostile, two: out.two, shotRetries: out.shotRetries || 0, realTime: out.realTime, motionPreference: out.motionPreference };
+  return { generated: out.generated, standalone: out.matrix.standalone, csp: out.matrix.csp, previewWorst: out.matrix.previewWorst, worstRest: out.matrix.worstRest, hostile: out.hostile, two: out.two, shotRetries: out.shotRetries || 0, realTime: out.realTime, motionPreference: out.motionPreference, shard: out.shard, timing: out.timing };
 }
 module.exports = { exportTests };

@@ -15,6 +15,7 @@ require_once get_theme_file_path('/inc/learn.php');
 require_once get_theme_file_path('/inc/learn-gallery.php');
 require_once get_theme_file_path('/inc/learn-composer.php');
 require_once get_theme_file_path('/inc/learn-svg-motion.php');
+require_once get_theme_file_path('/inc/logo-motion.php');
 require_once get_theme_file_path('/inc/learn-practice.php');
 require_once get_theme_file_path('/inc/ai-tool-detail.php');
 require_once get_theme_file_path('/inc/editorial-home.php');
