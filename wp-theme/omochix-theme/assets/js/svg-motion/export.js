@@ -12,7 +12,8 @@
 
     var SVG_NS = 'http://www.w3.org/2000/svg';
     var FORMAT = 'omochix-svg-motion';
-    var SCHEMA = 1;
+    var SCHEMA = 2;          // written when a file carries an edit
+    var SCHEMA_PRESET = 1;   // written otherwise, so earlier studios can still open it
     var JSON_LIMIT = 2097152;
 
     function fnv(text) {
@@ -112,7 +113,7 @@
             scope: scope,
             rest: plan.restTime,
             setup: plan.setup.map(function (s) { return { s: sel(s.target), styles: s.styles }; }),
-            boxes: plan.tracks.map(function (t) { return { s: sel(t.target), box: t.target.kind === 'stage' ? '' : (t.target.kind === 'base' ? 'view-box' : 'fill-box') }; }),
+            boxes: plan.tracks.map(function (t) { return { s: sel(t.target), box: t.target.kind === 'stage' ? '' : (t.target.kind === 'base' || (t.target.kind === 'root' && plan.origin) ? 'view-box' : 'fill-box'), origin: t.target.kind === 'root' && plan.origin ? plan.origin.x + 'px ' + plan.origin.y + 'px' : 'center' }; }),
             tracks: plan.tracks.map(function (t) {
                 return {
                     s: sel(t.target),
@@ -133,7 +134,7 @@
             '  if (!svg || !svg.animate) return;\n' +
             '  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;\n' +
             '  D.setup.forEach(function (x) { var e = document.querySelector(x.s); if (e) Object.keys(x.styles).forEach(function (k) { e.style.setProperty(k, x.styles[k]); }); });\n' +
-            '  D.boxes.forEach(function (x) { var e = document.querySelector(x.s); if (!e) return; if (x.box) e.style.transformBox = x.box; e.style.transformOrigin = "center"; });\n' +
+            '  D.boxes.forEach(function (x) { var e = document.querySelector(x.s); if (!e) return; if (x.box) e.style.transformBox = x.box; e.style.transformOrigin = x.origin; });\n' +
             '  var list = D.tracks.map(function (t) { var e = document.querySelector(t.s); if (!e) return null; var o = Object.assign({}, t.options); if (o.iterations < 0) o.iterations = Infinity; var a = e.animate(t.frames, o); a.pause(); a.currentTime = reduced ? D.rest : 0; return a; }).filter(Boolean);\n' +
             '  function play() { list.forEach(function (a) { if (a.playState === "finished") a.currentTime = 0; a.play(); }); }\n' +
             '  function pause() { list.forEach(function (a) { a.pause(); }); }\n' +
@@ -148,21 +149,23 @@
     }
 
     /**
-     * @param {{svg: string, preset: object, params: object, common: object, commonList: object[], budget: object, label: string}} input
-     *     svg: the normalized logo as kept by the studio.
+     * @param {{svg: string, preset: object, params: object, common: object, commonList: object[], budget: object, label: string, edit?: object|null}} input
+     *     svg: the normalized logo as kept by the studio. edit: a validated edit (S4), or nothing.
      * @return {object} Text of every output, file names and the scope. Throws when anything fails a check.
      */
     function build(input) {
         var settings = { preset: input.preset.id, params: root.OmxSvgCompile.sanitizeParams(input.preset, input.params), common: root.OmxSvgCompile.sanitizeCommon(input.commonList, input.common) };
-        var scope = 'omx-' + fnv(input.svg + JSON.stringify(settings));
+        var edit = input.edit || null;
+        var scope = 'omx-' + fnv(input.svg + JSON.stringify(settings) + (edit ? JSON.stringify(edit) : ''));
         // Again through the whole pipeline: the export carries its own id prefix, so pasted logos never share ids.
         var normalized = root.OmxSvgSafety.normalize(input.svg, { prefix: scope + '-' });
         var stage = root.OmxSvgFrame.prepare(normalized.svg, Object.assign({ overlay: input.preset.structure === 'overlay' }, input.budget));
-        var plan = root.OmxSvgCompile.buildPlan(input.preset, settings.params, stage.layout, settings.common);
+        var plan = root.OmxSvgCompile.compileEdit(root.OmxSvgCompile.buildPlan(input.preset, settings.params, stage.layout, settings.common), edit);
         var label = String(input.label || '').slice(0, 120);
         var css = root.OmxSvgCompile.planToCss(plan, { scope: scope, reducedRest: true });
         var restCss = root.OmxSvgCompile.planToCss(plan, { scope: scope, animate: false });
         if (!cssIsClean(css) || !cssIsClean(restCss)) throw new root.OmxSvgSafety.SafetyError('EXPORT_FAILED', 'css');
+        if (css.length > root.OmxSvgCompile.EDIT_LIMITS.css) throw new root.OmxSvgSafety.SafetyError('EXPORT_FAILED', 'css-size');
         var animated = svgText(stage.svg, scope, css, label);
         var still = svgText(stage.svg, scope, restCss, label);
         var bare = svgText(stage.svg, scope, '', label);
@@ -182,7 +185,7 @@
                 still: still,
                 css: css + '\n',
                 js: runnerText(plan, scope),
-                json: JSON.stringify({ format: FORMAT, schema: SCHEMA, svg: input.svg, settings: settings }, null, 2) + '\n'
+                json: JSON.stringify(edit ? { format: FORMAT, schema: SCHEMA, svg: input.svg, settings: settings, edit: edit } : { format: FORMAT, schema: SCHEMA_PRESET, svg: input.svg, settings: settings }, null, 2) + '\n'
             },
             snippets: {
                 image: '<picture>\n  <source media="(prefers-reduced-motion: reduce)" srcset="' + names.still + '">\n  <img src="' + names.animated + '" alt="' + alt + '" width="200" height="200">\n</picture>',
@@ -194,18 +197,26 @@
     }
 
     /**
-     * Reads settings JSON. Untrusted: the logo goes through the whole import pipeline afterwards.
-     * @return {{svg: string, settings: object}}
+     * Reads settings JSON. Untrusted: the logo goes through the whole import pipeline afterwards, and an edit
+     * through validateEdit() once the logo's parts are known. Schema 1 (preset only) and 2 (with an edit) are read.
+     * @return {{svg: string, settings: object, edit: object|null, schema: number}}
      */
     function parseSettings(text) {
         if (typeof text !== 'string' || text.length > JSON_LIMIT) throw new root.OmxSvgSafety.SafetyError('JSON_TOO_LARGE');
         var data;
         try { data = JSON.parse(text); } catch (error) { throw new root.OmxSvgSafety.SafetyError('JSON_INVALID'); }
         if (!data || typeof data !== 'object' || data.format !== FORMAT) throw new root.OmxSvgSafety.SafetyError('JSON_FORMAT');
-        if (data.schema !== SCHEMA) throw new root.OmxSvgSafety.SafetyError('JSON_SCHEMA');
+        if (data.schema !== SCHEMA_PRESET && data.schema !== SCHEMA) throw new root.OmxSvgSafety.SafetyError('JSON_SCHEMA');
         if (typeof data.svg !== 'string' || !data.settings || typeof data.settings !== 'object') throw new root.OmxSvgSafety.SafetyError('JSON_INVALID');
-        return { svg: data.svg, settings: data.settings };
+        var edit = null;
+        if (data.schema === SCHEMA) {
+            if (!data.edit || typeof data.edit !== 'object') throw new root.OmxSvgSafety.SafetyError('JSON_INVALID');
+            edit = data.edit;
+        } else if (data.edit !== undefined) {
+            throw new root.OmxSvgSafety.SafetyError('JSON_INVALID');
+        }
+        return { svg: data.svg, settings: data.settings, edit: edit, schema: data.schema };
     }
 
-    root.OmxSvgExport = { build: build, parseSettings: parseSettings, verifyExport: verifyExport, FORMAT: FORMAT, SCHEMA: SCHEMA };
+    root.OmxSvgExport = { build: build, parseSettings: parseSettings, verifyExport: verifyExport, FORMAT: FORMAT, SCHEMA: SCHEMA, SCHEMA_PRESET: SCHEMA_PRESET };
 }(window));

@@ -4,11 +4,12 @@ const { chromium, firefox, webkit } = require('playwright'); const fs = require(
 const { start, PORT } = require('./server.js'); const B = 'http://127.0.0.1:' + PORT + '/pages'; const REPO = path.join(__dirname, '../..'); const R = path.join(__dirname, 'results'); fs.mkdirSync(R, { recursive: true });
 const { pageTests, uploadSecurity } = require('./studio-tests.js');
 const { exportTests } = require('./export-tests.js');
-const only = (process.argv[2] || 'security,upload,fidelity,presets,page,export,regression').split(',');
+const only = (process.argv[2] || 'security,upload,fidelity,presets,page,export,compose,regression').split(',');
 // SVGM_ENGINE=chromium|firefox|webkit runs one engine (CI runs the three as parallel jobs). SVGM_PROFILE=fast|full (see export-tests.js).
 const ENGINES = [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]].filter(([n]) => !process.env.SVGM_ENGINE || process.env.SVGM_ENGINE === n);
 if (!ENGINES.length) { console.log('unknown SVGM_ENGINE ' + process.env.SVGM_ENGINE); process.exit(2); }
 const PROFILE = process.env.SVGM_PROFILE === 'fast' ? 'fast' : 'full';
+const { composeTests } = require('./compose-tests.js');
 const failures = [], summary = {}; const fail = (e, m) => { failures.push(e + ': ' + m); console.log('  FAIL ' + m); };
 const read = n => JSON.parse(fs.readFileSync(path.join(R, n + '.json'), 'utf8'));
 const num = v => { const m = String(v).match(/-?\d+(\.\d+)?/g); return m ? m.map(Number) : null; };
@@ -117,6 +118,7 @@ async function regression(br, e) {
       if (only.includes('upload')) { const u = await uploadSecurity(br, e, fail); s.upload = { routes: Object.fromEntries(Object.entries(u.routes).map(([k, v]) => [k, { accepted: v.accepted, rejected: Object.keys(v.rejected).length, markerPainted: v.markerPainted, hadMarker: v.hadMarker, exec: v.exec.length }])), canary: u.canary.length, outbound: u.outbound.length, controls: u.controls }; s.steps.upload = tick(); console.log(' upload done ' + s.steps.upload + 's'); }
       if (only.includes('page')) { s.page = await pageTests(br, e, fail); s.steps.page = tick(); console.log(' page done ' + s.steps.page + 's'); }
       if (only.includes('export')) { s.export = await exportTests(br, e, fail); s.steps.export = tick(); console.log(' export done ' + s.steps.export + 's'); }
+      if (only.includes('compose')) { s.compose = await composeTests(br, e, fail); s.steps.compose = tick(); console.log(' compose done ' + s.steps.compose + 's'); }
       if (only.includes('regression')) { s.regression = await regression(br, e); s.steps.regression = tick(); console.log(' regression done ' + s.steps.regression + 's'); }
       await br.close();
     }

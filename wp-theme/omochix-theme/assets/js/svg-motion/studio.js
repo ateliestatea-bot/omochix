@@ -27,7 +27,8 @@
     var presets = Object.create(null);
     data.presets.forEach(function (preset) { presets[preset.id] = preset; });
 
-    var settings = { preset: data.presets[0].id, sample: data.samples[0].id, params: Object.create(null), common: {} };
+    var settings = { preset: data.presets[0].id, sample: data.samples[0].id, params: Object.create(null), common: {}, edit: null };
+    // edit: a validated S4 edit (schema 2) or null. S4-0 carries it through preview, save and export; the editor comes with S4-1.
     var logo = null; // { kind: 'sample'|'user', svg, analysis, stages }
     var thumbsMoving = !reduced.matches;
     var thumbUrls = Object.create(null);
@@ -116,7 +117,8 @@
         return promiseOfText.then(function (text) {
             return loadText(text, 'user', name);
         }).then(function () {
-            announce(messages.loaded);
+            var dropped = dropEdit(false); // the part numbers it referred to belong to the previous logo
+            announce(messages.loaded + (dropped ? ' ' + messages.editDiscarded : ''));
             root.setAttribute('data-svgm-last', 'ok');
             scheduleSave();
         }, function (error) {
@@ -142,7 +144,60 @@
     }
 
     function currentPlan() {
-        return Compile.buildPlan(presets[settings.preset], paramsFor(settings.preset), stageFor(needsOverlay(settings.preset)).layout, commonValues());
+        var base = Compile.buildPlan(presets[settings.preset], paramsFor(settings.preset), stageFor(needsOverlay(settings.preset)).layout, commonValues());
+        return Compile.compileEdit(base, settings.edit);
+    }
+
+    /* ---------------------------------------------------------------- edits (S4) */
+    function markEdit() {
+        root.setAttribute('data-svgm-edit', settings.edit ? String(settings.edit.layers.length) : 'none');
+    }
+
+    /** Drops the edit when the logo it was made for goes away. The confirmation step belongs to the S4-1 editor. */
+    function dropEdit(reason) {
+        if (!settings.edit) return false;
+        settings.edit = null;
+        markEdit();
+        if (reason) announce(messages.editDiscarded);
+        return true;
+    }
+
+    /**
+     * Takes an untrusted edit for the current logo: checked against the logo's parts and compiled once before it is kept.
+     * @return {boolean} false when it was refused (the current state is unchanged).
+     */
+    function takeEdit(edit, options) {
+        options = options || {};
+        if (!edit) { dropEdit(false); return true; }
+        var clean;
+        try {
+            clean = Compile.validateEdit(edit, stageFor(false).layout);
+            Compile.compileEdit(Compile.buildPlan(presets[settings.preset], paramsFor(settings.preset), stageFor(needsOverlay(settings.preset)).layout, commonValues()), clean);
+        } catch (error) {
+            if (options.throwOnError) throw error;
+            dropEdit(true);
+            return false;
+        }
+        settings.edit = clean;
+        markEdit();
+        if (!clean.origin) measureOrigin();
+        return true;
+    }
+
+    /* The root's origin is pinned to the logo's own centre (see compile.js) by measuring it once in the sandbox frame. */
+    var measuring = null;
+    function measureOrigin() {
+        if (measuring || !settings.edit) return;
+        var mine = settings.edit;
+        measuring = Frame.measure(stageFor(false).svg).then(function (box) {
+            measuring = null;
+            if (settings.edit !== mine || !box) return;
+            settings.edit.origin = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+            settings.edit = Compile.validateEdit(settings.edit, stageFor(false).layout);
+            root.setAttribute('data-svgm-origin', settings.edit.origin.x + ',' + settings.edit.origin.y);
+            preview.update(currentPlan()).catch(function () { showError(messages.errors.DEFAULT); });
+            scheduleSave();
+        }, function () { measuring = null; });
     }
 
     function plainSettings() {
@@ -223,14 +278,18 @@
             try {
                 exported = Export.build({
                     svg: logo.svg, preset: presets[settings.preset], params: paramsFor(settings.preset), common: commonValues(),
-                    commonList: data.common, budget: data.budget, label: els.alt.value
+                    commonList: data.common, budget: data.budget, label: els.alt.value, edit: settings.edit
                 });
             } catch (error) {
+                // Nothing stale stays offered: no files, no copy, and the reason in place of the code.
                 exported = null;
                 els.code.textContent = messages.errors.EXPORT_FAILED;
+                els.downloads.textContent = '';
+                els.copy.disabled = true;
                 root.setAttribute('data-svgm-export', 'failed');
                 return;
             }
+            els.copy.disabled = false;
             renderExport();
         }, 120);
     }
@@ -294,7 +353,7 @@
         window.clearTimeout(saveTimer);
         saveTimer = window.setTimeout(function () {
             writeHash();
-            Store.save(logo && logo.kind === 'user' ? logo.svg : null, plainSettings()).then(function (saved) {
+            Store.save(logo && logo.kind === 'user' ? logo.svg : null, plainSettings(), settings.edit).then(function (saved) {
                 root.setAttribute('data-svgm-saved', saved ? String(Date.now()) : 'failed');
                 els.storage.hidden = saved;
             });
@@ -461,7 +520,7 @@
         if (target.name === 'svgm-preset' && presets[target.value]) {
             selectPreset(target.value);
         } else if (target.name === 'svgm-sample') {
-            loadSample(target.value).then(function () { scheduleSave(); }, function (error) { showError(messageFor(error && error.code)); });
+            loadSample(target.value).then(function () { if (dropEdit(false)) announce(messages.editDiscarded); scheduleSave(); }, function (error) { showError(messageFor(error && error.code)); });
         } else if (target === els.file && target.files && target.files[0]) {
             var file = target.files[0];
             takeUserLogo(Import.readFile(file), file.name);
@@ -541,12 +600,17 @@
         var reading = file.size > 2097152 ? Promise.reject(new Safety.SafetyError('JSON_TOO_LARGE')) : file.text();
         reading.then(function (text) {
             var parsed = Export.parseSettings(text);
+            if (parsed.edit) Compile.validateEdit(parsed.edit); // shape and limits first, so a bad file never replaces the logo
             return loadText(parsed.svg, 'user', file.name, '').then(function () { return parsed; });
         }).then(function (parsed) {
             adopt(parsed.settings);
             selectPreset(settings.preset, { announce: false });
-            announce(messages.imported);
+            // Against this logo's parts and the chosen preset; a refusal drops the edit and says so, the logo stays.
+            var kept = takeEdit(parsed.edit);
+            preview.update(currentPlan()).catch(function () { showError(messages.errors.DEFAULT); });
+            announce(kept ? messages.imported : messages.imported + ' ' + messages.editDiscarded);
             root.setAttribute('data-svgm-last', 'ok');
+            scheduleSave();
         }, function (error) {
             showError(messageFor(error && error.code));
             root.setAttribute('data-svgm-last', (error && error.code) || 'DEFAULT');
@@ -596,13 +660,19 @@
         var wantsSample = hash.s && data.samples.some(function (s) { return s.id === hash.s; });
         if (wantsSample) settings.sample = hash.s;
         // Whatever was saved is untrusted: it goes through the whole pipeline again.
+        var restoreEdit = function (loadedLogo) {
+            // Saved edits are untrusted too: refused ones are dropped, and the preview is rebuilt with what was kept.
+            if (record && record.edit && loadedLogo === true) takeEdit(record.edit);
+            markEdit();
+            if (settings.edit) preview.update(currentPlan()).catch(function () { showError(messages.errors.DEFAULT); });
+        };
         if (record && record.svg && !wantsSample) {
             return loadText(record.svg, 'user', messages.savedName, '').then(function () { return true; }, function () {
                 announce(messages.discarded);
                 return Store.remove().then(function () { return loadSample(settings.sample); });
-            });
+            }).then(restoreEdit);
         }
-        return loadSample(settings.sample);
+        return loadSample(settings.sample).then(restoreEdit);
     }).then(ready, function () {
         showError(messages.errors.DEFAULT);
         root.setAttribute('data-svgm-ready', 'failed');

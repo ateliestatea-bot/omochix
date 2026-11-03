@@ -210,6 +210,10 @@
             clear();
             plan = next;
             applyStyles(plan.setup);
+            if (plan.origin && typeof plan.origin.x === 'number' && typeof plan.origin.y === 'number') {
+                var rootEl = svg.querySelector('[data-omx-root]');
+                if (rootEl) { rootEl.style.transformBox = 'view-box'; rootEl.style.transformOrigin = plan.origin.x + 'px ' + plan.origin.y + 'px'; }
+            }
             plan.tracks.forEach(function (t) {
                 var el = select(t.target);
                 if (!el) return;
@@ -295,6 +299,58 @@
             '<script nonce="' + value + '">' + runtime.replace(/<\/script/gi, '<\\/script') + '</' + 'script></body></html>';
     }
 
+    /* Runs inside the measuring frame: reports the root's untransformed box, numbers only. Serialized with toString(). */
+    /* eslint-disable */
+    function measureRuntime() {
+        var el = document.querySelector('[data-omx-root]') || document.querySelector('svg');
+        var box = null;
+        try { var b = el.getBBox(); box = { x: b.x, y: b.y, width: b.width, height: b.height }; } catch (e) { box = null; }
+        window.parent.postMessage({ type: 'omx:measure', box: box }, '*');
+    }
+    /* eslint-enable */
+
+    /**
+     * Measures the logo's own box in a sandboxed frame (no same-origin access, nonce CSP, no network), so the
+     * studio page never holds the logo inline. Resolves with {x, y, width, height} in viewBox units, or null.
+     * @param {string} preparedSvg Verified output of prepare().
+     */
+    function measure(preparedSvg, options) {
+        var problems = root.OmxSvgSafety.verify(preparedSvg, { extraAttribute: EXTRA_ATTRIBUTE });
+        if (problems.length) return Promise.resolve(null);
+        var value = nonce();
+        var doc = '<!doctype html><html><head><meta charset="utf-8">' +
+            '<meta http-equiv="Content-Security-Policy" content="' + contentSecurityPolicy(value) + '">' +
+            '<style>html,body{margin:0}svg{display:block;width:200px;height:200px}</style></head><body>' + preparedSvg +
+            '<script nonce="' + value + '">(' + measureRuntime.toString().replace(/<\/script/gi, '<\\/script') + '())</' + 'script></body></html>';
+        var timeout = options && options.timeout || 3000;
+        return new Promise(function (resolve) {
+            var frame = document.createElement('iframe');
+            frame.setAttribute('sandbox', 'allow-scripts');
+            frame.setAttribute('aria-hidden', 'true');
+            frame.setAttribute('tabindex', '-1');
+            frame.style.cssText = 'position:absolute;width:200px;height:200px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none';
+            var done = false;
+            var finish = function (box) {
+                if (done) return;
+                done = true;
+                root.removeEventListener('message', onMessage);
+                root.clearTimeout(timer);
+                frame.remove();
+                resolve(box);
+            };
+            var onMessage = function (event) {
+                if (event.source !== frame.contentWindow || !event.data || event.data.type !== 'omx:measure') return;
+                var b = event.data.box;
+                var ok = b && typeof b === 'object' && ['x', 'y', 'width', 'height'].every(function (k) { return typeof b[k] === 'number' && isFinite(b[k]) && Math.abs(b[k]) < 1e5; });
+                finish(ok ? { x: b.x, y: b.y, width: b.width, height: b.height } : null);
+            };
+            var timer = root.setTimeout(function () { finish(null); }, timeout);
+            root.addEventListener('message', onMessage);
+            document.body.appendChild(frame);
+            frame.srcdoc = doc;
+        });
+    }
+
     /**
      * Stand-alone SVG text with CSS animation: for <img>, no script and no network by construction.
      * @param {string} preparedSvg Verified output of prepare().
@@ -315,5 +371,5 @@
         return root.OmxSvgSafety.verify(preparedSvg, { extraAttribute: EXTRA_ATTRIBUTE });
     }
 
-    root.OmxSvgFrame = { prepare: prepare, buildDocument: buildDocument, animatedSvg: animatedSvg, verifyPrepared: verifyPrepared, EXTRA_ATTRIBUTE: EXTRA_ATTRIBUTE };
+    root.OmxSvgFrame = { prepare: prepare, buildDocument: buildDocument, animatedSvg: animatedSvg, verifyPrepared: verifyPrepared, measure: measure, EXTRA_ATTRIBUTE: EXTRA_ATTRIBUTE };
 }(window));

@@ -9,7 +9,8 @@
     var DB_NAME = 'omx-svg-motion';
     var STORE = 'state';
     var KEY = 'current';
-    var SCHEMA = 1;
+    var SCHEMA = 2;          // S4: adds `edit`
+    var SCHEMA_PRESET = 1;   // S2: read and carried forward as an edit-free record
     var LEGACY_KEY = 'omx-svg-motion-state'; // S1-B: localStorage, settings only
 
     function open() {
@@ -54,11 +55,12 @@
         return run('readonly', function (store) { return store.get(KEY); }).then(function (record) {
             if (!record) {
                 var old = legacy();
-                return old ? { status: 'legacy', record: { schema: SCHEMA, svg: null, settings: old } } : { status: 'none', record: null };
+                return old ? { status: 'legacy', record: { schema: SCHEMA, svg: null, settings: old, edit: null } } : { status: 'none', record: null };
             }
-            if (typeof record !== 'object' || record.schema !== SCHEMA) {
+            if (typeof record !== 'object' || (record.schema !== SCHEMA && record.schema !== SCHEMA_PRESET)) {
                 return remove().then(function () { return { status: 'discarded', record: null }; });
             }
+            if (record.schema === SCHEMA_PRESET) record = { schema: SCHEMA, svg: record.svg, settings: record.settings, edit: null };
             return { status: 'ok', record: record };
         }, function () {
             var old = legacy();
@@ -66,10 +68,10 @@
         });
     }
 
-    /** @param {string|null} svg Normalized SVG, never the original file. */
-    function save(svg, settings) {
+    /** @param {string|null} svg Normalized SVG, never the original file. @param {object|null} [edit] A validated edit. */
+    function save(svg, settings, edit) {
         return run('readwrite', function (store) {
-            return store.put({ schema: SCHEMA, svg: svg, settings: settings }, KEY);
+            return store.put({ schema: SCHEMA, svg: svg, settings: settings, edit: edit || null }, KEY);
         }).then(function () { clearLegacy(); return true; }, function () { return false; });
     }
 

@@ -25,7 +25,7 @@ $d = omochix_svg_motion_data();
 check('data: 19 presets and 3 samples', 19 === count($d['presets']) && 3 === count($d['samples']));
 $ids = array_column($d['presets'], 'id');
 check('messages: every error code the scripts can raise has Japanese text', !array_diff(['EMPTY_INPUT','NOT_SVG_FILE','READ_FAILED','NOT_UTF8','TOO_MANY_FILES','TOO_LARGE','PARSE_ERROR','NOT_SVG','DOCTYPE_REJECTED','ELEMENT_LIMIT','DEPTH_LIMIT','PATH_LIMIT','USE_EXPANSION_LIMIT','SANITIZE_FAILED','VERIFY_FAILED','EMPTY_RESULT'], array_keys(omochix_svg_motion_messages()['errors'])));
-check('messages: export and settings-file codes have Japanese text', !array_diff(['JSON_TOO_LARGE','JSON_INVALID','JSON_FORMAT','JSON_SCHEMA','EXPORT_FAILED'], array_keys(omochix_svg_motion_messages()['errors'])) && '' !== omochix_svg_motion_messages()['copied'] && '' !== omochix_svg_motion_messages()['copyFailed'] && '' !== omochix_svg_motion_messages()['imported']);
+check('messages: export and settings-file codes have Japanese text', !array_diff(['JSON_TOO_LARGE','JSON_INVALID','JSON_FORMAT','JSON_SCHEMA','EXPORT_FAILED','EDIT_INVALID','EDIT_LIMIT','EDIT_CONFLICT'], array_keys(omochix_svg_motion_messages()['errors'])) && '' !== omochix_svg_motion_messages()['editDiscarded'] && '' !== omochix_svg_motion_messages()['copied'] && '' !== omochix_svg_motion_messages()['copyFailed'] && '' !== omochix_svg_motion_messages()['imported']);
 check('export: four usages, image first', ['image','inline','external','script'] === array_keys(omochix_svg_motion_usages()));
 $ex = file_get_contents($THEME . '/assets/js/svg-motion/export.js');
 check('export: no network, storage or eval in the exporter', !preg_match('/fetch\(|XMLHttpRequest|sendBeacon|localStorage|eval\(|new Function/', $ex));

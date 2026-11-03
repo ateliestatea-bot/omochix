@@ -9,6 +9,13 @@ const CSP_PAGE = body => '<!doctype html><html><head><meta charset="utf-8">' + C
 // else, every security check included, runs in both profiles. SVGM_PARALLEL: pages open at once for the standalone checks.
 const PROFILE = process.env.SVGM_PROFILE === 'fast' ? 'fast' : 'full', PAR = Math.max(1, Number(process.env.SVGM_PARALLEL) || 6);
 const REAL_TIME_FORMS = ['image', 'object', 'background'], REPRESENTATIVE = ['sample', 'gradient'];
+// An edit (S4) laid over three presets of the sample logo: individual transforms on a part and a pinned-origin rotation of the root.
+const EDIT = { duration: 2500, nextId: 3, layers: [
+  { id: 'L1', target: { kind: 'part', index: 0 }, start: 100, end: 1500, tracks: [
+    { prop: 'translate', easing: 'soft', keys: [{ at: 0, v: [0, -30] }, { at: 1, v: [0, 0] }] },
+    { prop: 'scale', easing: 'ease-in-out', keys: [{ at: 0, v: [1] }, { at: 0.5, v: [0.6] }, { at: 1, v: [1] }] }] },
+  { id: 'L2', target: { kind: 'root', index: 0 }, start: 0, end: 2500, tracks: [{ prop: 'rotate', easing: 'linear', keys: [{ at: 0, v: [0] }, { at: 1, v: [45] }] }] }] };
+const EDITED = ['logo-pop', 'logo-breathe', 'logo-wipe'];
 const write = (rel, text) => { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, text); };
 const HELPERS = () => {
   const load = u => new Promise((ok, no) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0); ok(x.getImageData(0, 0, c.width, c.height).data); }; i.onerror = no; i.src = 'data:image/png;base64,' + u; });
@@ -25,21 +32,26 @@ async function exportTests(br, e, fail) {
   const gctx = await br.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true }); const g = await gctx.newPage(); g.on('pageerror', x => errors.push(x.message));
   await g.goto(U); await g.waitForSelector('[data-svgm-ready="true"]');
   const logos = { sample: null, gradient: LOGOS.gradient, useBasic: LOGOS.useBasic, groupsIds: LOGOS.groupsIds, clipMask: LOGOS.clipMask, figmaLike: LOGOS.figmaLike, illustratorLike: LOGOS.illustratorLike };
-  const built = await g.evaluate(async logos => {
+  const built = await g.evaluate(async ([logos, EDIT, EDITED]) => {
     const data = JSON.parse(document.getElementById('omx-svg-motion-data').textContent); const out = {};
     for (const [name, src] of Object.entries(logos)) {
       const svg = OmxSvgSafety.normalize(src || data.samples[0].svg, { prefix: 'omx-' }).svg; out[name] = {};
-      for (const preset of data.presets) {
-        let b; try { b = OmxSvgExport.build({ svg, preset, params: {}, common: {}, commonList: data.common, budget: data.budget, label: 'テスト "ロゴ" <a>' }); } catch (err) { out[name][preset.id] = { error: err.code || err.message }; continue; }
+      const variants = []; for (const preset of data.presets) { variants.push([preset.id, preset, null]); if (name === 'sample' && EDITED.includes(preset.id)) variants.push([preset.id + '+edit', preset, EDIT]); }
+      for (const [key, preset, rawEdit] of variants) {
+        let b; try {
+          let edit = null;
+          if (rawEdit) { const layout = OmxSvgFrame.prepare(svg, Object.assign({ overlay: false }, data.budget)); const box = await OmxSvgFrame.measure(layout.svg); edit = OmxSvgCompile.validateEdit(Object.assign({}, rawEdit, box ? { origin: { x: box.x + box.width / 2, y: box.y + box.height / 2 } } : {}), layout.layout); if (!box) out[name][key + ':noOrigin'] = { error: 'MEASURE_FAILED' }; }
+          b = OmxSvgExport.build({ svg, preset, params: {}, common: {}, commonList: data.common, budget: data.budget, label: 'テスト "ロゴ" <a>', edit });
+        } catch (err) { out[name][key] = { error: err.code || err.message }; continue; }
         const stage = OmxSvgFrame.prepare(OmxSvgSafety.normalize(svg, { prefix: b.scope + '-' }).svg, Object.assign({ overlay: preset.structure === 'overlay' }, data.budget));
         const t = Math.round((b.plan.loops ? b.plan.tracks[0].duration : b.plan.length) * 0.4);
         // The preview's own picture at time t, from the same functions the preview uses.
         const preview = OmxSvgFrame.animatedSvg(stage.svg, b.plan, { time: t, frozen: true });
-        out[name][preset.id] = { scope: b.scope, names: b.names, files: b.files, snippets: b.snippets, loops: b.plan.loops, length: b.plan.length, restTime: b.plan.restTime, t, preview };
+        out[name][key] = { scope: b.scope, names: b.names, files: b.files, snippets: b.snippets, loops: b.plan.loops, length: b.plan.length, restTime: b.plan.restTime, t, preview, edited: !!rawEdit, origin: b.plan.origin || null };
       }
     }
     return out;
-  }, logos);
+  }, [logos, EDIT, EDITED]);
   write('base.css', 'html,body{margin:0;background:#fff}#t{width:300px;height:300px;display:block}#t img,#t svg{width:300px;height:300px;display:block}');
   const list = [];
   for (const [logo, presets] of Object.entries(built)) for (const [id, b] of Object.entries(presets)) {
@@ -50,14 +62,18 @@ async function exportTests(br, e, fail) {
     write(d + 'object.html', PAGE('', '<object type="image/svg+xml" data="' + b.names.animated + '"></object>')); write(d + 'background.html', PAGE('<style>#t{background:url(' + b.names.animated + ') center/contain no-repeat}</style>', ''));
     write(d + 'still.html', PAGE('', '<img src="' + b.names.still + '" alt="">')); write(d + 'still-inline.html', PAGE('', b.files.still));
     // The export frozen at time t (same rewrite the preview uses) next to the preview's own picture at t.
-    const frozen = b.files.animated.replace(/animation:([\w-]+) (\d+(?:\.\d+)?)ms (.+?) (-?\d+(?:\.\d+)?)ms (infinite|\d+) (\w+) both/g, (m, n, du, ea, de, it, di) => 'animation:' + n + ' ' + du + 'ms ' + ea + ' ' + (Number(de) - b.t) + 'ms ' + it + ' ' + di + ' both paused');
+    // Every animation in a list (commas inside cubic-bezier() are not separators) moved back by t and paused.
+    const frozen = b.files.animated.replace(/animation:([^;}]+)/g, (m, v) => 'animation:' + v.split(/,(?![^(]*\))/).map(x => x.trim().replace(/^([\w-]+) (\d+(?:\.\d+)?)ms (.+?) (-?\d+(?:\.\d+)?)ms (infinite|\d+) (\w+) both$/, (mm, n, du, ea, de, it, di) => n + ' ' + du + 'ms ' + ea + ' ' + (Number(de) - b.t) + 'ms ' + it + ' ' + di + ' both paused')).join(','));
     write(d + 'frozen.svg', frozen); write(d + 'preview.svg', b.preview); write(d + 'frozen.html', PAGE('', '<img src="frozen.svg" alt="">')); write(d + 'preview.html', PAGE('', '<img src="preview.svg" alt="">'));
     write(d + 'csp-image.html', CSP_PAGE(b.snippets.image)); write(d + 'csp-inline.html', CSP_PAGE(b.snippets.inline)); write(d + 'csp-external.html', CSP_PAGE(b.snippets.external)); write(d + 'csp-script.html', CSP_PAGE(b.snippets.script));
     list.push({ logo, id, d, b });
     // Names fixed, alt escaped, no viewer text as markup.
     if (!/^omochix-logo-motion-[a-z-]+(-static)?\.svg$/.test(b.names.animated) || !/alt="テスト &quot;ロゴ&quot; &lt;a&gt;"/.test(b.snippets.image)) fail(e, 'names or alt ' + logo + '/' + id);
   }
-  out.generated = list.length; if (list.length !== 133) fail(e, 'generated ' + list.length);
+  out.generated = list.length; if (list.length !== 133 + EDITED.length) fail(e, 'generated ' + list.length);
+  // The edited exports carry the edit's CSS and the pinned root origin.
+  for (const it of list.filter(x => x.b.edited)) { const css = it.b.files.css; if (!/translate:0px -30px/.test(css) || !/rotate:45deg/.test(css) || !it.b.origin || !new RegExp('\\.' + it.b.scope + ' \\[data-omx-root\\]\\{transform-box:view-box;transform-origin:[-\\d.]+px [-\\d.]+px\\}').test(css)) fail(e, 'edited export lacks the edit or the origin ' + it.id); if (JSON.parse(it.b.files.json).schema !== 2) fail(e, 'edited settings file is not schema 2 ' + it.id); }
+  for (const it of list.filter(x => !x.b.edited)) if (JSON.parse(it.b.files.json).schema !== 1) fail(e, 'preset-only settings file is not schema 1 ' + it.id);
   out.matrix.profile = PROFILE;
 
   // 2. Each form on its own page: it moves, it ends (or rests) exactly as the still file, nothing external, no errors.
@@ -177,6 +193,24 @@ async function exportTests(br, e, fail) {
   const [jdl] = await Promise.all([g.waitForEvent('download'), g.click('[data-svgm-json-download]')]); const jsonText = fs.readFileSync(await jdl.path(), 'utf8'); ui.jsonName = jdl.suggestedFilename(); const j = JSON.parse(jsonText); if (j.format !== 'omochix-svg-motion' || j.schema !== 1 || j.settings.preset !== 'logo-wipe' || j.settings.params.direction !== 'up') fail(e, 'json content');
   // Round trip in a fresh browser: same output, byte for byte.
   const rctx = await br.newContext({ viewport: { width: 1280, height: 900 } }); const r = await rctx.newPage(); await r.goto(U); await r.waitForSelector('[data-svgm-ready="true"]'); fs.writeFileSync(path.join(R, 'roundtrip.json'), jsonText); await r.evaluate(() => document.querySelector('[data-svg-motion]').removeAttribute('data-svgm-last')); await r.setInputFiles('[data-svgm-json-file]', path.join(R, 'roundtrip.json')); await r.waitForSelector('[data-svg-motion][data-svgm-last]'); await r.fill('[data-svgm-alt]', 'Acme "logo" <b>'); await r.waitForTimeout(400); const after = await r.evaluate(() => ({ preset: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-preset'), scope: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-export'), code: document.querySelector('[data-svgm-code]').textContent, last: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-last') })); const cls = t => (t.match(/omochix-logo-motion|class="(omx-[0-9a-f]{8})"/) || [])[1]; ui.roundTrip = { last: after.last, preset: after.preset, sameScope: (codes.inline.match(/class="(omx-[0-9a-f]{8})"/) || [])[1] === (after.scope || ''), sameCode: after.code === codes.image }; if (after.last !== 'ok' || after.preset !== 'logo-wipe' || after.code !== codes.image) fail(e, 'json round trip ' + JSON.stringify(ui.roundTrip));
+  // S4-0: a schema 2 file (an edit) through the studio: kept, measured, exported, saved, and dropped with a new logo.
+  const withEdit = (edit, extra) => JSON.stringify(Object.assign({}, j, { schema: 2, edit }, extra || {}));
+  const studio = async () => { await r.check('input[name="svgm-usage"][value="inline"]', { force: true }); await r.waitForTimeout(80); return r.evaluate(() => { const n = document.querySelector('[data-svg-motion]'); return { last: n.getAttribute('data-svgm-last'), edit: n.getAttribute('data-svgm-edit'), origin: n.getAttribute('data-svgm-origin'), scope: n.getAttribute('data-svgm-export'), code: document.querySelector('[data-svgm-code]').textContent, status: document.querySelector('[data-svgm-status]').textContent, logo: n.getAttribute('data-svgm-logo') }; }); };
+  const feed = async (name, text) => { fs.writeFileSync(path.join(R, name), text); await r.evaluate(() => document.querySelector('[data-svg-motion]').removeAttribute('data-svgm-last')); await r.setInputFiles('[data-svgm-json-file]', path.join(R, name)); await r.waitForSelector('[data-svg-motion][data-svgm-last]'); await r.waitForTimeout(500); return studio(); };
+  const ed = ui.edit = {};
+  const good = await feed('e1.json', withEdit(EDIT)); ed.good = { last: good.last, edit: good.edit, origin: good.origin, hasEditCss: /translate:0px -30px/.test(good.code) && /rotate:45deg/.test(good.code), pinned: /\[data-omx-root\]\{transform-box:view-box;transform-origin:[-\d.]+px [-\d.]+px\}/.test(good.code) };
+  if (good.last !== 'ok' || good.edit !== '2' || !good.origin || !ed.good.hasEditCss || !ed.good.pinned) fail(e, 'schema 2 import ' + JSON.stringify(ed.good));
+  // Saved as schema 2 and back after a reload, with the same code.
+  await r.waitForTimeout(600); await r.reload(); await r.waitForSelector('[data-svgm-ready="true"]'); await r.waitForTimeout(600); await r.fill('[data-svgm-alt]', 'Acme "logo" <b>'); await r.waitForTimeout(400); const back = await studio(); const rec = await r.evaluate(() => new Promise(ok => { const q = indexedDB.open('omx-svg-motion', 1); q.onsuccess = () => { const g = q.result.transaction('state').objectStore('state').get('current'); g.onsuccess = () => { q.result.close(); ok(g.result ? { schema: g.result.schema, layers: g.result.edit && g.result.edit.layers.length, origin: !!(g.result.edit && g.result.edit.origin) } : null); }; }; }));
+  ed.reload = { edit: back.edit, sameCode: back.code === good.code, saved: rec }; if (back.edit !== '2' || back.code !== good.code || !rec || rec.schema !== 2 || rec.layers !== 2 || !rec.origin) fail(e, 'edit did not survive a reload ' + JSON.stringify(ed.reload));
+  // Refused edits: the logo and the kept edit stay as they were.
+  const bads = { limit: withEdit(Object.assign({}, EDIT, { nextId: 50, layers: Array.from({ length: 41 }, (_, i) => ({ id: 'L' + (i + 1), target: { kind: 'part', index: i }, start: 0, end: 100, tracks: [{ prop: 'opacity', easing: 'linear', keys: [{ at: 0, v: [0] }, { at: 1, v: [1] }] }] })) })), invalid: withEdit(Object.assign({}, EDIT, { layers: [Object.assign({}, EDIT.layers[0], { tracks: [{ prop: 'translate', easing: 'soft', keys: [{ at: 0, v: [0, 99999] }, { at: 1, v: [0, 0] }] }] })] })), conflict: withEdit(Object.assign({}, EDIT, { layers: [Object.assign({}, EDIT.layers[0], { tracks: [{ prop: 'rotate', easing: 'soft', keys: [{ at: 0, v: [0] }, { at: 1, v: [1] }] }, { prop: 'rotate', easing: 'soft', keys: [{ at: 0, v: [0] }, { at: 1, v: [2] }] }] })] })), hostile: withEdit(Object.assign({}, EDIT, { layers: [Object.assign({}, EDIT.layers[0], { tracks: [{ prop: 'fill', easing: 'soft', keys: [{ at: 0, v: ['url(https://evil.example)'] }, { at: 1, v: ['#000000'] }] }] })] })), schemaOneWithEdit: JSON.stringify(Object.assign({}, j, { edit: EDIT })) };
+  const want = { limit: 'EDIT_LIMIT', invalid: 'EDIT_INVALID', conflict: 'EDIT_CONFLICT', hostile: 'EDIT_INVALID', schemaOneWithEdit: 'JSON_INVALID' };
+  for (const [k, text] of Object.entries(bads)) { const got = await feed('e-' + k + '.json', text); ed[k] = { last: got.last, edit: got.edit, logo: got.logo, sameCode: got.code === good.code }; if (got.last !== want[k] || got.edit !== '2' || got.logo !== 'user' || got.code !== good.code) fail(e, 'bad edit ' + k + ' ' + JSON.stringify(ed[k])); }
+  // A part that this logo does not have: refused after the logo loads, the import still succeeds without the edit.
+  const missing = await feed('e-missing.json', withEdit(Object.assign({}, EDIT, { layers: [Object.assign({}, EDIT.layers[0], { target: { kind: 'part', index: 9000 } })] }))); ed.missing = { last: missing.last, edit: missing.edit, said: /取り消し/.test(missing.status) }; if (missing.last !== 'ok' || missing.edit !== 'none' || !ed.missing.said) fail(e, 'missing part ' + JSON.stringify(ed.missing));
+  // A new logo drops the edit, and says so.
+  await feed('e2.json', withEdit(EDIT)); await r.evaluate(() => document.querySelector('[data-svg-motion]').removeAttribute('data-svgm-last')); await r.setInputFiles('[data-svgm-file]', { name: 'other.svg', mimeType: 'image/svg+xml', buffer: Buffer.from(LOGOS.useBasic) }); await r.waitForSelector('[data-svg-motion][data-svgm-last]'); await r.waitForTimeout(300); const dropped = await studio(); ed.dropped = { edit: dropped.edit, said: /取り消し/.test(dropped.status) }; if (dropped.edit !== 'none' || !ed.dropped.said) fail(e, 'edit not dropped with a new logo ' + JSON.stringify(ed.dropped));
   // Hostile and broken settings files: refused with a reason, or accepted only after the full pipeline. The current logo stays.
   const bad = ui.badJson = {}; const tryJson = async (name, text) => { fs.writeFileSync(path.join(R, name), text); await r.evaluate(() => { window.__h = []; addEventListener('message', ev => { if (ev.data && ev.data.hit) window.__h.push(ev.data.hit); }); document.querySelector('[data-svg-motion]').removeAttribute('data-svgm-last'); }); await r.setInputFiles('[data-svgm-json-file]', path.join(R, name)); await r.waitForSelector('[data-svg-motion][data-svgm-last]'); await r.waitForTimeout(200); return r.evaluate(() => ({ last: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-last'), logo: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-logo'), err: document.querySelector('[data-svgm-error]').hidden ? '' : document.querySelector('[data-svgm-error]').textContent, hits: window.__h.length, inline: document.querySelectorAll('[data-svg-motion] svg, [id^="omx-"]:not(#omx-svg-motion-data)').length })); };
   bad.schema = await tryJson('b1.json', JSON.stringify({ format: 'omochix-svg-motion', schema: 9, svg: LOGOS.simple, settings: {} }));
@@ -189,6 +223,9 @@ async function exportTests(br, e, fail) {
   for (const [k, code] of Object.entries(expect)) { if (bad[k].last !== code) fail(e, 'json ' + k + ' gave ' + bad[k].last); if (bad[k].logo !== 'user' || !/[ぁ-ん一-龠]/.test(bad[k].err)) fail(e, 'json ' + k + ' lost the logo or reason'); }
   if (bad.hostileSvg.last !== 'ok' || bad.hostileSvg.hits || bad.hostileSvg.inline) fail(e, 'hostile json ' + JSON.stringify(bad.hostileSvg));
   const finalCode = await r.evaluate(() => document.querySelector('[data-svgm-code]').textContent); if (/evil|url\(https/.test(finalCode)) fail(e, 'hostile json values reached the export');
+  // Negative control: when the export's own check fails, no file and no copy is offered, and the reason shows.
+  await r.check('input[name="svgm-usage"][value="image"]', { force: true }); await r.evaluate(() => { window.__verify = OmxSvgSafety.verify; OmxSvgSafety.verify = () => ['forced']; }); await r.fill('[data-svgm-alt]', 'x'); await r.waitForTimeout(400); const failed = await r.evaluate(() => ({ state: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-export'), buttons: document.querySelectorAll('[data-svgm-download]').length, copyDisabled: document.querySelector('[data-svgm-copy]').disabled, code: document.querySelector('[data-svgm-code]').textContent })); await r.evaluate(() => { OmxSvgSafety.verify = window.__verify; }); await r.fill('[data-svgm-alt]', 'y'); await r.waitForTimeout(400); const recovered = await r.evaluate(() => ({ state: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-export'), buttons: document.querySelectorAll('[data-svgm-download]').length, copyDisabled: document.querySelector('[data-svgm-copy]').disabled }));
+  ui.exportFailed = { failed, recovered: recovered }; if (failed.state !== 'failed' || failed.buttons || !failed.copyDisabled || !/[ぁ-ん一-龠]/.test(failed.code) || !/^omx-/.test(recovered.state || '') || !recovered.buttons || recovered.copyDisabled) fail(e, 'export failure handling ' + JSON.stringify(ui.exportFailed));
   await rctx.close(); await gctx.close();
   out.errors = errors; if (errors.length) fail(e, 'export page errors ' + errors.slice(0, 2));
   fs.writeFileSync(path.join(R, 'export-' + e + '.json'), JSON.stringify(out, null, 1));

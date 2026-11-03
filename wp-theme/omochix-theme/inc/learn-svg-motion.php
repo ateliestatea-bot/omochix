@@ -101,6 +101,9 @@ function omochix_svg_motion_messages() {
             'JSON_FORMAT'         => __('このスタジオで保存した設定ファイルではありません。', 'omochix'),
             'JSON_SCHEMA'         => __('この設定ファイルの形式には対応していません。', 'omochix'),
             'EXPORT_FAILED'       => __('書き出しに失敗しました。別のモーションでお試しください。', 'omochix'),
+            'EDIT_INVALID'        => __('編集データを読み取れませんでした。値や形式が正しくありません。', 'omochix'),
+            'EDIT_LIMIT'          => __('編集データが上限を超えています（レイヤー 40、トラック 120、キーフレーム 600）。', 'omochix'),
+            'EDIT_CONFLICT'       => __('同じパーツの同じ性質に、動きが 2 つ付いています。', 'omochix'),
             'EMPTY_RESULT'        => __('表示できる図形がありません。スクリプトや外部参照だけで作られている可能性があります。', 'omochix'),
         ],
         'warnings'    => [
@@ -123,6 +126,7 @@ function omochix_svg_motion_messages() {
         'copied'      => __('コピーしました。', 'omochix'),
         'copyFailed'  => __('コピーできませんでした。コードを選択してコピーしてください。', 'omochix'),
         'imported'    => __('設定を読み込みました。', 'omochix'),
+        'editDiscarded' => __('自由編集の内容は、このロゴには使えないため取り消しました。', 'omochix'),
         'download'    => [
             'animated' => __('SVG をダウンロード', 'omochix'),
             'still'    => __('静止画 SVG', 'omochix'),
