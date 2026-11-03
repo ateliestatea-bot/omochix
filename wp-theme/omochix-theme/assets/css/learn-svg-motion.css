@@ -73,6 +73,18 @@
 .svg-motion__card.is-disabled { cursor: not-allowed; opacity: 0.55; }
 .svg-motion__reason { color: var(--color-text); font-size: 12px; font-weight: 650; line-height: 1.5; }
 
+.svg-motion__export { display: grid; gap: 12px; padding-top: 14px; border-top: 1px solid var(--color-line); min-width: 0; }
+.svg-motion__export h3 { margin: 0; font-size: 15px; }
+.svg-motion__usages { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; }
+.svg-motion__usages legend { padding: 0; margin-bottom: 6px; color: var(--color-muted); font-size: 12px; font-weight: 650; }
+.svg-motion__usage { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid var(--color-line); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 650; }
+.svg-motion__usage:has(input:checked) { border-color: var(--color-primary); }
+.svg-motion__alt { display: grid; gap: 6px; font-size: 13px; font-weight: 650; }
+.svg-motion__alt input { box-sizing: border-box; width: 100%; height: 44px; padding: 0 12px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
+.svg-motion__code { box-sizing: border-box; max-height: 220px; margin: 0; padding: 12px; overflow: auto; background: var(--color-bg); border: 1px solid var(--color-line); border-radius: var(--radius-sm); font: 11px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.svg-motion__code:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.svg-motion__export-actions, .svg-motion__settings-io, [data-svgm-downloads] { display: flex; flex-wrap: wrap; gap: 8px; }
+
 @media (max-width: 1080px) {
     /* The preview stays in view while the presets scroll, so a choice shows its effect at once. Order: preview, logo, presets, adjustments. */
     .svg-motion__layout { gap: 14px; }
@@ -81,6 +93,7 @@
     .svg-motion__import { order: 1; }
     .svg-motion__gallery { order: 2; margin-top: 14px; }
     .svg-motion__adjust { order: 3; }
+    .svg-motion__export { order: 4; }
 }
 @media (min-width: 768px) {
     .svg-motion__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }

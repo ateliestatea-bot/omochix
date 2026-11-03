@@ -31,6 +31,7 @@ function have_posts() { static $n = 0; return $n++ < 1; }
 function the_post() {}
 function the_title() { echo esc_html($GLOBALS['post']->post_title); }
 function has_excerpt() { return false; }
+function checked($a, $b = true) { echo $a === $b ? ' checked' : ''; }
 function get_the_excerpt() { return ''; }
 function omochix_get_published_page_url($p) { return '/learn/'; }
 function get_header() {
@@ -40,7 +41,7 @@ function get_header() {
 }
 function get_footer() {
     $js = '/wp-theme/omochix-theme/assets/js/svg-motion/';
-    foreach (['lib/purify.min.js', 'safety.js', 'compile.js', 'frame.js', 'analyze.js', 'import.js', 'preview-image.js', 'store.js', 'studio.js'] as $f) { echo '<script src="' . $js . $f . '"></script>'; }
+    foreach (['lib/purify.min.js', 'safety.js', 'compile.js', 'frame.js', 'analyze.js', 'import.js', 'preview-image.js', 'store.js', 'export.js', 'studio.js'] as $f) { echo '<script src="' . $js . $f . '"></script>'; }
     echo '</body></html>';
 }
 require $THEME . '/inc/learn-svg-motion.php';

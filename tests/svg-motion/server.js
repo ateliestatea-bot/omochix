@@ -1,7 +1,7 @@
 // Test servers on 127.0.0.1 only. 8770: harness pages, theme assets, fixtures. 8771: canary, where any request is an outbound leak.
 const http = require('http'), fs = require('fs'), path = require('path');
 const repo = path.join(__dirname, '../..');
-const routes = { '/pages/': path.join(__dirname, 'pages'), '/fixtures/': path.join(__dirname, 'fixtures'), '/theme/': path.join(repo, 'wp-theme/omochix-theme') };
+const routes = { '/exported/': path.join(__dirname, 'results/exported'), '/pages/': path.join(__dirname, 'pages'), '/fixtures/': path.join(__dirname, 'fixtures'), '/theme/': path.join(repo, 'wp-theme/omochix-theme') };
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.css': 'text/css', '.svg': 'image/svg+xml' };
 function start() {
   const results = path.join(__dirname, 'results'); fs.mkdirSync(results, { recursive: true });

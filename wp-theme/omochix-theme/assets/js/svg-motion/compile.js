@@ -362,6 +362,15 @@
         throw new Error('Bad target');
     }
 
+    var SCOPE = /^omx-[a-z0-9]{4,16}$/;
+
+    /** Selector inside an exported logo: every rule is limited to that logo's class, so logos on one page never meet. */
+    function scopedSelector(target, scope) {
+        if (!scope) return selector(target);
+        if (!SCOPE.test(scope)) throw new Error('Bad scope');
+        return target.kind === 'stage' ? 'svg.' + scope : '.' + scope + ' ' + selector(target);
+    }
+
     /** Validates a plan received from outside the compiler (the frame calls this too). */
     function isValidPlan(plan) {
         if (!plan || !Array.isArray(plan.tracks) || !Array.isArray(plan.setup)) return false;
@@ -393,7 +402,7 @@
     /**
      * CSS for a plan. Same timing and values as the WAAPI preview.
      * @param {object} plan
-     * @param {{animate?: boolean, time?: number, frozen?: boolean}} [options] animate:false writes only the
+     * @param {{animate?: boolean, time?: number, frozen?: boolean, scope?: string, reducedRest?: boolean}} [options] animate:false writes only the
      *     resting state. time: start at this point of the timeline, through a negative animation-delay.
      *     frozen: hold there with animation-play-state, which is how an image can pause in place.
      */
@@ -401,22 +410,32 @@
         options = options || {};
         var animate = options.animate !== false;
         var time = Number(options.time) || 0;
-        var out = ['[data-omx-root],[data-omx-part],[data-omx-geometry]{transform-box:fill-box;transform-origin:center}[data-omx-stage]{transform-origin:center}[data-omx-base]{transform-box:view-box;transform-origin:center}'];
-        plan.setup.forEach(function (s) { out.push(selector(s.target) + '{' + declarations(s.styles) + '}'); });
+        var scope = options.scope || '';
+        var sel = function (target) { return scopedSelector(target, scope); };
+        var prefix = scope ? '.' + scope + ' ' : '';
+        var out = [prefix + '[data-omx-root],' + prefix + '[data-omx-part],' + prefix + '[data-omx-geometry]{transform-box:fill-box;transform-origin:center}' +
+            (scope ? 'svg.' + scope : '[data-omx-stage]') + '{transform-origin:center}' + prefix + '[data-omx-base]{transform-box:view-box;transform-origin:center}'];
+        plan.setup.forEach(function (s) { out.push(sel(s.target) + '{' + declarations(s.styles) + '}'); });
         if (!animate) {
-            restingStyles(plan).forEach(function (r) { out.push(selector(r.target) + '{' + declarations(r.styles) + '}'); });
+            restingStyles(plan).forEach(function (r) { out.push(sel(r.target) + '{' + declarations(r.styles) + '}'); });
             return out.join('');
         }
         plan.tracks.forEach(function (t, i) {
-            var name = 'omx-k' + i;
+            var name = (scope || 'omx') + '-k' + i;
             out.push('@keyframes ' + name + '{' + t.frames.map(function (f) {
                 return round(f.offset * 100) + '%{' + declarations(f.props) + '}';
             }).join('') + '}');
-            out.push(selector(t.target) + '{animation:' + name + ' ' + t.duration + 'ms ' + t.easing + ' ' + round(t.delay - time) + 'ms ' +
+            out.push(sel(t.target) + '{animation:' + name + ' ' + t.duration + 'ms ' + t.easing + ' ' + round(t.delay - time) + 'ms ' +
                 (t.iterations === Infinity ? 'infinite' : t.iterations) + ' ' + t.direction + ' both' + (options.frozen ? ' paused' : '') + '}');
         });
+        // For exported files: viewers who ask for less motion get the resting pose, with no animation at all.
+        if (options.reducedRest) {
+            out.push('@media (prefers-reduced-motion:reduce){' +
+                plan.tracks.map(function (t) { return sel(t.target) + '{animation:none}'; }).join('') +
+                restingStyles(plan).map(function (r) { return sel(r.target) + '{' + declarations(r.styles) + '}'; }).join('') + '}');
+        }
         return out.join('');
     }
 
-    return { buildPlan: buildPlan, sanitizeParams: sanitizeParams, sanitizeCommon: sanitizeCommon, staggerApplies: staggerApplies, SHAPE_PRESETS: SHAPE_PRESETS, isValidPlan: isValidPlan, restingStyles: restingStyles, planToCss: planToCss, selector: selector, BUILDERS: BUILDERS, EASINGS: EASINGS, PROPERTIES: PROPERTIES };
+    return { buildPlan: buildPlan, sanitizeParams: sanitizeParams, sanitizeCommon: sanitizeCommon, staggerApplies: staggerApplies, SHAPE_PRESETS: SHAPE_PRESETS, isValidPlan: isValidPlan, restingStyles: restingStyles, planToCss: planToCss, selector: selector, scopedSelector: scopedSelector, BUILDERS: BUILDERS, EASINGS: EASINGS, PROPERTIES: PROPERTIES };
 }));

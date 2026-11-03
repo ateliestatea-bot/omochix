@@ -69,6 +69,8 @@
     var REF_HREF_ELEMENTS = ['linearGradient', 'radialGradient', 'pattern', 'filter'];
     var IMAGE_URI = /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+\/=\s]+$/i;
     var LOCAL_REF = /^#[A-Za-z_][\w.:-]*$/;
+    // An id is copied into other people's pages by the export: only plain characters survive.
+    var SAFE_ID = /^[A-Za-z_][\w.:-]{0,127}$/;
     var SAFE_SELECTOR = /^[a-zA-Z#.\s,>_0-9*-]+$/;
     // var(): custom properties are removed, so a reference would resolve to nothing and break the colour it set.
     var BANNED_VALUE = /(?:image-set|cross-fade|element\(|paint\(|src\(|var\(|expression|@import|javascript:|vbscript:|data:)/i;
@@ -334,6 +336,10 @@
         } catch (error) {
             throw new SafetyError('SANITIZE_FAILED', error.message);
         }
+        Array.prototype.forEach.call(svg.querySelectorAll('[id]'), function (element) {
+            if (!SAFE_ID.test(element.id)) { report.removed.push('id:unsafe'); element.removeAttribute('id'); }
+        });
+        if (svg.id && !SAFE_ID.test(svg.id)) svg.removeAttribute('id');
         if (options.prefix) prefixIds(svg, options.prefix);
 
         var out = new XMLSerializer().serializeToString(svg);
@@ -355,6 +361,7 @@
                 var key = attribute.name.toLowerCase();
                 var value = attribute.value;
                 if (key.indexOf('on') === 0) problems.push(parser + ':handler:' + key);
+                if (key === 'id' && !SAFE_ID.test(value)) problems.push(parser + ':id');
                 if (ATTRIBUTES.indexOf(attribute.name) === -1 && !(extraAttribute && extraAttribute.test(attribute.name)) &&
                     !(parser === 'html' && lowerCaseAllowed(attribute.name))) {
                     problems.push(parser + ':attribute:' + attribute.name);

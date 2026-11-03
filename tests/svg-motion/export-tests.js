@@ -1,0 +1,155 @@
+// S3: exported files, used the way a site would use them, away from the studio.
+const fs = require('fs'), path = require('path'), vm = require('vm');
+const U = 'http://127.0.0.1:8788/learn/svg-motion/', X = 'http://127.0.0.1:8770/exported/', R = path.join(__dirname, 'results'), OUT = path.join(R, 'exported');
+const sb = { window: {} }; vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'fixtures/corpus.js'), 'utf8'), sb); const { ATTACKS, LOGOS } = sb.window;
+const PAGE = (head, body) => '<!doctype html><html><head><meta charset="utf-8">' + head + '<style>html,body{margin:0;background:#fff}#t{width:300px;height:300px;display:block}#t img,#t svg{width:300px;height:300px;display:block}</style></head><body><div id="t">' + body + '</div></body></html>';
+const CSP = '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; img-src \'self\'; style-src \'self\'; script-src \'self\'">';
+const CSP_PAGE = body => '<!doctype html><html><head><meta charset="utf-8">' + CSP + '<link rel="stylesheet" href="/exported/base.css"></head><body><div id="t">' + body + '</div></body></html>';
+const write = (rel, text) => { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, text); };
+const HELPERS = () => {
+  const load = u => new Promise((ok, no) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0); ok(x.getImageData(0, 0, c.width, c.height).data); }; i.onerror = no; i.src = 'data:image/png;base64,' + u; });
+  // Anti-aliasing tolerant comparison (3x3 range), as in the preset tests.
+  window.__diff = (a, b) => Promise.all([load(a), load(b)]).then(([p, q]) => { if (p.length !== q.length) return 100; const W = Math.sqrt(p.length / 4) | 0, H = p.length / 4 / W, T = 24; let n = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; let ok = true; for (let c = 0; c < 3 && ok; c++) { let lo = 255, hi = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const yy = y + dy, xx = x + dx; if (yy < 0 || yy >= H || xx < 0 || xx >= W) continue; const v = q[(yy * W + xx) * 4 + c]; if (v < lo) lo = v; if (v > hi) hi = v; } if (p[i + c] < lo - T || p[i + c] > hi + T) ok = false; } if (!ok) n++; } return +(n / (W * H) * 100).toFixed(2); });
+  window.__raw = (a, b) => Promise.all([load(a), load(b)]).then(([p, q]) => { let n = 0; for (let i = 0; i < p.length; i += 4) if (Math.abs(p[i] - q[i]) + Math.abs(p[i + 1] - q[i + 1]) + Math.abs(p[i + 2] - q[i + 2]) > 18) n++; return +(n / (p.length / 4) * 100).toFixed(2); });
+  window.__ink = a => load(a).then(d => { let n = 0, m = 0; for (let j = 0; j < d.length; j += 4) { if (d[j] + d[j + 1] + d[j + 2] < 740) n++; if (Math.abs(d[j] - 0x12) < 28 && Math.abs(d[j + 1] - 0x34) < 28 && Math.abs(d[j + 2] - 0x56) < 28) m++; } return { ink: n, marker: m }; });
+};
+
+async function exportTests(br, e, fail) {
+  const out = { matrix: {}, ui: {} }; const errors = [];
+  // 1. Generate with the product's own export, from the real studio page.
+  const gctx = await br.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true }); const g = await gctx.newPage(); g.on('pageerror', x => errors.push(x.message));
+  await g.goto(U); await g.waitForSelector('[data-svgm-ready="true"]');
+  const logos = { sample: null, gradient: LOGOS.gradient, useBasic: LOGOS.useBasic, groupsIds: LOGOS.groupsIds, clipMask: LOGOS.clipMask, figmaLike: LOGOS.figmaLike, illustratorLike: LOGOS.illustratorLike };
+  const built = await g.evaluate(async logos => {
+    const data = JSON.parse(document.getElementById('omx-svg-motion-data').textContent); const out = {};
+    for (const [name, src] of Object.entries(logos)) {
+      const svg = OmxSvgSafety.normalize(src || data.samples[0].svg, { prefix: 'omx-' }).svg; out[name] = {};
+      for (const preset of data.presets) {
+        let b; try { b = OmxSvgExport.build({ svg, preset, params: {}, common: {}, commonList: data.common, budget: data.budget, label: 'テスト "ロゴ" <a>' }); } catch (err) { out[name][preset.id] = { error: err.code || err.message }; continue; }
+        const stage = OmxSvgFrame.prepare(OmxSvgSafety.normalize(svg, { prefix: b.scope + '-' }).svg, Object.assign({ overlay: preset.structure === 'overlay' }, data.budget));
+        const t = Math.round((b.plan.loops ? b.plan.tracks[0].duration : b.plan.length) * 0.4);
+        // The preview's own picture at time t, from the same functions the preview uses.
+        const preview = OmxSvgFrame.animatedSvg(stage.svg, b.plan, { time: t, frozen: true });
+        out[name][preset.id] = { scope: b.scope, names: b.names, files: b.files, snippets: b.snippets, loops: b.plan.loops, length: b.plan.length, restTime: b.plan.restTime, t, preview };
+      }
+    }
+    return out;
+  }, logos);
+  write('base.css', 'html,body{margin:0;background:#fff}#t{width:300px;height:300px;display:block}#t img,#t svg{width:300px;height:300px;display:block}');
+  const list = [];
+  for (const [logo, presets] of Object.entries(built)) for (const [id, b] of Object.entries(presets)) {
+    if (b.error) { fail(e, 'export failed ' + logo + '/' + id + ' ' + b.error); continue; }
+    const d = logo + '/' + id + '/';
+    for (const k of ['animated', 'still', 'css', 'js', 'json']) write(d + b.names[k], b.files[k]);
+    write(d + 'image.html', PAGE('', b.snippets.image)); write(d + 'inline.html', PAGE('', b.snippets.inline)); write(d + 'external.html', PAGE('', b.snippets.external)); write(d + 'script.html', PAGE('', b.snippets.script));
+    write(d + 'object.html', PAGE('', '<object type="image/svg+xml" data="' + b.names.animated + '"></object>')); write(d + 'background.html', PAGE('<style>#t{background:url(' + b.names.animated + ') center/contain no-repeat}</style>', ''));
+    write(d + 'still.html', PAGE('', '<img src="' + b.names.still + '" alt="">')); write(d + 'still-inline.html', PAGE('', b.files.still));
+    // The export frozen at time t (same rewrite the preview uses) next to the preview's own picture at t.
+    const frozen = b.files.animated.replace(/animation:([\w-]+) (\d+(?:\.\d+)?)ms (.+?) (-?\d+(?:\.\d+)?)ms (infinite|\d+) (\w+) both/g, (m, n, du, ea, de, it, di) => 'animation:' + n + ' ' + du + 'ms ' + ea + ' ' + (Number(de) - b.t) + 'ms ' + it + ' ' + di + ' both paused');
+    write(d + 'frozen.svg', frozen); write(d + 'preview.svg', b.preview); write(d + 'frozen.html', PAGE('', '<img src="frozen.svg" alt="">')); write(d + 'preview.html', PAGE('', '<img src="preview.svg" alt="">'));
+    write(d + 'csp-image.html', CSP_PAGE(b.snippets.image)); write(d + 'csp-inline.html', CSP_PAGE(b.snippets.inline)); write(d + 'csp-external.html', CSP_PAGE(b.snippets.external)); write(d + 'csp-script.html', CSP_PAGE(b.snippets.script));
+    list.push({ logo, id, d, b });
+    // Names fixed, alt escaped, no viewer text as markup.
+    if (!/^omochix-logo-motion-[a-z-]+(-static)?\.svg$/.test(b.names.animated) || !/alt="テスト &quot;ロゴ&quot; &lt;a&gt;"/.test(b.snippets.image)) fail(e, 'names or alt ' + logo + '/' + id);
+  }
+  out.generated = list.length; if (list.length !== 133) fail(e, 'generated ' + list.length);
+
+  // 2. Each form on its own page: it moves, it ends (or rests) exactly as the still file, nothing external, no errors.
+  const ctx = await br.newContext({ viewport: { width: 700, height: 500 } }); const hp = await ctx.newPage(); await hp.goto(X + 'base.css'); await hp.evaluate(HELPERS);
+  const shot = async p => (await p.locator('#t').screenshot()).toString('base64');
+  const diff = (a, b) => hp.evaluate(([x, y]) => __diff(x, y), [a, b]); const raw = (a, b) => hp.evaluate(([x, y]) => __raw(x, y), [a, b]);
+  const forms = ['image', 'inline', 'external', 'script', 'object', 'background'];
+  // Each form is compared with the still file drawn the same way (as an image, or inline), so the comparison is not about rendering paths.
+  const stills = {};
+  const stillOf = async (it, inline) => { const key = it.d + (inline ? 'inline' : 'image'); if (stills[key]) return stills[key]; const p = await ctx.newPage(); await p.goto(X + it.d + (inline ? 'still-inline.html' : 'still.html')); await p.waitForTimeout(80); const s = await shot(p); await p.close(); return (stills[key] = s); };
+  const runForm = async (it, form, prefix) => {
+    const p = await ctx.newPage(); const ext = [], errs = [];
+    p.on('request', q => { const u = q.url(); if (!/^(data:|blob:)/.test(u) && !u.startsWith('http://127.0.0.1:8770/exported/')) ext.push(u); });
+    p.on('console', m => { if (m.type() === 'error' && !/Refused to apply a stylesheet|inline style|style-src/.test(m.text())) errs.push(m.text().slice(0, 100)); });
+    await p.goto(X + it.d + (prefix || '') + form + '.html'); await p.waitForLoadState('load');
+    const span = it.b.loops ? 3000 : Math.min(it.b.length, 1500); const shots = [await shot(p)];
+    // A forced style pass before each picture: WebKit's capture otherwise misses composited filter animation (see S3 design, note 1).
+    const force = () => p.evaluate(() => { const docs = [document]; const o = document.querySelector('object'); if (o && o.contentDocument) docs.push(o.contentDocument); docs.forEach(d => { const s = d.querySelector('svg'); if (s) { s.style.visibility = 'hidden'; void s.getBoundingClientRect(); s.style.visibility = ''; } }); });
+    for (let i = 0; i < 6; i++) { await p.waitForTimeout(span / 6); await force(); shots.push(await shot(p)); }
+    let moves = 0; for (let i = 1; i < shots.length; i++) moves = Math.max(moves, await raw(shots[0], shots[i]));
+    let rest = null; if (!it.b.loops) { await p.waitForTimeout(Math.max(0, it.b.length - span) + 300); await force(); rest = await diff(await shot(p), await stillOf(it, ['inline', 'external', 'script'].includes(form))); }
+    await p.close(); return { moves, rest, ext: ext.length, errs };
+  };
+  const queue = []; for (const it of list) for (const form of forms) if (form === 'image' || form === 'inline' || form === 'script' || it.logo === 'sample' || it.logo === 'gradient') queue.push([it, form]);
+  const results = {}; await Promise.all([0, 1, 2].map(async () => { while (queue.length) { const [it, form] = queue.shift(); results[it.logo + '/' + it.id + '/' + form] = await runForm(it, form); } }));
+  for (const [k, r] of Object.entries(results)) { if (r.moves <= 0) fail(e, 'does not move ' + k); // Playback ends on a composited layer and the still file is drawn statically: WebKit can place a mask edge 1px apart
+    // (P08, measured 267px on one row). Real differences in pose are far larger. The preview comparison below stays at 0.
+    if (r.rest !== null && r.rest > 0.5) fail(e, 'end differs from the still file ' + k + ' ' + r.rest); if (r.ext) fail(e, 'external request ' + k); if (r.errs.length) fail(e, 'console ' + k + ' ' + r.errs[0]); }
+  out.matrix.standalone = Object.keys(results).length; out.matrix.worstRest = Math.max(0, ...Object.values(results).map(r => r.rest || 0));
+
+  // 3. Same picture as the preview at the same moment.
+  let worst = 0; for (const it of list.filter(x => x.logo === 'sample' || x.logo === 'groupsIds')) { const a = await ctx.newPage(); await a.goto(X + it.d + 'frozen.html'); await a.waitForTimeout(80); const b = await ctx.newPage(); await b.goto(X + it.d + 'preview.html'); await b.waitForTimeout(80); const d = await diff(await shot(a), await shot(b)); worst = Math.max(worst, d); if (d > 0) fail(e, 'export differs from preview ' + it.logo + '/' + it.id + ' ' + d); await a.close(); await b.close(); }
+  out.matrix.previewWorst = worst;
+
+  // 4. CSP: image, external and script move; inline stays a still, unbroken logo.
+  const cspQ = []; for (const it of list.filter(x => x.logo === 'sample')) for (const f of ['image', 'external', 'script', 'inline']) cspQ.push([it, f]); const csp = {};
+  await Promise.all([0, 1, 2].map(async () => { while (cspQ.length) { const [it, f] = cspQ.shift(); csp[it.id + '/' + f] = await runForm(it, f, 'csp-'); } }));
+  for (const [k, r] of Object.entries(csp)) { const inline = k.endsWith('/inline'); if (!inline && r.moves <= 0) fail(e, 'CSP: does not move ' + k); if (inline && r.moves > 0) fail(e, 'CSP: inline should be still ' + k); if (r.ext) fail(e, 'CSP external ' + k); }
+  out.matrix.csp = Object.keys(csp).length;
+  await ctx.close();
+
+  // 5. Reduced motion: inline, external and script rest exactly as the still file; the image form switches to the still file.
+  const rc = await br.newContext({ reducedMotion: 'reduce', viewport: { width: 700, height: 500 } }); const rp0 = await rc.newPage(); await rp0.goto(X + 'base.css'); await rp0.evaluate(HELPERS); const red = out.reduced = {};
+  for (const it of list.filter(x => x.logo === 'sample')) for (const f of ['inline', 'external', 'script', 'image']) { const p = await rc.newPage(); await p.goto(X + it.d + f + '.html'); await p.waitForLoadState('load'); await p.waitForTimeout(150); const a = await shot(p); await p.waitForTimeout(350); const b = await shot(p); const sp = await rc.newPage(); await sp.goto(X + it.d + 'still.html'); await sp.waitForTimeout(80); const s = await shot(sp); await sp.close(); const moved = await rp0.evaluate(([x, y]) => __raw(x, y), [a, b]); const vs = await rp0.evaluate(([x, y]) => __diff(x, y), [b, s]); const src = f === 'image' ? await p.evaluate(() => document.querySelector('img').currentSrc) : ''; red[it.id + '/' + f] = { moved, vs, src: src.split('/').pop() }; if (moved > 0) fail(e, 'reduced: moves ' + it.id + '/' + f); if (vs > 0.1) fail(e, 'reduced: not the still pose ' + it.id + '/' + f + ' ' + vs); if (f === 'image' && !/-static\.svg$/.test(src)) fail(e, 'reduced: image did not switch to the still file ' + it.id); await p.close(); }
+  await rc.close();
+
+  // 6. Two logos with the same ids on one page.
+  const two = list.filter(x => x.logo === 'gradient' && (x.id === 'logo-breathe' || x.id === 'logo-spin-in')); write('two.html', PAGE('<style>#t{display:flex;width:600px}</style>', two[0].b.snippets.inline + two[1].b.snippets.inline.replace(/#f06|#06f/g, '#00aa00').replace(/stop-color="#ff0066"|stop-color="#0066ff"/g, 'stop-color="#00aa00"'))); const tc = await br.newContext({ viewport: { width: 700, height: 400 } }); const tp = await tc.newPage(); await tp.goto(X + 'two.html'); await tp.waitForTimeout(200); out.two = await tp.evaluate(() => { const ids = [...document.querySelectorAll('[id]')].map(x => x.id); return { ids: ids.length, unique: new Set(ids).size, animations: document.getAnimations().length, names: [...new Set(document.getAnimations().map(a => a.animationName))].length }; }); if (out.two.ids !== out.two.unique || out.two.names < 2) fail(e, 'two logos ' + JSON.stringify(out.two)); await tc.close();
+
+  // 6b. A logo's own stylesheet must not reach the page it is pasted into.
+  const il = list.find(x => x.logo === 'illustratorLike' && x.id === 'logo-pop'); write('host.html', '<!doctype html><html><head><meta charset="utf-8"></head><body><p class="st0" id="host" style="color:rgb(0, 0, 0)">host</p><svg width="10" height="10"><rect class="st0" id="hostrect" width="10" height="10" fill="rgb(1, 2, 3)"/></svg>' + il.b.snippets.inline + '</body></html>'); const hc = await br.newContext(); const hp2 = await hc.newPage(); await hp2.goto(X + 'host.html'); await hp2.waitForTimeout(100); out.hostPage = await hp2.evaluate(() => ({ text: getComputedStyle(document.getElementById('host')).fill, rect: getComputedStyle(document.getElementById('hostrect')).fill, logoRect: getComputedStyle(document.querySelector('svg[class^="omx-"] .st0')).fill })); if (out.hostPage.rect !== 'rgb(1, 2, 3)' || out.hostPage.logoRect !== 'rgb(227, 6, 19)') fail(e, 'logo CSS leaked or lost ' + JSON.stringify(out.hostPage)); await hc.close();
+
+  // 7. Hostile logos through the real upload, exported, and placed inline together: the worst a customer site could do.
+  const C = 'http://127.0.0.1:8771', run = 'ex' + e + Date.now();
+  const hostile = await g.evaluate(async ([A, C, run]) => { const data = JSON.parse(document.getElementById('omx-svg-motion-data').textContent); const out = { inline: [], still: [], keys: [], rejected: 0 }; for (const k in A) { let svg; try { svg = OmxSvgSafety.normalize(A[k].split('{C}').join(C + '/c/' + run + '/' + k + '/'), { prefix: 'omx-' }).svg; } catch (err) { out.rejected++; continue; } let b; try { b = OmxSvgExport.build({ svg, preset: data.presets[0], params: {}, common: {}, commonList: data.common, budget: data.budget, label: '' }); } catch (err) { out.exportFailed = (out.exportFailed || []).concat(k + ':' + err.message.slice(0, 60)); continue; } out.inline.push(b.snippets.inline); out.still.push(b.files.still); out.keys.push([k, A[k].includes('omxkeep')]); } return out; }, [ATTACKS, C, run]);
+  write('hostile/inline.html', '<!doctype html><html><head><meta charset="utf-8"></head><body>' + hostile.inline.map(s => '<div style="width:100px;height:100px;display:inline-block">' + s + '</div>').join('') + '<script>window.__h=[];addEventListener("message",e=>{if(e.data&&e.data.hit)__h.push(e.data.hit)});</script></body></html>');
+  write('hostile/control.html', '<!doctype html><html><head><meta charset="utf-8"></head><body><script>window.__h=[];addEventListener("message",e=>{if(e.data&&e.data.hit)__h.push(e.data.hit)});</script>' + ATTACKS.onerrorImg.split('{C}').join(C + '/c/' + run + '/control/') + ATTACKS.extImage.split('{C}').join(C + '/c/' + run + '/control/') + '</body></html>');
+  hostile.still.forEach((s, i) => write('hostile/' + i + '.svg', s));
+  const xc = await br.newContext({ viewport: { width: 1200, height: 1200 } }); const xp = await xc.newPage(); await xp.goto(X + 'hostile/inline.html'); await xp.waitForTimeout(1200); await xp.evaluate(() => document.querySelectorAll('svg *').forEach(x => { try { x.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); x.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); } catch (_) {} })); await xp.waitForTimeout(600); const hits = await xp.evaluate(() => window.__h); const stillUrl = xp.url();
+  const cp = await xc.newPage(); await cp.goto(X + 'hostile/control.html'); await cp.waitForTimeout(800); const controlHits = await cp.evaluate(() => window.__h);
+  // Markers drawn in each exported still file, by pixel.
+  await xp.goto(X + 'base.css'); await xp.evaluate(HELPERS); let painted = 0, had = 0; for (let i = 0; i < hostile.keys.length; i++) { if (!hostile.keys[i][1]) continue; had++; const ip = await xc.newPage(); await ip.goto(X + 'hostile/' + i + '.svg'); await ip.setViewportSize({ width: 400, height: 400 }); await ip.waitForTimeout(40); const s = (await ip.screenshot()).toString('base64'); const v = await xp.evaluate(x => __ink(x), s); if (v.marker > 0) painted++; else fail(e, 'export marker not painted ' + hostile.keys[i][0]); await ip.close(); }
+  await new Promise(r => setTimeout(r, 400)); const dump = await (await fetch(C + '/__dump?run=' + run)).json(); await xc.close();
+  if (hostile.exportFailed) fail(e, 'export refused sanitized logos: ' + hostile.exportFailed.join(' '));
+  out.hostile = { exported: hostile.inline.length, rejected: hostile.rejected, hits: hits.length, net: dump.filter(u => !u.includes('/control/')).length, markers: painted + '/' + had, controlHits: controlHits.length, controlNet: dump.filter(u => u.includes('/control/')).length, stayed: stillUrl.endsWith('inline.html') };
+  if (out.hostile.hits || out.hostile.net) fail(e, 'exported hostile logos ran or reached out ' + JSON.stringify(out.hostile)); if (!out.hostile.controlHits || !out.hostile.controlNet) fail(e, 'control: detectors dead'); if (had !== 63) fail(e, 'markers expected 63, got ' + had); if (!out.hostile.stayed) fail(e, 'page navigated');
+
+  // 8. The studio UI: usages, copy, download, settings JSON round trip and hostile JSON.
+  await g.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
+  const up = async (t, n) => { await g.evaluate(() => document.querySelector('[data-svg-motion]').removeAttribute('data-svgm-last')); await g.setInputFiles('[data-svgm-file]', { name: n || 'logo.svg', mimeType: 'image/svg+xml', buffer: Buffer.from(t) }); await g.waitForSelector('[data-svg-motion][data-svgm-last]'); await g.waitForTimeout(120); return g.getAttribute('[data-svg-motion]', 'data-svgm-last'); };
+  const waitExport = async () => { await g.waitForTimeout(350); return g.getAttribute('[data-svg-motion]', 'data-svgm-export'); };
+  await up(LOGOS.gradient); await g.evaluate(() => { const i = document.querySelector('input[name="svgm-preset"][value="logo-wipe"]'); i.checked = true; i.dispatchEvent(new Event('change', { bubbles: true })); }); await g.selectOption('select[data-svgm-param="direction"]', 'up'); await g.fill('[data-svgm-alt]', 'Acme "logo" <b>');
+  const scope1 = await waitExport(); const ui = out.ui; ui.scope = scope1; if (!/^omx-[0-9a-f]{8}$/.test(scope1 || '')) fail(e, 'export not ready ' + scope1);
+  const codes = {}; for (const u of ['image', 'inline', 'external', 'script']) { await g.check('input[name="svgm-usage"][value="' + u + '"]', { force: true }); await g.waitForTimeout(80); codes[u] = await g.textContent('[data-svgm-code]'); const btns = await g.evaluate(() => [...document.querySelectorAll('[data-svgm-download]')].map(b => b.getAttribute('data-svgm-download'))); ui[u] = btns; }
+  if (!codes.image.includes('<picture>') || !codes.inline.startsWith('<svg') || !codes.external.includes('<link rel="stylesheet"') || !codes.script.includes('<script src=')) fail(e, 'usage snippets');
+  if (!codes.image.includes('alt="Acme &quot;logo&quot; &lt;b&gt;"')) fail(e, 'alt not escaped: ' + codes.image.slice(0, 200)); if (await g.evaluate(() => document.querySelector('[data-svgm-code]').children.length)) fail(e, 'code became markup');
+  // Copy (http: the fallback path) and downloads.
+  await g.check('input[name="svgm-usage"][value="image"]', { force: true }); await g.waitForTimeout(80); await g.click('[data-svgm-copy]'); await g.waitForTimeout(150); ui.copied = await g.getAttribute('[data-svg-motion]', 'data-svgm-copied');
+  const files = {}; for (const key of ['animated', 'still']) { const [dl] = await Promise.all([g.waitForEvent('download'), g.click('[data-svgm-download="' + key + '"]')]); files[key] = { name: dl.suggestedFilename(), text: fs.readFileSync(await dl.path(), 'utf8') }; }
+  ui.files = Object.fromEntries(Object.entries(files).map(([k, v]) => [k, v.name])); if (files.animated.name !== 'omochix-logo-motion-wipe.svg' || files.still.name !== 'omochix-logo-motion-wipe-static.svg') fail(e, 'file names ' + JSON.stringify(ui.files)); if (!files.animated.text.includes('@keyframes ' + scope1 + '-k0') || !codes.image.includes(files.animated.name)) fail(e, 'downloaded file does not match the code');
+  const [jdl] = await Promise.all([g.waitForEvent('download'), g.click('[data-svgm-json-download]')]); const jsonText = fs.readFileSync(await jdl.path(), 'utf8'); ui.jsonName = jdl.suggestedFilename(); const j = JSON.parse(jsonText); if (j.format !== 'omochix-svg-motion' || j.schema !== 1 || j.settings.preset !== 'logo-wipe' || j.settings.params.direction !== 'up') fail(e, 'json content');
+  // Round trip in a fresh browser: same output, byte for byte.
+  const rctx = await br.newContext({ viewport: { width: 1280, height: 900 } }); const r = await rctx.newPage(); await r.goto(U); await r.waitForSelector('[data-svgm-ready="true"]'); fs.writeFileSync(path.join(R, 'roundtrip.json'), jsonText); await r.evaluate(() => document.querySelector('[data-svg-motion]').removeAttribute('data-svgm-last')); await r.setInputFiles('[data-svgm-json-file]', path.join(R, 'roundtrip.json')); await r.waitForSelector('[data-svg-motion][data-svgm-last]'); await r.fill('[data-svgm-alt]', 'Acme "logo" <b>'); await r.waitForTimeout(400); const after = await r.evaluate(() => ({ preset: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-preset'), scope: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-export'), code: document.querySelector('[data-svgm-code]').textContent, last: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-last') })); const cls = t => (t.match(/omochix-logo-motion|class="(omx-[0-9a-f]{8})"/) || [])[1]; ui.roundTrip = { last: after.last, preset: after.preset, sameScope: (codes.inline.match(/class="(omx-[0-9a-f]{8})"/) || [])[1] === (after.scope || ''), sameCode: after.code === codes.image }; if (after.last !== 'ok' || after.preset !== 'logo-wipe' || after.code !== codes.image) fail(e, 'json round trip ' + JSON.stringify(ui.roundTrip));
+  // Hostile and broken settings files: refused with a reason, or accepted only after the full pipeline. The current logo stays.
+  const bad = ui.badJson = {}; const tryJson = async (name, text) => { fs.writeFileSync(path.join(R, name), text); await r.evaluate(() => { window.__h = []; addEventListener('message', ev => { if (ev.data && ev.data.hit) window.__h.push(ev.data.hit); }); document.querySelector('[data-svg-motion]').removeAttribute('data-svgm-last'); }); await r.setInputFiles('[data-svgm-json-file]', path.join(R, name)); await r.waitForSelector('[data-svg-motion][data-svgm-last]'); await r.waitForTimeout(200); return r.evaluate(() => ({ last: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-last'), logo: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-logo'), err: document.querySelector('[data-svgm-error]').hidden ? '' : document.querySelector('[data-svgm-error]').textContent, hits: window.__h.length, inline: document.querySelectorAll('[data-svg-motion] svg, [id^="omx-"]:not(#omx-svg-motion-data)').length })); };
+  bad.schema = await tryJson('b1.json', JSON.stringify({ format: 'omochix-svg-motion', schema: 9, svg: LOGOS.simple, settings: {} }));
+  bad.format = await tryJson('b2.json', JSON.stringify({ format: 'other', schema: 1, svg: LOGOS.simple, settings: {} }));
+  bad.invalid = await tryJson('b3.json', '{"format": "omochix-svg-motion", ');
+  bad.large = await tryJson('b4.json', JSON.stringify({ format: 'omochix-svg-motion', schema: 1, svg: '<svg xmlns="http://www.w3.org/2000/svg"><desc>' + 'a'.repeat(2200000) + '</desc></svg>', settings: {} }));
+  bad.brokenSvg = await tryJson('b5.json', JSON.stringify({ format: 'omochix-svg-motion', schema: 1, svg: '<svg><g></svg>', settings: { preset: 'logo-pop' } }));
+  bad.hostileSvg = await tryJson('b6.json', JSON.stringify({ format: 'omochix-svg-motion', schema: 1, svg: ATTACKS.foreignImg.split('{C}').join(C + '/c/' + run + '/json/') + '', settings: { preset: '__proto__', params: { 'logo-pop': { from: 'url(https://evil.example)' } }, common: { opacity: 0 } } }));
+  const expect = { schema: 'JSON_SCHEMA', format: 'JSON_FORMAT', invalid: 'JSON_INVALID', large: 'JSON_TOO_LARGE', brokenSvg: 'PARSE_ERROR' };
+  for (const [k, code] of Object.entries(expect)) { if (bad[k].last !== code) fail(e, 'json ' + k + ' gave ' + bad[k].last); if (bad[k].logo !== 'user' || !/[ぁ-ん一-龠]/.test(bad[k].err)) fail(e, 'json ' + k + ' lost the logo or reason'); }
+  if (bad.hostileSvg.last !== 'ok' || bad.hostileSvg.hits || bad.hostileSvg.inline) fail(e, 'hostile json ' + JSON.stringify(bad.hostileSvg));
+  const finalCode = await r.evaluate(() => document.querySelector('[data-svgm-code]').textContent); if (/evil|url\(https/.test(finalCode)) fail(e, 'hostile json values reached the export');
+  await rctx.close(); await gctx.close();
+  out.errors = errors; if (errors.length) fail(e, 'export page errors ' + errors.slice(0, 2));
+  fs.writeFileSync(path.join(R, 'export-' + e + '.json'), JSON.stringify(out, null, 1));
+  return { generated: out.generated, standalone: out.matrix.standalone, csp: out.matrix.csp, previewWorst: out.matrix.previewWorst, worstRest: out.matrix.worstRest, hostile: out.hostile, two: out.two };
+}
+module.exports = { exportTests };

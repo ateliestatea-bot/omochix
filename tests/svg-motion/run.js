@@ -3,7 +3,8 @@
 const { chromium, firefox, webkit } = require('playwright'); const fs = require('fs'), path = require('path'), { spawn } = require('child_process');
 const { start } = require('./server.js'); const B = 'http://127.0.0.1:8770/pages'; const REPO = path.join(__dirname, '../..'); const R = path.join(__dirname, 'results'); fs.mkdirSync(R, { recursive: true });
 const { pageTests, uploadSecurity } = require('./studio-tests.js');
-const only = (process.argv[2] || 'security,upload,fidelity,presets,page,regression').split(',');
+const { exportTests } = require('./export-tests.js');
+const only = (process.argv[2] || 'security,upload,fidelity,presets,page,export,regression').split(',');
 const failures = [], summary = {}; const fail = (e, m) => { failures.push(e + ': ' + m); console.log('  FAIL ' + m); };
 const read = n => JSON.parse(fs.readFileSync(path.join(R, n + '.json'), 'utf8'));
 const num = v => { const m = String(v).match(/-?\d+(\.\d+)?/g); return m ? m.map(Number) : null; };
@@ -106,6 +107,7 @@ async function regression(br, e) {
       if (only.includes('presets')) { s.presets = await presets(br, e); console.log(' presets done'); }
       if (only.includes('upload')) { const u = await uploadSecurity(br, e, fail); s.upload = { routes: Object.fromEntries(Object.entries(u.routes).map(([k, v]) => [k, { accepted: v.accepted, rejected: Object.keys(v.rejected).length, markerPainted: v.markerPainted, hadMarker: v.hadMarker, exec: v.exec.length }])), canary: u.canary.length, outbound: u.outbound.length, controls: u.controls }; console.log(' upload done'); }
       if (only.includes('page')) { s.page = await pageTests(br, e, fail); console.log(' page done'); }
+      if (only.includes('export')) { s.export = await exportTests(br, e, fail); console.log(' export done'); }
       if (only.includes('regression')) { s.regression = await regression(br, e); console.log(' regression done'); }
       await br.close();
     }

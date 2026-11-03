@@ -11,7 +11,7 @@
 
     var root = document.querySelector('[data-svg-motion]');
     var dataElement = document.getElementById('omx-svg-motion-data');
-    if (!root || !dataElement || !window.OmxSvgPreview || !window.OmxSvgImport) return;
+    if (!root || !dataElement || !window.OmxSvgPreview || !window.OmxSvgImport || !window.OmxSvgExport) return;
 
     var data = JSON.parse(dataElement.textContent);
     var Compile = window.OmxSvgCompile;
@@ -39,8 +39,13 @@
         stage: el('stage'), title: el('title'), description: el('description'), toggle: el('toggle'), reset: el('reset'),
         defaults: el('defaults'), params: el('params'), common: el('common'), status: el('status'), error: el('error'),
         thumbs: el('thumbs'), count: el('count'), file: el('file'), drop: el('drop'), paste: el('paste'), pasteButton: el('paste-button'),
-        logoName: el('logo-name'), warnings: el('warnings'), remove: el('remove'), note: el('note'), storage: el('storage')
+        logoName: el('logo-name'), warnings: el('warnings'), remove: el('remove'), note: el('note'), storage: el('storage'),
+        code: el('code'), copy: el('copy'), downloads: el('downloads'), alt: el('alt'), usageNote: el('usage-note'),
+        jsonDownload: el('json-download'), jsonFile: el('json-file')
     };
+    var Export = window.OmxSvgExport;
+    var exported = null;
+    var exportTimer = 0;
 
     var preview = window.OmxSvgPreview.create(els.stage, function (state) { setPlaying(state.playing); });
 
@@ -205,7 +210,87 @@
         } catch (error) { /* the next save tries again */ }
     }
 
+    function usage() {
+        var checked = root.querySelector('input[name="svgm-usage"]:checked');
+        return checked ? checked.value : 'image';
+    }
+
+    /* The export always matches what is on screen: rebuilt shortly after any change. */
+    function refreshExport() {
+        window.clearTimeout(exportTimer);
+        exportTimer = window.setTimeout(function () {
+            if (!logo) return;
+            try {
+                exported = Export.build({
+                    svg: logo.svg, preset: presets[settings.preset], params: paramsFor(settings.preset), common: commonValues(),
+                    commonList: data.common, budget: data.budget, label: els.alt.value
+                });
+            } catch (error) {
+                exported = null;
+                els.code.textContent = messages.errors.EXPORT_FAILED;
+                root.setAttribute('data-svgm-export', 'failed');
+                return;
+            }
+            renderExport();
+        }, 120);
+    }
+
+    var FILES = { image: ['animated', 'still'], inline: [], external: ['css'], script: ['js'] };
+    var TYPES = { animated: 'image/svg+xml', still: 'image/svg+xml', css: 'text/css', js: 'text/javascript', json: 'application/json' };
+
+    function renderExport() {
+        var kind = usage();
+        els.code.textContent = exported.snippets[kind];
+        els.usageNote.textContent = messages.usages[kind];
+        els.downloads.textContent = '';
+        FILES[kind].forEach(function (key) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'svg-motion__button';
+            button.textContent = messages.download[key];
+            button.setAttribute('data-svgm-download', key);
+            button.addEventListener('click', function () { download(key); });
+            els.downloads.appendChild(button);
+        });
+        root.setAttribute('data-svgm-export', exported.scope);
+    }
+
+    /* File names are fixed by the studio, never taken from the viewer's input. */
+    function download(key) {
+        if (!exported) return;
+        var url = URL.createObjectURL(new Blob([exported.files[key]], { type: TYPES[key] }));
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = exported.names[key];
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return fallbackCopy(text); });
+        }
+        return Promise.resolve(fallbackCopy(text));
+    }
+
+    function fallbackCopy(text) {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        var copied = false;
+        try { copied = document.execCommand('copy'); } catch (error) { copied = false; }
+        area.remove();
+        return copied;
+    }
+
     function scheduleSave() {
+        refreshExport();
         window.clearTimeout(saveTimer);
         saveTimer = window.setTimeout(function () {
             writeHash();
@@ -434,6 +519,39 @@
         scheduleSave();
     });
     els.thumbs.addEventListener('click', function () { thumbsMoving = !thumbsMoving; renderThumbs(); });
+
+    root.addEventListener('change', function (event) {
+        if (event.target.name === 'svgm-usage' && exported) renderExport();
+    });
+    els.alt.addEventListener('input', refreshExport);
+    els.copy.addEventListener('click', function () {
+        if (!exported) return;
+        copyText(exported.snippets[usage()]).then(function (copied) {
+            announce(copied ? messages.copied : messages.copyFailed);
+            root.setAttribute('data-svgm-copied', copied ? 'true' : 'false');
+        });
+    });
+    els.jsonDownload.addEventListener('click', function () { download('json'); });
+    els.jsonFile.addEventListener('change', function () {
+        var file = els.jsonFile.files && els.jsonFile.files[0];
+        els.jsonFile.value = '';
+        if (!file) return;
+        root.removeAttribute('data-svgm-last');
+        // The logo inside is untrusted: it goes through the whole import pipeline, and settings are re-validated.
+        var reading = file.size > 2097152 ? Promise.reject(new Safety.SafetyError('JSON_TOO_LARGE')) : file.text();
+        reading.then(function (text) {
+            var parsed = Export.parseSettings(text);
+            return loadText(parsed.svg, 'user', file.name, '').then(function () { return parsed; });
+        }).then(function (parsed) {
+            adopt(parsed.settings);
+            selectPreset(settings.preset, { announce: false });
+            announce(messages.imported);
+            root.setAttribute('data-svgm-last', 'ok');
+        }, function (error) {
+            showError(messageFor(error && error.code));
+            root.setAttribute('data-svgm-last', (error && error.code) || 'DEFAULT');
+        });
+    });
 
     function replayThumb(card) {
         var img = card.querySelector('[data-svgm-thumb]');

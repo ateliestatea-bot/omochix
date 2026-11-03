@@ -65,6 +65,16 @@ function omochix_svg_motion_data() {
     return $data;
 }
 
+/** Ways to use an exported logo, in the order the page offers them. */
+function omochix_svg_motion_usages() {
+    return [
+        'image'    => ['label' => __('画像として使う（おすすめ）', 'omochix'), 'note' => __('2 つの SVG ファイルを置いて、このコードを貼ります。スクリプト不要で、多くのサイトでそのまま動きます。動きを減らす設定の人には静止画を出します。', 'omochix')],
+        'inline'   => ['label' => __('HTML に直接書く', 'omochix'), 'note' => __('ファイルを置かずに使えます。CSP でインラインのスタイルを禁止しているサイトでは動かず、静止したロゴになります。WordPress の投稿本文には向きません。', 'omochix')],
+        'external' => ['label' => __('HTML と CSS ファイル', 'omochix'), 'note' => __('CSS ファイルを置いて読み込みます。CSP のあるサイト向けです。', 'omochix')],
+        'script'   => ['label' => __('JavaScript で操作する', 'omochix'), 'note' => __('画面に入ったときに動き出し、再生・停止・やり直しを操作できます（window.omxLogoMotion）。', 'omochix')],
+    ];
+}
+
 /** What studio.js shows the viewer. Reasons say what happened and, where possible, what to do. */
 function omochix_svg_motion_messages() {
     return [
@@ -86,6 +96,11 @@ function omochix_svg_motion_messages() {
             'USE_EXPANSION_LIMIT' => __('参照（use）が多すぎます。参照を減らしてください。', 'omochix'),
             'SANITIZE_FAILED'     => __('安全に処理できませんでした。別の形式で書き出してお試しください。', 'omochix'),
             'VERIFY_FAILED'       => __('安全に処理できませんでした。別の形式で書き出してお試しください。', 'omochix'),
+            'JSON_TOO_LARGE'      => __('設定ファイルが大きすぎます（上限 2MB）。', 'omochix'),
+            'JSON_INVALID'        => __('設定ファイルを読み取れませんでした。', 'omochix'),
+            'JSON_FORMAT'         => __('このスタジオで保存した設定ファイルではありません。', 'omochix'),
+            'JSON_SCHEMA'         => __('この設定ファイルの形式には対応していません。', 'omochix'),
+            'EXPORT_FAILED'       => __('書き出しに失敗しました。別のモーションでお試しください。', 'omochix'),
             'EMPTY_RESULT'        => __('表示できる図形がありません。スクリプトや外部参照だけで作られている可能性があります。', 'omochix'),
         ],
         'warnings'    => [
@@ -104,6 +119,16 @@ function omochix_svg_motion_messages() {
         'loaded'      => __('ロゴを読み込みました。', 'omochix'),
         'removed'     => __('保存していたロゴを削除しました。', 'omochix'),
         'discarded'   => __('保存データを読み込めなかったため、削除しました。', 'omochix'),
+        'usages'      => array_map(static fn($u) => $u['note'], omochix_svg_motion_usages()),
+        'copied'      => __('コピーしました。', 'omochix'),
+        'copyFailed'  => __('コピーできませんでした。コードを選択してコピーしてください。', 'omochix'),
+        'imported'    => __('設定を読み込みました。', 'omochix'),
+        'download'    => [
+            'animated' => __('SVG をダウンロード', 'omochix'),
+            'still'    => __('静止画 SVG', 'omochix'),
+            'css'      => __('CSS をダウンロード', 'omochix'),
+            'js'       => __('JS をダウンロード', 'omochix'),
+        ],
         'pastedName'  => __('貼り付けたロゴ', 'omochix'),
         'savedName'   => __('保存したロゴ', 'omochix'),
     ];
@@ -163,6 +188,7 @@ function omochix_svg_motion_enqueue_assets() {
     wp_enqueue_script('omochix-svg-import', get_theme_file_uri('/assets/js/svg-motion/import.js'), ['omochix-svg-frame', 'omochix-svg-analyze'], $version, true);
     wp_enqueue_script('omochix-svg-preview', get_theme_file_uri('/assets/js/svg-motion/preview-image.js'), ['omochix-svg-frame'], $version, true);
     wp_enqueue_script('omochix-svg-store', get_theme_file_uri('/assets/js/svg-motion/store.js'), [], $version, true);
-    wp_enqueue_script('omochix-svg-studio', get_theme_file_uri('/assets/js/svg-motion/studio.js'), ['omochix-svg-import', 'omochix-svg-preview', 'omochix-svg-store'], $version, true);
+    wp_enqueue_script('omochix-svg-export', get_theme_file_uri('/assets/js/svg-motion/export.js'), ['omochix-svg-frame'], $version, true);
+    wp_enqueue_script('omochix-svg-studio', get_theme_file_uri('/assets/js/svg-motion/studio.js'), ['omochix-svg-import', 'omochix-svg-preview', 'omochix-svg-store', 'omochix-svg-export'], $version, true);
 }
 add_action('wp_enqueue_scripts', 'omochix_svg_motion_enqueue_assets', 20);

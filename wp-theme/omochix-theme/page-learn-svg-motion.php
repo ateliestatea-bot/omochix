@@ -67,6 +67,30 @@ while (have_posts()) :
                         <div class="svg-motion__params" data-svgm-common></div>
                     </details>
                 </div>
+
+                <section class="svg-motion__export" aria-labelledby="svgm-export-title">
+                    <h3 id="svgm-export-title"><?php esc_html_e('書き出す', 'omochix'); ?></h3>
+                    <fieldset class="svg-motion__usages">
+                        <legend><?php esc_html_e('使い方', 'omochix'); ?></legend>
+                        <?php foreach (omochix_svg_motion_usages() as $omochix_key => $omochix_usage) : ?>
+                            <label class="svg-motion__usage"><input type="radio" name="svgm-usage" value="<?php echo esc_attr($omochix_key); ?>"<?php checked('image' === $omochix_key); ?>><span><?php echo esc_html($omochix_usage['label']); ?></span></label>
+                        <?php endforeach; ?>
+                    </fieldset>
+                    <p class="svg-motion__privacy" data-svgm-usage-note></p>
+                    <label class="svg-motion__alt"><span><?php esc_html_e('ロゴの説明（代替テキスト）', 'omochix'); ?></span><input type="text" maxlength="120" autocomplete="off" data-svgm-alt placeholder="<?php esc_attr_e('例：OmochiX のロゴ', 'omochix'); ?>"></label>
+                    <pre class="svg-motion__code" tabindex="0" aria-label="<?php esc_attr_e('埋め込みコード', 'omochix'); ?>"><code data-svgm-code></code></pre>
+                    <div class="svg-motion__export-actions">
+                        <button type="button" class="svg-motion__button svg-motion__button--primary" data-svgm-copy><?php esc_html_e('コードをコピー', 'omochix'); ?></button>
+                        <span data-svgm-downloads></span>
+                    </div>
+                    <div class="svg-motion__settings-io">
+                        <button type="button" class="svg-motion__button" data-svgm-json-download><?php esc_html_e('設定を保存（JSON）', 'omochix'); ?></button>
+                        <label class="svg-motion__button svg-motion__file">
+                            <input class="sr-only" type="file" accept=".json,application/json" data-svgm-json-file>
+                            <span><?php esc_html_e('設定を読み込む', 'omochix'); ?></span>
+                        </label>
+                    </div>
+                </section>
             </section>
 
             <div class="svg-motion__main">
