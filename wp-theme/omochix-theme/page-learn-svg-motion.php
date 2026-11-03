@@ -78,6 +78,7 @@ while (have_posts()) :
                     </fieldset>
                     <p class="svg-motion__privacy" data-svgm-usage-note></p>
                     <label class="svg-motion__alt"><span><?php esc_html_e('ロゴの説明（代替テキスト）', 'omochix'); ?></span><input type="text" maxlength="120" autocomplete="off" data-svgm-alt placeholder="<?php esc_attr_e('例：OmochiX のロゴ', 'omochix'); ?>"></label>
+                    <p class="svg-motion__note" data-svgm-origin-note hidden></p>
                     <pre class="svg-motion__code" tabindex="0" aria-label="<?php esc_attr_e('埋め込みコード', 'omochix'); ?>"><code data-svgm-code></code></pre>
                     <div class="svg-motion__export-actions">
                         <button type="button" class="svg-motion__button svg-motion__button--primary" data-svgm-copy><?php esc_html_e('コードをコピー', 'omochix'); ?></button>

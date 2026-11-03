@@ -41,7 +41,7 @@
         defaults: el('defaults'), params: el('params'), common: el('common'), status: el('status'), error: el('error'),
         thumbs: el('thumbs'), count: el('count'), file: el('file'), drop: el('drop'), paste: el('paste'), pasteButton: el('paste-button'),
         logoName: el('logo-name'), warnings: el('warnings'), remove: el('remove'), note: el('note'), storage: el('storage'),
-        code: el('code'), copy: el('copy'), downloads: el('downloads'), alt: el('alt'), usageNote: el('usage-note'),
+        code: el('code'), copy: el('copy'), downloads: el('downloads'), alt: el('alt'), usageNote: el('usage-note'), originNote: el('origin-note'),
         jsonDownload: el('json-download'), jsonFile: el('json-file')
     };
     var Export = window.OmxSvgExport;
@@ -158,6 +158,7 @@
         if (!settings.edit) return false;
         settings.edit = null;
         markEdit();
+        markOrigin('none');
         if (reason) announce(messages.editDiscarded);
         return true;
     }
@@ -180,24 +181,59 @@
         }
         settings.edit = clean;
         markEdit();
-        if (!clean.origin) measureOrigin();
+        if (clean.origin) markOrigin('provided');
+        else { markOrigin('none'); measureOrigin(); }
         return true;
     }
 
-    /* The root's origin is pinned to the logo's own centre (see compile.js) by measuring it once in the sandbox frame. */
-    var measuring = null;
+    /*
+     * The root's origin is pinned to the logo's own centre (see compile.js) by measuring it once in the sandbox frame.
+     * When that cannot be done (no frame, a timeout, an unreadable box) the centre of the viewBox stands in: the same in
+     * every browser, said on screen, and not saved, so the next visit measures again. While measuring, nothing is offered
+     * for copy or download (the code would change underneath).
+     */
+    var measuring = null, originSource = 'none';
+    function viewBoxCentre() {
+        var box = (new DOMParser().parseFromString(stageFor(false).svg, 'image/svg+xml').documentElement.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+        return box.length === 4 && box.every(isFinite) ? { x: box[0] + box[2] / 2, y: box[1] + box[3] / 2 } : null;
+    }
+
+    /** source: 'none' | 'measured' | 'fallback' | 'provided' (from a settings file or the saved state). */
+    function markOrigin(source) {
+        originSource = source;
+        root.setAttribute('data-svgm-origin-source', source);
+        if (settings.edit && settings.edit.origin) root.setAttribute('data-svgm-origin', settings.edit.origin.x + ',' + settings.edit.origin.y);
+        else root.removeAttribute('data-svgm-origin');
+        els.originNote.textContent = source === 'fallback' ? messages.originFallback : '';
+        els.originNote.hidden = source !== 'fallback';
+    }
+
     function measureOrigin() {
         if (measuring || !settings.edit) return;
         var mine = settings.edit;
-        measuring = Frame.measure(stageFor(false).svg).then(function (box) {
+        var settle = function (box) {
             measuring = null;
-            if (settings.edit !== mine || !box) return;
-            settings.edit.origin = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-            settings.edit = Compile.validateEdit(settings.edit, stageFor(false).layout);
-            root.setAttribute('data-svgm-origin', settings.edit.origin.x + ',' + settings.edit.origin.y);
+            // The edit changed meanwhile: measure for the new one if it needs it, otherwise just rebuild the export.
+            if (settings.edit !== mine) { if (settings.edit && !settings.edit.origin) measureOrigin(); else refreshExport(); return; }
+            var centre = box ? { x: box.x + box.width / 2, y: box.y + box.height / 2 } : viewBoxCentre();
+            if (centre) {
+                try { settings.edit = Compile.validateEdit(Object.assign({}, settings.edit, { origin: centre }), stageFor(false).layout); } catch (error) { centre = null; }
+            }
+            markOrigin(centre ? (box ? 'measured' : 'fallback') : 'none');
+            if (!box && centre) announce(messages.originFallback);
             preview.update(currentPlan()).catch(function () { showError(messages.errors.DEFAULT); });
             scheduleSave();
-        }, function () { measuring = null; });
+        };
+        measuring = Frame.measure(stageFor(false).svg).then(settle, function () { settle(null); });
+        refreshExport();
+    }
+
+    /** The edit as it is saved: a stand-in origin is left out, so it is measured again next time. */
+    function editForSave() {
+        if (!settings.edit || originSource !== 'fallback') return settings.edit;
+        var copy = Object.assign({}, settings.edit);
+        delete copy.origin;
+        return copy;
     }
 
     function plainSettings() {
@@ -270,9 +306,24 @@
         return checked ? checked.value : 'image';
     }
 
-    /* The export always matches what is on screen: rebuilt shortly after any change. */
+    /** Copy and every download (files and settings) are offered only for an export that matches the screen. */
+    function offer(open) {
+        els.copy.disabled = !open;
+        els.jsonDownload.disabled = !open;
+        Array.prototype.forEach.call(els.downloads.querySelectorAll('button'), function (button) { button.disabled = !open; });
+    }
+
+    /* The export always matches what is on screen: rebuilt shortly after any change, and withdrawn until then. */
     function refreshExport() {
         window.clearTimeout(exportTimer);
+        offer(false);
+        if (measuring) {
+            exported = null;
+            els.code.textContent = messages.measuring;
+            els.downloads.textContent = '';
+            root.setAttribute('data-svgm-export', 'measuring');
+            return;
+        }
         exportTimer = window.setTimeout(function () {
             if (!logo) return;
             try {
@@ -285,12 +336,12 @@
                 exported = null;
                 els.code.textContent = messages.errors.EXPORT_FAILED;
                 els.downloads.textContent = '';
-                els.copy.disabled = true;
+                offer(false);
                 root.setAttribute('data-svgm-export', 'failed');
                 return;
             }
-            els.copy.disabled = false;
             renderExport();
+            offer(true);
         }, 120);
     }
 
@@ -353,7 +404,7 @@
         window.clearTimeout(saveTimer);
         saveTimer = window.setTimeout(function () {
             writeHash();
-            Store.save(logo && logo.kind === 'user' ? logo.svg : null, plainSettings(), settings.edit).then(function (saved) {
+            Store.save(logo && logo.kind === 'user' ? logo.svg : null, plainSettings(), editForSave()).then(function (saved) {
                 root.setAttribute('data-svgm-saved', saved ? String(Date.now()) : 'failed');
                 els.storage.hidden = saved;
             });

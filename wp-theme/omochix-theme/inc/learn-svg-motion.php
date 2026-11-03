@@ -127,6 +127,8 @@ function omochix_svg_motion_messages() {
         'copyFailed'  => __('コピーできませんでした。コードを選択してコピーしてください。', 'omochix'),
         'imported'    => __('設定を読み込みました。', 'omochix'),
         'editDiscarded' => __('自由編集の内容は、このロゴには使えないため取り消しました。', 'omochix'),
+        'originFallback' => __('ロゴの中心を測れなかったため、全体の回転と拡大は画像（viewBox）の中心を基準にしています。見た目の中心と少しずれることがあります。', 'omochix'),
+        'measuring'     => __('ロゴの中心を測っています。終わるとコードとファイルを用意します。', 'omochix'),
         'download'    => [
             'animated' => __('SVG をダウンロード', 'omochix'),
             'still'    => __('静止画 SVG', 'omochix'),
