@@ -23,6 +23,7 @@ const HELPERS = () => {
   window.__diff = (a, b) => Promise.all([load(a), load(b)]).then(([p, q]) => { if (p.length !== q.length) return 100; const W = Math.sqrt(p.length / 4) | 0, H = p.length / 4 / W, T = 24; let n = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; let ok = true; for (let c = 0; c < 3 && ok; c++) { let lo = 255, hi = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const yy = y + dy, xx = x + dx; if (yy < 0 || yy >= H || xx < 0 || xx >= W) continue; const v = q[(yy * W + xx) * 4 + c]; if (v < lo) lo = v; if (v > hi) hi = v; } if (p[i + c] < lo - T || p[i + c] > hi + T) ok = false; } if (!ok) n++; } return +(n / (W * H) * 100).toFixed(2); });
   window.__raw = (a, b) => Promise.all([load(a), load(b)]).then(([p, q]) => { let n = 0; for (let i = 0; i < p.length; i += 4) if (Math.abs(p[i] - q[i]) + Math.abs(p[i + 1] - q[i + 1]) + Math.abs(p[i + 2] - q[i + 2]) > 18) n++; return +(n / (p.length / 4) * 100).toFixed(2); });
   window.__ink = a => load(a).then(d => { let n = 0, m = 0; for (let j = 0; j < d.length; j += 4) { if (d[j] + d[j + 1] + d[j + 2] < 740) n++; if (Math.abs(d[j] - 0x12) < 28 && Math.abs(d[j + 1] - 0x34) < 28 && Math.abs(d[j + 2] - 0x56) < 28) m++; } return { ink: n, marker: m }; });
+  window.__center = a => load(a).then(d => { const W = Math.sqrt(d.length / 4) | 0, k = ((W >> 1) * W + (W >> 1)) * 4; return [d[k], d[k + 1], d[k + 2]]; });
 };
 
 async function exportTests(br, e, fail) {
@@ -121,6 +122,16 @@ async function exportTests(br, e, fail) {
     let rest = null, restShot = null; if (!it.b.loops) { if (driven) await setTime(it.b.length + 1); else await p.waitForTimeout(Math.max(0, it.b.length - span) + 300); await force(); restShot = await shot(p, own); rest = await diff(restShot, await stillOf(it, ['inline', 'external', 'script'].includes(form))); }
     await p.close(); return { moves, rest, ext: ext.length, errs, driven, gap, shots: [shots[0], shots[shots.length - 1], restShot] };
   };
+  // Environment probe: which motion preference an SVG document sees when it is shown as an image. Every exported file
+  // holds its own @media (prefers-reduced-motion: reduce) rule, and a browser may answer it from the operating system
+  // rather than from the page's emulated preference (WebKit on the GitHub runners drew every image form still: PR #55).
+  // Blue means no preference, red means reduce. The inline copy shows what the page itself sees.
+  { const probe = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><style>rect{fill:#0000ff}@media (prefers-reduced-motion:reduce){rect{fill:#ff0000}}</style><rect width="10" height="10"/></svg>';
+    write('probe-rm.svg', probe); write('probe-rm-image.html', PAGE('', '<img src="probe-rm.svg" alt="">')); write('probe-rm-inline.html', PAGE('', probe));
+    const seen = {}; for (const f of ['image', 'inline']) { const p = await ctx.newPage(); await p.goto(X + 'probe-rm-' + f + '.html'); await p.waitForLoadState('load'); await p.waitForTimeout(80); const [r, , b] = await hp.evaluate(a => __center(a), await shot(p)); seen[f] = r > 200 && b < 80 ? 'reduce' : b > 200 && r < 80 ? 'no-preference' : 'unknown'; await p.close(); }
+    out.motionPreference = seen;
+    if (seen.image !== 'no-preference') fail(e, 'environment: SVG shown as an image sees prefers-reduced-motion ' + seen.image + ' (page: ' + seen.inline + '), so image forms are drawn still; turn the system setting off');
+    if (seen.inline !== 'no-preference') fail(e, 'environment: the page itself sees prefers-reduced-motion ' + seen.inline); }
   // Controls for the driven clock: it must see a real animation move and a still page stay.
   const probe = list.find(x => x.logo === 'sample' && x.id === 'logo-pop'); const ctl = out.driveControl = {};
   { const p = await ctx.newPage(); await p.goto(X + probe.d + 'still-inline.html'); await p.waitForLoadState('load'); const a = await shot(p); await p.evaluate(() => { document.getAnimations().forEach(x => { x.pause(); x.currentTime = 500; }); }); ctl.stillMoves = await raw(a, await shot(p)); await p.close(); }
@@ -231,6 +242,6 @@ async function exportTests(br, e, fail) {
   await rctx.close(); await gctx.close();
   out.errors = errors; if (errors.length) fail(e, 'export page errors ' + errors.slice(0, 2));
   fs.writeFileSync(path.join(R, 'export-' + e + '.json'), JSON.stringify(out, null, 1));
-  return { generated: out.generated, standalone: out.matrix.standalone, csp: out.matrix.csp, previewWorst: out.matrix.previewWorst, worstRest: out.matrix.worstRest, hostile: out.hostile, two: out.two, shotRetries: out.shotRetries || 0, realTime: out.realTime };
+  return { generated: out.generated, standalone: out.matrix.standalone, csp: out.matrix.csp, previewWorst: out.matrix.previewWorst, worstRest: out.matrix.worstRest, hostile: out.hostile, two: out.two, shotRetries: out.shotRetries || 0, realTime: out.realTime, motionPreference: out.motionPreference };
 }
 module.exports = { exportTests };
