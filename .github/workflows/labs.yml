@@ -54,7 +54,7 @@ jobs:
       - name: Lint Labs PHP
         run: |
           status=0
-          for file in wp-theme/omochix-theme/inc/labs.php wp-theme/omochix-theme/page-labs.php wp-theme/omochix-theme/template-parts/labs/*.php wp-theme/omochix-theme/template-parts/labs/content/*.php tests/labs/*.php; do
+          for file in wp-theme/omochix-theme/inc/labs.php wp-theme/omochix-theme/inc/labs-data/*.php wp-theme/omochix-theme/page-labs.php wp-theme/omochix-theme/template-parts/labs/*.php wp-theme/omochix-theme/template-parts/labs/content/*.php tests/labs/*.php; do
             php -l "$file" >/dev/null || status=1
           done
           exit $status

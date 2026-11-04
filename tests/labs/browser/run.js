@@ -239,6 +239,9 @@ async function toolChecks(browser, name) {
     s = await openPage(browser, 1440, '/labs/token-cost-calculator/?gtag=1');
     p = s.page;
     check(name + ' cost: defaults computed for the three preselected models', (await p.locator('[data-labs-cost-rows] tr').count()) === 3);
+    // The preview server runs as a non-production environment: unapproved rows are listed with their state.
+    check(name + ' cost: outside production, held and pending rows are marked', (await p.locator('[data-labs-models] .labs-tag--state', { hasText: '保留' }).count()) === 5 && (await p.locator('[data-labs-models] .labs-tag--state', { hasText: '承認待ち' }).count()) === 6 && /本番のページには表示されません/.test(await p.textContent('[data-labs-cost-notes]')));
+    check(name + ' cost: each result row shows its caveats', (await p.locator('[data-labs-cost-rows] .labs-table__caveat').count()) >= 3);
     await p.click('[data-labs-sample]');
     await wait(500);
     check(name + ' cost: estimate shown as an estimate', /^約\d/.test(await p.textContent('[data-labs-tokens]')) && /〜/.test(await p.textContent('[data-labs-range]')));

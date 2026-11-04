@@ -15,6 +15,8 @@
 
     var SAMPLE_TEXT = 'あなたはカスタマーサポートの担当者です。次の問い合わせ内容を読み、丁寧な日本語で3文以内の返信文を作成してください。\n\n問い合わせ：注文した商品がまだ届きません。注文番号は 20261104-0012 です。いつ頃届きますか？';
     var DEFAULTS = { input: 2000, output: 800, cached: 0, requests: 100, days: 30, rate: '' };
+    /** Shown only outside production, where unapproved rows are listed for review. */
+    var STATES = { pending: '承認待ち', held: '保留' };
 
     L.tool('token-cost-calculator', function (root) {
         var limits = L.limits();
@@ -67,6 +69,13 @@
                     box.checked = !!checked[m.id];
                     label.appendChild(box);
                     label.appendChild(document.createTextNode(' ' + m.label));
+                    if (STATES[m.approval]) {
+                        var tag = document.createElement('span');
+                        tag.className = 'labs-tag labs-tag--state';
+                        tag.textContent = STATES[m.approval];
+                        label.appendChild(document.createTextNode(' '));
+                        label.appendChild(tag);
+                    }
                     group.appendChild(label);
                 });
                 modelsBox.appendChild(group);
@@ -143,7 +152,22 @@
                 [r.perRequest, r.perDay, r.total].forEach(function (v) {
                     cell(tr, 'td', Cost.formatUSD(v), rate ? '約' + Cost.formatJPY(v, rate) : '');
                 });
-                cell(tr, 'td', '入力 ' + Cost.formatPrice(r.prices.input) + ' / 出力 ' + Cost.formatPrice(r.prices.output), 'キャッシュ ' + Cost.formatPrice(r.prices.cached) + (r.tier === 'long' ? '（長いコンテキストの単価）' : ''));
+                var priceCell = cell(tr, 'td', '入力 ' + Cost.formatPrice(r.prices.input) + ' / 出力 ' + Cost.formatPrice(r.prices.output), 'キャッシュ ' + Cost.formatPrice(r.prices.cached) + (r.tier === 'long' ? '（長いコンテキストの単価）' : ''));
+                (model.caveats || []).forEach(function (code) {
+                    var label = (pricing.caveat_labels || {})[code];
+                    if (!label) return;
+                    var note = document.createElement('span');
+                    note.className = 'labs-table__sub labs-table__caveat';
+                    note.textContent = '※' + label;
+                    priceCell.appendChild(note);
+                });
+                if (STATES[model.approval]) {
+                    flags.unapproved = true;
+                    var state = document.createElement('span');
+                    state.className = 'labs-tag labs-tag--state';
+                    state.textContent = STATES[model.approval];
+                    tr.firstChild.appendChild(state);
+                }
                 var src = cell(tr, 'td', '');
                 var a = document.createElement('a');
                 a.href = model.source_url;
@@ -160,6 +184,7 @@
             var lines = ['金額はすべて推定値です（標準ティアの料金。キャッシュ書き込みの料金は含みません）。'];
             if (flags.long_context) lines.push('入力が長いため、一部のモデルは長いコンテキストの単価で計算しています。');
             if (flags.cached_not_listed) lines.push('キャッシュ単価が公開されていないモデルは、キャッシュ分も通常の入力単価で計算しています。');
+            if (flags.unapproved) lines.push('「承認待ち」「保留」の価格は確認用で、本番のページには表示されません。');
             if (!selected.length && models.length) lines.push('比べるモデルにチェックを入れてください。');
             notes.textContent = lines.join(' ');
             if (fromUser && selected.length) {

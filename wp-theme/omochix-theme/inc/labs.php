@@ -26,7 +26,7 @@ const OMOCHIX_LABS_REWRITE_VERSION  = '2'; // 2: /labs-sitemap.xml
 const OMOCHIX_LABS_SITEMAP_PATH     = 'labs-sitemap.xml';
 const OMOCHIX_LABS_SITEMAP_VAR      = 'omx_labs_sitemap';
 const OMOCHIX_LABS_CATALOG_VERSION  = 1;
-const OMOCHIX_LABS_PRICING_VERSION  = 1;
+const OMOCHIX_LABS_PRICING_VERSION  = 2; // 2: per-row approval and caveats
 const OMOCHIX_LABS_CRAWLERS_VERSION = 1;
 
 /**
@@ -418,6 +418,66 @@ function omochix_labs_is_allowed_source($url, array $hosts) {
     return is_string($host) && in_array(strtolower($host), $hosts, true);
 }
 
+/** Server-only pricing data (not under assets/, and a PHP file that prints nothing if requested over HTTP). */
+function omochix_labs_pricing_file() {
+    return get_theme_file_path('/inc/labs-data/pricing.json.php');
+}
+
+/**
+ * Read JSON stored after a "<?php exit; … ?>" guard line, so the file is
+ * data for PHP but empty when a browser requests it.
+ *
+ * @return array{ok: bool, data: mixed, errors: string[]}
+ */
+function omochix_labs_read_guarded_json($file) {
+    if (!is_string($file) || !is_readable($file)) {
+        return ['ok' => false, 'data' => null, 'errors' => ['file not readable']];
+    }
+    $raw = (string) file_get_contents($file);
+    if (0 !== strpos($raw, '<?php exit;') || false === ($end = strpos($raw, "?>\n"))) {
+        return ['ok' => false, 'data' => null, 'errors' => ['missing <?php exit; ?> guard line']];
+    }
+    $data = json_decode(substr($raw, $end + 3), true);
+    if (JSON_ERROR_NONE !== json_last_error()) {
+        return ['ok' => false, 'data' => null, 'errors' => ['invalid JSON: ' . json_last_error_msg()]];
+    }
+    return ['ok' => true, 'data' => $data, 'errors' => []];
+}
+
+/** Codes a row may list in `caveats` / `approval.acknowledged` (keys of `caveat_labels`). */
+function omochix_labs_is_caveat_code($value) {
+    return is_string($value) && 1 === preg_match('/^[a-z][a-z_]{2,60}$/', $value);
+}
+
+/**
+ * Approval state of one price row: 'approved' only with a reviewer, a review
+ * date on or after the price check (a re-checked price needs a new review)
+ * and every caveat of the row acknowledged; 'held' when deliberately held;
+ * otherwise 'pending'. Mirrors approvalState() in cost.js.
+ */
+function omochix_labs_row_approval_state($model) {
+    $approval = is_array($model) && is_array($model['approval'] ?? null) ? $model['approval'] : [];
+    $status   = $approval['status'] ?? null;
+    if ('held' === $status) {
+        return 'held';
+    }
+    if ('approved' !== $status) {
+        return 'pending';
+    }
+    $reviewer = $approval['reviewer'] ?? null;
+    $reviewed = $approval['reviewed_at'] ?? null;
+    if (!is_string($reviewer) || '' === trim($reviewer) || !omochix_labs_is_date($reviewed) || !omochix_labs_is_date($model['verified_at'] ?? null) || $reviewed < $model['verified_at']) {
+        return 'pending';
+    }
+    $acknowledged = is_array($approval['acknowledged'] ?? null) ? $approval['acknowledged'] : [];
+    foreach ((array) ($model['caveats'] ?? []) as $code) {
+        if (!in_array($code, $acknowledged, true)) {
+            return 'pending';
+        }
+    }
+    return 'approved';
+}
+
 /**
  * Why a price row must not be shown ('' when it may be). The same rules as
  * hiddenReason() in assets/js/labs/core/cost.js.
@@ -425,8 +485,9 @@ function omochix_labs_is_allowed_source($url, array $hosts) {
  * @param mixed  $model   Price row.
  * @param string $today   YYYY-MM-DD.
  * @param int    $max_age Maximum age of verified_at in days.
+ * @param array<string, string> $caveat_labels Known caveat codes.
  */
-function omochix_labs_price_hidden_reason($model, $today, $max_age) {
+function omochix_labs_price_hidden_reason($model, $today, $max_age, array $caveat_labels = []) {
     if (!is_array($model)) {
         return 'invalid';
     }
@@ -457,6 +518,15 @@ function omochix_labs_price_hidden_reason($model, $today, $max_age) {
     if (null !== $long && (!is_array($long) || !is_int($long['threshold_tokens'] ?? null) || $long['threshold_tokens'] < 1 || !omochix_labs_is_price($long['input'] ?? null) || !omochix_labs_is_price($long['output'] ?? null) || (null !== ($long['cached_input'] ?? null) && !omochix_labs_is_price($long['cached_input'])))) {
         return 'invalid';
     }
+    // Every row states its caveats (codes known in caveat_labels) and carries an approval record.
+    $caveats = $model['caveats'] ?? null;
+    if (!is_array($caveats) || array_filter($caveats, static fn($c) => !omochix_labs_is_caveat_code($c) || !isset($caveat_labels[$c]))) {
+        return 'invalid';
+    }
+    $approval = $model['approval'] ?? null;
+    if (!is_array($approval) || !in_array($approval['status'] ?? null, ['pending', 'approved', 'held'], true) || ('held' === $approval['status'] && (!is_string($approval['reason'] ?? null) || '' === trim($approval['reason'])))) {
+        return 'invalid';
+    }
     foreach (['valid_from', 'valid_until'] as $key) {
         if (isset($model[$key]) && !omochix_labs_is_date($model[$key])) {
             return 'invalid';
@@ -479,14 +549,16 @@ function omochix_labs_price_hidden_reason($model, $today, $max_age) {
  * within max_age_days, not expired. Rows scheduled to start later are kept
  * (with valid_from) so a cached page can switch on the right day; which rows
  * apply on a given day is decided by omochix_labs_pricing_active() here and
- * by active() in cost.js in the browser, with the browser's own date.
+ * by active() in cost.js in the browser, with the browser's own date. Each
+ * row carries its approval state; omochix_labs_pricing_gate() decides what a
+ * production page may show.
  *
- * @param mixed  $data  Decoded pricing.json.
+ * @param mixed  $data  Decoded pricing data.
  * @param string $today YYYY-MM-DD.
- * @return array{ok: bool, currency: string, max_age_days: int, providers: array<string, string>, models: array<int, array<string, mixed>>, hidden: array<string, int>}
+ * @return array{ok: bool, currency: string, max_age_days: int, providers: array<string, string>, caveat_labels: array<string, string>, models: array<int, array<string, mixed>>, hidden: array<string, int>}
  */
 function omochix_labs_pricing_view($data, $today) {
-    $view = ['ok' => false, 'currency' => 'USD', 'max_age_days' => 90, 'providers' => [], 'models' => [], 'hidden' => []];
+    $view = ['ok' => false, 'currency' => 'USD', 'max_age_days' => 90, 'providers' => [], 'caveat_labels' => [], 'models' => [], 'hidden' => []];
     if (!is_array($data) || ($data['schema_version'] ?? null) !== OMOCHIX_LABS_PRICING_VERSION || 'USD' !== ($data['currency'] ?? null) || 'per_1m_tokens' !== ($data['unit'] ?? null)) {
         return $view;
     }
@@ -501,8 +573,13 @@ function omochix_labs_pricing_view($data, $today) {
             $view['providers'][$provider['slug']] = $provider['name'];
         }
     }
+    foreach ((array) ($data['caveat_labels'] ?? []) as $code => $label) {
+        if (omochix_labs_is_caveat_code($code) && is_string($label) && '' !== trim($label)) {
+            $view['caveat_labels'][$code] = $label;
+        }
+    }
     foreach ((array) ($data['models'] ?? []) as $model) {
-        $reason = omochix_labs_price_hidden_reason($model, $today, $max_age);
+        $reason = omochix_labs_price_hidden_reason($model, $today, $max_age, $view['caveat_labels']);
         if (in_array($reason, ['', 'upcoming'], true) && !isset($view['providers'][$model['provider']])) {
             $reason = 'invalid';
         }
@@ -526,6 +603,8 @@ function omochix_labs_pricing_view($data, $today) {
             'valid_until'  => $model['valid_until'] ?? null,
             'source_url'   => $model['source_url'],
             'verified_at'  => $model['verified_at'],
+            'caveats'      => array_values($model['caveats']),
+            'approval'     => omochix_labs_row_approval_state($model),
         ];
     }
     return $view;
@@ -554,8 +633,9 @@ function omochix_labs_pricing_active(array $models, $today, $max_age) {
 }
 
 /**
- * Whether a person approved pricing.json (review.status "approved" with a
- * reviewer and a date) — the same rule as `tests/labs/data.js --release`.
+ * Whether a person approved the pricing file as a whole (review.status
+ * "approved" with a reviewer and a date) — the global gate, the same rule
+ * as `tests/labs/data.js --release`.
  */
 function omochix_labs_pricing_approved($data) {
     $review = is_array($data) && is_array($data['review'] ?? null) ? $data['review'] : [];
@@ -570,21 +650,42 @@ function omochix_labs_is_production() {
 }
 
 /**
- * Prices for the page. Release gate: on a production site no price is shown
- * until pricing.json is approved (local / development / staging show them so
- * they can be reviewed); `withheld` tells the templates why the list is empty.
+ * What a page may show. Production: nothing unless the file is approved
+ * (global gate), then only rows whose own approval is 'approved' (row gate);
+ * pending and held rows never leave the server. Other environments show every
+ * valid row with its state so it can be reviewed. Mirrors gate() in cost.js.
+ *
+ * @param array<string, mixed> $view pricing_view() result.
+ * @return array<string, mixed> The view with `models` filtered and `withheld` / `approved` / `production` set.
  */
+function omochix_labs_pricing_gate(array $view, $approved, $production) {
+    $view['approved']   = (bool) $approved;
+    $view['production'] = (bool) $production;
+    if (!$production) {
+        $view['withheld'] = false;
+        return $view;
+    }
+    $kept = [];
+    foreach ($view['models'] as $model) {
+        if ($approved && 'approved' === $model['approval']) {
+            $kept[] = $model;
+        } else {
+            $key                  = 'row_' . ($approved ? $model['approval'] : 'unapproved_file');
+            $view['hidden'][$key] = ($view['hidden'][$key] ?? 0) + 1;
+        }
+    }
+    $view['models']   = $kept;
+    $view['withheld'] = !$approved || !$kept;
+    return $view;
+}
+
+/** Prices for the page, through the global and row gates (see omochix_labs_pricing_gate()). */
 function omochix_labs_get_pricing() {
     static $view = null;
     if (null === $view) {
-        $read = omochix_labs_read_json(omochix_labs_data_file('pricing'));
+        $read = omochix_labs_read_guarded_json(omochix_labs_pricing_file());
         $data = $read['ok'] ? $read['data'] : null;
-        $view = omochix_labs_pricing_view($data, omochix_labs_today());
-        $view['approved'] = omochix_labs_pricing_approved($data);
-        $view['withheld'] = !$view['approved'] && omochix_labs_is_production();
-        if ($view['withheld']) {
-            $view['models'] = [];
-        }
+        $view = omochix_labs_pricing_gate(omochix_labs_pricing_view($data, omochix_labs_today()), omochix_labs_pricing_approved($data), omochix_labs_is_production());
     }
     return $view;
 }
@@ -784,10 +885,19 @@ function omochix_labs_sitemap_url() {
     return omochix_labs_page_id() ? home_url('/' . OMOCHIX_LABS_SITEMAP_PATH) : '';
 }
 
-/** @return array<int, array{loc: string, lastmod: string}> Canonical URLs of the published tools. */
+/**
+ * Canonical URLs of the published tools. A tool whose path is also a real
+ * page ("labs/{slug}" created in the admin) is left out: Slim SEO already
+ * lists that page, and one URL must not appear in two sitemaps (Runbook §17).
+ *
+ * @return array<int, array{loc: string, lastmod: string}>
+ */
 function omochix_labs_sitemap_entries() {
     $entries = [];
     foreach (omochix_labs_get_tools() as $tool) {
+        if (get_page_by_path(OMOCHIX_LABS_PATH . '/' . $tool['slug'], OBJECT, 'page') instanceof WP_Post) {
+            continue;
+        }
         $loc = omochix_labs_url($tool);
         if ('' !== $loc) {
             $entries[] = ['loc' => $loc, 'lastmod' => $tool['updated']];

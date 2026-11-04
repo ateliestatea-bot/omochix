@@ -211,7 +211,7 @@ check('assets: nothing on other pages', [] === $GLOBALS['enqueued']['scripts'] &
 check('assets: inline JSON cannot close the script element', !str_contains(omochix_labs_json_for_script(['x' => '</script><script>alert(1)</script>', 'y' => "a'b\"c&"]), '</') && !str_contains(omochix_labs_json_for_script(['y' => "'\"&<>"]), "'"));
 
 // ----------------------------------------------------------------- pricing
-$pricing_raw = json_decode(file_get_contents(omochix_labs_data_file('pricing')), true);
+$pricing_raw = omochix_labs_read_guarded_json(omochix_labs_pricing_file())['data'];
 $view = omochix_labs_pricing_view($pricing_raw, '2026-11-04');
 check('pricing: shipped file is valid with no hidden rows', $view['ok'] && [] === $view['hidden'] && 90 === $view['max_age_days']);
 check('pricing: input and output prices are separate numbers', !array_filter($view['models'], static fn($m) => !is_float($m['input']) || !is_float($m['output'])));
@@ -238,6 +238,64 @@ check('pricing: two rows for one model on the same day are both hidden', !in_arr
 check('pricing: wrong schema / currency / unit is rejected', !omochix_labs_pricing_view(['schema_version' => 1, 'currency' => 'JPY', 'unit' => 'per_1m_tokens'], '2026-11-04')['ok'] && !omochix_labs_pricing_view(null, '2026-11-04')['ok']);
 check('pricing: lookalike hosts are not official', !omochix_labs_is_allowed_source('https://platform.claude.com.evil.test/', OMOCHIX_LABS_PRICE_SOURCE_HOSTS) && !omochix_labs_is_allowed_source('http://platform.claude.com/', OMOCHIX_LABS_PRICE_SOURCE_HOSTS) && omochix_labs_is_allowed_source('https://PLATFORM.claude.com/docs', OMOCHIX_LABS_PRICE_SOURCE_HOSTS));
 check('pricing: review is still pending (release gate)', 'pending' === $pricing_raw['review']['status']);
+check('pricing: rows start pending (Anthropic, Google) or held with a reason (OpenAI); none approved', !array_filter($pricing_raw['models'], static fn($m) => ('openai' === $m['provider'] ? 'held' : 'pending') !== $m['approval']['status'] || ('held' === $m['approval']['status'] && '' === trim((string) ($m['approval']['reason'] ?? '')))) && !array_filter($view['models'], static fn($m) => 'approved' === $m['approval']));
+
+// ---------------------------------------------------- pricing file is not public
+$pfile = omochix_labs_pricing_file();
+check('pricing file: lives under inc/, not assets/', str_contains($pfile, '/inc/labs-data/pricing.json.php') && !file_exists(get_theme_file_path('/assets/data/labs/pricing.json')));
+check('pricing file: starts with the exit guard and prints nothing when executed (a browser request gets an empty body)', 0 === strpos((string) file_get_contents($pfile), '<?php exit;') && '' === (string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($pfile)));
+$tmpUnguarded = tempnam(sys_get_temp_dir(), 'omx'); file_put_contents($tmpUnguarded, '{"schema_version":2}');
+check('pricing file: a file without the guard line is refused', !omochix_labs_read_guarded_json($tmpUnguarded)['ok']); unlink($tmpUnguarded);
+check('pricing file: the data folder denies direct HTTP access (.htaccess, in case PHP is not executed)', str_contains((string) @file_get_contents(dirname($pfile) . '/.htaccess'), 'Require all denied') && str_contains((string) @file_get_contents(dirname($pfile) . '/.htaccess'), 'Deny from all'));
+// Fail closed: broken or unexpected data shows no price anywhere.
+foreach (['broken JSON' => "<?php exit; ?>\n{\"schema_version\": 2, ", 'no guard line' => json_encode($pricing_raw), 'schema 1' => "<?php exit; ?>\n" . json_encode(array_replace($pricing_raw, ['schema_version' => 1])), 'models not a list' => "<?php exit; ?>\n" . json_encode(array_replace($pricing_raw, ['models' => 'x']))] as $label => $body) {
+    $tmpBad = tempnam(sys_get_temp_dir(), 'omx'); file_put_contents($tmpBad, $body);
+    $readBad = omochix_labs_read_guarded_json($tmpBad); unlink($tmpBad);
+    $viewBad = omochix_labs_pricing_view($readBad['ok'] ? $readBad['data'] : null, '2026-11-06');
+    $ok = [] === omochix_labs_pricing_gate($viewBad, omochix_labs_pricing_approved($readBad['data'] ?? null), true)['models'] && [] === omochix_labs_pricing_gate($viewBad, true, false)['models'];
+    check("fail closed: $label shows no price on production or staging", $ok);
+}
+$weird = approve_rows(array_replace($pricing_raw, ['review' => ['status' => 'APPROVED', 'reviewer' => 'R', 'reviewed_at' => '2026-11-06']]), ['claude-opus-5-5']);
+check('fail closed: an unexpected review value is not an approval', !omochix_labs_pricing_approved($weird) && [] === omochix_labs_pricing_gate(omochix_labs_pricing_view($weird, '2026-11-06'), omochix_labs_pricing_approved($weird), true)['models']);
+$weirdRow = $pricing_raw; $weirdRow['models'][0]['approval'] = ['status' => 'Approved', 'reviewer' => 'R', 'reviewed_at' => '2026-11-06', 'acknowledged' => $pricing_raw['models'][0]['caveats']];
+check('fail closed: an unexpected row status hides the row', 1 === (omochix_labs_pricing_view($weirdRow, '2026-11-06')['hidden']['invalid'] ?? 0));
+$publicHits = [];
+$ids = array_unique(array_column($pricing_raw['models'], 'id'));
+foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(get_theme_file_path('/assets'), FilesystemIterator::SKIP_DOTS)) as $f) {
+    $txt = (string) file_get_contents((string) $f);
+    foreach ($ids as $id) { if (str_contains($txt, $id)) { $publicHits[] = basename((string) $f) . ':' . $id; } }
+}
+check('pricing file: no public asset (CSS, JS, JSON, images) contains a priced model id', [] === $publicHits);
+
+// --------------------------------------------------------- row gate (PHP side)
+function approve_rows(array $data, array $ids, $date = '2026-11-06') {
+    foreach ($data['models'] as $i => $m) {
+        if (in_array($m['id'], $ids, true)) {
+            $data['models'][$i]['approval'] = ['status' => 'approved', 'reviewer' => 'Reviewer', 'reviewed_at' => $date, 'acknowledged' => $m['caveats']];
+        }
+    }
+    return $data;
+}
+$fileOk = $pricing_raw; $fileOk['review'] = ['status' => 'approved', 'reviewer' => 'Reviewer', 'reviewed_at' => '2026-11-06'];
+$anth = approve_rows($fileOk, ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5']);
+$g = omochix_labs_pricing_gate(omochix_labs_pricing_view($anth, '2026-11-06'), true, true);
+check('row gate: production shows only the approved rows of an approved file', ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'] === array_column($g['models'], 'id') && false === $g['withheld'] && 5 === ($g['hidden']['row_held'] ?? 0) && 5 === ($g['hidden']['row_pending'] ?? 0)); // Google: 3 current + 2 scheduled rows
+$g = omochix_labs_pricing_gate(omochix_labs_pricing_view(approve_rows($pricing_raw, ['claude-opus-5-5']), '2026-11-06'), false, true);
+check('row gate: an approved row is still hidden while the file is not approved', [] === $g['models'] && true === $g['withheld']);
+$g = omochix_labs_pricing_gate(omochix_labs_pricing_view($fileOk, '2026-11-06'), true, true);
+check('row gate: an approved file with no approved row shows nothing', [] === $g['models'] && true === $g['withheld']);
+$g = omochix_labs_pricing_gate(omochix_labs_pricing_view($anth, '2026-11-06'), true, false);
+check('row gate: staging lists every valid row with its state', 11 === count(omochix_labs_pricing_active($g['models'], '2026-11-06', 90)) && ['approved' => 3, 'held' => 5, 'pending' => 3] === array_count_values(array_column(omochix_labs_pricing_active($g['models'], '2026-11-06', 90), 'approval')));
+$partial = $anth; $partial['models'][0]['approval']['acknowledged'] = ['cache_write_excluded'];
+check('row gate: an approval that misses a caveat stays pending', 'pending' === omochix_labs_row_approval_state($partial['models'][0]));
+$early = approve_rows($fileOk, ['claude-opus-5-5'], '2026-11-03');
+check('row gate: an approval dated before the price check stays pending (re-checked prices need a new review)', 'pending' === omochix_labs_row_approval_state($early['models'][0]));
+$heldNoReason = $pricing_raw; unset($heldNoReason['models'][3]['approval']['reason']);
+check('row gate: a held row without a reason is invalid', 1 === (omochix_labs_pricing_view($heldNoReason, '2026-11-06')['hidden']['invalid'] ?? 0));
+$unknownCaveat = $pricing_raw; $unknownCaveat['models'][0]['caveats'][] = 'made_up_caveat';
+check('row gate: a caveat code without a label is invalid', 1 === (omochix_labs_pricing_view($unknownCaveat, '2026-11-06')['hidden']['invalid'] ?? 0));
+$staleApproved = approve_rows($fileOk, ['claude-opus-5-5']);
+check('row gate: an approved row still disappears after 90 days', [] === omochix_labs_pricing_active(omochix_labs_pricing_gate(omochix_labs_pricing_view($staleApproved, '2027-02-04'), true, true)['models'], '2027-02-04', 90));
 
 // ---------------------------------------------------------------- crawlers
 $crawlers_raw = json_decode(file_get_contents(omochix_labs_data_file('crawlers')), true);
@@ -291,6 +349,12 @@ check('sitemap: HEAD has no body', '' === $body);
 check('sitemap: request untouched while published', ['omx_labs_sitemap' => '1'] === apply_filters('request', ['omx_labs_sitemap' => '1']));
 check('sitemap: other requests untouched', ['pagename' => 'about'] === apply_filters('request', ['pagename' => 'about']));
 check('sitemap: URL', 'https://example.test/labs-sitemap.xml' === omochix_labs_sitemap_url());
+$GLOBALS['pages']['labs/text-diff'] = new WP_Post(['ID' => 501, 'post_name' => 'text-diff', 'post_title' => 'A real page', 'post_parent' => 77]);
+labs_reset_statics();
+check('sitemap: a tool path that is also a real page (listed by Slim SEO) is left out', !in_array('https://example.test/labs/text-diff/', array_column(omochix_labs_sitemap_entries(), 'loc'), true) && 3 === count(omochix_labs_sitemap_entries()));
+unset($GLOBALS['pages']['labs/text-diff']);
+labs_reset_statics();
+check('sitemap: every entry is a virtual tool URL one level under /labs/', 4 === count(array_filter(array_column(omochix_labs_sitemap_entries(), 'loc'), static fn($u) => 1 === preg_match('#^https://example\.test/labs/[a-z0-9-]+/$#', $u))));
 labs_request(null, [], false);
 check('sitemap: 404 while the labs page is unpublished', ['error' => '404'] === apply_filters('request', ['omx_labs_sitemap' => '1']) && '' === omochix_labs_sitemap_url());
 // A draft tool never appears: run against a copy of the theme data with one tool in draft.
@@ -336,6 +400,39 @@ check('pricing gate: no price reaches the production page config', str_contains(
 $html = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('token-cost-calculator')]); });
 check('pricing gate: production page explains the withheld list and shows no prices', str_contains($html, '料金データの確認が完了するまで') && 0 === preg_match_all('/data-labs-model(?:>| checked>)/', $html) && !str_contains($html, 'platform.claude.com/docs'));
 unset($GLOBALS['env']);
+labs_request();
+
+// --------------------------------------- leak check: production page + config
+// A throw-away theme root: the real templates and assets, a pricing file with
+// the global review and the three Anthropic rows approved.
+$leakTheme = sys_get_temp_dir() . '/omx-labs-leak-' . getmypid();
+@mkdir($leakTheme . '/inc/labs-data', 0777, true);
+foreach (['assets', 'template-parts'] as $dir) { @symlink($GLOBALS['THEME'] . '/' . $dir, $leakTheme . '/' . $dir); }
+file_put_contents($leakTheme . '/inc/labs-data/pricing.json.php', "<?php exit; ?>\n" . json_encode($anth, JSON_UNESCAPED_UNICODE));
+$realTheme2 = $GLOBALS['THEME']; $GLOBALS['THEME'] = $leakTheme;
+$unapproved = array_values(array_filter($pricing_raw['models'], static fn($m) => 'anthropic' !== $m['provider']));
+$needles = array_unique(array_merge(array_column($unapproved, 'id'), array_column($unapproved, 'label'), ['developers.openai.com', 'aistudio.google.com']));
+foreach (['production' => true, 'staging' => false] as $env => $isProd) {
+    $GLOBALS['env'] = $env;
+    labs_request('token-cost-calculator');
+    $GLOBALS['enqueued'] = ['styles' => [], 'scripts' => [], 'inline' => []];
+    do_action('wp_enqueue_scripts');
+    $cfg = implode('', $GLOBALS['enqueued']['inline']['omochix-labs-shared'] ?? []);
+    $page = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('token-cost-calculator')]); });
+    $leaks = array_values(array_filter($needles, static fn($n) => str_contains($cfg, $n) || str_contains($page, $n) || str_contains($cfg, str_replace('.', '\\u002e', $n))));
+    if ($isProd) {
+        check('leak: production page and inline config carry no unapproved model, label or source', [] === $leaks);
+        check('leak: production shows the three approved Anthropic rows', 3 === preg_match_all('/data-labs-model(?:>| checked>)/', $page) && str_contains($cfg, 'claude-opus-5-5') && !str_contains($page, '承認待ち') && !str_contains($page, '保留'));
+        check('leak: production config lists hidden rows only as counts', str_contains($cfg, '"row_held":5') && str_contains($cfg, '"row_pending":5'));
+    } else {
+        check('leak: staging lists every row with its state for review', [] !== $leaks && 11 === preg_match_all('/data-labs-model(?:>| checked>)/', $page) && str_contains($page, '承認待ち') && str_contains($page, '保留'));
+    }
+}
+unset($GLOBALS['env']);
+$GLOBALS['THEME'] = $realTheme2;
+unlink($leakTheme . '/inc/labs-data/pricing.json.php'); @rmdir($leakTheme . '/inc/labs-data'); @rmdir($leakTheme . '/inc');
+foreach (['assets', 'template-parts'] as $dir) { @unlink($leakTheme . '/' . $dir); }
+@rmdir($leakTheme);
 labs_request();
 
 // --------------------------------------------------------------- templates

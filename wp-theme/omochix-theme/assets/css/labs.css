@@ -137,6 +137,9 @@
 .labs-card__meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
 .labs-tag { padding: 3px 10px; font-size: 12px; font-weight: 700; background: var(--color-hover); border-radius: var(--radius-pill); }
 .labs-tag--local { color: var(--labs-accent); background: color-mix(in srgb, var(--labs-accent) 10%, transparent); }
+.labs-tag--state { display: inline-block; margin-left: 4px; color: var(--labs-warn); background: var(--labs-warn-bg); font-size: 11px; }
+.labs-caveats { margin: 0; padding-left: 1.1em; font-size: 12px; line-height: 1.6; }
+.labs-table__caveat { margin-top: 2px; }
 .labs-empty { margin: 12px 0; padding: 16px; color: var(--color-muted); background: var(--color-surface); border: 1px dashed var(--color-line); border-radius: var(--radius-md); }
 .labs-grid--compact .labs-card { padding: 16px; }
 .labs-grid--compact .labs-card__title { font-size: 16px; }

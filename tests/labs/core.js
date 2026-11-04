@@ -228,24 +228,54 @@ var c4 = Cost.compute(model, { input: -5, output: 'abc', cached: 1e12, requestsP
 eq('cost: inputs are clamped to non-negative integers', c4.usage, { input: 0, output: 0, cached: 1e9, requestsPerDay: 2, days: 3660 });
 eq('cost: formatUSD', [Cost.formatUSD(0), Cost.formatUSD(0.000123), Cost.formatUSD(0.5), Cost.formatUSD(12.3456), Cost.formatUSD(1234.5)], ['$0', '$0.00012', '$0.5', '$12.35', '$1,235']);
 eq('cost: formatJPY needs a valid rate', [Cost.formatJPY(10, 150), Cost.formatJPY(10, ''), Cost.formatJPY(10, -1), Cost.formatJPY(0.001, 150)], ['1,500円', '', '', '0.15円']);
-var base = { id: 'x', provider: 'p', label: 'X', input: 1, output: 2, cached_input: null, long_context: null, source_url: 'https://developers.openai.com/api/docs/pricing', verified_at: '2026-11-01', status: 'verified' };
+var base = { id: 'x', provider: 'p', label: 'X', input: 1, output: 2, cached_input: null, long_context: null, source_url: 'https://developers.openai.com/api/docs/pricing', verified_at: '2026-11-01', status: 'verified', caveats: ['known_caveat'], approval: { status: 'pending' } };
+var LABELS = { known_caveat: 'A caveat' };
 function variant(over) { var m = JSON.parse(JSON.stringify(base)); Object.keys(over).forEach(function (k) { m[k] = over[k]; }); return m; }
 eq('cost: hiddenReason', [
-    Cost.hiddenReason(base, '2026-11-04', 90),
-    Cost.hiddenReason(variant({ status: 'draft' }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ source_url: 'https://example.com/prices' }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ source_url: 'http://developers.openai.com/' }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ source_url: 'https://developers.openai.com.evil.test/' }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ verified_at: '2026-11-06' }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ verified_at: '2026-11-05' }), '2026-11-04', 90),
-    Cost.hiddenReason(base, '2027-01-31', 90),
-    Cost.hiddenReason(base, '2027-01-30', 90),
-    Cost.hiddenReason(variant({ input: -1 }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ input: '1' }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ valid_until: '2026-11-03' }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ valid_from: '2026-11-05' }), '2026-11-04', 90),
-    Cost.hiddenReason(variant({ valid_from: '2026-12-01', valid_until: '2026-11-30' }), '2026-11-04', 90)
+    Cost.hiddenReason(base, '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ status: 'draft' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ source_url: 'https://example.com/prices' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ source_url: 'http://developers.openai.com/' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ source_url: 'https://developers.openai.com.evil.test/' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ verified_at: '2026-11-06' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ verified_at: '2026-11-05' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(base, '2027-01-31', 90, LABELS),
+    Cost.hiddenReason(base, '2027-01-30', 90, LABELS),
+    Cost.hiddenReason(variant({ input: -1 }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ input: '1' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ valid_until: '2026-11-03' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ valid_from: '2026-11-05' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ valid_from: '2026-12-01', valid_until: '2026-11-30' }), '2026-11-04', 90, LABELS)
 ], ['', 'unverified', 'source', 'source', 'source', 'unverified', '', 'stale', '', 'invalid', 'invalid', 'expired', 'upcoming', 'invalid']);
+eq('cost: hiddenReason for caveats and approval records', [
+    Cost.hiddenReason(variant({ caveats: ['unknown_code'] }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ caveats: 'known_caveat' }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ approval: null }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ approval: { status: 'ok' } }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ approval: { status: 'held' } }), '2026-11-04', 90, LABELS),
+    Cost.hiddenReason(variant({ approval: { status: 'held', reason: 'unconfirmed' } }), '2026-11-04', 90, LABELS)
+], ['invalid', 'invalid', 'invalid', 'invalid', 'invalid', '']);
+var good = { status: 'approved', reviewer: 'R', reviewed_at: '2026-11-05', acknowledged: ['known_caveat'] };
+function withApproval(a) { return variant({ approval: a }); }
+eq('cost: approvalState', [
+    Cost.approvalState(withApproval(good)),
+    Cost.approvalState(withApproval({ status: 'pending' })),
+    Cost.approvalState(withApproval({ status: 'held', reason: 'x' })),
+    Cost.approvalState(withApproval(Object.assign({}, good, { reviewer: ' ' }))),
+    Cost.approvalState(withApproval(Object.assign({}, good, { reviewed_at: 'soon' }))),
+    Cost.approvalState(withApproval(Object.assign({}, good, { reviewed_at: '2026-10-31' }))),
+    Cost.approvalState(withApproval(Object.assign({}, good, { acknowledged: [] }))),
+    Cost.approvalState(variant({ caveats: [], approval: Object.assign({}, good, { acknowledged: [] }) }))
+], ['approved', 'pending', 'held', 'pending', 'pending', 'pending', 'pending', 'approved']);
+var gview = { models: [{ id: 'a', approval: 'approved' }, { id: 'b', approval: 'pending' }, { id: 'c', approval: 'held' }], hidden: {} };
+function ids(v) { return v.models.map(function (m) { return m.id; }); }
+eq('cost: gate', [
+    [ids(Cost.gate(gview, false, true)), Cost.gate(gview, false, true).withheld],
+    [ids(Cost.gate(gview, true, true)), Cost.gate(gview, true, true).withheld, Cost.gate(gview, true, true).hidden],
+    [ids(Cost.gate(gview, false, false)), Cost.gate(gview, false, false).withheld],
+    [ids(Cost.gate({ models: [{ id: 'b', approval: 'pending' }], hidden: {} }, true, true)), Cost.gate({ models: [{ id: 'b', approval: 'pending' }], hidden: {} }, true, true).withheld]
+], [[[], true], [['a'], false, { row_pending: 1, row_held: 1 }], [['a', 'b', 'c'], false], [[], true]]);
+eq('cost: fileApproved', [Cost.fileApproved({ review: { status: 'approved', reviewer: 'R', reviewed_at: '2026-11-05' } }), Cost.fileApproved({ review: { status: 'pending' } }), Cost.fileApproved({ review: { status: 'approved', reviewer: '', reviewed_at: '2026-11-05' } }), Cost.fileApproved(null)], [true, false, false, false]);
 var rows = [variant({ id: 'a', valid_until: '2026-11-30' }), variant({ id: 'a', valid_from: '2026-12-01', input: 9 }), variant({ id: 'b' }), variant({ id: 'c' }), variant({ id: 'c' })];
 eq('cost: active picks the row for the day and drops ambiguous duplicates', [Cost.active(rows, '2026-11-20', 90).map(function (m) { return m.id + m.input; }), Cost.active(rows, '2026-12-02', 90).map(function (m) { return m.id + m.input; })], [['a1', 'b1'], ['a9', 'b1']]);
 eq('cost: active drops rows older than max age on the browser date', Cost.active([base], '2027-02-15', 90), []);

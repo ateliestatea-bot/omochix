@@ -1,11 +1,14 @@
 /**
  * OmochiX Labs: API price rules and cost arithmetic for the calculator.
  *
- * hiddenReason() / view() / active() mirror omochix_labs_price_hidden_reason(),
- * omochix_labs_pricing_view() and omochix_labs_pricing_active() in
- * inc/labs.php (tests/labs/data.js runs both on the same fixtures). The page
- * receives the server's view and calls active() again with the browser's own
- * date, so a long-cached page never shows an expired or stale price.
+ * hiddenReason() / approvalState() / view() / active() / gate() mirror
+ * omochix_labs_price_hidden_reason(), omochix_labs_row_approval_state(),
+ * omochix_labs_pricing_view(), omochix_labs_pricing_active() and
+ * omochix_labs_pricing_gate() in inc/labs.php (tests/labs/data.js runs both
+ * on the same fixtures). The page receives the server's already-gated view
+ * (on production: only approved rows of an approved file) and calls active()
+ * again with the browser's own date, so a long-cached page never shows an
+ * expired or stale price.
  *
  * All amounts are ESTIMATES from list prices; they do not include tax,
  * discounts, batch / priority tiers, cache writes or tool-use surcharges.
@@ -36,7 +39,22 @@
         return SOURCE_HOSTS.indexOf(host) !== -1;
     }
 
-    function hiddenReason(model, today, maxAge) {
+    function isCaveatCode(v) { return typeof v === 'string' && /^[a-z][a-z_]{2,60}$/.test(v); }
+
+    /** 'approved' | 'held' | 'pending' (see omochix_labs_row_approval_state()). */
+    function approvalState(model) {
+        var a = model && model.approval && typeof model.approval === 'object' ? model.approval : {};
+        if (a.status === 'held') return 'held';
+        if (a.status !== 'approved') return 'pending';
+        if (typeof a.reviewer !== 'string' || !a.reviewer.trim() || !Text.isDate(a.reviewed_at) || !Text.isDate(model.verified_at) || a.reviewed_at < model.verified_at) return 'pending';
+        var ack = Array.isArray(a.acknowledged) ? a.acknowledged : [];
+        var caveats = Array.isArray(model.caveats) ? model.caveats : [];
+        for (var i = 0; i < caveats.length; i++) if (ack.indexOf(caveats[i]) === -1) return 'pending';
+        return 'approved';
+    }
+
+    function hiddenReason(model, today, maxAge, caveatLabels) {
+        var labels = caveatLabels || {};
         if (!model || typeof model !== 'object') return 'invalid';
         if (model.status !== 'verified') return 'unverified';
         if (!allowedSource(model.source_url)) return 'source';
@@ -51,6 +69,9 @@
             if (typeof long !== 'object' || !Number.isInteger(long.threshold_tokens) || long.threshold_tokens < 1 || !isPrice(long.input) || !isPrice(long.output)) return 'invalid';
             if (long.cached_input !== undefined && long.cached_input !== null && !isPrice(long.cached_input)) return 'invalid';
         }
+        if (!Array.isArray(model.caveats) || model.caveats.some(function (c) { return !isCaveatCode(c) || !Object.prototype.hasOwnProperty.call(labels, c); })) return 'invalid';
+        var ap = model.approval;
+        if (!ap || typeof ap !== 'object' || ['pending', 'approved', 'held'].indexOf(ap.status) === -1 || (ap.status === 'held' && (typeof ap.reason !== 'string' || !ap.reason.trim()))) return 'invalid';
         if ((model.valid_from != null && !Text.isDate(model.valid_from)) || (model.valid_until != null && !Text.isDate(model.valid_until))) return 'invalid';
         if (model.valid_from && model.valid_until && model.valid_from > model.valid_until) return 'invalid';
         if (model.valid_until && today > model.valid_until) return 'expired';
@@ -59,8 +80,8 @@
     }
 
     function view(data, today) {
-        var out = { ok: false, currency: 'USD', max_age_days: 90, providers: {}, models: [], hidden: {} };
-        if (!data || data.schema_version !== 1 || data.currency !== 'USD' || data.unit !== 'per_1m_tokens') return out;
+        var out = { ok: false, currency: 'USD', max_age_days: 90, providers: {}, caveat_labels: {}, models: [], hidden: {} };
+        if (!data || data.schema_version !== 2 || data.currency !== 'USD' || data.unit !== 'per_1m_tokens') return out;
         var maxAge = parseInt(data.max_age_days, 10) || 0;
         if (maxAge < 1 || maxAge > 90) maxAge = 90;
         out.ok = true;
@@ -68,8 +89,12 @@
         (data.providers || []).forEach(function (p) {
             if (p && typeof p.slug === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug) && typeof p.name === 'string') out.providers[p.slug] = p.name;
         });
+        Object.keys(data.caveat_labels || {}).forEach(function (code) {
+            var label = data.caveat_labels[code];
+            if (isCaveatCode(code) && typeof label === 'string' && label.trim()) out.caveat_labels[code] = label;
+        });
         (data.models || []).forEach(function (m) {
-            var reason = hiddenReason(m, today, maxAge);
+            var reason = hiddenReason(m, today, maxAge, out.caveat_labels);
             if ((reason === '' || reason === 'upcoming') && !Object.prototype.hasOwnProperty.call(out.providers, m.provider)) reason = 'invalid';
             if (reason === 'expired') return;
             if (reason !== '' && reason !== 'upcoming') { out.hidden[reason] = (out.hidden[reason] || 0) + 1; return; }
@@ -85,10 +110,37 @@
                 valid_from: m.valid_from || null,
                 valid_until: m.valid_until || null,
                 source_url: m.source_url,
-                verified_at: m.verified_at
+                verified_at: m.verified_at,
+                caveats: m.caveats.slice(),
+                approval: approvalState(m)
             });
         });
         return out;
+    }
+
+    /** What a page may show (see omochix_labs_pricing_gate()). */
+    function gate(v, approved, production) {
+        var out = JSON.parse(JSON.stringify(v));
+        out.approved = !!approved;
+        out.production = !!production;
+        if (!production) { out.withheld = false; return out; }
+        var kept = [];
+        out.models.forEach(function (m) {
+            if (approved && m.approval === 'approved') kept.push(m);
+            else {
+                var key = 'row_' + (approved ? m.approval : 'unapproved_file');
+                out.hidden[key] = (out.hidden[key] || 0) + 1;
+            }
+        });
+        out.models = kept;
+        out.withheld = !approved || !kept.length;
+        return out;
+    }
+
+    /** Global gate on the raw file (see omochix_labs_pricing_approved()). */
+    function fileApproved(data) {
+        var r = data && data.review && typeof data.review === 'object' ? data.review : {};
+        return r.status === 'approved' && typeof r.reviewer === 'string' && !!r.reviewer.trim() && Text.isDate(r.reviewed_at);
     }
 
     /** Rows that apply on `today` (see omochix_labs_pricing_active()). */
@@ -168,7 +220,10 @@
     return {
         SOURCE_HOSTS: SOURCE_HOSTS,
         hiddenReason: hiddenReason,
+        approvalState: approvalState,
         view: view,
+        gate: gate,
+        fileApproved: fileApproved,
         active: active,
         compute: compute,
         formatUSD: formatUSD,

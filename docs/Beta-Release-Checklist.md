@@ -43,12 +43,12 @@
 | 項目 | 状態 | 優先度 | 作業場所 | 備考 |
 |---|---|---:|---|---|
 | Google Search Console | 公開後 | P0 | Google | 所有権確認、インデックス状況確認 |
-| Sitemap送信 | 公開後 | P0 | Search Console | 本番HTTPS URLを使用 |
+| Sitemap送信 | 公開後 | P0 | Search Console | 本番HTTPS URLを使用。Slim SEOの`/sitemap.xml`と補助の`/labs-sitemap.xml`（Labs公開後）を送信。手順は`docs/labs/LABS-SEARCH-CONSOLE.md` |
 | Rich Results Test | 公開後 | P0 | Google | 実NewsArticle、SoftwareApplicationを検証 |
 | Schema Validator | 公開後 | P1 | Schema.org | JSON-LDの型・関係を確認 |
 | OGP / SNS preview | 公開後 | P1 | X / Facebook等 | 正式画像とキャッシュを確認 |
 | Canonical HTTPS確認 | 公開後 | P0 | Browser / crawler | HTTP、www有無、末尾slashを統一 |
-| robots本番確認 | 公開後 | P0 | Browser | crawl許可とSitemap URLを確認 |
+| robots本番確認 | 公開後 | P0 | Browser | crawl許可と、Sitemap行（Slim SEOと`/labs-sitemap.xml`の各1行）を確認 |
 | Lighthouse実測 | 公開後 | P1 | Browser | CWV、Accessibility、SEOを実測 |
 | Index確認 | 公開後 | P0 | Search Console | noindex対象が混入していないか確認 |
 | 404 / redirect監視 | 公開後 | P1 | Logs / Search Console | 内部・外部リンク切れを継続確認 |

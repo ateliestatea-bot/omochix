@@ -1,7 +1,7 @@
 <?php
 /**
  * AI token / API cost calculator: workspace and guide. Prices come from
- * assets/data/labs/pricing.json through omochix_labs_get_pricing(); only
+ * inc/labs-data/pricing.json.php through omochix_labs_get_pricing(); only
  * rows that apply today (verified within 90 days, inside their date window)
  * are listed, and the browser re-checks them with its own date.
  *
@@ -17,6 +17,8 @@ if (!defined('ABSPATH')) {
 $omochix_pricing = omochix_labs_get_pricing();
 $omochix_models  = omochix_labs_pricing_active($omochix_pricing['models'], omochix_labs_today(), $omochix_pricing['max_age_days']);
 $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
+// Outside production every valid row is listed for review, marked with its approval state.
+$omochix_states  = ['pending' => __('承認待ち', 'omochix'), 'held' => __('保留', 'omochix')];
 ?>
 <?php if ('workspace' === $args['part']) : ?>
     <p class="labs-notice labs-notice--warning"><strong><?php esc_html_e('目安の計算です。', 'omochix'); ?></strong><?php esc_html_e('トークン数は文字の種類から推定した値で、金額は公開されている標準ティアの料金から計算した概算です。キャッシュ書き込みの料金は計算に含みません。実際の請求額を保証するものではありません。', 'omochix'); ?></p>
@@ -64,7 +66,7 @@ $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
                     <div class="labs-models__group">
                         <p class="labs-models__provider"><?php echo esc_html($omochix_provider_name); ?></p>
                         <?php foreach ($omochix_rows as $omochix_model) : ?>
-                            <label class="labs-check"><input type="checkbox" value="<?php echo esc_attr($omochix_model['id']); ?>" data-labs-model<?php echo in_array($omochix_model['id'], $omochix_default, true) ? ' checked' : ''; ?>> <?php echo esc_html($omochix_model['label']); ?></label>
+                            <label class="labs-check"><input type="checkbox" value="<?php echo esc_attr($omochix_model['id']); ?>" data-labs-model<?php echo in_array($omochix_model['id'], $omochix_default, true) ? ' checked' : ''; ?>> <?php echo esc_html($omochix_model['label']); ?><?php if (isset($omochix_states[$omochix_model['approval']])) : ?> <span class="labs-tag labs-tag--state"><?php echo esc_html($omochix_states[$omochix_model['approval']]); ?></span><?php endif; ?></label>
                         <?php endforeach; ?>
                     </div>
                 <?php endforeach; ?>
@@ -151,6 +153,8 @@ $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
             <li><?php esc_html_e('単価：テキストの入力・出力・キャッシュ読み込みの100万トークンあたりの価格（USD）。キャッシュ書き込み、画像・音声などの入力、ツール利用の料金は計算に含みません。', 'omochix'); ?></li>
             <li><?php esc_html_e('価格改定：公式に予告されている改定は、適用日から新しい価格に切り替えます。', 'omochix'); ?></li>
             <li><?php esc_html_e('鮮度：公式ページで確認した日付を併記し、確認日から90日を過ぎた価格や、確認できていない価格は表示しません。', 'omochix'); ?></li>
+            <li><?php esc_html_e('承認：価格表全体の確認に加えて、モデルごとに価格と計算の前提を確認したものだけを掲載します。公式情報で条件を確かめられないモデルは掲載しません。', 'omochix'); ?></li>
+            <li><?php esc_html_e('モデルごとの前提：Google の一部のモデルは、明示的キャッシュのストレージ料金と無料枠を含めず、モダリティの表記がない価格をテキストの単価として扱います。Gemini の出力単価は thinking トークンを含みます。各モデルの前提は下の表の「計算の前提」に記載しています。', 'omochix'); ?></li>
         </ul>
     </section>
     <section>
@@ -159,14 +163,15 @@ $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
             <p><?php echo esc_html(sprintf(__('各社の公式価格ページで確認した標準料金（USD、100万トークンあたり）です。確認日から%s日を過ぎた価格や、確認できていない価格は表示しません。', 'omochix'), (string) $omochix_pricing['max_age_days'])); ?></p>
             <div class="labs-table-wrap" role="region" aria-label="<?php esc_attr_e('掲載している価格', 'omochix'); ?>" tabindex="0">
                 <table class="labs-table">
-                    <thead><tr><th scope="col"><?php esc_html_e('モデル', 'omochix'); ?></th><th scope="col"><?php esc_html_e('入力', 'omochix'); ?></th><th scope="col"><?php esc_html_e('出力', 'omochix'); ?></th><th scope="col"><?php esc_html_e('キャッシュ読み込み', 'omochix'); ?></th><th scope="col"><?php esc_html_e('出典（確認日）', 'omochix'); ?></th></tr></thead>
+                    <thead><tr><th scope="col"><?php esc_html_e('モデル', 'omochix'); ?></th><th scope="col"><?php esc_html_e('入力', 'omochix'); ?></th><th scope="col"><?php esc_html_e('出力', 'omochix'); ?></th><th scope="col"><?php esc_html_e('キャッシュ読み込み', 'omochix'); ?></th><th scope="col"><?php esc_html_e('計算の前提', 'omochix'); ?></th><th scope="col"><?php esc_html_e('出典（確認日）', 'omochix'); ?></th></tr></thead>
                     <tbody>
                         <?php foreach ($omochix_models as $omochix_model) : ?>
                             <tr>
-                                <th scope="row"><?php echo esc_html($omochix_model['label']); ?><span class="labs-table__sub"><?php echo esc_html($omochix_pricing['providers'][$omochix_model['provider']] ?? ''); ?></span></th>
+                                <th scope="row"><?php echo esc_html($omochix_model['label']); ?><span class="labs-table__sub"><?php echo esc_html($omochix_pricing['providers'][$omochix_model['provider']] ?? ''); ?></span><?php if (isset($omochix_states[$omochix_model['approval']])) : ?><span class="labs-tag labs-tag--state"><?php echo esc_html($omochix_states[$omochix_model['approval']]); ?></span><?php endif; ?></th>
                                 <td>$<?php echo esc_html((string) $omochix_model['input']); ?></td>
                                 <td>$<?php echo esc_html((string) $omochix_model['output']); ?></td>
                                 <td><?php echo null === $omochix_model['cached_input'] ? '—' : '$' . esc_html((string) $omochix_model['cached_input']); ?></td>
+                                <td><?php if ($omochix_model['caveats']) : ?><ul class="labs-caveats"><?php foreach ($omochix_model['caveats'] as $omochix_caveat) : ?><li><?php echo esc_html($omochix_pricing['caveat_labels'][$omochix_caveat] ?? ''); ?></li><?php endforeach; ?></ul><?php else : ?>—<?php endif; ?></td>
                                 <td><a href="<?php echo esc_url($omochix_model['source_url']); ?>" rel="noopener noreferrer external"><?php esc_html_e('公式ページ', 'omochix'); ?></a><span class="labs-table__sub"><?php echo esc_html($omochix_model['verified_at']); ?><?php if ($omochix_model['valid_until']) : ?> / <?php echo esc_html(sprintf(__('%sまでの価格', 'omochix'), $omochix_model['valid_until'])); ?><?php endif; ?></span></td>
                             </tr>
                         <?php endforeach; ?>
