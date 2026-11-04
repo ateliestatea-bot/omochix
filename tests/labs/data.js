@@ -85,6 +85,7 @@ check('pricing: scheduled price changes do not overlap', (function () {
         return rows.length === 2 && rows[0].valid_until && rows[1].valid_from && rows[0].valid_until < rows[1].valid_from;
     });
 }()));
+check('pricing: scope of the listed prices is written down', pricing.scope && ['providers', 'tier', 'prices', 'schedule'].every(function (k) { return typeof pricing.scope[k] === 'string' && pricing.scope[k].length > 20; }));
 check('pricing: review record present', pricing.review && ['pending', 'approved'].indexOf(pricing.review.status) !== -1);
 if (release) {
     check('release: prices reviewed by a person', pricing.review.status === 'approved' && typeof pricing.review.reviewer === 'string' && pricing.review.reviewer !== '' && /^\d{4}-\d{2}-\d{2}$/.test(pricing.review.reviewed_at || ''));

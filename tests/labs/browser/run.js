@@ -299,6 +299,17 @@ async function toolChecks(browser, name) {
     check(name + ' list: card link opens the tool', /robots\.txt生成/.test(await p.textContent('h1')));
     await s.context.close();
 
+    // --- sitemap and robots.txt (over HTTP, as a crawler sees them) -----
+    var req = (await browser.newContext()).request;
+    var sm = await req.get(ORIGIN + '/labs-sitemap.xml');
+    var smText = await sm.text();
+    check(name + ' sitemap: 200 application/xml, noindex, Last-Modified', sm.status() === 200 && /^application\/xml; charset=UTF-8$/i.test(sm.headers()['content-type']) && /noindex/.test(sm.headers()['x-robots-tag']) && !!sm.headers()['last-modified']);
+    check(name + ' sitemap: four tool URLs and not the list page', (smText.match(/<loc>/g) || []).length === 4 && smText.indexOf('<loc>' + ORIGIN + '/labs/</loc>') === -1);
+    var sm304 = await req.get(ORIGIN + '/labs-sitemap.xml', { headers: { 'If-Modified-Since': sm.headers()['last-modified'] } });
+    check(name + ' sitemap: 304 for an unchanged copy', sm304.status() === 304 && (await sm304.text()) === '');
+    var rb = await (await req.get(ORIGIN + '/robots.txt')).text();
+    check(name + ' robots.txt: Slim SEO sitemap kept and Labs sitemap added once', rb.indexOf('Sitemap: ' + ORIGIN + '/sitemap.xml') !== -1 && (rb.match(/labs-sitemap\.xml/g) || []).length === 1);
+
     var nf = await openPage(browser, 1440, '/labs/does-not-exist/');
     check(name + ' 404 for an unknown slug', nf.status() === 404);
     await nf.context.close();

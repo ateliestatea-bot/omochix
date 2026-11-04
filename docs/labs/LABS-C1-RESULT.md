@@ -158,3 +158,17 @@ Slim SEO 4.9.11 には、仮想 URL をサイトマップに追加するフッ�
   3. キャッシュ書き込みの料金は計算に含めない方針
   4. 標準ティアだけを掲載すること(Batch・Flex などは除く)
 - 承認したら、`pricing.json` の `review` に `"status": "approved"`、`reviewer`、`reviewed_at` を記入する。その後 `node tests/labs/data.js --release` が通ることを確認する。**今回は承認フラグを変更していない**(リリースゲートは想定どおり失敗)。
+
+## 11. C1.1(SEO・公開準備。未コミット)
+
+- **サイトマップ**:`/labs-sitemap.xml` を追加した。
+  - 中身:公開中のツールの canonical URL 4 件と `lastmod`。一覧 `/labs/` は Slim SEO の固定ページ用サイトマップに載るので入れない。下書きと未知の slug は含めない。
+  - 応答:`application/xml; charset=UTF-8`、`X-Robots-Tag: noindex, follow`、`Cache-Control: public, max-age=3600`。`Last-Modified` は `catalog.json` の更新時刻で、変更がなければ 304 を返す。HEAD には本文を返さない。
+  - 固定ページ `labs` が非公開のときは 404。rewrite のバージョンを 2 にした(1 回だけ flush される)。
+- **robots.txt**:`robots_txt` フィルタを優先度 10000(Slim SEO の 9999 の後)で使い、`Sitemap: …/labs-sitemap.xml` を 1 行だけ末尾に追加する。既存の行は残す。検索エンジンを拒否する設定のとき、固定ページが非公開のとき、同じ行がすでにあるときは追加しない。Slim SEO のサイトマップと rewrite には触れていない。
+- **価格表**:
+  - `pricing.json` に `scope`(対象モデル、ティア、単価の範囲、価格改定の扱い)を追加した。
+  - 画面に「標準ティアのみ」「キャッシュ書き込みは計算に含めない」「推定値」と、掲載モデルの条件を表示する。
+  - **本番のゲート**:`wp_get_environment_type()` が `production` で、`review` が未承認(status・reviewer・reviewed_at がそろっていない)なら、価格を 1 件も出さない(ページ・設定 JSON・解説の表のどれにも出ない)。staging・development・local では、レビューのために表示する。`review.status` は `pending` のまま。
+- **テスト**:PHP 220 件、Node 117 件、パリティ 25 件、Chromium 98 件、既存 11 スイート、すべて PASS。`--release` は未承認のため 1 件 FAIL(想定どおり)。`xmllint` で整形式を確認。
+- **検証計画**:[LABS-C1.1-VERIFICATION.md](LABS-C1.1-VERIFICATION.md)

@@ -22,7 +22,9 @@ if (!defined('ABSPATH')) {
 
 const OMOCHIX_LABS_PATH             = 'labs';
 const OMOCHIX_LABS_QUERY_VAR        = 'omx_lab';
-const OMOCHIX_LABS_REWRITE_VERSION  = '1';
+const OMOCHIX_LABS_REWRITE_VERSION  = '2'; // 2: /labs-sitemap.xml
+const OMOCHIX_LABS_SITEMAP_PATH     = 'labs-sitemap.xml';
+const OMOCHIX_LABS_SITEMAP_VAR      = 'omx_labs_sitemap';
 const OMOCHIX_LABS_CATALOG_VERSION  = 1;
 const OMOCHIX_LABS_PRICING_VERSION  = 1;
 const OMOCHIX_LABS_CRAWLERS_VERSION = 1;
@@ -551,11 +553,38 @@ function omochix_labs_pricing_active(array $models, $today, $max_age) {
     return array_values(array_filter($rows, static fn($m) => 1 === $counts[$m['id']]));
 }
 
+/**
+ * Whether a person approved pricing.json (review.status "approved" with a
+ * reviewer and a date) — the same rule as `tests/labs/data.js --release`.
+ */
+function omochix_labs_pricing_approved($data) {
+    $review = is_array($data) && is_array($data['review'] ?? null) ? $data['review'] : [];
+    return 'approved' === ($review['status'] ?? null)
+        && is_string($review['reviewer'] ?? null) && '' !== trim($review['reviewer'])
+        && omochix_labs_is_date($review['reviewed_at'] ?? null);
+}
+
+/** Production unless WP_ENVIRONMENT_TYPE says otherwise (WordPress's own default). */
+function omochix_labs_is_production() {
+    return !function_exists('wp_get_environment_type') || 'production' === wp_get_environment_type();
+}
+
+/**
+ * Prices for the page. Release gate: on a production site no price is shown
+ * until pricing.json is approved (local / development / staging show them so
+ * they can be reviewed); `withheld` tells the templates why the list is empty.
+ */
 function omochix_labs_get_pricing() {
     static $view = null;
     if (null === $view) {
         $read = omochix_labs_read_json(omochix_labs_data_file('pricing'));
-        $view = omochix_labs_pricing_view($read['ok'] ? $read['data'] : null, omochix_labs_today());
+        $data = $read['ok'] ? $read['data'] : null;
+        $view = omochix_labs_pricing_view($data, omochix_labs_today());
+        $view['approved'] = omochix_labs_pricing_approved($data);
+        $view['withheld'] = !$view['approved'] && omochix_labs_is_production();
+        if ($view['withheld']) {
+            $view['models'] = [];
+        }
     }
     return $view;
 }
@@ -654,6 +683,7 @@ function omochix_labs_url($tool = null, array $filters = []) {
 
 function omochix_labs_register_query_vars($vars) {
     $vars[] = OMOCHIX_LABS_QUERY_VAR;
+    $vars[] = OMOCHIX_LABS_SITEMAP_VAR;
     return $vars;
 }
 add_filter('query_vars', 'omochix_labs_register_query_vars');
@@ -664,6 +694,7 @@ function omochix_labs_register_rewrite_rules() {
         'index.php?pagename=' . OMOCHIX_LABS_PATH . '&' . OMOCHIX_LABS_QUERY_VAR . '=$matches[1]',
         'top'
     );
+    add_rewrite_rule('^' . preg_quote(OMOCHIX_LABS_SITEMAP_PATH, '#') . '$', 'index.php?' . OMOCHIX_LABS_SITEMAP_VAR . '=1', 'top');
 }
 add_action('init', 'omochix_labs_register_rewrite_rules');
 
@@ -738,6 +769,137 @@ function omochix_labs_template_include($template) {
     return file_exists($labs) ? $labs : $template;
 }
 add_filter('template_include', 'omochix_labs_template_include', 9);
+
+/* -------------------------------------------------------------------------
+ * XML sitemap of the tool pages ("/labs-sitemap.xml")
+ *
+ * Slim SEO has no hook for URLs that are not posts, so the tool pages get a
+ * sitemap of their own, announced in robots.txt. The list page "/labs/" is a
+ * normal page and already in Slim SEO's page sitemap, so it is not repeated
+ * here. Slim SEO's sitemaps are not touched.
+ * ---------------------------------------------------------------------- */
+
+/** Public sitemap URL, or '' while the labs page is not published. */
+function omochix_labs_sitemap_url() {
+    return omochix_labs_page_id() ? home_url('/' . OMOCHIX_LABS_SITEMAP_PATH) : '';
+}
+
+/** @return array<int, array{loc: string, lastmod: string}> Canonical URLs of the published tools. */
+function omochix_labs_sitemap_entries() {
+    $entries = [];
+    foreach (omochix_labs_get_tools() as $tool) {
+        $loc = omochix_labs_url($tool);
+        if ('' !== $loc) {
+            $entries[] = ['loc' => $loc, 'lastmod' => $tool['updated']];
+        }
+    }
+    return $entries;
+}
+
+function omochix_labs_xml_escape($text) {
+    return htmlspecialchars((string) $text, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+/** @param array<int, array{loc: string, lastmod: string}> $entries */
+function omochix_labs_sitemap_xml(array $entries) {
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    foreach ($entries as $entry) {
+        $xml .= "\t<url>\n\t\t<loc>" . omochix_labs_xml_escape($entry['loc']) . "</loc>\n";
+        if (omochix_labs_is_date($entry['lastmod'])) {
+            $xml .= "\t\t<lastmod>" . $entry['lastmod'] . "</lastmod>\n";
+        }
+        $xml .= "\t</url>\n";
+    }
+    return $xml . "</urlset>\n";
+}
+
+/**
+ * Response headers. Last-Modified follows catalog.json (it only changes with
+ * a theme release, when the page cache is purged anyway); one hour of
+ * caching keeps LiteSpeed and browsers in step with that.
+ *
+ * @param int $modified Unix time of the last catalog change.
+ * @return array<string, string>
+ */
+function omochix_labs_sitemap_headers($modified) {
+    return [
+        'Content-Type'           => 'application/xml; charset=UTF-8',
+        'X-Robots-Tag'           => 'noindex, follow',
+        'X-Content-Type-Options' => 'nosniff',
+        'Cache-Control'          => 'public, max-age=3600',
+        'Last-Modified'          => gmdate('D, d M Y H:i:s', (int) $modified) . ' GMT',
+    ];
+}
+
+/** Whether an If-Modified-Since request header lets us answer 304. */
+function omochix_labs_sitemap_not_modified($if_modified_since, $modified) {
+    if (!is_string($if_modified_since) || '' === $if_modified_since) {
+        return false;
+    }
+    $since = strtotime($if_modified_since);
+    return false !== $since && $since >= (int) $modified;
+}
+
+function omochix_labs_sitemap_modified() {
+    $file = omochix_labs_data_file('catalog');
+    return is_file($file) ? (int) filemtime($file) : time();
+}
+
+/** A sitemap request while the labs page is not published is a normal 404. */
+add_filter('request', static function ($query_vars) {
+    if (!empty($query_vars[OMOCHIX_LABS_SITEMAP_VAR]) && !omochix_labs_sitemap_url()) {
+        return ['error' => '404'];
+    }
+    return $query_vars;
+});
+
+/**
+ * Print the sitemap. Returns the HTTP status sent, so the caller decides
+ * whether to stop WordPress (the parse_request hook) or not (tests).
+ */
+function omochix_labs_send_sitemap($if_modified_since, $method = 'GET') {
+    $modified = omochix_labs_sitemap_modified();
+    $status   = omochix_labs_sitemap_not_modified($if_modified_since, $modified) ? 304 : 200;
+    status_header($status);
+    if (!headers_sent()) {
+        foreach (omochix_labs_sitemap_headers($modified) as $name => $value) {
+            header($name . ': ' . $value);
+        }
+    }
+    if (200 === $status && 'HEAD' !== strtoupper((string) $method)) {
+        echo omochix_labs_sitemap_xml(omochix_labs_sitemap_entries()); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in omochix_labs_sitemap_xml().
+    }
+    return $status;
+}
+
+/** Answer before the main query and canonical redirects run. */
+add_action('parse_request', static function ($wp) {
+    if (!is_object($wp) || empty($wp->query_vars[OMOCHIX_LABS_SITEMAP_VAR]) || !omochix_labs_sitemap_url()) {
+        return;
+    }
+    omochix_labs_send_sitemap(
+        isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ? wp_unslash($_SERVER['HTTP_IF_MODIFIED_SINCE']) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only parsed as a date.
+        isset($_SERVER['REQUEST_METHOD']) ? (string) $_SERVER['REQUEST_METHOD'] : 'GET' // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- compared to "HEAD" only.
+    );
+    exit;
+}, 1);
+
+/**
+ * Add the Labs sitemap to robots.txt, after Slim SEO (priority 9999, which may
+ * replace the whole file with the admin-edited text). Existing lines are kept;
+ * nothing is added when the site discourages search engines, when the labs
+ * page is unpublished, or when the line is already there.
+ */
+function omochix_labs_robots_txt($output, $public, $sitemap_url) {
+    $output = (string) $output;
+    if (!$public || '' === $sitemap_url || false !== stripos($output, $sitemap_url)) {
+        return $output;
+    }
+    return rtrim($output, "\r\n") . "\nSitemap: " . $sitemap_url . "\n";
+}
+add_filter('robots_txt', static function ($output, $public) {
+    return omochix_labs_robots_txt($output, (bool) $public, omochix_labs_sitemap_url());
+}, 10000, 2);
 
 /* -------------------------------------------------------------------------
  * Security headers (Labs pages only)

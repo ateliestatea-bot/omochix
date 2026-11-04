@@ -3,6 +3,12 @@
   "currency": "USD",
   "unit": "per_1m_tokens",
   "max_age_days": 90,
+  "scope": {
+    "providers": "Anthropic, OpenAI and Google models listed on the provider's official API pricing page with a published API model ID: each provider's current flagship, mid-size and small models.",
+    "tier": "Standard tier, general availability list prices only. No Batch / Flex / Priority tiers, regional prices or contract discounts.",
+    "prices": "Text input, output and cache-read prices per 1M tokens in USD. Cache writes, image / audio input and tool fees are not modelled.",
+    "schedule": "Announced price changes are separate rows with valid_until / valid_from and switch on the effective date."
+  },
   "review": {
     "status": "pending",
     "reviewer": null,

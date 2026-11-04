@@ -157,7 +157,7 @@
                 rowsBody.appendChild(tr);
                 lastRows.push([model.label, Cost.formatUSD(r.perRequest), Cost.formatUSD(r.perDay), Cost.formatUSD(r.total), model.verified_at]);
             });
-            var lines = ['金額はすべて推定値です。'];
+            var lines = ['金額はすべて推定値です（標準ティアの料金。キャッシュ書き込みの料金は含みません）。'];
             if (flags.long_context) lines.push('入力が長いため、一部のモデルは長いコンテキストの単価で計算しています。');
             if (flags.cached_not_listed) lines.push('キャッシュ単価が公開されていないモデルは、キャッシュ分も通常の入力単価で計算しています。');
             if (!selected.length && models.length) lines.push('比べるモデルにチェックを入れてください。');

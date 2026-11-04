@@ -62,8 +62,12 @@ check('related: curated first, never self, at most 4', ['text-diff', 'token-cost
 
 // ---------------------------------------------------------------- routing
 do_action('init');
-check('rewrite: one top rule for /labs/{slug}/', [['^labs/([a-z0-9-]+)/?$', 'index.php?pagename=labs&omx_lab=$matches[1]', 'top']] === $GLOBALS['rewrite']);
-check('rewrite: flushed once per version', 1 === $GLOBALS['flushed'] && '1' === get_option('omochix_labs_rewrite_version'));
+check('rewrite: top rules for /labs/{slug}/ and /labs-sitemap.xml', [['^labs/([a-z0-9-]+)/?$', 'index.php?pagename=labs&omx_lab=$matches[1]', 'top'], ['^labs\\-sitemap\\.xml$', 'index.php?omx_labs_sitemap=1', 'top']] === $GLOBALS['rewrite']);
+check('rewrite: flushed once per version (2 adds the sitemap)', 1 === $GLOBALS['flushed'] && '2' === get_option('omochix_labs_rewrite_version'));
+$sitemap_rule = '#' . $GLOBALS['rewrite'][1][0] . '#';
+check('rewrite: sitemap rule matches only labs-sitemap.xml', preg_match($sitemap_rule, 'labs-sitemap.xml') && !array_filter(['sitemap.xml', 'sitemap-post-type-page.xml', 'labs-sitemap.xml/', 'xlabs-sitemap.xml', 'labs/labs-sitemap.xml', 'labs-sitemapxxml'], static fn($u) => preg_match($sitemap_rule, $u)));
+check('rewrite: Slim SEO sitemap rules (anchored by WordPress) do not catch labs-sitemap.xml', !preg_match('#^sitemap\.xml$#', 'labs-sitemap.xml') && !preg_match('#^sitemap-(post-type-[^/]+?)\.xml$#', 'labs-sitemap.xml'));
+check('query var for the sitemap registered', in_array('omx_labs_sitemap', apply_filters('query_vars', []), true));
 do_action('init');
 check('rewrite: not flushed again', 1 === $GLOBALS['flushed']);
 check('query var registered', in_array('omx_lab', apply_filters('query_vars', ['p']), true));
@@ -262,6 +266,78 @@ $shell = file_get_contents(get_theme_file_path('/inc/shell.php'));
 check('shell: Labs pages use the shared shell', str_contains($shell, "(function_exists('omochix_labs_is_request') && omochix_labs_is_request())"));
 check('functions.php: requires inc/labs.php once', 1 === substr_count(file_get_contents(get_theme_file_path('/functions.php')), "require_once get_theme_file_path('/inc/labs.php');"));
 
+// ---------------------------------------------------------------- sitemap
+labs_request();
+$entries = omochix_labs_sitemap_entries();
+check('sitemap: the four published tool URLs, not the list page (Slim SEO lists it)', array_map(static fn($t) => 'https://example.test/labs/' . $t . '/', array_keys(omochix_labs_get_tools())) === array_column($entries, 'loc') && !in_array('https://example.test/labs/', array_column($entries, 'loc'), true));
+$xml = omochix_labs_sitemap_xml($entries);
+$doc = new DOMDocument();
+check('sitemap: well-formed XML', $doc->loadXML($xml, LIBXML_NONET));
+$sx = simplexml_load_string($xml);
+check('sitemap: urlset in the sitemaps.org 0.9 namespace with 4 urls', 'urlset' === $sx->getName() && 'http://www.sitemaps.org/schemas/sitemap/0.9' === $doc->documentElement->namespaceURI && 4 === count($sx->url));
+check('sitemap: absolute https-or-http loc and W3C dates only', !array_filter(iterator_to_array($sx->url, false), static fn($u) => !preg_match('#^https?://[^/]+/labs/[a-z0-9-]+/$#', (string) $u->loc) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $u->lastmod)));
+$esc = omochix_labs_sitemap_xml([['loc' => 'https://example.test/labs/x/?a=1&b="2"<3>\'', 'lastmod' => 'not-a-date']]);
+check('sitemap: XML escaping round-trips and bad dates are dropped', str_contains($esc, '&amp;b=&quot;2&quot;&lt;3&gt;&apos;') && 'https://example.test/labs/x/?a=1&b="2"<3>\'' === (string) simplexml_load_string($esc)->url->loc && !str_contains($esc, 'lastmod'));
+check('sitemap: empty catalog is still a valid urlset', 0 === count(simplexml_load_string(omochix_labs_sitemap_xml([]))->url));
+$hdr = omochix_labs_sitemap_headers(1793750400);
+check('sitemap: XML content type, noindex, nosniff, one-hour cache, Last-Modified', 'application/xml; charset=UTF-8' === $hdr['Content-Type'] && 'noindex, follow' === $hdr['X-Robots-Tag'] && 'nosniff' === $hdr['X-Content-Type-Options'] && 'public, max-age=3600' === $hdr['Cache-Control'] && 'Wed, 04 Nov 2026 00:00:00 GMT' === $hdr['Last-Modified']);
+check('sitemap: conditional request', omochix_labs_sitemap_not_modified('Wed, 04 Nov 2026 00:00:00 GMT', 1793750400) && !omochix_labs_sitemap_not_modified('Tue, 03 Nov 2026 00:00:00 GMT', 1793750400) && !omochix_labs_sitemap_not_modified('', 1793750400) && !omochix_labs_sitemap_not_modified('garbage', 1793750400));
+$body = render(static function () { $GLOBALS['sent_status'] = omochix_labs_send_sitemap(''); });
+check('sitemap: GET sends 200 and the XML', 200 === $GLOBALS['sent_status'] && 200 === $GLOBALS['status'] && $body === omochix_labs_sitemap_xml($entries));
+$body = render(static function () { $GLOBALS['sent_status'] = omochix_labs_send_sitemap(gmdate('D, d M Y H:i:s', time() + 60) . ' GMT'); });
+check('sitemap: 304 without a body when unchanged', 304 === $GLOBALS['sent_status'] && '' === $body);
+$body = render(static function () { omochix_labs_send_sitemap('', 'HEAD'); });
+check('sitemap: HEAD has no body', '' === $body);
+check('sitemap: request untouched while published', ['omx_labs_sitemap' => '1'] === apply_filters('request', ['omx_labs_sitemap' => '1']));
+check('sitemap: other requests untouched', ['pagename' => 'about'] === apply_filters('request', ['pagename' => 'about']));
+check('sitemap: URL', 'https://example.test/labs-sitemap.xml' === omochix_labs_sitemap_url());
+labs_request(null, [], false);
+check('sitemap: 404 while the labs page is unpublished', ['error' => '404'] === apply_filters('request', ['omx_labs_sitemap' => '1']) && '' === omochix_labs_sitemap_url());
+// A draft tool never appears: run against a copy of the theme data with one tool in draft.
+$tmpTheme = sys_get_temp_dir() . '/omx-labs-theme-' . getmypid();
+@mkdir($tmpTheme . '/assets/data/labs', 0777, true);
+$draftCatalog = raw_catalog(); $draftCatalog['tools'][1]['status'] = 'draft';
+file_put_contents($tmpTheme . '/assets/data/labs/catalog.json', json_encode($draftCatalog));
+$realTheme = $GLOBALS['THEME']; $GLOBALS['THEME'] = $tmpTheme;
+labs_request();
+check('sitemap: draft tools are left out', ['json-formatter', 'robots-txt-generator', 'token-cost-calculator'] === array_map(static fn($e) => basename($e['loc']), omochix_labs_sitemap_entries()));
+labs_request('text-diff');
+do_action('template_redirect');
+check('sitemap: and a draft tool URL is a 404', is_404());
+$GLOBALS['THEME'] = $realTheme; unlink($tmpTheme . '/assets/data/labs/catalog.json'); @rmdir($tmpTheme . '/assets/data/labs'); @rmdir($tmpTheme . '/assets/data'); @rmdir($tmpTheme . '/assets'); @rmdir($tmpTheme);
+labs_request();
+
+// ------------------------------------------------------------- robots.txt
+$wpDefault = "User-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: https://example.test/sitemap.xml\n";
+check('robots: Labs sitemap appended, existing lines kept', $wpDefault . 'Sitemap: https://example.test/labs-sitemap.xml' . "\n" === apply_filters('robots_txt', $wpDefault, true));
+check('robots: not added twice', apply_filters('robots_txt', $wpDefault . "Sitemap: https://example.test/labs-sitemap.xml\n", true) === $wpDefault . "Sitemap: https://example.test/labs-sitemap.xml\n");
+check('robots: not added when search engines are discouraged', $wpDefault === apply_filters('robots_txt', $wpDefault, false));
+check('robots: runs after Slim SEO (priority 9999)', 10000 === $GLOBALS['hooks']['robots_txt'][0][0]);
+check('robots: works on admin-edited robots.txt without a trailing newline', "User-agent: *\nDisallow:\nSitemap: https://example.test/labs-sitemap.xml\n" === apply_filters('robots_txt', "User-agent: *\nDisallow:", true));
+labs_request(null, [], false);
+check('robots: unchanged while the labs page is unpublished', $wpDefault === apply_filters('robots_txt', $wpDefault, true));
+
+// ----------------------------------------------------------- pricing gate
+$approved = $pricing_raw; $approved['review'] = ['status' => 'approved', 'reviewer' => 'Reviewer', 'reviewed_at' => '2026-11-10'];
+check('pricing gate: pending is not approved', !omochix_labs_pricing_approved($pricing_raw));
+check('pricing gate: approved needs status, reviewer and date', omochix_labs_pricing_approved($approved) && !omochix_labs_pricing_approved(array_replace_recursive($approved, ['review' => ['reviewer' => ' ']])) && !omochix_labs_pricing_approved(array_replace_recursive($approved, ['review' => ['reviewed_at' => 'soon']])));
+foreach (['production' => true, 'staging' => false, 'development' => false, 'local' => false] as $env => $withheld) {
+    $GLOBALS['env'] = $env;
+    labs_request('token-cost-calculator');
+    $pv = omochix_labs_get_pricing();
+    check("pricing gate: pending prices " . ($withheld ? 'withheld' : 'shown') . " on $env", $withheld === $pv['withheld'] && ($withheld ? [] === $pv['models'] : count($pv['models']) > 0));
+}
+$GLOBALS['env'] = 'production';
+labs_request('token-cost-calculator');
+$GLOBALS['enqueued'] = ['styles' => [], 'scripts' => [], 'inline' => []];
+do_action('wp_enqueue_scripts');
+$inline = implode('', $GLOBALS['enqueued']['inline']['omochix-labs-shared']);
+check('pricing gate: no price reaches the production page config', str_contains($inline, '"models":[]') && !str_contains($inline, 'platform.claude.com'));
+$html = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('token-cost-calculator')]); });
+check('pricing gate: production page explains the withheld list and shows no prices', str_contains($html, '料金データの確認が完了するまで') && 0 === preg_match_all('/data-labs-model(?:>| checked>)/', $html) && !str_contains($html, 'platform.claude.com/docs'));
+unset($GLOBALS['env']);
+labs_request();
+
 // --------------------------------------------------------------- templates
 $GLOBALS['posts'] = [];
 labs_request();
@@ -297,7 +373,7 @@ foreach (array_keys(omochix_labs_get_tools()) as $slug) {
 }
 labs_request('token-cost-calculator');
 $html = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('token-cost-calculator')]); });
-check('render cost: estimate disclaimer and model checkboxes', str_contains($html, '目安の計算です。') && str_contains($html, '実際の請求額を保証するものではありません') && 11 === preg_match_all('/data-labs-model(?:>| checked>)/', $html));
+check('render cost: estimate disclaimer, standard tier and cache-write notes, model checkboxes', str_contains($html, '目安の計算です。') && str_contains($html, '実際の請求額を保証するものではありません') && str_contains($html, '標準ティア') && str_contains($html, 'キャッシュ書き込みの料金は計算に含みません') && str_contains($html, '掲載するモデルと価格の条件') && 11 === preg_match_all('/data-labs-model(?:>| checked>)/', $html));
 check('render cost: price table lists check dates and official links', 11 === substr_count($html, '2026-11-04</span>') + substr_count($html, '2026-11-04 / ') && str_contains($html, 'href="https://platform.claude.com/docs/en/about-claude/pricing"'));
 $GLOBALS['today_override'] = '2027-03-01';
 labs_reset_statics();

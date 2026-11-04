@@ -6,7 +6,7 @@
  *
  * Run from the repository root:
  *   php -S 127.0.0.1:8790 -t . tests/labs/preview-server.php
- * Then open http://127.0.0.1:8790/labs/ (add ?gtag=1 to record analytics
+ * Then open http://127.0.0.1:8790/labs/, /labs-sitemap.xml or /robots.txt (add ?gtag=1 to record analytics
  * events in window.__labsEvents instead of sending them anywhere).
  *
  * Not a substitute for a real WordPress run: no Slim SEO, no shell sidebar
@@ -27,6 +27,18 @@ $origin             = 'http://' . $_SERVER['HTTP_HOST'];
 $GLOBALS['home']      = $origin;
 $GLOBALS['theme_uri'] = $origin . '/wp-theme/omochix-theme';
 
+if ('/labs-sitemap.xml' === $path) {
+    labs_request();
+    omochix_labs_send_sitemap($_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? '', $_SERVER['REQUEST_METHOD'] ?? 'GET');
+    exit;
+}
+if ('/robots.txt' === $path) {
+    labs_request();
+    header('Content-Type: text/plain; charset=utf-8');
+    // What WordPress + Slim SEO print today on omochix.com, then the Labs filter.
+    echo apply_filters('robots_txt', "User-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: " . home_url('/sitemap.xml') . "\n", true);
+    exit;
+}
 if (!preg_match('#^/labs(?:/([a-z0-9-]+))?/?$#', $path, $m)) {
     http_response_code(404);
     echo '<!doctype html><title>404</title><p>Not found (preview)</p>';

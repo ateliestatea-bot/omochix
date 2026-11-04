@@ -19,7 +19,7 @@ $omochix_models  = omochix_labs_pricing_active($omochix_pricing['models'], omoch
 $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
 ?>
 <?php if ('workspace' === $args['part']) : ?>
-    <p class="labs-notice labs-notice--warning"><strong><?php esc_html_e('目安の計算です。', 'omochix'); ?></strong><?php esc_html_e('トークン数は文字の種類から推定した値で、金額は公開されている標準料金から計算した概算です。実際の請求額を保証するものではありません。', 'omochix'); ?></p>
+    <p class="labs-notice labs-notice--warning"><strong><?php esc_html_e('目安の計算です。', 'omochix'); ?></strong><?php esc_html_e('トークン数は文字の種類から推定した値で、金額は公開されている標準ティアの料金から計算した概算です。キャッシュ書き込みの料金は計算に含みません。実際の請求額を保証するものではありません。', 'omochix'); ?></p>
     <div class="labs-toolbar" role="group" aria-label="<?php esc_attr_e('操作', 'omochix'); ?>">
         <button type="button" class="labs-button labs-button--ghost" data-labs-sample><?php esc_html_e('入力例', 'omochix'); ?></button>
         <button type="button" class="labs-button labs-button--ghost" data-labs-reset><?php esc_html_e('リセット', 'omochix'); ?></button>
@@ -70,7 +70,7 @@ $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
-        <p class="labs-hint" data-labs-no-models<?php echo $omochix_models ? ' hidden' : ''; ?>><?php esc_html_e('現在、確認済みの価格がありません。価格の確認後に表示します。', 'omochix'); ?></p>
+        <p class="labs-hint" data-labs-no-models<?php echo $omochix_models ? ' hidden' : ''; ?>><?php echo esc_html(!empty($omochix_pricing['withheld']) ? __('料金データの確認が完了するまで、料金の一覧は表示していません。トークン数の推定はご利用いただけます。', 'omochix') : __('現在、確認済みの価格がありません。価格の確認後に表示します。', 'omochix')); ?></p>
     </fieldset>
 
     <div class="labs-result" data-labs-result>
@@ -144,6 +144,16 @@ $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
         <p><?php esc_html_e('1回あたり入力2,000トークン・出力800トークンを1日100回、30日使う場合、入力単価が100万トークンあたり2ドル、出力単価が10ドルのモデルなら、1回あたり (2,000×2 ＋ 800×10) ÷ 1,000,000 ＝ 0.012ドル、1日で1.2ドル、30日で36ドルが目安です。', 'omochix'); ?></p>
     </section>
     <section>
+        <h3><?php esc_html_e('掲載するモデルと価格の条件', 'omochix'); ?></h3>
+        <ul>
+            <li><?php esc_html_e('対象：Anthropic・OpenAI・Google の公式API価格ページに掲載され、API で指定するモデルIDが公式に確認できるモデルのうち、各社の現行の主力・中位・小型モデル。', 'omochix'); ?></li>
+            <li><?php esc_html_e('料金の種類：標準ティア（Standard）の一般向け価格だけを掲載します。Batch・Flex・Priority などの別ティア、地域別の価格、契約による割引は含みません。', 'omochix'); ?></li>
+            <li><?php esc_html_e('単価：テキストの入力・出力・キャッシュ読み込みの100万トークンあたりの価格（USD）。キャッシュ書き込み、画像・音声などの入力、ツール利用の料金は計算に含みません。', 'omochix'); ?></li>
+            <li><?php esc_html_e('価格改定：公式に予告されている改定は、適用日から新しい価格に切り替えます。', 'omochix'); ?></li>
+            <li><?php esc_html_e('鮮度：公式ページで確認した日付を併記し、確認日から90日を過ぎた価格や、確認できていない価格は表示しません。', 'omochix'); ?></li>
+        </ul>
+    </section>
+    <section>
         <h3><?php esc_html_e('掲載している価格', 'omochix'); ?></h3>
         <?php if ($omochix_models) : ?>
             <p><?php echo esc_html(sprintf(__('各社の公式価格ページで確認した標準料金（USD、100万トークンあたり）です。確認日から%s日を過ぎた価格や、確認できていない価格は表示しません。', 'omochix'), (string) $omochix_pricing['max_age_days'])); ?></p>
@@ -165,7 +175,7 @@ $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
             </div>
             <p class="labs-hint"><?php esc_html_e('長いコンテキストの料金があるモデルは、境目を超えたときの単価で自動的に計算します。価格は予告なく変わることがあるため、契約や予算の判断の前に必ず公式ページを確認してください。', 'omochix'); ?></p>
         <?php else : ?>
-            <p><?php esc_html_e('現在、確認済みの価格はありません。', 'omochix'); ?></p>
+            <p><?php echo esc_html(!empty($omochix_pricing['withheld']) ? __('料金データの確認が完了するまで、価格の一覧は掲載していません。', 'omochix') : __('現在、確認済みの価格はありません。', 'omochix')); ?></p>
         <?php endif; ?>
     </section>
 <?php endif; ?>
