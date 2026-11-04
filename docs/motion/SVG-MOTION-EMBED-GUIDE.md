@@ -78,14 +78,49 @@ wp-content/uploads/omochix-logo-motion/omochix-logo-motion-pop-static.svg
 | `name` | `name` の形が正しくない |
 | `folder` | `omochix-logo-motion` フォルダーがない（またはリンクになっている） |
 | `missing` | 2 つのファイルのどちらかがない |
-| `link` | ファイルがシンボリックリンク |
-| `invalid` | ファイルの中身がスタジオの書き出しとして正しくない（手で編集した、別のツールで保存し直したなど） |
+| `link` | ファイルがシンボリックリンクかハードリンク |
+| `outside` | ファイルの実体がフォルダーの外にある |
+| `changed` | 読み込みの途中でファイルが置き換わった（もう一度表示すると直る） |
+| `invalid` | ファイルの中身がスタジオの書き出しとして正しくない（手で編集した、別のツールで保存し直した、UTF-8 以外で保存した、ロゴのタイトルなどの文字に `<` が含まれているなど） |
 | `pair` | 2 つが同じ書き出しのものではない |
 | `size` | ファイルが大きすぎる（1MB まで） |
 
+**サーバーの設定（推奨、公開前に確認）**
+
+ショートコードのファイルは `<img>` として表示するので、中のスクリプトや外部参照は動きません。ただし SVG の URL を直接開くと、ブラウザーはそのファイルをサイトの一部として表示します。フォルダーに次の応答ヘッダーを付けると、直接開いてもスクリプトは動かず、`<img>` での表示や「動きを減らす」設定には影響しません（3 エンジンで確認）。
+
+Apache / LiteSpeed（`wp-content/uploads/omochix-logo-motion/.htaccess`）：
+
+```
+<IfModule mod_mime.c>
+  AddType image/svg+xml .svg
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.svg$">
+    Header set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
+    Header set X-Content-Type-Options "nosniff"
+  </FilesMatch>
+</IfModule>
+Options -Indexes
+```
+
+nginx：
+
+```
+location ^~ /wp-content/uploads/omochix-logo-motion/ {
+    types { image/svg+xml svg; }
+    default_type application/octet-stream;
+    add_header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    autoindex off;
+}
+```
+
+設定後に `curl -I <SVG の URL>` で 3 つのヘッダーが付くことを確かめます。キャッシュ（CDN やサーバーのアクセラレータ）を挟む場合は、ヘッダーがそのまま返ることも確かめます。
+
 **差し替え・削除**
 
-- ファイルを新しい書き出しに置き換えると、次の表示から新しいロゴになります（URL の `?v=` が変わるので、ブラウザーの古いキャッシュは使われません）。ページキャッシュのプラグインを使っている場合は、キャッシュを削除してください。
+- ファイルを新しい書き出しに置き換えると、次の表示から新しいロゴになります（URL の `?v=` はファイルの中身から作るので、内容が変われば必ず変わり、ブラウザーの古いキャッシュは使われません）。ページキャッシュのプラグインを使っている場合は、キャッシュを削除してください。
 - どちらかのファイルを消すと、ショートコードは何も表示しなくなります。
 
 ### カスタム HTML で表示する（管理者と編集者のみ）

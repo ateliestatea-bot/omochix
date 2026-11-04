@@ -10,6 +10,10 @@
  * (assets/js/svg-motion/safety.js and export.js): the SVG element and attribute allow lists, local references
  * only, scoped generated CSS, and a matching pair. They are shown as images only, never inline.
  *
+ * Fail-closed (MVP-4): UTF-8 only; one root element and nothing else (no document type, entity, processing
+ * instruction, comment or CDATA anywhere); the generated CSS must match the exact grammar the studio writes; each
+ * file is read once through one handle whose identity is checked against the path; ?v= comes from the contents.
+ *
  * @package OmochiX
  */
 
@@ -68,10 +72,101 @@ function omochix_logo_motion_safe_value($value) {
     return preg_match_all('/url\s*\(/i', $value) === preg_match_all('/url\(\s*(["\']?)#[A-Za-z_][\w.:-]*\1\s*\)/i', $value);
 }
 
-/** export.js cssIsClean(): the generated CSS uses only these characters and no fetching function. */
-function omochix_logo_motion_clean_css($css) {
-    return 1 === preg_match('/^[\w\s.#%(),:;{}\[\]="\'*>+\-@]*$/', $css)
-        && 0 === preg_match('/url\s*\(|@import|@font-face|expression|javascript:|<|\\\\/i', $css);
+/**
+ * UTF-8 only, as the studio writes it: no byte order mark, no NUL, valid UTF-8, and an XML declaration (if any) that
+ * names UTF-8. Anything else is refused before a parser sees it, so the checks below read the same text the browser does.
+ */
+function omochix_logo_motion_encoding_ok($text) {
+    if (false !== strpos($text, "\0") || 0 === strncmp($text, "\xEF\xBB\xBF", 3) || 0 === strncmp($text, "\xFE\xFF", 2) || 0 === strncmp($text, "\xFF\xFE", 2)) {
+        return false;
+    }
+    if (!preg_match('//u', $text) || '<' !== substr(ltrim($text), 0, 1)) {
+        return false;
+    }
+    if (preg_match('/^\s*<\?xml\s([^?]*)\?>/', $text, $declaration) && preg_match('/\bencoding\s*=\s*["\']([^"\']*)["\']/i', $declaration[1], $encoding)) {
+        return 'utf-8' === strtolower($encoding[1]);
+    }
+    return true;
+}
+
+/**
+ * The generated style, checked against the exact grammar compile.js planToCss() writes (MVP-4): header rules,
+ * @keyframes {scope}-k{n}, one @media (prefers-reduced-motion:reduce) block, selectors limited to this logo's own
+ * [data-omx-*] hooks, and a fixed list of properties with fixed value shapes. Anything else is refused.
+ */
+function omochix_logo_motion_generated_css_ok($css, $scope) {
+    $s    = preg_quote($scope, '/');
+    $n    = '-?(?:\d+(?:\.\d*)?|\.\d+)(?:e-?\d+)?';
+    $hex  = '#[0-9a-fA-F]{3,8}';
+    $ease = '(?:linear|ease|ease-in|ease-out|ease-in-out|cubic-bezier\(' . $n . ',' . $n . ',' . $n . ',' . $n . '\))';
+    $one  = $s . '-k\d{1,4} ' . $n . 'ms ' . $ease . ' ' . $n . 'ms (?:infinite|' . $n . ') (?:normal|alternate) both';
+    $fn   = '(?:translate\(' . $n . 'px,' . $n . 'px\)|translate[XY]\(' . $n . 'px\)|scale\(' . $n . '(?:,' . $n . ')?\)|rotate[XY]?\(' . $n . 'deg\)|perspective\(' . $n . 'px\))';
+    $values = [
+        'opacity' => $n, 'fill-opacity' => $n, 'stroke-opacity' => $n, 'stroke-width' => $n, 'stroke-dashoffset' => $n,
+        'stroke-dasharray' => $n . '(?: ' . $n . '){0,3}',
+        'fill' => $hex, 'stroke' => $hex,
+        'transform-box' => 'fill-box|view-box',
+        'transform-origin' => 'center|' . $n . 'px ' . $n . 'px',
+        'translate' => $n . 'px ' . $n . 'px', 'rotate' => $n . 'deg', 'scale' => $n . '(?: ' . $n . ')?',
+        'transform' => 'none|' . $fn . '(?: ' . $fn . '){0,3}',
+        'filter' => 'none|blur\(' . $n . 'px\)|drop-shadow\(' . $n . 'px ' . $n . 'px ' . $n . 'px ' . $hex . '\)',
+        'clip-path' => 'inset\(' . $n . '% ' . $n . '% ' . $n . '% ' . $n . '%\)',
+        'animation' => 'none|' . $one . '(?:,' . $one . '){0,15}',
+    ];
+    $selector = '(?:\.' . $s . ' \[data-omx-(?:root|part|geometry|base|overlay)(?:="\d{1,5}")?\]|svg\.' . $s . ')';
+    $decls_ok = function ($body) use ($values) {
+        $body = rtrim($body, ';');
+        if ('' === $body) {
+            return true;
+        }
+        foreach (explode(';', $body) as $decl) {
+            $colon = strpos($decl, ':');
+            $name  = false === $colon ? '' : substr($decl, 0, $colon);
+            if (!isset($values[$name]) || !preg_match('/^(?:' . $values[$name] . ')$/', substr($decl, $colon + 1))) {
+                return false;
+            }
+        }
+        return true;
+    };
+    $selectors_ok = function ($list) use ($selector) {
+        foreach (explode(',', $list) as $part) {
+            if (!preg_match('/^' . $selector . '$/', $part)) {
+                return false;
+            }
+        }
+        return true;
+    };
+    $media    = '@media (prefers-reduced-motion:reduce){';
+    $frame    = '(?:\d{1,3}(?:\.\d+)?%|from|to)';
+    $pos      = 0;
+    $len      = strlen($css);
+    $in_media = false;
+    while ($pos < $len) {
+        if ($in_media && '}' === $css[$pos]) {
+            $in_media = false;
+            $pos++;
+        } elseif (!$in_media && preg_match('/\G@keyframes ' . $s . '-k\d{1,4}\{/', $css, $m, 0, $pos)) {
+            $pos += strlen($m[0]);
+            while ($pos < $len && '}' !== $css[$pos]) {
+                if (!preg_match('/\G(' . $frame . '(?:,' . $frame . ')*)\{([^{}]*)\}/', $css, $m, 0, $pos) || !$decls_ok($m[2])) {
+                    return false;
+                }
+                $pos += strlen($m[0]);
+            }
+            if ($pos >= $len) {
+                return false;
+            }
+            $pos++;
+        } elseif (!$in_media && substr($css, $pos, strlen($media)) === $media) {
+            $in_media = true;
+            $pos     += strlen($media);
+        } elseif (preg_match('/\G([^{}@]+)\{([^{}]*)\}/', $css, $m, 0, $pos) && $selectors_ok($m[1]) && $decls_ok($m[2])) {
+            $pos += strlen($m[0]);
+        } else {
+            return false;
+        }
+    }
+    return !$in_media;
 }
 
 /** True when every rule of a logo's own style is plain and limited to this logo (export.js: "style:scope"). */
@@ -106,19 +201,40 @@ function omochix_logo_motion_check_svg($text) {
         $out['problems'][] = 'size';
         return $out;
     }
-    // No document type, entities or processing instructions: an export never has them.
-    if (preg_match('/<!DOCTYPE|<!ENTITY|<\?(?!xml\s)/i', $text)) {
-        $out['problems'][] = 'doctype';
+    if (!omochix_logo_motion_encoding_ok($text)) {
+        $out['problems'][] = 'encoding';
         return $out;
     }
+    // No document type, entities, processing instructions, comments or CDATA: an export never has them. Checked on
+    // the text (now known to be UTF-8) and again on the parsed structure below.
+    foreach (['doctype' => '/<!DOCTYPE|<!ENTITY/i', 'pi' => '/<\?(?!xml\s)|<\?xml\s.*<\?/s', 'comment' => '/<!--/', 'cdata' => '/<!\[CDATA\[/'] as $code => $pattern) {
+        if (preg_match($pattern, $text)) {
+            $out['problems'][] = $code;
+            return $out;
+        }
+    }
+    // No network, no entity substitution, no DTD loading; and where PHP lets the previous loader be restored, an
+    // external entity loader that loads nothing.
     $previous = libxml_use_internal_errors(true);
-    $doc      = new DOMDocument();
-    $loaded   = $doc->loadXML($text, LIBXML_NONET | LIBXML_COMPACT);
+    $loader   = function_exists('libxml_get_external_entity_loader') ? libxml_get_external_entity_loader() : false;
+    if (false !== $loader) {
+        libxml_set_external_entity_loader(static function () { return null; });
+    }
+    $doc    = new DOMDocument();
+    $loaded = $doc->loadXML($text, LIBXML_NONET | LIBXML_COMPACT | (defined('LIBXML_NO_XXE') ? LIBXML_NO_XXE : 0));
+    if (false !== $loader) {
+        libxml_set_external_entity_loader($loader);
+    }
     libxml_clear_errors();
     libxml_use_internal_errors($previous);
     $svg = $loaded ? $doc->documentElement : null;
     if (!$svg || 'svg' !== $svg->localName || OMOCHIX_LOGO_MOTION_SVG_NS !== $svg->namespaceURI) {
         $out['problems'][] = 'parse';
+        return $out;
+    }
+    // The document is the root element and nothing else.
+    if (null !== $doc->doctype || 1 !== $doc->childNodes->length) {
+        $out['problems'][] = 'outside-root';
         return $out;
     }
     $scope = (string) $svg->getAttribute('class');
@@ -140,10 +256,10 @@ function omochix_logo_motion_check_svg($text) {
     $generated = null;
     if ($first && 'style' === $first->localName && preg_match('/@keyframes|^\.omx-|^svg\.omx-/', $first->textContent)) {
         $generated = $first;
-        if (!omochix_logo_motion_clean_css($first->textContent)) {
+        if (!omochix_logo_motion_generated_css_ok($first->textContent, $scope)) {
             $out['problems'][] = 'style';
         }
-        $out['animated'] = false !== strpos($first->textContent, '@keyframes') || false !== strpos($first->textContent, 'animation:');
+        $out['animated'] = false !== strpos($first->textContent, '@keyframes');
     }
 
     // Every id carries the export's own prefix (the studio renames them), except the two the overlay presets add.
@@ -206,18 +322,84 @@ function omochix_logo_motion_check_svg($text) {
         foreach ($node->childNodes as $child) {
             if (XML_ELEMENT_NODE === $child->nodeType) {
                 $walk($child, $depth + 1);
-            } elseif (in_array($child->nodeType, [XML_PI_NODE, XML_ENTITY_REF_NODE, XML_DOCUMENT_TYPE_NODE, XML_COMMENT_NODE], true)) {
-                $out['problems'][] = 'node';
+            } elseif (XML_TEXT_NODE === $child->nodeType) {
+                // Markup-like text could read differently if the file were ever parsed as HTML; an export has none.
+                if ('style' !== $name && false !== strpos($child->nodeValue, '<')) {
+                    $out['problems'][] = 'text';
+                }
+            } else {
+                $out['problems'][] = [XML_PI_NODE => 'pi', XML_COMMENT_NODE => 'comment', XML_CDATA_SECTION_NODE => 'cdata', XML_ENTITY_REF_NODE => 'entity'][$child->nodeType] ?? 'node';
             }
         }
     };
     $walk($svg, 1);
+    // Read as HTML (as a page would if the markup were pasted inline), the logo stays one SVG root with the same
+    // elements, all in the SVG namespace. Needs PHP 8.4's HTML5 parser; earlier versions rely on the text rule above.
+    if (!$out['problems'] && class_exists('Dom\\HTMLDocument')) {
+        $html  = @\Dom\HTMLDocument::createFromString('<!doctype html><html><body>' . $text, LIBXML_NOERROR);
+        $body  = $html->body;
+        $roots = $body ? $body->children : null;
+        $same  = $roots && 1 === $roots->length && 'svg' === $roots->item(0)->localName && $roots->item(0)->getElementsByTagName('*')->length + 1 === $count;
+        if ($same) {
+            foreach ($roots->item(0)->getElementsByTagName('*') as $element) {
+                if (OMOCHIX_LOGO_MOTION_SVG_NS !== $element->namespaceURI) {
+                    $same = false;
+                    break;
+                }
+            }
+        }
+        if (!$same) {
+            $out['problems'][] = 'html';
+        }
+    }
     $out['problems'] = array_values(array_unique($out['problems']));
     return $out;
 }
 
 /**
+ * One file of the pair, read once through one handle (MVP-4). The path is examined without following links (lstat):
+ * a regular file with a single link, directly inside the folder. The open handle must still be that same file
+ * (device and inode), so a swap between the check and the read is refused instead of read.
+ *
+ * @return array{error?: string, text?: string}
+ */
+function omochix_logo_motion_read($path, $base) {
+    clearstatcache(true, $path);
+    $link = @lstat($path);
+    if (!$link) {
+        return ['error' => 'missing'];
+    }
+    $type = $link['mode'] & 0170000;
+    if (0120000 === $type || $link['nlink'] > 1) {
+        return ['error' => 'link'];
+    }
+    if (0100000 !== $type) {
+        return ['error' => 'missing'];
+    }
+    $real = realpath($path);
+    if (!$real || dirname($real) !== $base) {
+        return ['error' => 'outside'];
+    }
+    if ($link['size'] > OMOCHIX_LOGO_MOTION_MAX) {
+        return ['error' => 'size'];
+    }
+    $handle = @fopen($real, 'rb');
+    if (!$handle) {
+        return ['error' => 'missing'];
+    }
+    $open = fstat($handle);
+    $text = $open && $open['dev'] === $link['dev'] && $open['ino'] === $link['ino'] && 1 === $open['nlink'] && 0100000 === ($open['mode'] & 0170000)
+        ? stream_get_contents($handle, OMOCHIX_LOGO_MOTION_MAX + 1) : false;
+    fclose($handle);
+    if (false === $text) {
+        return ['error' => 'changed'];
+    }
+    return strlen($text) > OMOCHIX_LOGO_MOTION_MAX ? ['error' => 'size'] : ['text' => $text];
+}
+
+/**
  * The verified pair for a name, or an error code. Only plain names, only regular files directly inside the folder.
+ * The result is keyed on the contents themselves, and ?v= is a hash of them: what was checked is what is offered.
  *
  * @param string $name
  * @return array{error?: string, animated?: string, still?: string, url?: string, version?: string, viewBox?: string}
@@ -236,51 +418,35 @@ function omochix_logo_motion_resolve($name) {
     if (!$base) {
         return ['error' => 'folder'];
     }
-    $files = [];
+    $texts = [];
     foreach (['animated' => $name . '.svg', 'still' => $name . '-static.svg'] as $role => $file) {
-        $path = $dir . '/' . $file;
-        if (is_link($path)) {
-            return ['error' => 'link'];
+        $read = omochix_logo_motion_read($dir . '/' . $file, $base);
+        if (isset($read['error'])) {
+            return $read;
         }
-        $real = is_file($path) ? realpath($path) : false;
-        if (!$real) {
-            return ['error' => 'missing'];
-        }
-        if (dirname($real) !== $base) {
-            return ['error' => 'outside'];
-        }
-        $files[$role] = $real;
+        $texts[$role] = $read['text'];
     }
-    $stamp = [];
-    foreach ($files as $real) {
-        clearstatcache(true, $real);
-        $stamp[] = filemtime($real) . ':' . filesize($real);
-    }
-    $key = $name . '|' . implode('|', $stamp);
-    if (isset($cache[$key])) {
-        return $cache[$key];
+    $hash = sha1($texts['animated'] . "\0" . $texts['still']);
+    if (isset($cache[$hash])) {
+        return $cache[$hash];
     }
     $checks = [];
-    foreach ($files as $role => $real) {
-        $size = filesize($real);
-        if (false === $size || $size > OMOCHIX_LOGO_MOTION_MAX) {
-            return $cache[$key] = ['error' => 'size'];
-        }
-        $checks[$role] = omochix_logo_motion_check_svg((string) file_get_contents($real));
+    foreach ($texts as $role => $text) {
+        $checks[$role] = omochix_logo_motion_check_svg($text);
         if ($checks[$role]['problems']) {
-            return $cache[$key] = ['error' => 'invalid', 'problems' => $checks[$role]['problems']];
+            return $cache[$hash] = ['error' => 'invalid', 'problems' => $checks[$role]['problems']];
         }
     }
     // The pair belongs together: same logo (scope and viewBox); one moves, the other does not.
     if ($checks['animated']['scope'] !== $checks['still']['scope'] || $checks['animated']['viewBox'] !== $checks['still']['viewBox']
         || !$checks['animated']['animated'] || $checks['still']['animated']) {
-        return $cache[$key] = ['error' => 'pair'];
+        return $cache[$hash] = ['error' => 'pair'];
     }
     $url = trailingslashit($uploads['baseurl']) . OMOCHIX_LOGO_MOTION_DIR . '/';
-    return $cache[$key] = [
+    return $cache[$hash] = [
         'animated' => $url . $name . '.svg',
         'still'    => $url . $name . '-static.svg',
-        'version'  => substr(md5(implode('|', $stamp)), 0, 10),
+        'version'  => substr($hash, 0, 12),
         'viewBox'  => $checks['animated']['viewBox'],
     ];
 }

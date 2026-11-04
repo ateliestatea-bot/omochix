@@ -13,7 +13,11 @@ function start() {
     for (const pre in routes) if (u.pathname.startsWith(pre)) {
       const f = path.normalize(path.join(routes[pre], u.pathname.slice(pre.length)));
       if (!f.startsWith(routes[pre]) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) break;
-      s.setHeader('Content-Type', types[path.extname(f)] || 'text/plain'); return s.end(fs.readFileSync(f));
+      s.setHeader('Content-Type', types[path.extname(f)] || 'text/plain');
+      // MVP-4: the shortcode's folder is served as production should serve it (docs/motion/SVG-MOTION-MVP-4-RESULT.md):
+      // opened on its own, an SVG there runs no script and loads nothing.
+      if (u.pathname.startsWith('/exported/sc/uploads/') && f.endsWith('.svg')) { s.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"); s.setHeader('X-Content-Type-Options', 'nosniff'); }
+      return s.end(fs.readFileSync(f));
     }
     s.statusCode = 404; s.end();
   }).listen(PORT, '127.0.0.1');

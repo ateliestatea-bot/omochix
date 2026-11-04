@@ -58,7 +58,7 @@ check('registered as [omochix_logo_motion]', ($GLOBALS['shortcodes']['omochix_lo
 
 $dir = uploads(); put($dir, 'acme', $pop, $popStill); $GLOBALS['caps'] = [];
 $html = render(['name' => 'acme', 'alt' => 'Acme のロゴ', 'size' => '320']);
-check('a placed pair renders a <picture> with the still file for reduced motion', 1 === preg_match('#^<picture class="omochix-logo-motion"><source media="\(prefers-reduced-motion: reduce\)" srcset="https://example\.test/wp-content/uploads/omochix-logo-motion/acme-static\.svg\?v=[0-9a-f]{10}"><img src="https://example\.test/wp-content/uploads/omochix-logo-motion/acme\.svg\?v=[0-9a-f]{10}" alt="Acme のロゴ" width="320" height="320" loading="lazy" decoding="async" style="max-width:100%;height:auto"></picture>$#u', $html));
+check('a placed pair renders a <picture> with the still file for reduced motion', 1 === preg_match('#^<picture class="omochix-logo-motion"><source media="\(prefers-reduced-motion: reduce\)" srcset="https://example\.test/wp-content/uploads/omochix-logo-motion/acme-static\.svg\?v=[0-9a-f]{12}"><img src="https://example\.test/wp-content/uploads/omochix-logo-motion/acme\.svg\?v=[0-9a-f]{12}" alt="Acme のロゴ" width="320" height="320" loading="lazy" decoding="async" style="max-width:100%;height:auto"></picture>$#u', $html));
 check('the output is an image only: no inline SVG, script, handler, object or iframe', !preg_match('/<svg|<script|\son\w+=|<object|<iframe|<embed/i', $html));
 
 $html = render(['name' => 'acme', 'alt' => 'x', 'size' => '200', 'class' => 'evil', 'style' => 'background:url(https://evil.example)', 'onload' => 'alert(1)', 'src' => 'https://evil.example/x.svg', 'srcset' => 'https://evil.example/y.svg']);
@@ -101,6 +101,8 @@ symlink("$outside/acme.svg", "$dir/linked.svg"); symlink("$outside/acme-static.s
 check('a symbolic link to a file outside the folder is refused', 'link' === omochix_logo_motion_resolve('linked')['error']);
 symlink("$dir/acme.svg", "$dir/inside.svg"); copy("$dir/acme-static.svg", "$dir/inside-static.svg");
 check('a symbolic link inside the folder is refused too', 'link' === omochix_logo_motion_resolve('inside')['error']);
+link("$outside/acme.svg", "$dir/hard.svg"); link("$outside/acme-static.svg", "$dir/hard-static.svg");
+check('a hard link to a file outside the folder is refused (MVP-3 S4)', 'link' === omochix_logo_motion_resolve('hard')['error']);
 mkdir("$dir/sub"); put("$dir/sub", 'deep', $pop, $popStill);
 check('files in a sub-folder cannot be reached', 'name' === omochix_logo_motion_resolve('sub/deep')['error']);
 
@@ -114,7 +116,7 @@ $GLOBALS['uploads'] = dirname($dir);
 $cases = [
     'doctype'           => [str_replace('<svg ', "<!DOCTYPE svg [<!ENTITY x \"y\">]><svg ", $pop), 'doctype'],
     'entity'            => [str_replace('<svg ', "<!ENTITY a SYSTEM \"file:///etc/passwd\"><svg ", $pop), 'doctype'],
-    'processing'        => [str_replace('<title>', '<?php echo 1; ?><title>', $pop), 'doctype'],
+    'processing'        => [str_replace('<title>', '<?php echo 1; ?><title>', $pop), 'pi'],
     'script'            => [str_replace('<title>', '<script>alert(1)</script><title>', $pop), 'element:script'],
     'foreignObject'     => [str_replace('<title>', '<foreignObject><div xmlns="http://www.w3.org/1999/xhtml">x</div></foreignObject><title>', $pop), 'element:foreignObject'],
     'handler'           => [str_replace('<title>', '<g onload="alert(1)"/><title>', $pop), 'handler:onload'],
@@ -139,10 +141,37 @@ $cases = [
     'empty'             => ['', 'size'],
     'huge'              => [str_replace('<title>', '<desc>' . str_repeat('a', OMOCHIX_LOGO_MOTION_MAX) . '</desc><title>', $pop), 'size'],
     'deep'              => [str_replace('<title>', str_repeat('<g>', 40) . str_repeat('</g>', 40) . '<title>', $pop), 'budget'],
-    'comment'           => [str_replace('<title>', '<!--<img src=x onerror=alert(1)>--><title>', $pop), 'node'],
+    'comment'           => [str_replace('<title>', '<!--<img src=x onerror=alert(1)>--><title>', $pop), 'comment'],
     'clobberId'         => [str_replace('<title>', '<rect id="getElementById" width="9" height="9"/><title>', $pop), 'id'],
     'foreignPrefixId'   => [str_replace('id="omx-e40839bd-omx-a"', 'id="omx-00000000-omx-a"', $pop), 'id'],
     'hugePath'          => [str_replace('<title>', '<path d="M0 0' . str_repeat(' L1 1', 110000) . '"/><title>', $pop), 'path'],
+    // MVP-3 audit (S2, S3): encodings, nodes outside the root, generated CSS outside the studio's grammar.
+    'utf16le'           => ["\xFF\xFE" . mb_convert_encoding($pop, 'UTF-16LE', 'UTF-8'), 'encoding'],
+    'utf16be'           => ["\xFE\xFF" . mb_convert_encoding($pop, 'UTF-16BE', 'UTF-8'), 'encoding'],
+    'utf16Doctype'      => ["\xFF\xFE" . mb_convert_encoding('<!DOCTYPE svg SYSTEM "https://evil.example/x.dtd">' . $pop, 'UTF-16LE', 'UTF-8'), 'encoding'],
+    'utf16Stylesheet'   => ["\xFF\xFE" . mb_convert_encoding('<?xml-stylesheet href="https://evil.example/x.css"?>' . $pop, 'UTF-16LE', 'UTF-8'), 'encoding'],
+    'utf16NoBom'        => [mb_convert_encoding($pop, 'UTF-16LE', 'UTF-8'), 'encoding'],
+    'utf8Bom'           => ["\xEF\xBB\xBF" . $pop, 'encoding'],
+    'latin1Declared'    => ['<?xml version="1.0" encoding="ISO-8859-1"?>' . $pop, 'encoding'],
+    'invalidUtf8'       => [str_replace('<title>', "<title>\xC3\x28", $pop), 'encoding'],
+    'nul'               => [str_replace('<title>', "<title>\0", $pop), 'encoding'],
+    'utf8DeclaredOk'    => ['<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet href="x.css"?>' . $pop, 'pi'],
+    'stylesheetFirst'   => ['<?xml-stylesheet type="text/css" href="https://evil.example/x.css"?>' . $pop, 'pi'],
+    'commentFirst'      => ['<!-- note -->' . $pop, 'comment'],
+    'cdataStyle'        => [preg_replace('/<style>(.*?)<\/style>/s', '<style><![CDATA[$1]]></style>', $pop, 1), 'cdata'],
+    'markupText'        => [str_replace('<title>Prism', '<title>&lt;img src=x onerror=alert(1)&gt;', $pop), 'text'],
+    'imageSet'          => [str_replace('transform-origin:center}', 'transform-origin:center;background-image:image-set("x.png" 1x)}', $pop), 'style'],
+    'cssVar'            => [str_replace('transform-origin:center}', 'transform-origin:center;fill:var(--a)}', $pop), 'style'],
+    'cssNamespace'      => [preg_replace('/<style>/', '<style>@namespace x "y";', $pop, 1), 'style'],
+    'cssCharset'        => [preg_replace('/<style>/', '<style>@charset "utf-8";', $pop, 1), 'style'],
+    'cssOtherMedia'     => [str_replace('@media (prefers-reduced-motion:reduce)', '@media print', $pop), 'style'],
+    'cssUnknownProp'    => [str_replace('transform-origin:center}', 'transform-origin:center;content:"x"}', $pop), 'style'],
+    'cssBadValue'       => [str_replace('opacity:0;', 'opacity:attr(x);', $pop), 'style'],
+    'cssForeignScope'   => [str_replace('svg.omx-e40839bd{', 'svg.omx-00000000{', $pop), 'style'],
+    'cssOtherSelector'  => [str_replace('svg.omx-e40839bd{', 'svg.omx-e40839bd,body{', $pop), 'style'],
+    'cssForeignKeyframe'=> [str_replace('@keyframes omx-e40839bd-k0{', '@keyframes evil{', $pop), 'style'],
+    'cssUnbalanced'     => [preg_replace('/<\/style>/', '{</style>', $pop, 1), 'style'],
+    'cssEscape'         => [str_replace('opacity:0;', 'opa\\63ity:0;', $pop), 'style'],
 ];
 $ok = true;
 foreach ($cases as $k => [$text, $want]) {
@@ -164,10 +193,14 @@ check('an animated file in place of the still one is refused (pair)', 'pair' ===
 
 // ------------------------------------------------------------------ replacing and removing files
 put($dir, 'swap', $pop, $popStill);
-$before = render(['name' => 'swap']); preg_match('/\?v=([0-9a-f]{10})/', $before, $v1);
+$before = render(['name' => 'swap']); preg_match('/\?v=([0-9a-f]{12})/', $before, $v1);
 put($dir, 'swap', $wipe, $wipeStill); touch("$dir/swap.svg", time() + 5); touch("$dir/swap-static.svg", time() + 5);
-$after = render(['name' => 'swap']); preg_match('/\?v=([0-9a-f]{10})/', $after, $v2);
+$after = render(['name' => 'swap']); preg_match('/\?v=([0-9a-f]{12})/', $after, $v2);
 check('replacing the pair with another export is shown, under a new ?v= (no stale cache)', '' !== $after && !empty($v1[1]) && !empty($v2[1]) && $v1[1] !== $v2[1]);
+// Same size and the old modification time (touch -r): the version still changes, because it is the contents' hash.
+$stamp = filemtime("$dir/swap.svg"); $same = str_replace('fill="#fff"', 'fill="#eee"', $wipe); file_put_contents("$dir/swap.svg", $same); touch("$dir/swap.svg", $stamp);
+preg_match('/\?v=([0-9a-f]{12})/', render(['name' => 'swap']), $v3);
+check('a same-size swap that keeps the old modification time still gets a new ?v= (contents hash)', strlen($same) === strlen($wipe) && !empty($v3[1]) && $v3[1] !== $v2[1]);
 file_put_contents("$dir/swap.svg", str_replace('<title>', '<script>alert(1)</script><title>', $wipe)); touch("$dir/swap.svg", time() + 10);
 check('replacing one file with a tampered one: refused at once, even in the same request', '' === render(['name' => 'swap']));
 unlink("$dir/swap-static.svg");

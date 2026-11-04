@@ -27,6 +27,12 @@ async function shortcodeTests(br, e, fail) {
       for (const preset of data.presets) { const b = make(svg, preset); out.exports.push({ key: name + '--' + preset.id, base: b.names.animated.replace(/\.svg$/, ''), animated: b.files.animated, still: b.files.still, snippet: b.snippets.image }); }
     }
     const pop = data.presets.find(p => p.id === 'logo-pop');
+    // MVP-4 (S3): the studio's own export check refuses generated CSS outside what the compiler writes.
+    const sample = make(OmxSvgSafety.normalize(data.samples[0].svg, { prefix: 'omx-' }).svg, pop).files.animated;
+    out.studioCss = Object.fromEntries(Object.entries({ imageSet: ';background-image:image-set("x.png" 1x)', cssVar: ';fill:var(--a)', namespace: '@namespace x "y";' }).map(([k, add]) => {
+      const text = k === 'namespace' ? sample.replace('<style>', '<style>' + add) : sample.replace('transform-origin:center}', 'transform-origin:center' + add + '}');
+      return [k, OmxSvgExport.verifyExport(text).includes('style')];
+    }));
     for (const [k, src] of Object.entries(attacks)) { try { const b = make(OmxSvgSafety.normalize(src, { prefix: 'omx-' }).svg, pop); out.hostile.push({ key: k, animated: b.files.animated, still: b.files.still }); } catch (x) { out.refused++; } }
     return out;
   }, [logos, Object.fromEntries(Object.entries(ATTACKS).map(([k, v]) => [k, v.split('{C}').join('http://127.0.0.1:8771/c/sc/')]))]);
@@ -36,7 +42,11 @@ async function shortcodeTests(br, e, fail) {
   const refusedExports = Object.entries(exp).filter(([, p]) => p.length), refusedHostile = Object.entries(hos).filter(([, p]) => p.length);
   out.studioExports = { files: Object.keys(exp).length, refused: refusedExports.length, hostileExported: built.hostile.length, hostileRefusedByStudio: built.refused, hostileFiles: Object.keys(hos).length, hostileRefusedHere: refusedHostile.length };
   if (Object.keys(exp).length !== 2 * 7 * 19 || refusedExports.length) fail(e, 'shortcode refuses studio exports ' + JSON.stringify(refusedExports.slice(0, 3)));
-  if (!built.hostile.length || refusedHostile.length) fail(e, 'shortcode refuses sanitized hostile exports ' + JSON.stringify(refusedHostile.slice(0, 3)));
+  // Fail-closed (MVP-4): a sanitized export whose text still holds markup-like characters (the escaped-markup attacks of
+  // the corpus) is refused for that reason alone; every other sanitized hostile export is accepted.
+  out.studioExports.hostileRefusedFor = [...new Set(refusedHostile.flatMap(([, p]) => p))];
+  if (!built.hostile.length || refusedHostile.some(([, p]) => p.join() !== 'text')) fail(e, 'shortcode refuses sanitized hostile exports ' + JSON.stringify(refusedHostile.slice(0, 3)));
+  out.studioCss = built.studioCss; if (!Object.values(built.studioCss).every(Boolean)) fail(e, 'studio export check accepts CSS outside the compiler\'s output ' + JSON.stringify(built.studioCss));
 
   // 2. The raw corpus put inside a real export (as if someone edited the file on the server): every one is refused.
   const pop = fs.readFileSync(path.join(FIX, 'omochix-logo-motion-pop.svg'), 'utf8');
@@ -46,13 +56,9 @@ async function shortcodeTests(br, e, fail) {
   names.forEach((k, i) => { const m = /^\s*<svg\b[^>]*>([\s\S]*)<\/svg>\s*$/.exec(raw[k]); put('raw/r' + i + '.svg', m ? pop.replace('<title>', m[1].replace(/<rect id="omxkeep"[^>]*\/>/, '') + '<title>') : raw[k]); });
   const rawCheck = JSON.parse(php('--check-dir', path.join(D, 'raw')));
   const accepted = names.filter((k, i) => !(rawCheck['r' + i + '.svg'] || []).length);
-  // Escaped markup as plain text in <title>, <desc> or <text> is inert in an image (it only matters to HTML that is
-  // pasted inline, which the shortcode never does); the studio's own sanitized exports carry the same text. These are
-  // accepted on purpose and shown below to do nothing. Anything else accepted is a failure.
-  const INERT = ['a-mxssTitle', 'a-mxssDesc', 'a-mxssText'];
+  // Every one is refused (MVP-4: the escaped-markup text cases too, which MVP-2 accepted as inert in an image).
   out.rawCorpus = { cases: names.length, refused: names.length - accepted.length, accepted };
-  const unexpected = accepted.filter(k => !INERT.includes(k));
-  if (unexpected.length) fail(e, 'shortcode accepts raw attacks ' + unexpected.join(','));
+  if (accepted.length) fail(e, 'shortcode accepts raw attacks ' + accepted.join(','));
   // Control: the check is alive (the untouched export passes, one obvious attack does not).
   const ctl = JSON.parse(php('--check-dir', FIX)); if (Object.values(ctl).some(p => p.length)) fail(e, 'control: fixtures refused');
 
@@ -92,15 +98,23 @@ async function shortcodeTests(br, e, fail) {
   out.swap = { newVersion: attr(html, 'src') !== attr(html2, 'src'), loaded: swapped.loaded, removedShowsNothing: html3 === '' };
   if (!out.swap.newVersion || !out.swap.loaded || !out.swap.removedShowsNothing) fail(e, 'replacing or removing files ' + JSON.stringify(out.swap));
 
-  // 5. The accepted inert cases through the shortcode: loaded as images, no request, no error, no message from inside.
-  out.inert = {};
-  for (const k of accepted.filter(k => INERT.includes(k))) {
-    const i = names.indexOf(k), name = 'inert-' + k.toLowerCase().replace(/[^a-z0-9-]/g, '');
-    fs.copyFileSync(path.join(D, 'raw', 'r' + i + '.svg'), path.join(up, name + '.svg')); fs.copyFileSync(path.join(FIX, 'omochix-logo-motion-pop-static.svg'), path.join(up, name + '-static.svg'));
-    const h = render({ name, alt: 'x' }); put(name + '.html', PAGE(h + '<script>window.__hits=[];addEventListener("message",e=>__hits.push(e.data))</script>'));
-    const r = out.inert[k] = Object.assign({ rendered: h.includes('<picture') }, await look('no-preference', name + '.html'));
-    if (!r.rendered || !r.loaded || r.ext || r.errs) fail(e, 'inert case ' + k + ' ' + JSON.stringify(r));
+  // 5. Opened on its own (not through <img>): with the production headers an SVG in the shortcode's folder runs nothing;
+  //    the same file served without them does run (the detector is alive). The pictures above came through the same
+  //    headers, so display and reduced motion are unaffected by them.
+  const run = 'sc' + e + Date.now(), C = 'http://127.0.0.1:8771';
+  const evil = n => '<svg xmlns="http://www.w3.org/2000/svg" onload="fetch(\'' + C + '/c/' + run + '/' + n + '-onload\')"><script>fetch("' + C + '/c/' + run + '/' + n + '-script")</script><rect width="10" height="10"/></svg>';
+  fs.writeFileSync(path.join(up, 'direct.svg'), evil('headers')); put('direct-control.svg', evil('control'));
+  out.direct = {};
+  for (const [k, url] of [['headers', X + 'sc/uploads/omochix-logo-motion/direct.svg'], ['control', X + 'sc/direct-control.svg']]) {
+    const c = await br.newContext(); const p = await c.newPage(); const resp = await p.goto(url); await p.waitForTimeout(700);
+    const h = resp.headers(); out.direct[k] = { type: h['content-type'], csp: h['content-security-policy'] || '', nosniff: h['x-content-type-options'] || '' }; await c.close();
   }
+  const hits = await (await fetch(C + '/__dump?run=' + run)).json();
+  out.direct.hits = { headers: hits.filter(h => h.includes('/headers-')).length, control: hits.filter(h => h.includes('/control-')).length };
+  const dh = out.direct.headers;
+  if (dh.type !== 'image/svg+xml' || !/\bsandbox\b/.test(dh.csp) || !/default-src 'none'/.test(dh.csp) || dh.nosniff !== 'nosniff') fail(e, 'direct access headers ' + JSON.stringify(dh));
+  if (out.direct.hits.headers) fail(e, 'an SVG opened directly ran script despite the headers ' + JSON.stringify(out.direct.hits));
+  if (!out.direct.hits.control) fail(e, 'control: an SVG without the headers ran nothing (detector dead) ' + JSON.stringify(out.direct.hits));
 
   await ctx.close();
   fs.writeFileSync(path.join(R, 'shortcode-' + e + '.json'), JSON.stringify(out, null, 1));

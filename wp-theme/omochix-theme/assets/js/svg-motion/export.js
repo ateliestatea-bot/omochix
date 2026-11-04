@@ -66,10 +66,13 @@
         return new XMLSerializer().serializeToString(svg);
     }
 
-    /* Generated CSS only ever contains these characters and no fetching function. */
+    /* Generated CSS only ever contains these characters, no function that can fetch or read from elsewhere, and no
+       at-rule other than the two the compiler writes (MVP-4: image-set(), var() and @namespace were not refused). */
     function cssIsClean(css) {
         return /^[\w\s.#%(),:;{}\[\]="'*>+\-@]*$/.test(css) &&
-            !/url\s*\(|@import|@font-face|expression|javascript:|<|\\/i.test(css);
+            !/url\s*\(|@import|@font-face|expression|javascript:|<|\\/i.test(css) &&
+            !/image-set|cross-fade|element\(|paint\(|src\(|var\(|attr\(|env\(/i.test(css) &&
+            !/@(?!keyframes |media \(prefers-reduced-motion:reduce\)\{)/.test(css);
     }
 
     /**
