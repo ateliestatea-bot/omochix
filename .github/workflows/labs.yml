@@ -1,0 +1,79 @@
+# OmochiX Labs tests (inc/labs.php, assets/js/labs/, assets/data/labs/).
+# Kept separate from tests.yml so Labs can change without touching the shared
+# test list. Read-only: no secrets, no deploy, no production access.
+name: Labs
+
+on:
+  pull_request:
+    paths:
+      - 'wp-theme/omochix-theme/**'
+      - 'tests/labs/**'
+      - '.github/workflows/labs.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: labs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Labs (PHP ${{ matrix.php }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # 8.1 is the minimum in the theme header; 8.3 is current.
+        php: ['8.1', '8.3']
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, ctype
+          coverage: none
+          tools: none
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # The Labs JS tests only use Node built-ins.
+          node-version: '24.14.1'
+          package-manager-cache: false
+
+      - name: Lint Labs PHP
+        run: |
+          status=0
+          for file in wp-theme/omochix-theme/inc/labs.php wp-theme/omochix-theme/page-labs.php wp-theme/omochix-theme/template-parts/labs/*.php wp-theme/omochix-theme/template-parts/labs/content/*.php tests/labs/*.php; do
+            php -l "$file" >/dev/null || status=1
+          done
+          exit $status
+
+      - name: Check Labs JS syntax
+        run: |
+          status=0
+          for file in wp-theme/omochix-theme/assets/js/labs/*.js wp-theme/omochix-theme/assets/js/labs/*/*.js tests/labs/*.js; do
+            node --check "$file" || status=1
+          done
+          exit $status
+
+      - name: PHP tests
+        run: php tests/labs/run.php
+
+      - name: Node tests
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          node tests/labs/core.js || status=1
+          node tests/labs/data.js || status=1
+          exit $status

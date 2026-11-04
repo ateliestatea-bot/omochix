@@ -1,0 +1,7 @@
+{
+  "name": "omochix-labs-browser-tests",
+  "private": true,
+  "description": "Local browser checks for OmochiX Labs (layout, accessibility, CSP, network, tools). Separate from the repository's dependency-free tests.",
+  "scripts": { "test": "node run.js" },
+  "devDependencies": { "axe-core": "4.13.0", "playwright": "1.64.1" }
+}
