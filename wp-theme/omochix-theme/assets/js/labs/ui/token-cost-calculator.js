@@ -15,7 +15,7 @@
 
     var SAMPLE_TEXT = 'あなたはカスタマーサポートの担当者です。次の問い合わせ内容を読み、丁寧な日本語で3文以内の返信文を作成してください。\n\n問い合わせ：注文した商品がまだ届きません。注文番号は 20261104-0012 です。いつ頃届きますか？';
     var DEFAULTS = { input: 2000, output: 800, cached: 0, requests: 100, days: 30, rate: '' };
-    /** Shown only outside production, where unapproved rows are listed for review. */
+    /** Shown only in review mode (an administrator outside production): the server sends unapproved rows nowhere else. */
     var STATES = { pending: '承認待ち', held: '保留' };
 
     L.tool('token-cost-calculator', function (root) {

@@ -118,12 +118,12 @@
         return out;
     }
 
-    /** What a page may show (see omochix_labs_pricing_gate()). */
-    function gate(v, approved, production) {
+    /** What a page may show (see omochix_labs_pricing_gate()); publicMode = approved rows only. */
+    function gate(v, approved, publicMode) {
         var out = JSON.parse(JSON.stringify(v));
         out.approved = !!approved;
-        out.production = !!production;
-        if (!production) { out.withheld = false; return out; }
+        out.public_mode = !!publicMode;
+        if (!publicMode) { out.withheld = false; return out; }
         var kept = [];
         out.models.forEach(function (m) {
             if (approved && m.approval === 'approved') kept.push(m);

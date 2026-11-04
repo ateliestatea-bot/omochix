@@ -50,6 +50,7 @@
 .labs-noscript, .labs-notice { margin: 0 0 16px; padding: 12px 16px; line-height: 1.7; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-sm); }
 .labs-notice--warning { color: var(--color-text); background: var(--labs-warn-bg); border-color: color-mix(in srgb, var(--labs-warn) 35%, transparent); }
 .labs-notice strong { margin-right: 4px; }
+.labs-notice--review { border-style: dashed; border-color: var(--labs-warn); }
 
 /* --- Icons (mask so they follow the text colour) ---------------------- */
 .labs-icon { display: inline-block; flex-shrink: 0; width: 20px; height: 20px; background: currentColor; -webkit-mask: var(--labs-icon) center / contain no-repeat; mask: var(--labs-icon) center / contain no-repeat; }

@@ -385,12 +385,34 @@ check('robots: unchanged while the labs page is unpublished', $wpDefault === app
 $approved = $pricing_raw; $approved['review'] = ['status' => 'approved', 'reviewer' => 'Reviewer', 'reviewed_at' => '2026-11-10'];
 check('pricing gate: pending is not approved', !omochix_labs_pricing_approved($pricing_raw));
 check('pricing gate: approved needs status, reviewer and date', omochix_labs_pricing_approved($approved) && !omochix_labs_pricing_approved(array_replace_recursive($approved, ['review' => ['reviewer' => ' ']])) && !omochix_labs_pricing_approved(array_replace_recursive($approved, ['review' => ['reviewed_at' => 'soon']])));
-foreach (['production' => true, 'staging' => false, 'development' => false, 'local' => false] as $env => $withheld) {
-    $GLOBALS['env'] = $env;
-    labs_request('token-cost-calculator');
-    $pv = omochix_labs_get_pricing();
-    check("pricing gate: pending prices " . ($withheld ? 'withheld' : 'shown') . " on $env", $withheld === $pv['withheld'] && ($withheld ? [] === $pv['models'] : count($pv['models']) > 0));
+// Review mode needs a named non-production environment AND an administrator; everything else is public mode.
+foreach (['production', 'staging', 'development', 'local', 'bogus-env'] as $env) {
+    foreach (['anon', 'subscriber', 'admin'] as $user) {
+        $GLOBALS['env'] = $env; $GLOBALS['user'] = $user;
+        labs_request('token-cost-calculator');
+        $pv = omochix_labs_get_pricing();
+        $review = 'admin' === $user && in_array($env, ['staging', 'development', 'local'], true);
+        check("pricing gate: pending file, $env / $user -> " . ($review ? 'review (all rows, marked)' : 'nothing shown'), $review ? (false === $pv['public_mode'] && count($pv['models']) > 0) : (true === $pv['public_mode'] && [] === $pv['models'] && true === $pv['withheld']));
+    }
 }
+unset($GLOBALS['user']);
+check('review mode: unknown, empty or non-string environments and non-true capability results are never review', !omochix_labs_pricing_review_allowed('bogus', true) && !omochix_labs_pricing_review_allowed('', true) && !omochix_labs_pricing_review_allowed(null, true) && !omochix_labs_pricing_review_allowed('Staging', true) && !omochix_labs_pricing_review_allowed('staging', 1) && !omochix_labs_pricing_review_allowed('staging', 'yes') && !omochix_labs_pricing_review_allowed('production', true) && omochix_labs_pricing_review_allowed('staging', true));
+$nc = omochix_labs_review_nocache_headers();
+check('review mode: responses are no-store / private / noindex', str_contains($nc['Cache-Control'], 'no-store') && str_contains($nc['Cache-Control'], 'private') && 'no-cache' === $nc['Pragma'] && str_contains($nc['X-Robots-Tag'], 'noindex'));
+$GLOBALS['env'] = 'local'; $GLOBALS['user'] = 'admin';
+$GLOBALS['hooks']['litespeed_control_set_nocache'] = [[10, static function () { $GLOBALS['ls_nocache'] = true; }, 1]];
+labs_request('token-cost-calculator');
+do_action('template_redirect');
+check('review mode: the review page disables page caching (DONOTCACHEPAGE, LiteSpeed no-cache)', defined('DONOTCACHEPAGE') && true === ($GLOBALS['ls_nocache'] ?? false));
+unset($GLOBALS['hooks']['litespeed_control_set_nocache'], $GLOBALS['ls_nocache']);
+$GLOBALS['user'] = 'anon';
+labs_request('token-cost-calculator');
+$pubHtml = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('token-cost-calculator')]); });
+check('public mode: an anonymous visitor on a local site gets no unapproved price, id or review banner', 0 === preg_match_all('/data-labs-model(?:>| checked>)/', $pubHtml) && !str_contains($pubHtml, 'gpt-6-astra') && !str_contains($pubHtml, 'claude-opus-5-5') && !str_contains($pubHtml, 'レビュー表示') && str_contains($pubHtml, '料金データの確認が完了するまで'));
+$GLOBALS['env'] = 'production'; $GLOBALS['user'] = 'admin';
+labs_request('token-cost-calculator');
+check('public mode: production never reviews, even for an administrator', true === omochix_labs_get_pricing()['public_mode'] && [] === omochix_labs_get_pricing()['models']);
+unset($GLOBALS['user']);
 $GLOBALS['env'] = 'production';
 labs_request('token-cost-calculator');
 $GLOBALS['enqueued'] = ['styles' => [], 'scripts' => [], 'inline' => []];
@@ -414,6 +436,7 @@ $unapproved = array_values(array_filter($pricing_raw['models'], static fn($m) =>
 $needles = array_unique(array_merge(array_column($unapproved, 'id'), array_column($unapproved, 'label'), ['developers.openai.com', 'aistudio.google.com']));
 foreach (['production' => true, 'staging' => false] as $env => $isProd) {
     $GLOBALS['env'] = $env;
+    $GLOBALS['user'] = 'admin'; // the strongest case: even an administrator on production gets approved rows only
     labs_request('token-cost-calculator');
     $GLOBALS['enqueued'] = ['styles' => [], 'scripts' => [], 'inline' => []];
     do_action('wp_enqueue_scripts');
@@ -425,10 +448,17 @@ foreach (['production' => true, 'staging' => false] as $env => $isProd) {
         check('leak: production shows the three approved Anthropic rows', 3 === preg_match_all('/data-labs-model(?:>| checked>)/', $page) && str_contains($cfg, 'claude-opus-5-5') && !str_contains($page, '承認待ち') && !str_contains($page, '保留'));
         check('leak: production config lists hidden rows only as counts', str_contains($cfg, '"row_held":5') && str_contains($cfg, '"row_pending":5'));
     } else {
-        check('leak: staging lists every row with its state for review', [] !== $leaks && 11 === preg_match_all('/data-labs-model(?:>| checked>)/', $page) && str_contains($page, '承認待ち') && str_contains($page, '保留'));
+        check('leak: staging, administrator (review mode) lists every row with its state', [] !== $leaks && 11 === preg_match_all('/data-labs-model(?:>| checked>)/', $page) && str_contains($page, '承認待ち') && str_contains($page, '保留'));
     }
 }
-unset($GLOBALS['env']);
+$GLOBALS['env'] = 'staging'; $GLOBALS['user'] = 'subscriber';
+labs_request('token-cost-calculator');
+$GLOBALS['enqueued'] = ['styles' => [], 'scripts' => [], 'inline' => []];
+do_action('wp_enqueue_scripts');
+$subCfg = implode('', $GLOBALS['enqueued']['inline']['omochix-labs-shared'] ?? []);
+$subPage = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('token-cost-calculator')]); });
+check('leak: staging, ordinary logged-in user gets approved rows only (no unapproved id, label or source)', [] === array_values(array_filter($needles, static fn($n) => str_contains($subCfg, $n) || str_contains($subPage, $n))) && 3 === preg_match_all('/data-labs-model(?:>| checked>)/', $subPage));
+unset($GLOBALS['env'], $GLOBALS['user']);
 $GLOBALS['THEME'] = $realTheme2;
 unlink($leakTheme . '/inc/labs-data/pricing.json.php'); @rmdir($leakTheme . '/inc/labs-data'); @rmdir($leakTheme . '/inc');
 foreach (['assets', 'template-parts'] as $dir) { @unlink($leakTheme . '/' . $dir); }
@@ -468,14 +498,17 @@ foreach (array_keys(omochix_labs_get_tools()) as $slug) {
     check("render $slug: guide has at least 1,200 characters of explanation", mb_strlen(trim(preg_replace('/\s+/u', ' ', strip_tags($guide)))) >= 1200);
     check("render $slug: external links are noopener noreferrer", !preg_match('/<a [^>]*href="https:\/\/(?!example\.test)[^"]*"(?![^>]*rel="noopener noreferrer)/', $html));
 }
+$GLOBALS['user'] = 'admin'; // review mode on a local site
 labs_request('token-cost-calculator');
 $html = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('token-cost-calculator')]); });
+check('render cost: review mode shows the administrator banner', str_contains($html, 'レビュー表示（管理者のみ・この環境のみ）'));
 check('render cost: estimate disclaimer, standard tier and cache-write notes, model checkboxes', str_contains($html, '目安の計算です。') && str_contains($html, '実際の請求額を保証するものではありません') && str_contains($html, '標準ティア') && str_contains($html, 'キャッシュ書き込みの料金は計算に含みません') && str_contains($html, '掲載するモデルと価格の条件') && 11 === preg_match_all('/data-labs-model(?:>| checked>)/', $html));
 check('render cost: price table lists check dates and official links', 11 === substr_count($html, '2026-11-04</span>') + substr_count($html, '2026-11-04 / ') && str_contains($html, 'href="https://platform.claude.com/docs/en/about-claude/pricing"'));
 $GLOBALS['today_override'] = '2027-03-01';
 labs_reset_statics();
 $html = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('token-cost-calculator')]); });
 check('render cost: stale prices are not shown at all', 0 === preg_match_all('/data-labs-model(?:>| checked>)/', $html) && !str_contains($html, 'platform.claude.com') && str_contains($html, '確認済みの価格がありません'));
+unset($GLOBALS['user']);
 unset($GLOBALS['today_override']);
 labs_reset_statics();
 $learn = file_get_contents(get_theme_file_path('/page-learn.php'));

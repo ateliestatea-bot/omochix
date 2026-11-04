@@ -65,7 +65,11 @@ function is_page() { return $GLOBALS['ctx']['is_page']; }
 function is_404() { return $GLOBALS['wp_query']->is_404; }
 function is_singular($t = '') { return false; }
 function is_admin() { return false; }
-function wp_get_environment_type() { return $GLOBALS['env'] ?? 'local'; }
+// Like WordPress: an unknown value becomes 'production'.
+function wp_get_environment_type() { $e = $GLOBALS['env'] ?? 'local'; return in_array($e, ['local', 'development', 'staging', 'production'], true) ? $e : 'production'; }
+// $GLOBALS['user']: 'anon' (default), 'subscriber' or 'admin'.
+function is_user_logged_in() { return in_array($GLOBALS['user'] ?? 'anon', ['subscriber', 'admin'], true); }
+function current_user_can($cap) { return 'admin' === ($GLOBALS['user'] ?? 'anon') && 'manage_options' === $cap; }
 function get_queried_object_id() { return $GLOBALS['ctx']['queried']; }
 function get_queried_object() { return null; }
 function post_type_exists($t) { return in_array($t, ['ai_tool', 'prompt'], true); }

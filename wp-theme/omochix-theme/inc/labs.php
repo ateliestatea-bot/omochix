@@ -644,24 +644,61 @@ function omochix_labs_pricing_approved($data) {
         && omochix_labs_is_date($review['reviewed_at'] ?? null);
 }
 
-/** Production unless WP_ENVIRONMENT_TYPE says otherwise (WordPress's own default). */
-function omochix_labs_is_production() {
-    return !function_exists('wp_get_environment_type') || 'production' === wp_get_environment_type();
+/** Environments where an authorised reviewer may see rows that are not approved yet. */
+const OMOCHIX_LABS_REVIEW_ENVIRONMENTS = ['local', 'development', 'staging'];
+
+/**
+ * Whether this response may show unapproved rows for review: only in a
+ * non-production environment that is named explicitly AND for a logged-in
+ * user who can manage the site. Everything else — production, an unknown or
+ * misspelled environment, anonymous visitors, ordinary users, a failed check —
+ * is public mode (approved rows only). Production never reviews, even for
+ * administrators.
+ *
+ * @param mixed $environment wp_get_environment_type() (WordPress turns unknown values into 'production').
+ * @param mixed $can_review  true only when the current user passed the capability check.
+ */
+function omochix_labs_pricing_review_allowed($environment, $can_review) {
+    return is_string($environment) && in_array($environment, OMOCHIX_LABS_REVIEW_ENVIRONMENTS, true) && true === $can_review;
+}
+
+/** Review mode for the current request (see omochix_labs_pricing_review_allowed()). */
+function omochix_labs_pricing_review_mode() {
+    $environment = function_exists('wp_get_environment_type') ? wp_get_environment_type() : 'production';
+    $can_review  = function_exists('is_user_logged_in') && function_exists('current_user_can') && is_user_logged_in() && true === current_user_can('manage_options');
+    return omochix_labs_pricing_review_allowed($environment, $can_review);
 }
 
 /**
- * What a page may show. Production: nothing unless the file is approved
- * (global gate), then only rows whose own approval is 'approved' (row gate);
- * pending and held rows never leave the server. Other environments show every
- * valid row with its state so it can be reviewed. Mirrors gate() in cost.js.
+ * Headers for a review response: never stored by the browser, a proxy or a
+ * page cache, so a reviewer's page cannot be served to anyone else.
+ *
+ * @return array<string, string>
+ */
+function omochix_labs_review_nocache_headers() {
+    return [
+        'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0, private',
+        'Pragma'        => 'no-cache',
+        'Expires'       => '0',
+        'X-Robots-Tag'  => 'noindex, nofollow',
+    ];
+}
+
+/**
+ * What a page may show. Public mode (every anonymous or ordinary visitor, and
+ * everyone on production): nothing unless the file is approved (global gate),
+ * then only rows whose own approval is 'approved' (row gate); pending and held
+ * rows never leave the server. Review mode (omochix_labs_pricing_review_mode())
+ * shows every valid row with its state. Mirrors gate() in cost.js.
  *
  * @param array<string, mixed> $view pricing_view() result.
- * @return array<string, mixed> The view with `models` filtered and `withheld` / `approved` / `production` set.
+ * @param bool                 $public_mode true = approved rows only.
+ * @return array<string, mixed> The view with `models` filtered and `withheld` / `approved` / `public_mode` set.
  */
-function omochix_labs_pricing_gate(array $view, $approved, $production) {
-    $view['approved']   = (bool) $approved;
-    $view['production'] = (bool) $production;
-    if (!$production) {
+function omochix_labs_pricing_gate(array $view, $approved, $public_mode) {
+    $view['approved']    = (bool) $approved;
+    $view['public_mode'] = (bool) $public_mode;
+    if (!$public_mode) {
         $view['withheld'] = false;
         return $view;
     }
@@ -685,7 +722,7 @@ function omochix_labs_get_pricing() {
     if (null === $view) {
         $read = omochix_labs_read_guarded_json(omochix_labs_pricing_file());
         $data = $read['ok'] ? $read['data'] : null;
-        $view = omochix_labs_pricing_gate(omochix_labs_pricing_view($data, omochix_labs_today()), omochix_labs_pricing_approved($data), omochix_labs_is_production());
+        $view = omochix_labs_pricing_gate(omochix_labs_pricing_view($data, omochix_labs_today()), omochix_labs_pricing_approved($data), !omochix_labs_pricing_review_mode());
     }
     return $view;
 }
@@ -859,6 +896,22 @@ function omochix_labs_template_redirect() {
         return;
     }
     omochix_labs_send_security_headers();
+    // A page that may show unapproved prices to a reviewer must never be cached or reused.
+    if ('token-cost-calculator' === $slug && omochix_labs_pricing_review_mode()) {
+        omochix_labs_send_review_nocache();
+    }
+}
+
+function omochix_labs_send_review_nocache() {
+    if (!defined('DONOTCACHEPAGE')) {
+        define('DONOTCACHEPAGE', true); // WordPress page-cache plugins
+    }
+    do_action('litespeed_control_set_nocache', 'OmochiX Labs pricing review'); // LiteSpeed Cache
+    if (!headers_sent()) {
+        foreach (omochix_labs_review_nocache_headers() as $name => $value) {
+            header($name . ': ' . $value);
+        }
+    }
 }
 add_action('template_redirect', 'omochix_labs_template_redirect');
 
@@ -1032,7 +1085,7 @@ function omochix_labs_security_headers() {
         "img-src 'self' data: blob: https://s.w.org https://secure.gravatar.com " . $ga,
         "font-src 'self' data:",
         "connect-src 'self' " . $ga,
-        "worker-src 'self'",
+        "worker-src 'self' blob:", // WordPress's emoji loader runs its support test in a blob: Worker
         "frame-src 'self'",
         "object-src 'none'",
         "frame-ancestors 'self'",

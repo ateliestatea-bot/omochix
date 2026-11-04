@@ -6,7 +6,8 @@
  *
  * Run from the repository root:
  *   php -S 127.0.0.1:8790 -t . tests/labs/preview-server.php
- * Then open http://127.0.0.1:8790/labs/, /labs-sitemap.xml or /robots.txt (add ?gtag=1 to record analytics
+ * Then open http://127.0.0.1:8790/labs/, /labs-sitemap.xml or /robots.txt (add ?gtag=1 to record analytics;
+ * the preview acts as a logged-in administrator on a local site — add ?anon=1 for an anonymous visitor —
  * events in window.__labsEvents instead of sending them anywhere).
  *
  * Not a substitute for a real WordPress run: no Slim SEO, no shell sidebar
@@ -46,6 +47,8 @@ if (!preg_match('#^/labs(?:/([a-z0-9-]+))?/?$#', $path, $m)) {
 }
 parse_str((string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $query);
 labs_request($m[1] ?? null, $query);
+// The preview acts as a logged-in administrator on a local site (review mode) unless ?anon=1.
+$GLOBALS['user'] = isset($query['anon']) ? 'anon' : 'admin';
 do_action('template_redirect');
 if (is_404()) {
     http_response_code(404);

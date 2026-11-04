@@ -21,6 +21,9 @@ $omochix_default = ['claude-sonnet-5-5', 'gpt-6.1-sol', 'gemini-3.8-flash'];
 $omochix_states  = ['pending' => __('承認待ち', 'omochix'), 'held' => __('保留', 'omochix')];
 ?>
 <?php if ('workspace' === $args['part']) : ?>
+    <?php if (empty($omochix_pricing['public_mode'])) : ?>
+        <p class="labs-notice labs-notice--review" role="note"><strong><?php esc_html_e('レビュー表示（管理者のみ・この環境のみ）', 'omochix'); ?></strong><?php esc_html_e('「承認待ち」「保留」の価格を確認用に表示しています。一般の訪問者には、承認済みの価格だけが表示されます。', 'omochix'); ?></p>
+    <?php endif; ?>
     <p class="labs-notice labs-notice--warning"><strong><?php esc_html_e('目安の計算です。', 'omochix'); ?></strong><?php esc_html_e('トークン数は文字の種類から推定した値で、金額は公開されている標準ティアの料金から計算した概算です。キャッシュ書き込みの料金は計算に含みません。実際の請求額を保証するものではありません。', 'omochix'); ?></p>
     <div class="labs-toolbar" role="group" aria-label="<?php esc_attr_e('操作', 'omochix'); ?>">
         <button type="button" class="labs-button labs-button--ghost" data-labs-sample><?php esc_html_e('入力例', 'omochix'); ?></button>
