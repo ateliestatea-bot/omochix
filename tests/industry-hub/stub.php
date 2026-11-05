@@ -18,6 +18,16 @@ define('HOUR_IN_SECONDS', 3600);
 define('DAY_IN_SECONDS', 86400);
 define('KB_IN_BYTES', 1024);
 define('MB_IN_BYTES', 1048576);
+$GLOBALS['pass'] = 0; $GLOBALS['fail'] = 0;
+// Any PHP warning, notice or deprecation is a test failure (they would show
+// in production logs and often hide a real bug).
+error_reporting(E_ALL);
+set_error_handler(static function ($no, $str, $file, $line) {
+    $GLOBALS['fail']++;
+    echo 'FAIL php error: ' . $str . ' at ' . basename($file) . ':' . $line . "\n";
+    return true;
+});
+
 
 class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_name = '', $post_title = '', $post_parent = 0, $post_excerpt = '', $post_content = '', $post_password = '', $menu_order = 0, $post_author = 1; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 class WP_Term { public $term_id = 0, $term_taxonomy_id = 0, $name = '', $slug = '', $taxonomy = '', $parent = 0, $count = 0, $description = ''; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
@@ -226,7 +236,6 @@ $GLOBALS['ih_load_hooks'] = $GLOBALS['hooks'];
 /** Reset everything except the hooks added while the plugin files loaded, then boot. */
 function ih_fresh() { ih_reset(); $GLOBALS['hooks'] = $GLOBALS['ih_load_hooks']; do_action('init'); }
 
-$GLOBALS['pass'] = 0; $GLOBALS['fail'] = 0;
 function check($name, $cond) { if ($cond) { $GLOBALS['pass']++; echo "PASS $name\n"; } else { $GLOBALS['fail']++; echo "FAIL $name\n"; } }
 function ih_done() { echo "\n{$GLOBALS['pass']} passed, {$GLOBALS['fail']} failed\n"; exit($GLOBALS['fail'] ? 1 : 0); }
 
@@ -253,3 +262,4 @@ function ih_registration_snapshot() {
     unset($m);
     return ['post_types' => $norm($r['post_types']), 'taxonomies' => $norm($r['taxonomies']), 'post_meta' => $norm($r['post_meta']), 'rewrite' => $r['rewrite'], 'hooks' => ih_hook_names()];
 }
+
