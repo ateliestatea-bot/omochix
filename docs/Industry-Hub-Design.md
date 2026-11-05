@@ -368,3 +368,37 @@ P3-01 `single-learn_practice.php` に workflow セクションを条件付きで
 | B-7 | Labs #56 のマージ時期（Phase 2 の P2-07 と P2-08 の着手条件） | 未確定 |
 | B-8 | ゲートの閾値（120字・80字・3件・180日）の妥当性 | 承認待ち（暫定案） |
 | — | 手元の PHP は 8.5.8 で、CI の 8.1 / 8.3 による手元検証はしていない | 制約（CI で担保） |
+
+---
+
+## 13. Phase 1 実装状況（2026-11-05、`feature/industry-hub-p1`）
+
+ベース：`94152a7`。プラグインのみの変更。テーマ・`tests.yml`・`functions.php`・`shell.php`・`page-learn.php` は未変更。
+
+| 項目 | 実装 | 主なファイル |
+|---|---|---|
+| 読み込み | `omochix-core.php` に require 1行。登録は `init` 優先度 11 | `includes/industry-hub.php` |
+| 業種・業務目的・提供元 | 3タクソノミー。業種は Phase 1 では非公開（URLなし）。提供元は固定4語彙・1件のみ・未設定は未分類 | `includes/industry-taxonomies.php`, `includes/provider.php` |
+| 業種ハブの編集内容 | term meta 11キー、編集画面、内容ゲート G1〜G7 | `includes/industry-term-meta.php`, `admin/industry-term-fields.php` |
+| Motion 参照 | slug で参照。`catalog.json` に存在する slug だけを使い、テーマの読み込み関数が無ければ何も返さない | 同上 |
+| 外部コンテンツ台帳 | 非公開 CPT `omx_resource`、ライセンス記録、公開ガード、社内参照番号の保護 | `includes/resource-post-type.php`, `includes/resource-meta-schema.php`, `admin/resource-meta-boxes.php` |
+| Workflow データ基盤 | `learn_practice` に `workflow_*` 6キー、Workflow ガード（classic・REST）、リビジョン検知、編集パネル。`workflow` 形式のタームは Phase 1 では作らない | `includes/workflow-meta-schema.php`, `admin/workflow-meta-panel.php` |
+| 読み出し | 業種別の取得、キュレーション、台帳カード | `includes/industry-relations.php` |
+| REST | 3タクソノミーのターム一覧は、編集権限が無いユーザーには 401 | `includes/industry-taxonomies.php` |
+
+テスト（`tests/industry-hub/`、CI は `.github/workflows/industry-hub.yml`）：
+
+```bash
+php tests/industry-hub/compat.php      # 既存登録のスナップショット比較・catalog.json 不変
+php tests/industry-hub/run.php         # タクソノミー・提供元・多対多・REST 読み取り制限
+php tests/industry-hub/term-meta.php   # term meta・編集画面・Motion・内容ゲート
+php tests/industry-hub/resource.php    # 台帳の非公開性・ライセンス・ガード・保存
+php tests/industry-hub/workflow.php    # Workflow メタ・ガード・リビジョン・パネル
+php tests/industry-hub/relations.php   # 読み出し側
+php tests/industry-hub/wp-integration.php /path/to/throwaway/wordpress   # 実 WordPress（CI 対象外、使い捨て環境のみ）
+```
+
+Phase 1 で未着手・保留の項目：
+- P1-08 practice JSON 入出力への workflow メタと新タクソノミーの追加（Phase 3 で `workflow` タームを作るときに合わせて行う）。
+- 版番号の更新（Core 1.10.0）はリリース用 PR で行う。
+- ステージングでの確認（B-2）はアクセス手段が未確認のため未実施。
