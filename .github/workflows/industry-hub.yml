@@ -57,7 +57,8 @@ jobs:
           # A missing file fails the job: a test that did not run is not a pass.
           for test in \
             tests/industry-hub/compat.php \
-            tests/industry-hub/run.php
+            tests/industry-hub/run.php \
+            tests/industry-hub/term-meta.php
           do
             echo "::group::$test"
             php "$test" || status=1

@@ -16,6 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once OMOCHIX_CORE_DIR . 'includes/industry-taxonomies.php';
 require_once OMOCHIX_CORE_DIR . 'includes/provider.php';
+require_once OMOCHIX_CORE_DIR . 'includes/industry-term-meta.php';
+require_once OMOCHIX_CORE_DIR . 'admin/industry-term-fields.php';
 
 /**
  * Register the Industry Hub data model.
@@ -24,6 +26,7 @@ require_once OMOCHIX_CORE_DIR . 'includes/provider.php';
  */
 function omochix_core_industry_hub_init() {
 	omochix_core_register_industry_taxonomies();
+	omochix_core_register_industry_term_meta();
 	omochix_core_industry_maybe_flush_rewrite_rules();
 }
 add_action( 'init', 'omochix_core_industry_hub_init', 11 );

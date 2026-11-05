@@ -181,6 +181,7 @@ function get_post_meta($id, $key = '', $single = false) { return '' === $key ? (
 function update_post_meta($id, $key, $v) { $GLOBALS['meta'][$id][$key] = $v; return true; }
 function delete_post_meta($id, $key) { unset($GLOBALS['meta'][$id][$key]); return true; }
 function ih_query_posts($args) {
+    $GLOBALS['last_query'] = $args;
     $types = isset($args['post_type']) ? (array) $args['post_type'] : ['post'];
     $status = isset($args['post_status']) ? (array) $args['post_status'] : ['publish'];
     $out = [];
@@ -195,7 +196,7 @@ function ih_query_posts($args) {
             if ('relation' === $k) { continue; }
             $have = get_the_terms($p->ID, $c['taxonomy']) ?: [];
             $vals = ($c['field'] ?? 'term_id') === 'slug' ? wp_list_pluck($have, 'slug') : wp_list_pluck($have, 'term_id');
-            if (($c['include_children'] ?? true) && ($c['field'] ?? 'term_id') === 'slug') { foreach ($have as $h) { if ($h->parent && ($par = get_term($h->parent, $c['taxonomy']))) { $vals[] = $par->slug; } } }
+            if (($c['include_children'] ?? true)) { foreach ($have as $h) { if ($h->parent && ($par = get_term($h->parent, $c['taxonomy']))) { $vals[] = ($c['field'] ?? 'term_id') === 'slug' ? $par->slug : $par->term_id; } } }
             $hit = (bool) array_intersect(array_map('strval', (array) $c['terms']), array_map('strval', $vals));
             if (($c['operator'] ?? 'IN') === 'NOT IN' ? $hit : !$hit) { $ok = false; }
         }
