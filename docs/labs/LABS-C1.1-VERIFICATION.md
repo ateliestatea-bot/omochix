@@ -61,7 +61,7 @@ firefox を対象にするには、`run.js` の `LABS_BROWSERS` の対象に fir
 | W-6 | robots.txt | `/robots.txt` を開く。Slim SEO で「robots.txt を編集」をオンにした状態でも確認 | Slim SEO の `Sitemap: …/sitemap.xml` が残り、`Sitemap: …/labs-sitemap.xml` が 1 行だけ増える |
 | W-7 | 固定ページを下書きに戻す | `labs` を下書きにする | `/labs/`、4 ツール、`/labs-sitemap.xml` が 404 になる。robots.txt の Labs 行とフッターのリンクが消える |
 | W-8 | ヘッダー | `curl -I` で `/labs/` と `/` を比べる | Labs のページだけに `Content-Security-Policy-Report-Only`・`X-Content-Type-Options`・`Referrer-Policy` が付く。サーバー(LiteSpeed や `.htaccess`)が同じ名前のヘッダーを付けていても重複しない(重複したらサーバー側の値を残し、Labs 側を外す) |
-| W-9 | CSP Report-Only | DevTools の Console で `[Report Only]` を確認(5 ページ × PC とスマホ) | Labs 由来の違反がない。プラグイン由来の違反は記録し、C2 で許可リストに反映 |
+| W-9 | CSP Report-Only | **Chrome と Firefox** の DevTools の Console で違反を確認(5 ページ × PC とスマホ)。Safari は観察に使わない(`LABS-CSP-OBSERVATION.md` §1) | Labs 由来の違反がない。プラグイン由来の違反は記録し、C2 で許可リストに反映。Safari の「report-to がない」警告は想定どおり |
 | W-10 | GA4 | GA4 の DebugView(Site Kit のタグ)で操作する | `labs_tool_view` / `run` / `success` / `error` / `copy` / `related_click` が届く。パラメータは固定の語彙だけ。`page_location` に検索語が入らない(`?cat=` だけ) |
 | W-11 | 価格ゲート | `WP_ENVIRONMENT_TYPE` を `production` にして料金計算を開く(確認後に `staging` に戻す) | 承認前は価格の一覧が出ず、「料金データの確認が完了するまで…」と表示される。トークン数の推定は使える |
 | W-12 | キャッシュ | LiteSpeed Cache を有効にして 2 回目のアクセス | ヘッダーとサイトマップがキャッシュ後も同じ。料金はブラウザ側の日付でも再判定される |

@@ -92,7 +92,7 @@ node tests/labs/browser/run.js
 - **入力を HTML として実行しない**:入力は `textContent` と `value` だけで表示する。`innerHTML`、`eval`、`document.write`、ストレージ、`fetch` などのネットワーク API が Labs の JS 全 15 ファイルにないことを、ソース検査で確認した。`<img onerror>` を入力しても実行されなかった。
 - **重い処理の分離**:JSON の解析(256KB 超)、差分(常に)、トークン推定(256KB 超)は Worker で動かす。Worker は同じオリジンの `labs/core/*.js` だけを読み込み、10 秒を超えたら止める。
 - **外部通信**:ツールの処理中は 0 件。外に出るのは Site Kit の gtag だけ。
-- **CSP**:Labs のページだけに `Content-Security-Policy-Report-Only` を付ける(`unsafe-eval` なし、`object-src 'none'`、`frame-ancestors 'self'`、`worker-src 'self'`)。あわせて `X-Content-Type-Options` と `Referrer-Policy` も付ける。
+- **CSP**:Labs のページだけに `Content-Security-Policy-Report-Only` を付ける(`unsafe-eval` なし、`object-src 'none'`、`worker-src 'self'`。1.28.0 で `worker-src 'self' blob:` に広げ、`frame-ancestors` は C2 の強制のポリシーに移した。`LABS-CSP-OBSERVATION.md`)。あわせて `X-Content-Type-Options` と `Referrer-Policy` も付ける。
 - **既存のヘッダーを弱めない**:同じ名前のヘッダーがすでにあれば上書きしない。強制の CSP がすでにある場合は Report-Only を付けない(テストで確認)。
 - **GA4**:6 イベント、決まった語彙の値だけを送る(許可リスト方式)。入力本文・URL・数値は送らない。
 - **インラインの設定 JSON**:`</script>` や引用符をエスケープして埋め込む(テストで確認)。
@@ -115,7 +115,7 @@ node tests/labs/browser/run.js
 | 5 | 公開時に固定ページ `labs`(タイトル「OmochiX Labs」、親なし)を作成。ヘッダーのメニューへの追加 | 利用者が管理画面で行う |
 | 6 | OG 画像(1200×630)を `assets/img/labs/og/{index,slug}.png` に用意する(なければ Slim SEO の既定の画像が使われる) | 制作 |
 | 7 | `/labs/{slug}/` はサイトマップに載らない(Slim SEO に URL を追加するフックがない)。一覧ページと内部リンクから発見させる | 公開後に Search Console で確認 |
-| 8 | CSP Report-Only を 2 週間観察する(DevTools の `[Report Only]`) → C2 で強制に切り替え | 公開後 |
+| 8 | CSP Report-Only を 2 週間観察する(Chrome と Firefox の DevTools。手順は `LABS-CSP-OBSERVATION.md`) → C2 で強制に切り替え | 公開後 |
 | 9 | Lighthouse、VoiceOver での手動確認 | ステージング |
 | 10 | GA4 のカスタムディメンション登録(任意) | 利用者 |
 | 11 | コミット、push、PR。`labs.yml` は push 後に初めて CI で動く | 承認後 |

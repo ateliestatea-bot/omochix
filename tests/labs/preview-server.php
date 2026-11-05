@@ -22,6 +22,10 @@ if ('/' === $path) {
     header('Location: /labs/');
     exit;
 }
+if ('/favicon.ico' === $path) {
+    http_response_code(204); // WordPress answers /favicon.ico itself; a 404 here would be a preview-only console error
+    exit;
+}
 
 require __DIR__ . '/stub.php';
 $origin             = 'http://' . $_SERVER['HTTP_HOST'];

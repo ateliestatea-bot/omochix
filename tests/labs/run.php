@@ -176,9 +176,29 @@ check('schema: 404 untouched', slim_graph('https://example.test/labs/unknown-too
 $h = omochix_labs_security_headers();
 check('headers: Report-Only CSP, nosniff, referrer policy', ['Content-Security-Policy-Report-Only', 'X-Content-Type-Options', 'Referrer-Policy'] === array_keys($h));
 $csp = $h['Content-Security-Policy-Report-Only'];
-foreach (["default-src 'self'", "worker-src 'self'", "object-src 'none'", "frame-ancestors 'self'", "base-uri 'self'", "form-action 'self'", "connect-src 'self' https://www.googletagmanager.com"] as $directive) {
+foreach (["default-src 'self'", "worker-src 'self' blob:", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "connect-src 'self' https://www.googletagmanager.com"] as $directive) {
     check("headers: CSP has $directive", false !== strpos($csp, $directive));
 }
+// The whole policy is pinned: any new source or directive has to change this list on purpose.
+$ga = 'https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net';
+$expected_csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://s.w.org https://secure.gravatar.com $ga",
+    "font-src 'self' data:",
+    "connect-src 'self' $ga",
+    "worker-src 'self' blob:",
+    "frame-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+];
+check('headers: CSP is exactly the reviewed allowlist (nothing widened)', explode('; ', $csp) === $expected_csp, explode('; ', $csp));
+// Browsers ignore frame-ancestors in Report-Only (Safari warns); it returns with the enforced policy in C2.
+check('headers: Report-Only CSP has no frame-ancestors', false === strpos($csp, 'frame-ancestors'));
+// No report endpoint by design (docs/labs/LABS-CSP-OBSERVATION.md): adding one is a reviewed change.
+check('headers: Report-Only CSP has no report-uri / report-to', !preg_match('/\breport-(uri|to)\b/', $csp));
 check('headers: CSP never allows eval', false === strpos($csp, 'unsafe-eval'));
 check('headers: all added when none are present', 3 === count(omochix_labs_headers_to_send(['Content-Type: text/html'])));
 check('headers: an existing header is never replaced (case-insensitive)', ['Content-Security-Policy-Report-Only', 'Referrer-Policy'] === array_keys(omochix_labs_headers_to_send(['x-content-type-options: nosniff'])));

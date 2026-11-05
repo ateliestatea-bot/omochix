@@ -1072,7 +1072,12 @@ add_filter('robots_txt', static function ($output, $public) {
  * Report-Only CSP plus two hardening headers. Report-Only first: it only
  * logs violations in the browser console, so a missed WordPress or plugin
  * source cannot break the page (docs/labs/LABS-C1-PLAN.md §8). There is no
- * report endpoint by design.
+ * report endpoint by design, so Safari does not evaluate this policy at all;
+ * observation uses Chrome and Firefox (docs/labs/LABS-CSP-OBSERVATION.md).
+ *
+ * frame-ancestors is left out on purpose: browsers ignore it in a
+ * Report-Only policy (Safari warns about it). It comes back with the
+ * enforced policy in C2, as clickjacking protection.
  *
  * @return array<string, string>
  */
@@ -1088,7 +1093,6 @@ function omochix_labs_security_headers() {
         "worker-src 'self' blob:", // WordPress's emoji loader runs its support test in a blob: Worker
         "frame-src 'self'",
         "object-src 'none'",
-        "frame-ancestors 'self'",
         "base-uri 'self'",
         "form-action 'self'",
     ]);

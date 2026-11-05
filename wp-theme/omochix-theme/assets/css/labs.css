@@ -89,6 +89,8 @@
 .labs-textarea.labs-code { white-space: pre; overflow-wrap: normal; overflow-x: auto; }
 .labs-input[aria-invalid="true"] { border-color: var(--labs-del); box-shadow: 0 0 0 1px var(--labs-del); }
 .labs-input:focus, .labs-select:focus, .labs-textarea:focus { border-color: var(--labs-accent); box-shadow: var(--glow-focus); outline: none; }
+/* WebKit/Safari draws no box-shadow on a native select, so keyboard focus on a Labs select gets the same 2px ring as other controls. */
+.labs .labs-select:focus-visible { outline: 2px solid var(--labs-accent); outline-offset: 2px; }
 .labs-hint { margin: 8px 0 0; color: var(--color-muted); font-size: 13px; line-height: 1.6; }
 .labs-field { display: grid; gap: 6px; font-size: 14px; font-weight: 650; }
 .labs-field--inline { display: inline-flex; align-items: center; gap: 8px; }

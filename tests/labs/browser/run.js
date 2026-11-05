@@ -7,6 +7,10 @@
  *  - every tool: sample → run → copy → reset, error states, keyboard-only use
  *  - Web Worker for large input and the time limit
  *  - no request leaves 127.0.0.1, no CSP (Report-Only) violation
+ *  - console: CSP violations and unknown CSP notices fail; only the listed
+ *    configuration notices pass (console-policy.js). A deliberate violation
+ *    proves the check catches one.
+ *  - keyboard focus on a Labs select shows the 2px ring (light and dark)
  *  - analytics events: only the six names, only vocabulary values
  *  - unknown slug is a 404
  *
@@ -20,6 +24,7 @@
 var path = require('path');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
+var consolePolicy = require('./console-policy');
 
 var root = path.resolve(__dirname, '..', '..', '..');
 var playwright = require(process.env.LABS_PLAYWRIGHT || 'playwright');
@@ -53,12 +58,26 @@ async function openPage(browser, width, url, opts) {
     page.on('response', function (res) { if (res.url().split('?')[0] === (ORIGIN + url).split('?')[0]) status = res.status(); });
     var errors = [];
     page.on('pageerror', function (e) { errors.push(String(e)); });
+    var messages = [];
+    var policy = { value: '' };
+    page.on('console', function (m) { messages.push({ type: m.type(), text: m.text(), url: (m.location() || {}).url || '' }); });
+    var failed = [];
+    page.on('response', function (res) { if (res.status() >= 400) failed.push(res.status() + ' ' + res.url()); });
+    page.on('response', function (res) { if (res.request().resourceType() === 'document' && res.frame() === page.mainFrame()) policy.value = res.headers()['content-security-policy-report-only'] || ''; });
     await page.addInitScript(function () {
         window.__csp = [];
         document.addEventListener('securitypolicyviolation', function (e) { window.__csp.push(e.violatedDirective + ' ' + e.blockedURI); });
     });
     await page.goto(ORIGIN + url);
-    return { page: page, context: context, external: external, errors: errors, status: function () { return status; } };
+    return { page: page, context: context, external: external, errors: errors, messages: messages, failed: failed, policy: policy, status: function () { return status; } };
+}
+
+// Console messages and violation events against console-policy.js. Returns the review.
+async function consoleCheck(s, name, label) {
+    var events = await s.page.evaluate(function () { return window.__csp || []; });
+    var r = consolePolicy.review(name, s.messages, s.policy.value);
+    check(name + ' ' + label + ': console has no CSP violation, unknown CSP notice or error' + (Object.keys(r.known).length ? ' (known: ' + JSON.stringify(r.known) + ')' : ''), r.ok && events.length === 0, { bad: r.bad, events: events, failed: s.failed });
+    return r;
 }
 
 async function axe(page) {
@@ -96,6 +115,7 @@ async function layoutChecks(browser, name) {
                 check(name + ' ' + w + 'px ' + url + ': axe WCAG 2.2 AA clean', v.length === 0, v);
             }
             check(name + ' ' + w + 'px ' + url + ': no script errors', s.errors.length === 0, s.errors);
+            await consoleCheck(s, name, w + 'px ' + url);
             if (shots && w !== 768) await s.page.screenshot({ path: path.join(shots, name + '-' + w + url.replace(/\//g, '_') + '.png'), fullPage: true });
             await s.context.close();
         }
@@ -105,7 +125,54 @@ async function layoutChecks(browser, name) {
     await wait(500);
     if (name === 'chromium') check(name + ' dark theme: axe clean with a diff on screen', (await axe(dark.page)).length === 0, await axe(dark.page));
     if (shots) await dark.page.screenshot({ path: path.join(shots, name + '-dark-text-diff.png'), fullPage: true });
+    await consoleCheck(dark, name, 'dark theme');
     await dark.context.close();
+}
+
+// The console check must catch a real violation: create a data: Worker (not allowed by
+// worker-src, no network request) and expect a violation, never a pass.
+async function consoleSelfTest(browser, name) {
+    var s = await openPage(browser, 1440, '/labs/json-formatter/');
+    await s.page.evaluate(function () { try { new Worker('data:application/javascript,0'); } catch (e) { /* enforced elsewhere */ } });
+    await wait(600);
+    var r = consolePolicy.review(name, s.messages, s.policy.value);
+    var events = await s.page.evaluate(function () { return window.__csp || []; });
+    check(name + ' console self-test: a deliberate worker-src violation is reported as a failure', !r.ok && r.bad.some(function (b) { return /^violation: /.test(b); }) && events.some(function (e) { return /^worker-src/.test(e); }), { bad: r.bad, events: events });
+    await s.context.close();
+}
+
+// F-4: keyboard focus on a Labs select draws the 2px accent ring (WebKit draws no box-shadow on a native select).
+async function selectFocusChecks(browser, name) {
+    for (var dark of [false, true]) {
+        var s = await openPage(browser, 768, '/labs/json-formatter/' + (dark ? '?theme=dark' : ''), { dark: dark });
+        var p = s.page;
+        await p.focus('#labs-json-sort');
+        await p.keyboard.press(name === 'webkit' ? 'Shift+Alt+Tab' : 'Shift+Tab');
+        var r = await p.evaluate(function () {
+            function rgb(c) {
+                var m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/.exec(c) || /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)/.exec(c);
+                if (!m) return null;
+                var k = /^color/.test(c) ? 255 : 1;
+                return { r: m[1] * k, g: m[2] * k, b: m[3] * k, a: m[4] === undefined ? 1 : Number(m[4]) };
+            }
+            function lum(c) { return [c.r, c.g, c.b].map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }).reduce(function (s, v, i) { return s + v * [0.2126, 0.7152, 0.0722][i]; }, 0); }
+            var e = document.activeElement;
+            var st = getComputedStyle(e);
+            var bg = null;
+            for (var n = e.parentElement; n && !bg; n = n.parentElement) { var c = rgb(getComputedStyle(n).backgroundColor); if (c && c.a > 0.9) bg = c; }
+            bg = bg || { r: 255, g: 255, b: 255, a: 1 };
+            var ring = rgb(st.outlineColor);
+            var l1 = lum(ring), l2 = lum(bg);
+            return { id: e.id, fv: e.matches(':focus-visible'), style: st.outlineStyle, width: parseFloat(st.outlineWidth), contrast: (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05), theme: document.documentElement.getAttribute('data-theme') || '' };
+        });
+        check(name + ' F-4 ' + (dark ? 'dark' : 'light') + ': keyboard focus on a Labs select shows a 2px ring with 3:1 contrast', r.id === 'labs-json-indent' && r.fv && r.style === 'solid' && r.width >= 2 && r.contrast >= 3 && (!dark || r.theme === 'dark'), r);
+        if (shots) await (await p.$('#labs-json-indent')).screenshot({ path: path.join(shots, name + '-select-focus-' + (dark ? 'dark' : 'light') + '.png') });
+        // Other form fields keep their own focus style (border + glow, no outline).
+        await p.focus('#labs-json-input');
+        var ta = await p.evaluate(function () { return getComputedStyle(document.activeElement).outlineStyle; });
+        check(name + ' F-4 ' + (dark ? 'dark' : 'light') + ': textarea focus style unchanged (no outline)', ta === 'none', ta);
+        await s.context.close();
+    }
 }
 
 async function toolChecks(browser, name) {
@@ -154,6 +221,7 @@ async function toolChecks(browser, name) {
     await wait(200);
     check(name + ' json: size limit is enforced', /入力が大きすぎます/.test(await p.textContent('[data-labs-error]')));
     await checkEvents(p, name + ' json');
+    await consoleCheck(s, name, 'json');
     check(name + ' json: no external requests, no CSP violations', s.external.length === 0 && (await p.evaluate(function () { return window.__csp; })).length === 0, { external: s.external, csp: await p.evaluate(function () { return window.__csp; }) });
     await s.context.close();
 
@@ -200,6 +268,7 @@ async function toolChecks(browser, name) {
     await p.click('[data-labs-reset]');
     check(name + ' diff: reset', (await p.inputValue('#labs-diff-old')) === '' && await p.isHidden('[data-labs-result]'));
     await checkEvents(p, name + ' diff');
+    await consoleCheck(s, name, 'diff');
     check(name + ' diff: no external requests, no CSP violations', s.external.length === 0 && (await p.evaluate(function () { return window.__csp; })).length === 0, { external: s.external, csp: await p.evaluate(function () { return window.__csp; }) });
     await s.context.close();
 
@@ -232,6 +301,7 @@ async function toolChecks(browser, name) {
     await wait(200);
     check(name + ' robots: reset', (await p.inputValue('#labs-robots-output')) === 'User-agent: *\nAllow: /\n');
     await checkEvents(p, name + ' robots');
+    await consoleCheck(s, name, 'robots');
     check(name + ' robots: no external requests, no CSP violations', s.external.length === 0 && (await p.evaluate(function () { return window.__csp; })).length === 0, { external: s.external, csp: await p.evaluate(function () { return window.__csp; }) });
     await s.context.close();
 
@@ -336,6 +406,8 @@ async function toolChecks(browser, name) {
             var browser = await playwright[name].launch(exe ? { executablePath: exe } : {});
             await layoutChecks(browser, name);
             await toolChecks(browser, name);
+            await consoleSelfTest(browser, name);
+            await selectFocusChecks(browser, name);
             await browser.close();
         }
     } catch (e) {
