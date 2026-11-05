@@ -448,3 +448,31 @@ add_filter(
 	},
 	11
 );
+
+/**
+ * The three taxonomies are in REST only for the editor panels. Visitors may
+ * not list them (term names, descriptions and counts would be a new public
+ * surface): their REST routes answer 401 to anyone who cannot edit posts.
+ * Industries open up only when hubs are public (Phase 2).
+ *
+ * @param mixed           $response Response so far (WP_Error short-circuits).
+ * @param array           $handler  Route handler.
+ * @param WP_REST_Request $request  Request.
+ * @return mixed
+ */
+function omochix_core_industry_rest_read_guard( $response, $handler, $request ) {
+	if ( is_wp_error( $response ) || ! is_object( $request ) || ! method_exists( $request, 'get_route' ) ) {
+		return $response;
+	}
+	if ( ! preg_match( '#^/wp/v2/(industries|business-purposes|provider-types)(?:/|$)#', (string) $request->get_route(), $m ) ) {
+		return $response;
+	}
+	if ( 'industries' === $m[1] && omochix_core_industry_is_public() ) {
+		return $response;
+	}
+	if ( current_user_can( 'edit_posts' ) ) {
+		return $response;
+	}
+	return new WP_Error( 'rest_forbidden', __( 'Sorry, you are not allowed to do that.', 'omochix-core' ), array( 'status' => function_exists( 'rest_authorization_required_code' ) ? rest_authorization_required_code() : 401 ) );
+}
+add_filter( 'rest_request_before_callbacks', 'omochix_core_industry_rest_read_guard', 10, 3 );

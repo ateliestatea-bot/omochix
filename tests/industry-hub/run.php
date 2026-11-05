@@ -126,4 +126,21 @@ check('many-to-many: a real-estate query finds the tool and the prompt; restaura
 check('many-to-many: an industry with nothing tagged returns nothing', [] === $q(['ai_tool', 'prompt'], 'beauty'));
 check('association: tagging does not touch post meta (no migration)', !isset($GLOBALS['meta'][$tool]) && !isset($GLOBALS['meta'][$prompt]));
 
+// ------------------------------------------------------------- REST reads
+$req = static fn($route) => new class($route) { private $r; function __construct($r) { $this->r = $r; } function get_route() { return $this->r; } };
+ih_as([]);
+foreach (['/wp/v2/industries', '/wp/v2/industries/101', '/wp/v2/business-purposes', '/wp/v2/provider-types'] as $route) {
+    $r = omochix_core_industry_rest_read_guard(null, [], $req($route));
+    check("rest: visitors cannot list $route in Phase 1", $r instanceof WP_Error && 'rest_forbidden' === $r->get_error_code());
+}
+check('rest: other routes are untouched (learn-fields, posts)', null === omochix_core_industry_rest_read_guard(null, [], $req('/wp/v2/learn-fields')) && null === omochix_core_industry_rest_read_guard(null, [], $req('/wp/v2/industries-x')));
+ih_as(['edit_posts']);
+check('rest: editors (block editor panels) can read them', null === omochix_core_industry_rest_read_guard(null, [], $req('/wp/v2/provider-types')));
+ih_as([]);
+add_filter('omochix_core_industry_public', '__return_true');
+check('rest: once hubs are public, industries are readable, purposes and providers still not', null === omochix_core_industry_rest_read_guard(null, [], $req('/wp/v2/industries')) && omochix_core_industry_rest_read_guard(null, [], $req('/wp/v2/business-purposes')) instanceof WP_Error);
+remove_filter('omochix_core_industry_public', '__return_true');
+$earlier = new WP_Error('x', 'y');
+check('rest: an earlier error is passed through', $earlier === omochix_core_industry_rest_read_guard($earlier, [], $req('/wp/v2/industries')));
+
 ih_done();
