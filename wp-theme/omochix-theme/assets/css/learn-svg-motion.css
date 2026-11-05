@@ -104,3 +104,10 @@
     .svg-motion__detail { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--header-height) + 16px); max-height: calc(100vh - var(--header-height) - 32px); overflow-y: auto; }
     .svg-motion__main { grid-column: 1; grid-row: 1; }
 }
+/* A phone held sideways has a viewport about 320-380px tall, where the pinned preview under the sticky header covered
+   half the screen and the content slid underneath it (iPhone QA i03). There the preview stays in the normal flow and
+   gets taller. Its padding is in px because a % padding is taken from the width and ate most of a wide, short preview. */
+@media (max-width: 1080px) and (orientation: landscape) and (max-height: 500px) {
+    .svg-motion__stage { position: relative; top: auto; z-index: auto; height: min(78vh, 300px); height: min(78svh, 300px); box-shadow: none; }
+    .svg-motion__preview { padding: 12px; }
+}
