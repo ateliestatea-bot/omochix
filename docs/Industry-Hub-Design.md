@@ -418,4 +418,6 @@ php tests/industry-hub/wp-integration.php /path/to/throwaway/wordpress   # 実 W
 Phase 1 で未着手・保留の項目：
 - P1-08 practice JSON 入出力への workflow メタと新タクソノミーの追加（Phase 3 で `workflow` タームを作るときに合わせて行う）。
 - 版番号の更新（Core 1.10.0）はリリース用 PR で行う。
+- 性能（Phase 2）：ハブ一覧と G5 は投稿ごとにターム・メタを読み直す（N+1）。表示を作る Phase 2 で、`update_meta_cache` / `update_object_term_cache` による事前読み込みか、結果のキャッシュを入れる。
+- 確認事項：公開済み Workflow の `workflow_*` メタ（台帳 ID 以外）は公開 REST から読める。公開コンテンツの一部として意図どおり。
 - ステージングでの確認（B-2）はアクセス手段が無いため未実施。代替確認は §12.1。

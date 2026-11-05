@@ -79,7 +79,7 @@ function omochix_core_get_industry_posts( $industry, $post_type, $args = array()
 		'post_type'           => $post_type,
 		'post_status'         => 'publish',
 		'has_password'        => false,
-		'posts_per_page'      => $limit,
+		'posts_per_page'      => min( OMOCHIX_CORE_INDUSTRY_LIST_MAX * 2, $limit * 2 ), // headroom for the read-side re-checks below
 		'no_found_rows'       => true,
 		'ignore_sticky_posts' => true,
 		'post__not_in'        => array_map( 'absint', (array) ( $args['exclude'] ?? array() ) ),
@@ -99,7 +99,7 @@ function omochix_core_get_industry_posts( $industry, $post_type, $args = array()
 		// Re-check: a post with two providers is unclassified, never a match.
 		$posts = array_values( array_filter( $posts, static fn( $p ) => $provider === omochix_core_get_provider_type( $p ) ) );
 	}
-	return $posts;
+	return array_slice( $posts, 0, $limit );
 }
 
 /**

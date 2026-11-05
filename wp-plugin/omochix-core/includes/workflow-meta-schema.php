@@ -206,8 +206,10 @@ function omochix_core_workflow_submitted_terms( $taxonomy, $request = null, $tax
 		$term = ctype_digit( $item ) ? get_term( (int) $item, $taxonomy ) : ( get_term_by( 'slug', sanitize_title( $item ), $taxonomy ) ?: get_term_by( 'name', $item, $taxonomy ) );
 		if ( $term instanceof WP_Term ) {
 			$slugs[] = $term->slug;
-		} elseif ( ! ctype_digit( $item ) ) {
-			// A name core will turn into a new term on save. Judge it by what it
+		} elseif ( ! ctype_digit( $item ) && ! is_taxonomy_hierarchical( $taxonomy ) ) {
+			// Flat taxonomies only: core creates unknown names there, while for
+			// hierarchical ones it intval()s them to 0 and drops them.
+			// A name core will turn into a new term on save is judged by what it
 			// will become, so "workflow" / "導入する" cannot slip past the guard.
 			$slugs[] = 'learn_format' === $taxonomy && '導入する' === $item ? OMOCHIX_CORE_WORKFLOW_FORMAT : sanitize_title( $item );
 		}

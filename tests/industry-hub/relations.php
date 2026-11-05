@@ -41,8 +41,10 @@ check('search: "official" never matches unclassified content', [] === omochix_co
 check('search: "unclassified" or unknown providers are not filters', [] === omochix_core_get_industry_posts('real-estate', 'prompt', ['provider' => 'unclassified']) && [] === omochix_core_get_industry_posts('real-estate', 'ai_tool', ['provider' => 'official']));
 check('search: only listable post types (never the private ledger through this getter)', [] === omochix_core_get_industry_posts('real-estate', 'omx_resource') && [] === omochix_core_get_industry_posts('real-estate', 'attachment'));
 omochix_core_get_industry_posts('real-estate', 'prompt', ['limit' => 500, 'exclude' => [$prompt]]);
-check('query: published only, no passwords, no_found_rows, limit capped at 12, exclusions applied', 'publish' === $GLOBALS['last_query']['post_status'] && false === $GLOBALS['last_query']['has_password'] && true === $GLOBALS['last_query']['no_found_rows'] && 12 === $GLOBALS['last_query']['posts_per_page'] && [$prompt] === $GLOBALS['last_query']['post__not_in']);
+check('query: published only, no passwords, no_found_rows, fetches headroom (24) for a 12-item cap, exclusions applied', 'publish' === $GLOBALS['last_query']['post_status'] && false === $GLOBALS['last_query']['has_password'] && true === $GLOBALS['last_query']['no_found_rows'] && 24 === $GLOBALS['last_query']['posts_per_page'] && [$prompt] === $GLOBALS['last_query']['post__not_in']);
 function omochix_get_active_ai_tool_meta_query() { return ['relation' => 'OR', ['key' => 'tool_status', 'compare' => 'NOT EXISTS']]; }
+$many = array_map(static fn($i) => $add('prompt', ['construction']), range(1, 15));
+check('query: the result never exceeds the requested limit', 12 === count(omochix_core_get_industry_posts('construction', 'prompt', ['limit' => 99])) && 3 === count(omochix_core_get_industry_posts('construction', 'prompt', ['limit' => 3])));
 omochix_core_get_industry_posts('real-estate', 'ai_tool');
 check('query: discontinued tools are excluded with the theme\'s active-tool rule when available', isset($GLOBALS['last_query']['meta_query']['relation']));
 omochix_core_get_industry_posts('real-estate', 'prompt');

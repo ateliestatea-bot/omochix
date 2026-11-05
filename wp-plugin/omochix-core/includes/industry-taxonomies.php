@@ -335,7 +335,8 @@ function omochix_core_industry_pre_insert_term( $term, $taxonomy, $args = array(
 	// is a flat taxonomy, so any author could otherwise create it from the tag
 	// box or REST while saving — and an item whose term did not exist yet would
 	// skip the workflow guard. Only editors may create it.
-	if ( 'learn_format' === $taxonomy && ! doing_action( 'init' ) && ! current_user_can( 'manage_categories' ) ) {
+	// Userless code (WP-CLI without --user, cron, upgrade routines) may seed it.
+	if ( 'learn_format' === $taxonomy && ! doing_action( 'init' ) && is_user_logged_in() && ! current_user_can( 'manage_categories' ) ) {
 		$slug = omochix_core_industry_candidate_slug( $term, $args );
 		if ( 'workflow' === $slug || '導入する' === trim( (string) $term ) ) {
 			return new WP_Error( 'omochix_workflow_format_curated', __( '形式「導入する（workflow）」の作成は編集者だけができます。', 'omochix-core' ) );
