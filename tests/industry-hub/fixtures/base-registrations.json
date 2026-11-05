@@ -1,0 +1,1539 @@
+{
+    "post_types": {
+        "ai_tool": {
+            "labels": {
+                "name": "AIツール",
+                "singular_name": "AIツール",
+                "menu_name": "AIツール",
+                "name_admin_bar": "AIツール",
+                "add_new": "新規追加",
+                "add_new_item": "AIツールを追加",
+                "new_item": "新しいAIツール",
+                "edit_item": "AIツールを編集",
+                "view_item": "AIツールを表示",
+                "all_items": "AIツール一覧",
+                "search_items": "AIツールを検索",
+                "not_found": "AIツールが見つかりません。",
+                "not_found_in_trash": "ゴミ箱にAIツールはありません。",
+                "featured_image": "Hero画像",
+                "set_featured_image": "Hero画像を設定",
+                "remove_featured_image": "Hero画像を削除",
+                "use_featured_image": "Hero画像として使用",
+                "archives": "AIツールアーカイブ"
+            },
+            "public": true,
+            "publicly_queryable": true,
+            "show_ui": true,
+            "show_in_menu": true,
+            "show_in_rest": true,
+            "rest_base": "ai-tools",
+            "has_archive": "ai-tools",
+            "rewrite": {
+                "slug": "ai-tools",
+                "with_front": false
+            },
+            "query_var": true,
+            "exclude_from_search": false,
+            "menu_icon": "dashicons-superhero",
+            "menu_position": 6,
+            "capability_type": "post",
+            "map_meta_cap": true,
+            "supports": [
+                "title",
+                "editor",
+                "excerpt",
+                "thumbnail",
+                "revisions",
+                "custom-fields",
+                "author"
+            ],
+            "template": [
+                [
+                    "core/heading",
+                    {
+                        "level": 2,
+                        "placeholder": "概要"
+                    }
+                ],
+                [
+                    "core/paragraph",
+                    {
+                        "placeholder": "ツールの概要を入力してください。"
+                    }
+                ]
+            ]
+        },
+        "learn_practice": {
+            "labels": {
+                "name": "実践教材",
+                "singular_name": "実践教材",
+                "menu_name": "Learn 実践教材",
+                "name_admin_bar": "実践教材",
+                "add_new": "新規追加",
+                "add_new_item": "実践教材を追加",
+                "new_item": "新しい実践教材",
+                "edit_item": "実践教材を編集",
+                "view_item": "実践教材を表示",
+                "all_items": "実践教材一覧",
+                "search_items": "実践教材を検索",
+                "not_found": "実践教材が見つかりません。",
+                "not_found_in_trash": "ゴミ箱に実践教材はありません。",
+                "archives": "実践教材アーカイブ"
+            },
+            "description": "見る → 学ぶ → 試す → 組み合わせる → AIで実装する → 検証する、を 1 ページで完結させる教材。",
+            "public": true,
+            "publicly_queryable": true,
+            "show_ui": true,
+            "show_in_menu": true,
+            "show_in_rest": true,
+            "rest_base": "learn-practice",
+            "has_archive": "learn/practice",
+            "rewrite": {
+                "slug": "learn/practice",
+                "with_front": false
+            },
+            "query_var": true,
+            "exclude_from_search": false,
+            "menu_icon": "dashicons-welcome-learn-more",
+            "menu_position": 8,
+            "capability_type": "post",
+            "map_meta_cap": true,
+            "supports": [
+                "title",
+                "editor",
+                "excerpt",
+                "thumbnail",
+                "revisions",
+                "custom-fields",
+                "author"
+            ],
+            "template": [
+                [
+                    "core/paragraph",
+                    {
+                        "placeholder": "補足説明（任意）。手順・プロンプト・コードは下の各パネルに入力します。"
+                    }
+                ]
+            ]
+        },
+        "prompt": {
+            "labels": {
+                "name": "プロンプト",
+                "singular_name": "プロンプト",
+                "menu_name": "プロンプトライブラリ",
+                "name_admin_bar": "プロンプト",
+                "add_new": "新規追加",
+                "add_new_item": "プロンプトを追加",
+                "new_item": "新しいプロンプト",
+                "edit_item": "プロンプトを編集",
+                "view_item": "プロンプトを表示",
+                "all_items": "プロンプト一覧",
+                "search_items": "プロンプトを検索",
+                "not_found": "プロンプトが見つかりません。",
+                "not_found_in_trash": "ゴミ箱にプロンプトはありません。",
+                "archives": "プロンプトアーカイブ"
+            },
+            "public": true,
+            "publicly_queryable": true,
+            "show_ui": true,
+            "show_in_menu": true,
+            "show_in_rest": true,
+            "rest_base": "prompts",
+            "has_archive": "prompts",
+            "rewrite": {
+                "slug": "prompts",
+                "with_front": false
+            },
+            "query_var": true,
+            "exclude_from_search": false,
+            "menu_icon": "dashicons-format-chat",
+            "menu_position": 7,
+            "capability_type": "post",
+            "map_meta_cap": true,
+            "supports": [
+                "title",
+                "editor",
+                "excerpt",
+                "thumbnail",
+                "revisions",
+                "custom-fields",
+                "author"
+            ],
+            "template": [
+                [
+                    "core/paragraph",
+                    {
+                        "placeholder": "このプロンプトの説明・使いどころを入力してください。"
+                    }
+                ]
+            ]
+        }
+    },
+    "taxonomies": {
+        "ai_tool_category": {
+            "types": [
+                "ai_tool"
+            ],
+            "args": {
+                "labels": {
+                    "name": "AIツールカテゴリー",
+                    "singular_name": "AIツールカテゴリー",
+                    "search_items": "AIツールカテゴリーを検索",
+                    "all_items": "AIツールカテゴリー一覧",
+                    "edit_item": "AIツールカテゴリーを編集",
+                    "update_item": "AIツールカテゴリーを更新",
+                    "add_new_item": "AIツールカテゴリーを追加",
+                    "new_item_name": "新しいAIツールカテゴリー",
+                    "menu_name": "AIツールカテゴリー"
+                },
+                "hierarchical": true,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "ai-tool-categories",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "ai-tools/category",
+                    "with_front": false
+                }
+            }
+        },
+        "ai_tool_feature": {
+            "types": [
+                "ai_tool"
+            ],
+            "args": {
+                "labels": {
+                    "name": "機能",
+                    "singular_name": "機能",
+                    "search_items": "機能を検索",
+                    "all_items": "機能一覧",
+                    "edit_item": "機能を編集",
+                    "update_item": "機能を更新",
+                    "add_new_item": "機能を追加",
+                    "new_item_name": "新しい機能",
+                    "menu_name": "機能"
+                },
+                "hierarchical": false,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "ai-tool-features",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "ai-tools/features",
+                    "with_front": false
+                }
+            }
+        },
+        "ai_tool_platform": {
+            "types": [
+                "ai_tool"
+            ],
+            "args": {
+                "labels": {
+                    "name": "対応環境",
+                    "singular_name": "対応環境",
+                    "search_items": "対応環境を検索",
+                    "all_items": "対応環境一覧",
+                    "edit_item": "対応環境を編集",
+                    "update_item": "対応環境を更新",
+                    "add_new_item": "対応環境を追加",
+                    "new_item_name": "新しい対応環境",
+                    "menu_name": "対応環境"
+                },
+                "hierarchical": false,
+                "public": false,
+                "publicly_queryable": false,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "ai-tool-platforms",
+                "query_var": true,
+                "rewrite": false
+            }
+        },
+        "ai_tool_tag": {
+            "types": [
+                "ai_tool"
+            ],
+            "args": {
+                "labels": {
+                    "name": "特徴タグ",
+                    "singular_name": "特徴タグ",
+                    "search_items": "特徴タグを検索",
+                    "all_items": "特徴タグ一覧",
+                    "edit_item": "特徴タグを編集",
+                    "update_item": "特徴タグを更新",
+                    "add_new_item": "特徴タグを追加",
+                    "new_item_name": "新しい特徴タグ",
+                    "menu_name": "特徴タグ"
+                },
+                "hierarchical": false,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "ai-tool-tags",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "ai-tools/tag",
+                    "with_front": false
+                }
+            }
+        },
+        "learn_ai": {
+            "types": [
+                "learn_practice"
+            ],
+            "args": {
+                "labels": {
+                    "name": "対応AI",
+                    "singular_name": "対応AI",
+                    "search_items": "対応AIを検索",
+                    "all_items": "対応AI一覧",
+                    "edit_item": "対応AIを編集",
+                    "update_item": "対応AIを更新",
+                    "add_new_item": "対応AIを追加",
+                    "new_item_name": "新しい対応AI",
+                    "menu_name": "対応AI"
+                },
+                "hierarchical": false,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "learn-ai",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "learn/ai",
+                    "with_front": false
+                }
+            }
+        },
+        "learn_field": {
+            "types": [
+                "learn_practice",
+                "page"
+            ],
+            "args": {
+                "labels": {
+                    "name": "分野",
+                    "singular_name": "分野",
+                    "search_items": "分野を検索",
+                    "all_items": "分野一覧",
+                    "edit_item": "分野を編集",
+                    "update_item": "分野を更新",
+                    "add_new_item": "分野を追加",
+                    "new_item_name": "新しい分野",
+                    "menu_name": "分野"
+                },
+                "hierarchical": true,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "learn-fields",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "learn/field",
+                    "with_front": false
+                }
+            }
+        },
+        "learn_format": {
+            "types": [
+                "learn_practice"
+            ],
+            "args": {
+                "labels": {
+                    "name": "形式",
+                    "singular_name": "形式",
+                    "search_items": "形式を検索",
+                    "all_items": "形式一覧",
+                    "edit_item": "形式を編集",
+                    "update_item": "形式を更新",
+                    "add_new_item": "形式を追加",
+                    "new_item_name": "新しい形式",
+                    "menu_name": "形式"
+                },
+                "hierarchical": false,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "learn-formats",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "learn/format",
+                    "with_front": false
+                }
+            }
+        },
+        "learn_tech": {
+            "types": [
+                "learn_practice"
+            ],
+            "args": {
+                "labels": {
+                    "name": "使用技術",
+                    "singular_name": "使用技術",
+                    "search_items": "使用技術を検索",
+                    "all_items": "使用技術一覧",
+                    "edit_item": "使用技術を編集",
+                    "update_item": "使用技術を更新",
+                    "add_new_item": "使用技術を追加",
+                    "new_item_name": "新しい使用技術",
+                    "menu_name": "使用技術"
+                },
+                "hierarchical": false,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "learn-tech",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "learn/tech",
+                    "with_front": false
+                }
+            }
+        },
+        "learn_usecase": {
+            "types": [
+                "learn_practice",
+                "page"
+            ],
+            "args": {
+                "labels": {
+                    "name": "用途",
+                    "singular_name": "用途",
+                    "search_items": "用途を検索",
+                    "all_items": "用途一覧",
+                    "edit_item": "用途を編集",
+                    "update_item": "用途を更新",
+                    "add_new_item": "用途を追加",
+                    "new_item_name": "新しい用途",
+                    "menu_name": "用途"
+                },
+                "hierarchical": false,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "learn-usecases",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "learn/usecase",
+                    "with_front": false
+                }
+            }
+        },
+        "prompt_category": {
+            "types": [
+                "prompt"
+            ],
+            "args": {
+                "labels": {
+                    "name": "プロンプトカテゴリー",
+                    "singular_name": "プロンプトカテゴリー",
+                    "search_items": "プロンプトカテゴリーを検索",
+                    "all_items": "プロンプトカテゴリー一覧",
+                    "edit_item": "プロンプトカテゴリーを編集",
+                    "update_item": "プロンプトカテゴリーを更新",
+                    "add_new_item": "プロンプトカテゴリーを追加",
+                    "new_item_name": "新しいプロンプトカテゴリー",
+                    "menu_name": "プロンプトカテゴリー"
+                },
+                "hierarchical": true,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "prompt-categories",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "prompts/category",
+                    "with_front": false
+                }
+            }
+        },
+        "prompt_model": {
+            "types": [
+                "prompt"
+            ],
+            "args": {
+                "labels": {
+                    "name": "対応AI",
+                    "singular_name": "対応AI",
+                    "search_items": "対応AIを検索",
+                    "all_items": "対応AI一覧",
+                    "edit_item": "対応AIを編集",
+                    "update_item": "対応AIを更新",
+                    "add_new_item": "対応AIを追加",
+                    "new_item_name": "新しい対応AI",
+                    "menu_name": "対応AI"
+                },
+                "hierarchical": false,
+                "public": true,
+                "publicly_queryable": true,
+                "show_ui": true,
+                "show_admin_column": true,
+                "show_in_rest": true,
+                "rest_base": "prompt-models",
+                "query_var": true,
+                "rewrite": {
+                    "slug": "prompts/model",
+                    "with_front": false
+                }
+            }
+        }
+    },
+    "post_meta": {
+        "ai_tool": {
+            "api_available": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": "unknown"
+            },
+            "api_sdk_info": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "commercial_use": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": "unknown"
+            },
+            "company_name": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "cons": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "display_order": {
+                "type": "integer",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": 0
+            },
+            "has_free_plan": {
+                "type": "boolean",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": false
+            },
+            "info_checked_date": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "integrations": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "is_featured": {
+                "type": "boolean",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": false
+            },
+            "japanese_support": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": "unknown"
+            },
+            "key_features": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "not_recommended_for": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "notes": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "official_url": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "omochix_view": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "pricing_details": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "pricing_type": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": "contact"
+            },
+            "pros": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "rating_overall": {
+                "type": "number",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta"
+            },
+            "recommended_for": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "recommended_use_cases": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "related_compare_ids": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "related_lab_ids": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "related_learn_ids": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "related_news_ids": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "security_info": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "short_description": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": ""
+            },
+            "strengths": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "supported_devices": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "supported_models": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            },
+            "tool_logo": {
+                "type": "integer",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": 0
+            },
+            "tool_status": {
+                "type": "string",
+                "single": true,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": "active"
+            },
+            "weaknesses": {
+                "type": "array",
+                "single": true,
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_meta",
+                "auth_callback": "omochix_core_auth_registered_meta",
+                "default": []
+            }
+        },
+        "learn_practice": {
+            "practice_changelog": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "date": {
+                                    "type": "string"
+                                },
+                                "note": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_code": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "label": {
+                                    "type": "string"
+                                },
+                                "lang": {
+                                    "type": "string"
+                                },
+                                "file": {
+                                    "type": "string"
+                                },
+                                "body": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_difficulty": {
+                "type": "string",
+                "single": true,
+                "default": "beginner",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_env": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_minutes": {
+                "type": "integer",
+                "single": true,
+                "default": 0,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_outcome": {
+                "type": "string",
+                "single": true,
+                "default": "",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_prereq": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_preview_poster": {
+                "type": "integer",
+                "single": true,
+                "default": 0,
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_preview_src": {
+                "type": "string",
+                "single": true,
+                "default": "",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_preview_type": {
+                "type": "string",
+                "single": true,
+                "default": "image",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_prompts": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string"
+                                },
+                                "for": {
+                                    "type": "string"
+                                },
+                                "body": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_publish": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_safety": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_sources": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "label": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_steps": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string"
+                                },
+                                "body": {
+                                    "type": "string"
+                                },
+                                "prompt": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "code": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "check": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_summary": {
+                "type": "string",
+                "single": true,
+                "default": "",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_troubleshooting": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "symptom": {
+                                    "type": "string"
+                                },
+                                "cause": {
+                                    "type": "string"
+                                },
+                                "fix": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_verified_at": {
+                "type": "string",
+                "single": true,
+                "default": "",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "practice_verify": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string"
+                                },
+                                "how": {
+                                    "type": "string"
+                                },
+                                "expect": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "related_learn_ids": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "related_motion_slugs": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "related_practice_ids": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "related_prompt_ids": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            },
+            "related_tool_ids": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_practice_meta",
+                "auth_callback": "omochix_core_auth_registered_practice_meta",
+                "revisions_enabled": true
+            }
+        },
+        "post": {
+            "omochix_content_role": {
+                "type": "string",
+                "single": true,
+                "default": "",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_content_role",
+                "auth_callback": "omochix_core_auth_registered_meta"
+            }
+        },
+        "prompt": {
+            "prompt_body": {
+                "type": "string",
+                "single": true,
+                "default": "",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_prompt_meta",
+                "auth_callback": "omochix_core_auth_registered_prompt_meta"
+            },
+            "prompt_difficulty": {
+                "type": "string",
+                "single": true,
+                "default": "beginner",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_prompt_meta",
+                "auth_callback": "omochix_core_auth_registered_prompt_meta"
+            },
+            "prompt_example": {
+                "type": "string",
+                "single": true,
+                "default": "",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_prompt_meta",
+                "auth_callback": "omochix_core_auth_registered_prompt_meta"
+            },
+            "prompt_usage": {
+                "type": "string",
+                "single": true,
+                "default": "",
+                "show_in_rest": true,
+                "sanitize_callback": "omochix_core_sanitize_registered_prompt_meta",
+                "auth_callback": "omochix_core_auth_registered_prompt_meta"
+            },
+            "related_tool_ids": {
+                "type": "array",
+                "single": true,
+                "default": [],
+                "show_in_rest": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "sanitize_callback": "omochix_core_sanitize_registered_prompt_meta",
+                "auth_callback": "omochix_core_auth_registered_prompt_meta"
+            }
+        }
+    },
+    "rewrite": [
+        [
+            "^ai\\-tools/category/([^/]+)/page/?([0-9]{1,})/?$",
+            "index.php?ai_tool_category=$matches[1]&paged=$matches[2]",
+            "top"
+        ],
+        [
+            "^ai\\-tools/category/([^/]+)/?$",
+            "index.php?ai_tool_category=$matches[1]",
+            "top"
+        ],
+        [
+            "^ai\\-tools/features/([^/]+)/page/?([0-9]{1,})/?$",
+            "index.php?ai_tool_feature=$matches[1]&paged=$matches[2]",
+            "top"
+        ],
+        [
+            "^ai\\-tools/features/([^/]+)/?$",
+            "index.php?ai_tool_feature=$matches[1]",
+            "top"
+        ],
+        [
+            "^ai\\-tools/tag/([^/]+)/page/?([0-9]{1,})/?$",
+            "index.php?ai_tool_tag=$matches[1]&paged=$matches[2]",
+            "top"
+        ],
+        [
+            "^ai\\-tools/tag/([^/]+)/?$",
+            "index.php?ai_tool_tag=$matches[1]",
+            "top"
+        ],
+        [
+            "^prompts/category/([^/]+)/page/?([0-9]{1,})/?$",
+            "index.php?prompt_category=$matches[1]&paged=$matches[2]",
+            "top"
+        ],
+        [
+            "^prompts/category/([^/]+)/?$",
+            "index.php?prompt_category=$matches[1]",
+            "top"
+        ],
+        [
+            "^prompts/model/([^/]+)/page/?([0-9]{1,})/?$",
+            "index.php?prompt_model=$matches[1]&paged=$matches[2]",
+            "top"
+        ],
+        [
+            "^prompts/model/([^/]+)/?$",
+            "index.php?prompt_model=$matches[1]",
+            "top"
+        ]
+    ],
+    "hooks": {
+        "add_meta_boxes": [
+            "10:omochix_core_add_content_role_meta_box",
+            "10:omochix_core_add_meta_boxes"
+        ],
+        "add_meta_boxes_learn_practice": [
+            "10:omochix_core_add_practice_meta_boxes"
+        ],
+        "add_meta_boxes_prompt": [
+            "10:omochix_core_add_prompt_meta_boxes"
+        ],
+        "admin_enqueue_scripts": [
+            "10:omochix_core_admin_assets",
+            "10:omochix_core_practice_admin_assets",
+            "10:omochix_core_practice_admin_exporter_assets",
+            "10:omochix_core_practice_admin_importer_assets",
+            "10:omochix_core_practice_list_assets",
+            "10:omochix_core_prompt_admin_assets"
+        ],
+        "admin_init": [
+            "10:omochix_core_practice_export_download"
+        ],
+        "admin_menu": [
+            "10:omochix_core_register_csv_import_page",
+            "10:omochix_core_register_practice_exporter_page",
+            "10:omochix_core_register_practice_importer_page",
+            "10:omochix_core_register_prompt_csv_import_page",
+            "10:omochix_core_register_tool_content_updater_page"
+        ],
+        "admin_notices": [
+            "10:omochix_core_practice_admin_notices",
+            "10:omochix_core_practice_guard_notices"
+        ],
+        "bulk_actions-edit-learn_practice": [
+            "10:omochix_core_practice_export_bulk_action"
+        ],
+        "bulk_edit_custom_box": [
+            "10:omochix_core_ai_tool_bulk_edit",
+            "10:omochix_core_practice_bulk_edit"
+        ],
+        "get_post_metadata": [
+            "10:omochix_core_legacy_company_meta",
+            "9:omochix_core_normalize_legacy_contract_meta"
+        ],
+        "handle_bulk_actions-edit-learn_practice": [
+            "10:omochix_core_practice_export_handle_bulk"
+        ],
+        "init": [
+            "10:omochix_core_init",
+            "10:omochix_core_register_content_role_meta"
+        ],
+        "manage_ai_tool_posts_columns": [
+            "10:omochix_core_ai_tool_columns"
+        ],
+        "manage_ai_tool_posts_custom_column": [
+            "10:omochix_core_ai_tool_column_content"
+        ],
+        "manage_edit-ai_tool_sortable_columns": [
+            "10:omochix_core_ai_tool_sortable_columns"
+        ],
+        "manage_edit-learn_practice_sortable_columns": [
+            "10:omochix_core_practice_list_sortable_columns"
+        ],
+        "manage_learn_practice_posts_columns": [
+            "10:omochix_core_practice_list_columns"
+        ],
+        "manage_learn_practice_posts_custom_column": [
+            "10:omochix_core_practice_list_column_content"
+        ],
+        "posts_clauses": [
+            "10:omochix_core_ai_tool_orderby_clauses",
+            "10:omochix_core_practice_list_orderby_clauses"
+        ],
+        "posts_search": [
+            "10:omochix_core_ai_tool_admin_search"
+        ],
+        "pre_get_posts": [
+            "10:omochix_core_ai_tool_admin_query",
+            "10:omochix_core_practice_list_query"
+        ],
+        "quick_edit_custom_box": [
+            "10:omochix_core_ai_tool_quick_edit",
+            "10:omochix_core_practice_quick_edit"
+        ],
+        "rest_pre_insert_learn_practice": [
+            "10:omochix_core_practice_guard_rest"
+        ],
+        "restrict_manage_posts": [
+            "10:omochix_core_ai_tool_filters",
+            "10:omochix_core_practice_list_filters"
+        ],
+        "save_post_ai_tool": [
+            "10:omochix_core_save_ai_tool_meta",
+            "10:omochix_core_save_product_timeline",
+            "20:omochix_core_save_ai_tool_inline_meta"
+        ],
+        "save_post_learn_practice": [
+            "10:omochix_core_save_practice_meta",
+            "20:omochix_core_save_practice_inline_meta"
+        ],
+        "save_post_post": [
+            "10:omochix_core_save_content_role"
+        ],
+        "save_post_prompt": [
+            "10:omochix_core_save_prompt_meta"
+        ],
+        "slim_seo_schema_graph": [
+            "9223372036854775807:omochix_core_add_software_application_to_slim_seo"
+        ],
+        "the_posts": [
+            "10:omochix_core_prime_ai_tool_logo_cache"
+        ],
+        "wp_footer": [
+            "9223372036854775807:omochix_core_output_software_application_fallback"
+        ],
+        "wp_insert_post_data": [
+            "10:omochix_core_practice_guard_insert_data"
+        ],
+        "wp_save_post_revision_post_has_changed": [
+            "10:omochix_core_practice_revision_has_changed"
+        ]
+    }
+}
