@@ -1,7 +1,13 @@
-# OmochiX Industry Hub — 設計書 v0.2（確定案・承認待ち）
+# OmochiX Industry Hub — 設計書 v0.2
 
 作成日：2026-11-05 / Claude Code
-状態：設計確定案。リポジトリ未保存・未commit。v0.1（同ディレクトリ `Industry-Hub-Design-v0.1.md`）の承認事項と修正指示を反映。
+状態：v0.2 承認済み（2026-11-05）。Phase 1 実装中。v0.1 の監査結果は承認時の会話に記録（本リポジトリには置いていない）。
+
+> 実装時の補足（Phase 1）
+> - 業種ハブの公開URLは Phase 1 では作らない。`omx_industry` は既定で非公開（`omochix_core_industry_is_public()` = false）。Phase 2 のテーマが `omochix_core_industry_public` フィルタで有効化し、その時点で rewrite が一度 flush される。
+> - 予約スラッグは、`/learn/industries/` 配下で実際に衝突する WordPress のエンドポイント（`page`, `feed`, `embed` 等）に限定した。`practice` や `motion` はこの配下では衝突しないため予約しない（§7.1 の記述をこれで置き換える）。
+> - テスト stub は既存の `tests/learn-practice/stub.php` を読み込まず、独立した `tests/industry-hub/stub.php` とした（既存 stub の `current_user_can()` は常に true を返すため、権限テストができない）。§10 の記述をこれで置き換える。
+> - Workflow のメタは既存の `omochix_core_get_practice_meta_schema()` に追加せず、別スキーマ `omochix_core_get_workflow_meta_schema()` として `learn_practice` に登録する（既存の保存・エクスポート・リビジョン処理の挙動を変えないため）。そのため、practice の JSON 入出力には workflow メタと新タクソノミーがまだ含まれない（P1-08 は未着手）。
 
 ---
 
