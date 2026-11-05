@@ -331,6 +331,16 @@ function omochix_core_industry_pre_insert_term( $term, $taxonomy, $args = array(
 	if ( OMOCHIX_CORE_PURPOSE_TAXONOMY === $taxonomy && ! doing_action( 'init' ) && is_user_logged_in() && ! current_user_can( 'manage_categories' ) ) {
 		return new WP_Error( 'omochix_purpose_curated', __( '業務目的の追加は編集者（カテゴリー管理の権限）だけができます。', 'omochix-core' ) );
 	}
+	// The workflow format switches on the workflow rules (Phase 3). learn_format
+	// is a flat taxonomy, so any author could otherwise create it from the tag
+	// box or REST while saving — and an item whose term did not exist yet would
+	// skip the workflow guard. Only editors may create it.
+	if ( 'learn_format' === $taxonomy && ! doing_action( 'init' ) && ! current_user_can( 'manage_categories' ) ) {
+		$slug = omochix_core_industry_candidate_slug( $term, $args );
+		if ( 'workflow' === $slug || '導入する' === trim( (string) $term ) ) {
+			return new WP_Error( 'omochix_workflow_format_curated', __( '形式「導入する（workflow）」の作成は編集者だけができます。', 'omochix-core' ) );
+		}
+	}
 	if ( OMOCHIX_CORE_PROVIDER_TAXONOMY === $taxonomy ) {
 		$vocabulary = omochix_core_get_provider_vocabulary();
 		$slug       = omochix_core_industry_candidate_slug( $term, $args );
@@ -470,7 +480,9 @@ function omochix_core_industry_rest_read_guard( $response, $handler, $request ) 
 	if ( is_wp_error( $response ) || ! is_object( $request ) || ! method_exists( $request, 'get_route' ) ) {
 		return $response;
 	}
-	if ( ! preg_match( '#^/wp/v2/(industries|business-purposes|provider-types)(?:/|$)#', (string) $request->get_route(), $m ) ) {
+	// WP_REST_Server matches routes case-insensitively, so this check must too.
+	$route = strtolower( (string) $request->get_route() );
+	if ( ! preg_match( '#^/+wp/v2/+(industries|business-purposes|provider-types)(?:/|$)#', $route, $m ) ) {
 		return $response;
 	}
 	if ( 'industries' === $m[1] && omochix_core_industry_is_public() ) {
@@ -482,3 +494,88 @@ function omochix_core_industry_rest_read_guard( $response, $handler, $request ) 
 	return new WP_Error( 'rest_forbidden', __( 'Sorry, you are not allowed to do that.', 'omochix-core' ), array( 'status' => function_exists( 'rest_authorization_required_code' ) ? rest_authorization_required_code() : 401 ) );
 }
 add_filter( 'rest_request_before_callbacks', 'omochix_core_industry_rest_read_guard', 10, 3 );
+
+/**
+ * Post responses would otherwise carry the term IDs of the three taxonomies
+ * (industries / business-purposes / provider-types fields) and accept them as
+ * filters (?provider-types=ID), letting visitors tell which public posts are
+ * partner (PR) or official. In Phase 1 these stay editor-only; industries
+ * open up with the hubs.
+ *
+ * @return string[] REST field / parameter names hidden from visitors.
+ */
+function omochix_core_industry_private_rest_fields() {
+	$fields = array( 'business-purposes', 'provider-types' );
+	if ( ! omochix_core_industry_is_public() ) {
+		$fields[] = 'industries';
+	}
+	return $fields;
+}
+
+/**
+ * Remove the fields from post responses for users who cannot edit posts.
+ *
+ * @param WP_REST_Response $response Response.
+ * @return WP_REST_Response
+ */
+function omochix_core_industry_rest_hide_fields( $response ) {
+	if ( current_user_can( 'edit_posts' ) || ! is_object( $response ) || ! method_exists( $response, 'get_data' ) ) {
+		return $response;
+	}
+	$data = $response->get_data();
+	if ( is_array( $data ) ) {
+		foreach ( omochix_core_industry_private_rest_fields() as $field ) {
+			unset( $data[ $field ] );
+		}
+		$response->set_data( $data );
+	}
+	if ( method_exists( $response, 'get_links' ) && method_exists( $response, 'remove_link' ) ) {
+		foreach ( (array) ( $response->get_links()['https://api.w.org/term'] ?? array() ) as $link ) {
+			$taxonomy = $link['attributes']['taxonomy'] ?? '';
+			if ( in_array( $taxonomy, array( OMOCHIX_CORE_PURPOSE_TAXONOMY, OMOCHIX_CORE_PROVIDER_TAXONOMY ), true ) || ( OMOCHIX_CORE_INDUSTRY_TAXONOMY === $taxonomy && ! omochix_core_industry_is_public() ) ) {
+				$response->remove_link( 'https://api.w.org/term', $link['href'] );
+			}
+		}
+	}
+	return $response;
+}
+
+/**
+ * Ignore the taxonomies as collection filters for users who cannot edit
+ * posts (the parameters are dropped before the query is built).
+ *
+ * @param array<string, mixed> $args    WP_Query args.
+ * @return array<string, mixed>
+ */
+function omochix_core_industry_rest_strip_query( $args ) {
+	if ( current_user_can( 'edit_posts' ) || empty( $args['tax_query'] ) || ! is_array( $args['tax_query'] ) ) {
+		return $args;
+	}
+	$private = array( OMOCHIX_CORE_PURPOSE_TAXONOMY, OMOCHIX_CORE_PROVIDER_TAXONOMY );
+	if ( ! omochix_core_industry_is_public() ) {
+		$private[] = OMOCHIX_CORE_INDUSTRY_TAXONOMY;
+	}
+	$strip = static function ( $clauses ) use ( &$strip, $private ) {
+		$out = array();
+		foreach ( $clauses as $key => $clause ) {
+			if ( 'relation' === $key ) {
+				$out[ $key ] = $clause;
+			} elseif ( is_array( $clause ) && isset( $clause['taxonomy'] ) ) {
+				if ( ! in_array( $clause['taxonomy'], $private, true ) ) {
+					$out[ $key ] = $clause;
+				}
+			} elseif ( is_array( $clause ) ) {
+				$out[ $key ] = $strip( $clause );
+			}
+		}
+		return $out;
+	};
+	$args['tax_query'] = $strip( $args['tax_query'] );
+	return $args;
+}
+
+foreach ( array( 'post', 'page', 'ai_tool', 'prompt', 'learn_practice' ) as $omochix_core_rest_type ) {
+	add_filter( 'rest_prepare_' . $omochix_core_rest_type, 'omochix_core_industry_rest_hide_fields', 20 );
+	add_filter( 'rest_' . $omochix_core_rest_type . '_query', 'omochix_core_industry_rest_strip_query', 20 );
+}
+unset( $omochix_core_rest_type );

@@ -317,7 +317,7 @@ function omochix_core_resource_publish_blockers( array $meta, $provider, array $
  * @return string
  */
 function omochix_core_resource_effective_provider( $post_id, $tax_input = null ) {
-	if ( is_array( $tax_input ) && array_key_exists( OMOCHIX_CORE_PROVIDER_TAXONOMY, $tax_input ) ) {
+	if ( is_array( $tax_input ) && array_key_exists( OMOCHIX_CORE_PROVIDER_TAXONOMY, $tax_input ) && ( $tax_obj = get_taxonomy( OMOCHIX_CORE_PROVIDER_TAXONOMY ) ) && current_user_can( $tax_obj->cap->assign_terms ) ) { // core ignores tax_input the user may not assign
 		$raw   = $tax_input[ OMOCHIX_CORE_PROVIDER_TAXONOMY ];
 		$ids   = array_filter( array_map( 'absint', array_filter( is_array( $raw ) ? $raw : explode( ',', (string) $raw ), 'is_scalar' ) ) );
 		$slugs = array();
@@ -327,7 +327,7 @@ function omochix_core_resource_effective_provider( $post_id, $tax_input = null )
 				$slugs[] = $term->slug;
 			}
 		}
-		return omochix_core_provider_type_from_slugs( $slugs );
+		return omochix_core_provider_type_from_slugs( omochix_core_provider_surviving_slugs( $post_id, $slugs ) );
 	}
 	return $post_id ? omochix_core_get_provider_type( $post_id ) : OMOCHIX_CORE_PROVIDER_UNCLASSIFIED;
 }

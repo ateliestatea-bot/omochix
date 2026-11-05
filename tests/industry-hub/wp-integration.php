@@ -44,6 +44,25 @@ check('surface: the ledger has no REST route', !array_filter($routes, static fn(
 foreach (['/wp/v2/industries', '/wp/v2/business-purposes', '/wp/v2/provider-types'] as $route) {
     check("rest: anonymous GET $route is refused", 401 === ih_rest('GET', $route)->get_status());
 }
+foreach (['/wp/v2/Industries', '/WP/v2/provider-types', '/wp/v2/BUSINESS-PURPOSES'] as $route) {
+    check("rest: anonymous GET $route (case variant) is refused", 401 === ih_rest('GET', $route)->get_status());
+}
+wp_set_current_user($admin);
+$pubp = wp_insert_post(['post_type' => 'post', 'post_title' => 'IH public', 'post_status' => 'publish'], true);
+wp_set_object_terms($pubp, ['real-estate'], 'omx_industry');
+wp_set_object_terms($pubp, ['partner'], 'omx_provider_type');
+$p_partner = get_term_by('slug', 'partner', 'omx_provider_type')->term_id;
+wp_set_current_user(0);
+$req = new WP_REST_Request('GET', '/wp/v2/posts/' . $pubp); $req->set_param('_embed', 'wp:term');
+$dump = (string) wp_json_encode(rest_get_server()->response_to_data(rest_do_request($req), true));
+check('rest: a public post response shows visitors no Industry Hub term IDs, links or embeds', false === strpos($dump, '"provider-types"') && false === strpos($dump, '"industries"') && false === strpos($dump, '"business-purposes"') && false === strpos($dump, 'omx_provider_type'));
+$list = rest_do_request(new WP_REST_Request('GET', '/wp/v2/posts'));
+$filtered = (static function ($id) { $r = new WP_REST_Request('GET', '/wp/v2/posts'); $r->set_param('provider-types', [$id]); return rest_do_request($r); })($p_partner);
+check('rest: ?provider-types=ID cannot be used by visitors to pick out partner posts (filter ignored)', wp_list_pluck($list->get_data(), 'id') === wp_list_pluck($filtered->get_data(), 'id'));
+wp_set_current_user($admin); // the post's editor (an author cannot open someone else's post in the edit context)
+$req = new WP_REST_Request('GET', '/wp/v2/posts/' . $pubp); $req->set_param('context', 'edit');
+check('rest: editors still get the fields (block editor panels)', isset(rest_do_request($req)->get_data()['provider-types']));
+wp_set_current_user(0);
 wp_set_current_user($author);
 check('rest: an author (block editor) can list provider types', 200 === ih_rest('GET', '/wp/v2/provider-types')->get_status() && 4 === count(ih_rest('GET', '/wp/v2/provider-types')->get_data()));
 check('rest: nobody can create a provider term through REST', !in_array(ih_rest('POST', '/wp/v2/provider-types', ['name' => 'own', 'slug' => 'own'])->get_status(), [200, 201], true));
@@ -143,7 +162,7 @@ check('workflow: editing a live workflow is never blocked or demoted', 200 === $
 check('workflow: workflow meta is registered with REST schema on learn_practice', isset($r->get_data()['meta']['workflow_problem']));
 
 // -------------------------------------------------------------- cleanup
-foreach ([$res, $draft, $pid, $tool, $id, $own, $bulk_res] as $p) { if ($p && !is_wp_error($p)) { wp_delete_post((int) $p, true); } }
+foreach ([$res, $draft, $pid, $tool, $id, $own, $bulk_res, $pubp] as $p) { if ($p && !is_wp_error($p)) { wp_delete_post((int) $p, true); } }
 if (is_array($deep)) { wp_delete_term($deep['term_id'], 'omx_industry'); }
 foreach (get_users(['search' => 'ih-*', 'search_columns' => ['user_login']]) as $u) { require_once ABSPATH . 'wp-admin/includes/user.php'; wp_delete_user($u->ID); }
 echo "\n$pass passed, $fail failed\n";

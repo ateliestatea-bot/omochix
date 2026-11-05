@@ -270,7 +270,9 @@ function omochix_core_count_official_workflows( $term_id, $limit = 1 ) {
 	);
 	// The tax_query also matches a post that (against the rules) carries two
 	// providers; count only posts whose single provider is official.
-	$ids = array_filter( is_array( $ids ) ? $ids : array(), static fn( $id ) => 'official' === omochix_core_get_provider_type( (int) $id ) );
+	// Live workflows edited into an incomplete state are only warned about by
+	// the guard; they do not count here either.
+	$ids = array_filter( is_array( $ids ) ? $ids : array(), static fn( $id ) => 'official' === omochix_core_get_provider_type( (int) $id ) && ! omochix_core_workflow_stored_blockers( (int) $id ) );
 	return min( count( $ids ), max( 1, (int) $limit ) );
 }
 

@@ -130,7 +130,7 @@ function register_meta($type, $key, $args) { $GLOBALS['registered']['post_meta']
 function register_term_meta($tax, $key, $args) { $GLOBALS['registered']['term_meta'][$tax][$key] = $args; return true; }
 function post_type_exists($t) { return isset($GLOBALS['registered']['post_types'][$t]) || in_array($t, ['post', 'page', 'attachment'], true); }
 function taxonomy_exists($t) { return isset($GLOBALS['registered']['taxonomies'][$t]); }
-function get_taxonomy($t) { if (!taxonomy_exists($t)) { return false; } $a = $GLOBALS['registered']['taxonomies'][$t]['args']; $o = (object) $a; $o->name = $t; $o->cap = (object) ($a['capabilities'] ?? []); return $o; }
+function get_taxonomy($t) { if (!taxonomy_exists($t)) { return false; } $a = $GLOBALS['registered']['taxonomies'][$t]['args']; $o = (object) $a; $o->name = $t; $o->cap = (object) array_merge(['manage_terms' => 'manage_categories', 'edit_terms' => 'manage_categories', 'delete_terms' => 'manage_categories', 'assign_terms' => 'edit_posts'], $a['capabilities'] ?? []); /* core defaults */ return $o; }
 function get_object_taxonomies($type) { $out = []; foreach ($GLOBALS['registered']['taxonomies'] as $n => $t) { if (in_array(is_object($type) ? $type->post_type : $type, $t['types'], true)) { $out[] = $n; } } return $out; }
 function is_taxonomy_hierarchical($t) { return !empty($GLOBALS['registered']['taxonomies'][$t]['args']['hierarchical']); }
 

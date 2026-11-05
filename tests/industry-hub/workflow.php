@@ -17,8 +17,13 @@ check('meta: rows are typed objects in REST (no extra properties); ledger IDs ar
 check('practice: the practice schema itself is unchanged (24 keys, same required list)', 24 === count(omochix_core_get_practice_meta_schema()) && ['practice_summary', 'practice_minutes', 'practice_outcome', 'practice_prompts', 'practice_steps', 'practice_verify', 'practice_safety', 'practice_verified_at', 'practice_sources'] === omochix_core_get_practice_required_meta() && !array_intersect($wf_keys, array_keys(omochix_core_get_practice_meta_schema())));
 check('practice: the five format labels the theme filter uses are unchanged (no 導入する chip appears)', ['project' => '作る', 'lesson' => '学ぶ', 'demo' => '試す', 'reference' => '調べる', 'prompt' => '使う'] === omochix_core_get_practice_format_labels());
 check('phase 1: the workflow format term is not created on boot (no new /learn/format/workflow/ archive)', null === ih_term('learn_format', 'workflow') && 5 === count($GLOBALS['terms']['learn_format']));
+ih_as(['edit_posts']);
+check('format term: an author cannot create the workflow format (tag box / REST)', wp_insert_term('導入する', 'learn_format', ['slug' => 'workflow']) instanceof WP_Error && wp_insert_term('workflow', 'learn_format') instanceof WP_Error && null === ih_term('learn_format', 'workflow'));
+check('format term: other new formats are unaffected by this rule', is_array(wp_insert_term('作ってみる', 'learn_format', ['slug' => 'try-it'])));
+ih_as(['manage_categories']);
 omochix_core_insert_workflow_format_term(); omochix_core_insert_workflow_format_term();
-check('seed helper: creates 導入する once (for Phase 3)', '導入する' === ih_term('learn_format', 'workflow')->name && 6 === count($GLOBALS['terms']['learn_format']));
+ih_as([]);
+check('seed helper: creates 導入する once (for Phase 3)', '導入する' === ih_term('learn_format', 'workflow')->name && 7 === count($GLOBALS['terms']['learn_format']));
 
 // ---------------------------------------------------------------- sanitize
 $s   = 'omochix_core_sanitize_workflow_meta_value';
@@ -33,6 +38,7 @@ check('sanitize: resource IDs keep only ledger entries', [$res] === $s("$tool, $
 
 // ------------------------------------------------------------ detection
 $p = ih_add_post(['post_type' => 'learn_practice', 'post_status' => 'draft', 'post_name' => 'wf']);
+ih_as(['edit_posts']); // core applies tax_input only for users who may assign terms
 check('detect: a practice item without the workflow format is not a workflow', false === omochix_core_is_workflow($p));
 wp_set_object_terms($p, ['workflow'], 'learn_format');
 check('detect: stored format', true === omochix_core_is_workflow($p));
@@ -44,6 +50,13 @@ check('detect: raw $_POST tax_input is never read (bulk edit posts it empty)', t
 $_POST = [];
 check('detect: nested values are ignored without warnings', true === omochix_core_is_workflow($p, null, ['learn_format' => [['x'], '導入する']]));
 $wid = ih_term('learn_format', 'workflow')->term_id;
+$GLOBALS['ih_saved_wf'] = $GLOBALS['terms']['learn_format'];
+unset($GLOBALS['terms']['learn_format'][$wid]);
+check('detect: a format name core will create on save ("workflow" / "導入する") is already a workflow', true === omochix_core_is_workflow($p, null, ['learn_format' => 'workflow']) && true === omochix_core_is_workflow($p, null, ['learn_format' => '作る,導入する']));
+$GLOBALS['terms']['learn_format'] = $GLOBALS['ih_saved_wf'];
+ih_as([]);
+check('detect: tax_input from a user who cannot assign terms (userless CLI / cron) is ignored, stored terms count', true === omochix_core_is_workflow($p, null, ['learn_format' => '作る']));
+ih_as(['edit_posts']);
 check('detect: REST term IDs under the rest_base', true === omochix_core_is_workflow(0, ['learn-formats' => [$wid]]) && false === omochix_core_is_workflow($p, ['learn-formats' => []]));
 
 // -------------------------------------------------------------- blockers
@@ -89,7 +102,7 @@ check('guard: a workflow without industry, tools and provider is held as draft',
 wp_set_object_terms($p, ['real-estate', 'restaurant'], 'omx_industry');
 ih_as(['edit_others_posts']);
 wp_set_object_terms($p, ['official'], 'omx_provider_type');
-ih_as([]);
+ih_as(['edit_posts']);
 update_post_meta($p, 'related_tool_ids', [$tool]);
 delete_transient('omochix_core_workflow_guard_' . $p);
 check('guard: complete (two industries, one tool, official) → publish allowed, no notice', 'publish' === $guard($p)['post_status'] && false === get_transient('omochix_core_workflow_guard_' . $p));
@@ -160,5 +173,30 @@ $_GET = ['post' => (string) $q];
 ob_start(); omochix_core_workflow_save_notice(); $n = ob_get_clean();
 check('notice: shown once', false !== strpos($n, 'workflow_cost') && false === get_transient('omochix_core_workflow_save_' . $q));
 $_GET = [];
+
+// ------------------------------------------------------- second review fixes
+ih_as(['edit_posts']);
+$off = (string) ih_term('omx_provider_type', 'official')->term_id;
+$np  = ih_add_post(['post_type' => 'learn_practice', 'post_status' => 'draft']);
+foreach ($good as $k => $v) { if ($v) { update_post_meta($np, $k, $v); } }
+update_post_meta($np, 'related_tool_ids', [$tool]);
+wp_set_object_terms($np, ['workflow'], 'learn_format');
+wp_set_object_terms($np, ['real-estate'], 'omx_industry');
+check('provider: an author posting "official" does not get past the guard (it would be stripped after it)', 'draft' === $guard($np, 'publish', ['omx_provider_type' => [$off]])['post_status']);
+check('provider: the same through REST is refused', omochix_core_workflow_guard_rest((object) ['ID' => $np, 'post_status' => 'publish'], ['provider-types' => [(int) $off]]) instanceof WP_Error);
+ih_as(['edit_posts', 'edit_others_posts']);
+check('provider: an editor posting "official" passes', 'publish' === $guard($np, 'publish', ['omx_provider_type' => [$off]])['post_status']);
+ih_as(['edit_posts']);
+check('stored blockers: [] for a complete workflow and for non-workflows', [] === omochix_core_workflow_stored_blockers($p) && [] === omochix_core_workflow_stored_blockers($plain));
+check('stored blockers: a live workflow emptied after publishing is reported', [] !== omochix_core_workflow_stored_blockers($live));
+$resp = new class(['meta' => ['workflow_results' => [['metric' => 'm', 'source_resource_id' => 12, 'evidence' => 'reported']], 'workflow_problem' => 'x']]) { private $d; function __construct($d) { $this->d = $d; } function get_data() { return $this->d; } function set_data($d) { $this->d = $d; } };
+$view = new class { function get_param($k) { return 'view'; } };
+$editc = new class { function get_param($k) { return 'edit'; } };
+$out = omochix_core_workflow_rest_strip_ledger_ids(clone $resp, get_post($p), $view)->get_data();
+check('rest: ledger IDs inside workflow_results are stripped from public (view) responses', !isset($out['meta']['workflow_results'][0]['source_resource_id']) && 'reported' === $out['meta']['workflow_results'][0]['evidence']);
+ih_as(['edit_post']);
+check('rest: editors keep them in the edit context', 12 === omochix_core_workflow_rest_strip_ledger_ids(clone $resp, get_post($p), $editc)->get_data()['meta']['workflow_results'][0]['source_resource_id']);
+ih_as([]);
+check('rest: edit context without edit_post is still stripped', !isset(omochix_core_workflow_rest_strip_ledger_ids(clone $resp, get_post($p), $editc)->get_data()['meta']['workflow_results'][0]['source_resource_id']));
 
 ih_done();

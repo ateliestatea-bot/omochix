@@ -183,6 +183,12 @@ function omochix_core_workflow_submitted_terms( $taxonomy, $request = null, $tax
 		$raw    = $request[ $base ] ?? null;
 	} else {
 		$raw = is_array( $tax_input ) && array_key_exists( $taxonomy, $tax_input ) ? wp_unslash( $tax_input[ $taxonomy ] ) : null;
+		// wp_insert_post() applies tax_input only with assign_terms (not for
+		// userless WP-CLI / cron); terms core will not save must not count.
+		$object = get_taxonomy( $taxonomy );
+		if ( null !== $raw && ( ! $object || ! current_user_can( $object->cap->assign_terms ) ) ) {
+			$raw = null;
+		}
 	}
 	if ( null === $raw ) {
 		return null;
@@ -200,6 +206,10 @@ function omochix_core_workflow_submitted_terms( $taxonomy, $request = null, $tax
 		$term = ctype_digit( $item ) ? get_term( (int) $item, $taxonomy ) : ( get_term_by( 'slug', sanitize_title( $item ), $taxonomy ) ?: get_term_by( 'name', $item, $taxonomy ) );
 		if ( $term instanceof WP_Term ) {
 			$slugs[] = $term->slug;
+		} elseif ( ! ctype_digit( $item ) ) {
+			// A name core will turn into a new term on save. Judge it by what it
+			// will become, so "workflow" / "導入する" cannot slip past the guard.
+			$slugs[] = 'learn_format' === $taxonomy && '導入する' === $item ? OMOCHIX_CORE_WORKFLOW_FORMAT : sanitize_title( $item );
 		}
 	}
 	return array_values( array_unique( $slugs ) );
@@ -386,10 +396,65 @@ function omochix_core_workflow_request_blockers( $post_id, $request = null, $tax
 	return omochix_core_workflow_publish_blockers(
 		omochix_core_workflow_effective_meta( $post_id, $request ),
 		omochix_core_workflow_effective_terms( $post_id, OMOCHIX_CORE_INDUSTRY_TAXONOMY, $request, $tax_input ),
-		omochix_core_provider_type_from_slugs( omochix_core_workflow_effective_terms( $post_id, OMOCHIX_CORE_PROVIDER_TAXONOMY, $request, $tax_input ) ),
+		omochix_core_provider_type_from_slugs( omochix_core_provider_surviving_slugs( $post_id, omochix_core_workflow_effective_terms( $post_id, OMOCHIX_CORE_PROVIDER_TAXONOMY, $request, $tax_input ) ) ),
 		omochix_core_workflow_effective_tool_ids( $post_id, $request )
 	);
 }
+
+/**
+ * Blockers of a stored item, with no request overlay (read side: hubs and the
+ * content gate re-check live workflows, which the guards only warn about).
+ *
+ * @param int $post_id Post ID.
+ * @return string[] [] when the item is not a workflow or is complete.
+ */
+function omochix_core_workflow_stored_blockers( $post_id ) {
+	$post_id = (int) $post_id;
+	if ( ! $post_id || ! omochix_core_is_workflow( $post_id, array() ) ) {
+		return array();
+	}
+	$terms = static function ( $taxonomy ) use ( $post_id ) {
+		$t = get_the_terms( $post_id, $taxonomy );
+		return is_array( $t ) ? array_values( wp_list_pluck( $t, 'slug' ) ) : array();
+	};
+	return omochix_core_workflow_publish_blockers(
+		omochix_core_workflow_effective_meta( $post_id, array( 'meta' => array() ) ),
+		$terms( OMOCHIX_CORE_INDUSTRY_TAXONOMY ),
+		omochix_core_get_provider_type( $post_id ),
+		omochix_core_sanitize_typed_post_ids( get_post_meta( $post_id, 'related_tool_ids', true ), array( 'ai_tool' ), 50 )
+	);
+}
+
+/**
+ * Keep ledger IDs (workflow_results[].source_resource_id) out of public REST
+ * responses; editors still see them in the edit context.
+ *
+ * @param WP_REST_Response $response Response.
+ * @param WP_Post          $post     Post.
+ * @param WP_REST_Request  $request  Request.
+ * @return WP_REST_Response
+ */
+function omochix_core_workflow_rest_strip_ledger_ids( $response, $post, $request ) {
+	if ( ! is_object( $response ) || ! method_exists( $response, 'get_data' ) ) {
+		return $response;
+	}
+	$context = is_object( $request ) && method_exists( $request, 'get_param' ) ? (string) $request->get_param( 'context' ) : 'view';
+	if ( 'edit' === $context && $post instanceof WP_Post && current_user_can( 'edit_post', $post->ID ) ) {
+		return $response;
+	}
+	$data = $response->get_data();
+	if ( isset( $data['meta']['workflow_results'] ) && is_array( $data['meta']['workflow_results'] ) ) {
+		foreach ( $data['meta']['workflow_results'] as &$row ) {
+			if ( is_array( $row ) ) {
+				unset( $row['source_resource_id'] );
+			}
+		}
+		unset( $row );
+		$response->set_data( $data );
+	}
+	return $response;
+}
+add_filter( 'rest_prepare_learn_practice', 'omochix_core_workflow_rest_strip_ledger_ids', 10, 3 );
 
 /**
  * Classic path: runs after the practice guard (10). An item the practice

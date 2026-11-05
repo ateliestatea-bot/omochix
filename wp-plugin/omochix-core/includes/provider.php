@@ -82,6 +82,35 @@ function omochix_core_get_privileged_provider_types() {
 }
 
 /**
+ * The provider slugs a save would really leave: a privileged type the post
+ * does not have yet is dropped for users without edit_others_posts, exactly
+ * as omochix_core_provider_enforce_single() will do after the guards ran.
+ * Guards decide on this, so they never pass on a value that is stripped.
+ *
+ * @param int      $post_id Post ID (0 for new).
+ * @param string[] $slugs   Requested slugs.
+ * @return string[]
+ */
+function omochix_core_provider_surviving_slugs( $post_id, $slugs ) {
+	if ( current_user_can( 'edit_others_posts' ) ) {
+		return array_values( (array) $slugs );
+	}
+	$stored = array();
+	$terms  = $post_id ? get_the_terms( (int) $post_id, OMOCHIX_CORE_PROVIDER_TAXONOMY ) : false;
+	foreach ( is_array( $terms ) ? $terms : array() as $term ) {
+		$stored[] = $term->slug;
+	}
+	return array_values(
+		array_filter(
+			(array) $slugs,
+			static function ( $slug ) use ( $stored ) {
+				return ! in_array( $slug, omochix_core_get_privileged_provider_types(), true ) || in_array( $slug, $stored, true );
+			}
+		)
+	);
+}
+
+/**
  * After any change to a post's provider terms (wp_set_object_terms, append
  * or not, from post.php, quick / bulk edit, REST, WP-CLI or code):
  *

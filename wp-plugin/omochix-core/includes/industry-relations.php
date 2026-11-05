@@ -91,6 +91,10 @@ function omochix_core_get_industry_posts( $industry, $post_type, $args = array()
 	}
 	$posts = get_posts( $query );
 	$posts = is_array( $posts ) ? array_values( array_filter( $posts, static fn( $p ) => $p instanceof WP_Post ) ) : array();
+	if ( 'learn_practice' === $post_type && function_exists( 'omochix_core_workflow_stored_blockers' ) ) {
+		// A live workflow that no longer meets its rules is not listed.
+		$posts = array_values( array_filter( $posts, static fn( $p ) => ! omochix_core_workflow_stored_blockers( $p->ID ) ) );
+	}
 	if ( '' !== $raw_provider ) {
 		// Re-check: a post with two providers is unclassified, never a match.
 		$posts = array_values( array_filter( $posts, static fn( $p ) => $provider === omochix_core_get_provider_type( $p ) ) );

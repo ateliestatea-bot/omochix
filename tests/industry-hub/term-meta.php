@@ -116,8 +116,10 @@ update_term_meta($re, 'industry_sources', [['label' => '国交省', 'url' => 'ht
 update_term_meta($re, 'industry_tool_ids', [$tool, $tool2]);
 check('gate: written content alone is not enough without an official workflow', ['G5_official_workflow'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
 // The workflow format term is seeded by the workflow module; seed it here so this file stands alone.
+ih_as(['manage_categories']); // only editors may create the workflow format
 if (!ih_term('learn_format', 'workflow')) { wp_insert_term('導入する', 'learn_format', ['slug' => 'workflow']); }
 ih_as(['edit_others_posts']); // only editors may mark content official
+$fill_wf = static function ($id) use ($tool) { foreach (['workflow_problem' => '課題', 'workflow_audience' => [['role' => '担当者', 'note' => '']], 'workflow_cost' => [['item' => 'x', 'amount' => '0円', 'period' => 'once', 'note' => '', 'checked_at' => '2026-11-01']], 'workflow_metrics' => [['metric' => 'm', 'how' => 'h', 'frequency' => '']], 'related_tool_ids' => [$tool]] as $k => $v) { update_post_meta($id, $k, $v); } };
 $wf = ih_add_post(['post_type' => 'learn_practice', 'post_name' => 'wf-creator', 'post_status' => 'publish']);
 wp_set_object_terms($wf, ['real-estate'], 'omx_industry'); wp_set_object_terms($wf, ['workflow'], 'learn_format'); wp_set_object_terms($wf, ['creator'], 'omx_provider_type');
 check('gate: a workflow by a creator does not count as OmochiX content', ['G5_official_workflow'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
@@ -125,13 +127,15 @@ $wf2 = ih_add_post(['post_type' => 'learn_practice', 'post_name' => 'wf-official
 wp_set_object_terms($wf2, ['real-estate'], 'omx_industry'); wp_set_object_terms($wf2, ['workflow'], 'learn_format'); wp_set_object_terms($wf2, ['official'], 'omx_provider_type');
 check('gate: an unpublished official workflow does not count', ['G5_official_workflow'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
 $GLOBALS['posts'][$wf2]->post_status = 'publish';
+check('gate: a published official workflow that does not meet the workflow rules does not count', ['G5_official_workflow'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
+$fill_wf($wf2);
 check('gate: all seven met → ready', true === omochix_core_industry_hub_gate($re, $now)['ready']);
 $GLOBALS['posts'][$wf2]->post_password = 'secret';
 check('gate: a password-protected workflow does not count', ['G5_official_workflow'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
 $GLOBALS['posts'][$wf2]->post_password = '';
 $wf3 = ih_add_post(['post_type' => 'learn_practice', 'post_name' => 'wf-sub', 'post_status' => 'publish']);
 wp_set_object_terms($wf2, ['restaurant'], 'omx_industry');
-wp_set_object_terms($wf3, ['rental'], 'omx_industry'); wp_set_object_terms($wf3, ['workflow'], 'learn_format'); wp_set_object_terms($wf3, ['official'], 'omx_provider_type');
+wp_set_object_terms($wf3, ['rental'], 'omx_industry'); $fill_wf($wf3); wp_set_object_terms($wf3, ['workflow'], 'learn_format'); wp_set_object_terms($wf3, ['official'], 'omx_provider_type');
 check('gate: an official workflow tagged with a sub-industry counts for the parent (include_children)', true === omochix_core_industry_hub_gate($re, $now)['ready'] && true === $GLOBALS['last_query']['tax_query'][0]['include_children']);
 check('gate: freshness boundary (180 days ok, 181 days stale)', true === omochix_core_industry_hub_gate($re, strtotime('2026-10-01 00:00:00 UTC') + 180 * DAY_IN_SECONDS)['ready'] && in_array('G6_fresh', omochix_core_industry_hub_gate($re, strtotime('2026-10-01 00:00:00 UTC') + 181 * DAY_IN_SECONDS)['unmet'], true));
 update_term_meta($re, 'industry_lead', str_repeat('あ', 119));

@@ -161,6 +161,9 @@ foreach (['/wp/v2/industries', '/wp/v2/industries/101', '/wp/v2/business-purpose
     $r = omochix_core_industry_rest_read_guard(null, [], $req($route));
     check("rest: visitors cannot list $route in Phase 1", $r instanceof WP_Error && 'rest_forbidden' === $r->get_error_code());
 }
+foreach (['/wp/v2/Industries', '/WP/V2/provider-types', '//wp/v2/business-purposes', '/wp/v2//industries/5'] as $route) {
+    check("rest: case and slash variants are refused too ($route) — WP routes match case-insensitively", omochix_core_industry_rest_read_guard(null, [], $req($route)) instanceof WP_Error);
+}
 check('rest: other routes are untouched (learn-fields, posts)', null === omochix_core_industry_rest_read_guard(null, [], $req('/wp/v2/learn-fields')) && null === omochix_core_industry_rest_read_guard(null, [], $req('/wp/v2/industries-x')));
 ih_as(['edit_posts']);
 check('rest: editors (block editor panels) can read them', null === omochix_core_industry_rest_read_guard(null, [], $req('/wp/v2/provider-types')));
@@ -170,5 +173,22 @@ check('rest: once hubs are public, industries are readable, purposes and provide
 remove_filter('omochix_core_industry_public', '__return_true');
 $earlier = new WP_Error('x', 'y');
 check('rest: an earlier error is passed through', $earlier === omochix_core_industry_rest_read_guard($earlier, [], $req('/wp/v2/industries')));
+
+// ------------------------------------------- REST fields on post responses
+$resp = new class(['id' => 1, 'title' => 't', 'industries' => [5], 'business-purposes' => [6], 'provider-types' => [7], 'categories' => [1]]) { private $d; public $removed = []; function __construct($d) { $this->d = $d; } function get_data() { return $this->d; } function set_data($d) { $this->d = $d; } function get_links() { return ['https://api.w.org/term' => [['href' => 'a', 'attributes' => ['taxonomy' => 'omx_provider_type']], ['href' => 'b', 'attributes' => ['taxonomy' => 'category']], ['href' => 'c', 'attributes' => ['taxonomy' => 'omx_industry']]]]; } function remove_link($rel, $href) { $this->removed[] = $href; } };
+ih_as([]);
+$out = omochix_core_industry_rest_hide_fields(clone $resp);
+check('rest fields: visitors get no industry / purpose / provider term IDs; other fields untouched', ['id' => 1, 'title' => 't', 'categories' => [1]] === $out->get_data());
+check('rest fields: the matching wp:term links are removed (no embeds), others kept', ['a', 'c'] === $out->removed);
+ih_as(['edit_posts']);
+check('rest fields: editors keep everything', 6 === count(omochix_core_industry_rest_hide_fields(clone $resp)->get_data()));
+ih_as([]);
+$args = ['post_type' => 'post', 'tax_query' => ['relation' => 'AND', ['taxonomy' => 'omx_provider_type', 'terms' => [7]], ['taxonomy' => 'category', 'terms' => [1]], ['relation' => 'OR', ['taxonomy' => 'omx_industry', 'terms' => [5]]]]];
+$q = omochix_core_industry_rest_strip_query($args);
+check('rest query: visitors cannot filter by provider / industry (clauses dropped, nested too); category kept', ['relation' => 'AND', 1 => ['taxonomy' => 'category', 'terms' => [1]], 2 => ['relation' => 'OR']] === $q['tax_query']);
+ih_as(['edit_posts']);
+check('rest query: editors may filter', $args === omochix_core_industry_rest_strip_query($args));
+ih_as([]);
+check('rest: registered on the five public post types', 20 === has_filter('rest_prepare_ai_tool', 'omochix_core_industry_rest_hide_fields') && 20 === has_filter('rest_post_query', 'omochix_core_industry_rest_strip_query') && 20 === has_filter('rest_learn_practice_query', 'omochix_core_industry_rest_strip_query'));
 
 ih_done();
