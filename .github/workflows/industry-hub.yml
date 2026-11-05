@@ -59,7 +59,8 @@ jobs:
             tests/industry-hub/compat.php \
             tests/industry-hub/run.php \
             tests/industry-hub/term-meta.php \
-            tests/industry-hub/resource.php
+            tests/industry-hub/resource.php \
+            tests/industry-hub/workflow.php
           do
             echo "::group::$test"
             php "$test" || status=1
