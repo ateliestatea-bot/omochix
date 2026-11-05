@@ -114,7 +114,8 @@ function omochix_core_register_workflow_post_meta() {
 				'type'              => $field['type'],
 				'single'            => true,
 				'default'           => $field['default'],
-				'show_in_rest'      => 'array' === $field['type'] ? array( 'schema' => omochix_core_practice_rest_schema( $field ) ) : true,
+				// Ledger IDs stay out of the public REST response (the panel is a classic meta box).
+				'show_in_rest'      => 'workflow_resource_ids' === $key ? false : ( 'array' === $field['type'] ? array( 'schema' => omochix_core_practice_rest_schema( $field ) ) : true ),
 				'sanitize_callback' => 'omochix_core_sanitize_registered_workflow_meta',
 				'auth_callback'     => 'omochix_core_auth_registered_practice_meta',
 				'revisions_enabled' => true,
@@ -166,17 +167,22 @@ add_filter( 'wp_save_post_revision_post_has_changed', 'omochix_core_workflow_rev
  * Classic: tax_input (IDs for hierarchical, comma-separated names or IDs for
  * flat taxonomies). REST: the taxonomy's rest_base (IDs).
  *
- * @param string     $taxonomy Taxonomy.
- * @param mixed|null $request  WP_REST_Request-like array access, or null for $_POST.
+ * Classic requests are read from wp_insert_post()'s $postarr['tax_input'],
+ * which core has already resolved for post.php, quick edit and bulk edit
+ * (bulk edit merges the stored terms in); raw $_POST is never used.
+ *
+ * @param string     $taxonomy  Taxonomy.
+ * @param mixed|null $request   WP_REST_Request-like array access, or null for a classic request.
+ * @param array|null $tax_input Classic: $postarr['tax_input'] (null when the request submits no terms).
  * @return string[]|null
  */
-function omochix_core_workflow_submitted_terms( $taxonomy, $request = null ) {
+function omochix_core_workflow_submitted_terms( $taxonomy, $request = null, $tax_input = null ) {
 	if ( null !== $request ) {
 		$object = get_taxonomy( $taxonomy );
 		$base   = $object && ! empty( $object->rest_base ) ? $object->rest_base : $taxonomy;
 		$raw    = $request[ $base ] ?? null;
 	} else {
-		$raw = isset( $_POST['tax_input'][ $taxonomy ] ) ? wp_unslash( $_POST['tax_input'][ $taxonomy ] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only overlay; values are resolved against existing terms.
+		$raw = is_array( $tax_input ) && array_key_exists( $taxonomy, $tax_input ) ? wp_unslash( $tax_input[ $taxonomy ] ) : null;
 	}
 	if ( null === $raw ) {
 		return null;
@@ -184,6 +190,9 @@ function omochix_core_workflow_submitted_terms( $taxonomy, $request = null ) {
 	$items = is_array( $raw ) ? $raw : explode( ',', (string) $raw );
 	$slugs = array();
 	foreach ( $items as $item ) {
+		if ( ! is_scalar( $item ) ) {
+			continue; // nested arrays (tax_input[x][0][]=…) are never a term
+		}
 		$item = trim( (string) $item );
 		if ( '' === $item || '0' === $item ) {
 			continue;
@@ -199,13 +208,14 @@ function omochix_core_workflow_submitted_terms( $taxonomy, $request = null ) {
 /**
  * Term slugs the item would have after the request.
  *
- * @param int        $post_id  Post ID.
- * @param string     $taxonomy Taxonomy.
- * @param mixed|null $request  REST request or null.
+ * @param int        $post_id   Post ID.
+ * @param string     $taxonomy  Taxonomy.
+ * @param mixed|null $request   REST request or null.
+ * @param array|null $tax_input Classic $postarr['tax_input'].
  * @return string[]
  */
-function omochix_core_workflow_effective_terms( $post_id, $taxonomy, $request = null ) {
-	$submitted = omochix_core_workflow_submitted_terms( $taxonomy, $request );
+function omochix_core_workflow_effective_terms( $post_id, $taxonomy, $request = null, $tax_input = null ) {
+	$submitted = omochix_core_workflow_submitted_terms( $taxonomy, $request, $tax_input );
 	if ( null !== $submitted ) {
 		return $submitted;
 	}
@@ -216,12 +226,13 @@ function omochix_core_workflow_effective_terms( $post_id, $taxonomy, $request = 
 /**
  * Whether the item is (or would become) a workflow.
  *
- * @param int        $post_id Post ID.
- * @param mixed|null $request REST request or null.
+ * @param int        $post_id   Post ID.
+ * @param mixed|null $request   REST request or null.
+ * @param array|null $tax_input Classic $postarr['tax_input'].
  * @return bool
  */
-function omochix_core_is_workflow( $post_id, $request = null ) {
-	return in_array( OMOCHIX_CORE_WORKFLOW_FORMAT, omochix_core_workflow_effective_terms( $post_id, 'learn_format', $request ), true );
+function omochix_core_is_workflow( $post_id, $request = null, $tax_input = null ) {
+	return in_array( OMOCHIX_CORE_WORKFLOW_FORMAT, omochix_core_workflow_effective_terms( $post_id, 'learn_format', $request, $tax_input ), true );
 }
 
 /**
@@ -241,7 +252,9 @@ function omochix_core_workflow_effective_meta( $post_id, $request = null ) {
 	if ( null !== $request ) {
 		$submitted = is_array( $request['meta'] ?? null ) ? $request['meta'] : array();
 	} else {
-		$submitted = isset( $_POST['omochix_core_workflow_meta'] ) && is_array( $_POST['omochix_core_workflow_meta'] ) ? wp_unslash( $_POST['omochix_core_workflow_meta'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only overlay; the save handler verifies its nonce.
+		// Only values the panel's save handler will really store count: same nonce check.
+		$nonce     = isset( $_POST['omochix_core_workflow_nonce'] ) && is_string( $_POST['omochix_core_workflow_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['omochix_core_workflow_nonce'] ) ) : '';
+		$submitted = '' !== $nonce && wp_verify_nonce( $nonce, 'omochix_core_save_workflow' ) && isset( $_POST['omochix_core_workflow_meta'] ) && is_array( $_POST['omochix_core_workflow_meta'] ) ? wp_unslash( $_POST['omochix_core_workflow_meta'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per key below.
 	}
 	foreach ( $submitted as $key => $value ) {
 		if ( ! isset( $meta[ $key ] ) ) {
@@ -269,8 +282,13 @@ function omochix_core_workflow_effective_tool_ids( $post_id, $request = null ) {
 		if ( is_array( $request['meta'] ?? null ) && array_key_exists( 'related_tool_ids', $request['meta'] ) ) {
 			$value = $request['meta']['related_tool_ids'];
 		}
-	} elseif ( isset( $_POST['omochix_core_practice_relation_fields'] ) && in_array( 'related_tool_ids', array_map( 'sanitize_key', (array) wp_unslash( $_POST['omochix_core_practice_relation_fields'] ) ), true ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$value = $_POST['omochix_core_practice_meta']['related_tool_ids'] ?? array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized below.
+	} else {
+		// The practice save handler stores relation fields only with its nonce; mirror that.
+		$nonce = isset( $_POST['omochix_core_practice_nonce'] ) && is_string( $_POST['omochix_core_practice_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['omochix_core_practice_nonce'] ) ) : '';
+		$fields = isset( $_POST['omochix_core_practice_relation_fields'] ) ? array_map( 'sanitize_key', array_filter( (array) wp_unslash( $_POST['omochix_core_practice_relation_fields'] ), 'is_scalar' ) ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( '' !== $nonce && wp_verify_nonce( $nonce, 'omochix_core_save_practice' ) && in_array( 'related_tool_ids', $fields, true ) ) {
+			$value = $_POST['omochix_core_practice_meta']['related_tool_ids'] ?? array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized below.
+		}
 	}
 	return omochix_core_sanitize_typed_post_ids( is_array( $value ) ? wp_unslash( $value ) : $value, array( 'ai_tool' ), 50 );
 }
@@ -356,18 +374,19 @@ function omochix_core_workflow_publish_blockers( array $meta, array $industries,
 /**
  * Blockers for an item as the request would leave it ([] when not a workflow).
  *
- * @param int        $post_id Post ID.
- * @param mixed|null $request REST request or null.
+ * @param int        $post_id   Post ID.
+ * @param mixed|null $request   REST request or null.
+ * @param array|null $tax_input Classic $postarr['tax_input'].
  * @return string[]
  */
-function omochix_core_workflow_request_blockers( $post_id, $request = null ) {
-	if ( ! omochix_core_is_workflow( $post_id, $request ) ) {
+function omochix_core_workflow_request_blockers( $post_id, $request = null, $tax_input = null ) {
+	if ( ! omochix_core_is_workflow( $post_id, $request, $tax_input ) ) {
 		return array();
 	}
 	return omochix_core_workflow_publish_blockers(
 		omochix_core_workflow_effective_meta( $post_id, $request ),
-		omochix_core_workflow_effective_terms( $post_id, OMOCHIX_CORE_INDUSTRY_TAXONOMY, $request ),
-		omochix_core_provider_type_from_slugs( omochix_core_workflow_effective_terms( $post_id, OMOCHIX_CORE_PROVIDER_TAXONOMY, $request ) ),
+		omochix_core_workflow_effective_terms( $post_id, OMOCHIX_CORE_INDUSTRY_TAXONOMY, $request, $tax_input ),
+		omochix_core_provider_type_from_slugs( omochix_core_workflow_effective_terms( $post_id, OMOCHIX_CORE_PROVIDER_TAXONOMY, $request, $tax_input ) ),
 		omochix_core_workflow_effective_tool_ids( $post_id, $request )
 	);
 }
@@ -389,7 +408,7 @@ function omochix_core_workflow_guard_insert_data( $data, $postarr ) {
 		return $data;
 	}
 	$post_id = (int) ( $postarr['ID'] ?? 0 );
-	$lines   = omochix_core_workflow_request_blockers( $post_id );
+	$lines   = omochix_core_workflow_request_blockers( $post_id, null, isset( $postarr['tax_input'] ) && is_array( $postarr['tax_input'] ) ? $postarr['tax_input'] : null );
 	if ( ! $lines ) {
 		return $data;
 	}

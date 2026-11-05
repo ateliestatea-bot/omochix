@@ -72,23 +72,68 @@ function omochix_core_provider_link_rel( $type ) {
 }
 
 /**
- * Enforce a single provider: when a save leaves more than one provider term
- * on a post, remove them all (unclassified) and leave a notice.
+ * Provider types only editors may assign: "official" certifies content as
+ * OmochiX's own (the hub gate trusts it) and "partner" marks advertising.
  *
- * @param int    $object_id Object ID.
- * @param array  $terms     Terms passed to wp_set_object_terms.
- * @param array  $tt_ids    Resulting term taxonomy IDs.
- * @param string $taxonomy  Taxonomy.
+ * @return string[]
+ */
+function omochix_core_get_privileged_provider_types() {
+	return array( 'official', 'partner' );
+}
+
+/**
+ * After any change to a post's provider terms (wp_set_object_terms, append
+ * or not, from post.php, quick / bulk edit, REST, WP-CLI or code):
+ *
+ * 1. a privileged type (official / partner) newly added by a user without
+ *    edit_others_posts is removed again;
+ * 2. if the post still has more than one provider, all are removed
+ *    (unclassified) — counted from the stored terms, so appending cannot
+ *    slip a second provider in.
+ *
+ * Code running with no user (cron, seeding) is held to the same rule.
+ *
+ * @param int    $object_id  Object ID.
+ * @param array  $terms      Terms passed in.
+ * @param array  $tt_ids     Term taxonomy IDs passed / created.
+ * @param string $taxonomy   Taxonomy.
+ * @param bool   $append     Append mode.
+ * @param array  $old_tt_ids Term taxonomy IDs before the change.
  * @return void
  */
-function omochix_core_provider_enforce_single( $object_id, $terms, $tt_ids, $taxonomy ) {
-	if ( OMOCHIX_CORE_PROVIDER_TAXONOMY !== $taxonomy || count( (array) $tt_ids ) <= 1 ) {
+function omochix_core_provider_enforce_single( $object_id, $terms, $tt_ids, $taxonomy, $append = false, $old_tt_ids = array() ) {
+	static $running = false;
+	if ( OMOCHIX_CORE_PROVIDER_TAXONOMY !== $taxonomy || $running ) {
 		return;
 	}
-	wp_set_object_terms( (int) $object_id, array(), OMOCHIX_CORE_PROVIDER_TAXONOMY, false );
-	set_transient( OMOCHIX_CORE_PROVIDER_NOTICE . (int) $object_id, 1, 10 * MINUTE_IN_SECONDS );
+	$current = wp_get_object_terms( (int) $object_id, OMOCHIX_CORE_PROVIDER_TAXONOMY );
+	if ( ! is_array( $current ) ) {
+		return;
+	}
+	$old_tt_ids = array_map( 'intval', (array) $old_tt_ids );
+	$keep       = array();
+	$changed    = false;
+	foreach ( $current as $term ) {
+		$is_new = ! in_array( (int) $term->term_taxonomy_id, $old_tt_ids, true );
+		if ( $is_new && in_array( $term->slug, omochix_core_get_privileged_provider_types(), true ) && ! current_user_can( 'edit_others_posts' ) ) {
+			$changed = true;
+			set_transient( OMOCHIX_CORE_PROVIDER_NOTICE . (int) $object_id, 'privileged', 10 * MINUTE_IN_SECONDS );
+			continue;
+		}
+		$keep[] = (int) $term->term_id;
+	}
+	if ( count( $keep ) > 1 ) {
+		$keep    = array();
+		$changed = true;
+		set_transient( OMOCHIX_CORE_PROVIDER_NOTICE . (int) $object_id, 'multiple', 10 * MINUTE_IN_SECONDS );
+	}
+	if ( $changed ) {
+		$running = true;
+		wp_set_object_terms( (int) $object_id, $keep, OMOCHIX_CORE_PROVIDER_TAXONOMY, false );
+		$running = false;
+	}
 }
-add_action( 'set_object_terms', 'omochix_core_provider_enforce_single', 10, 4 );
+add_action( 'set_object_terms', 'omochix_core_provider_enforce_single', 10, 6 );
 
 /** Admin notice after a save that had more than one provider. */
 function omochix_core_provider_notice() {
@@ -96,8 +141,10 @@ function omochix_core_provider_notice() {
 	if ( ! $post_id || ! get_transient( OMOCHIX_CORE_PROVIDER_NOTICE . $post_id ) ) {
 		return;
 	}
+	$reason = get_transient( OMOCHIX_CORE_PROVIDER_NOTICE . $post_id );
 	delete_transient( OMOCHIX_CORE_PROVIDER_NOTICE . $post_id );
-	echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( '提供元は1つだけ選べます。複数選ばれていたため「未分類」に戻しました。', 'omochix-core' ) . '</p></div>';
+	$text = 'privileged' === $reason ? __( '「OmochiX公式」と「パートナー（PR）」は編集者だけが設定できます。設定は反映していません。', 'omochix-core' ) : __( '提供元は1つだけ選べます。複数選ばれていたため「未分類」に戻しました。', 'omochix-core' );
+	echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( $text ) . '</p></div>';
 }
 add_action( 'admin_notices', 'omochix_core_provider_notice' );
 
@@ -131,16 +178,19 @@ function omochix_core_provider_meta_box( $post ) {
 		disabled( ! $can_assign, true, false ),
 		esc_html__( '未分類（確認待ち）', 'omochix-core' )
 	);
+	$editor = current_user_can( 'edit_others_posts' );
 	foreach ( omochix_core_get_provider_vocabulary() as $slug => $label ) {
 		if ( ! isset( $by_slug[ $slug ] ) ) {
 			continue;
 		}
+		// Official / partner can be chosen only by editors (an author keeps a value an editor set).
+		$locked = ! $can_assign || ( ! $editor && $slug !== $current && in_array( $slug, omochix_core_get_privileged_provider_types(), true ) );
 		printf(
 			'<p><label><input type="radio" name="tax_input[%1$s][]" value="%2$d" %3$s %4$s> %5$s</label></p>',
 			esc_attr( OMOCHIX_CORE_PROVIDER_TAXONOMY ),
 			(int) $by_slug[ $slug ]->term_id,
 			checked( $slug, $current, false ),
-			disabled( ! $can_assign, true, false ),
+			disabled( $locked, true, false ),
 			esc_html( $label )
 		);
 	}

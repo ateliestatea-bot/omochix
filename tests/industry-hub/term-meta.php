@@ -117,6 +117,7 @@ update_term_meta($re, 'industry_tool_ids', [$tool, $tool2]);
 check('gate: written content alone is not enough without an official workflow', ['G5_official_workflow'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
 // The workflow format term is seeded by the workflow module; seed it here so this file stands alone.
 if (!ih_term('learn_format', 'workflow')) { wp_insert_term('導入する', 'learn_format', ['slug' => 'workflow']); }
+ih_as(['edit_others_posts']); // only editors may mark content official
 $wf = ih_add_post(['post_type' => 'learn_practice', 'post_name' => 'wf-creator', 'post_status' => 'publish']);
 wp_set_object_terms($wf, ['real-estate'], 'omx_industry'); wp_set_object_terms($wf, ['workflow'], 'learn_format'); wp_set_object_terms($wf, ['creator'], 'omx_provider_type');
 check('gate: a workflow by a creator does not count as OmochiX content', ['G5_official_workflow'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
@@ -143,6 +144,9 @@ check('gate: short use-case bodies do not count (written content, not placeholde
 update_term_meta($re, 'industry_usecases', [['title' => 'a', 'body' => $body, 'purpose' => 'marketing'], ['title' => 'b', 'body' => $body, 'purpose' => 'document'], ['title' => 'c', 'body' => $body, 'purpose' => 'sales']]);
 update_term_meta($re, 'industry_tool_ids', []);
 check('gate: curated tool cards do not count either way (removing them keeps the hub ready)', true === omochix_core_industry_hub_gate($re, $now)['ready']);
+$GLOBALS['post_terms'][$wf3]['omx_provider_type'][] = ih_term('omx_provider_type', 'creator')->term_id; // two providers, written around the API
+check('gate: an official workflow that also carries a second provider is ambiguous and does not count', ['G5_official_workflow'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
+$GLOBALS['post_terms'][$wf3]['omx_provider_type'] = [ih_term('omx_provider_type', 'official')->term_id];
 update_term_meta($re, 'industry_hub_ready', false);
 check('gate: without the editor flag the hub is never ready', ['G1_editor_ready'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
 check('gate: a sub-industry is never a hub', ['not_top_level'] === omochix_core_industry_hub_gate($sub, $now)['unmet'] && ['missing_term'] === omochix_core_industry_hub_gate(424242, $now)['unmet']);

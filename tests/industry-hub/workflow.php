@@ -13,7 +13,7 @@ $wf_keys = ['workflow_problem', 'workflow_audience', 'workflow_cost', 'workflow_
 
 // ------------------------------------------------------------ registration
 check('meta: six workflow keys on learn_practice with practice auth, own sanitizer, revisions', 6 === count(array_intersect_key($reg, array_flip($wf_keys))) && !array_filter(array_intersect_key($reg, array_flip($wf_keys)), static fn($a) => 'omochix_core_auth_registered_practice_meta' !== $a['auth_callback'] || 'omochix_core_sanitize_registered_workflow_meta' !== $a['sanitize_callback'] || true !== $a['revisions_enabled']));
-check('meta: rows are typed objects in REST (no extra properties), resource IDs integers', 'object' === $reg['workflow_results']['show_in_rest']['schema']['items']['type'] && false === $reg['workflow_results']['show_in_rest']['schema']['items']['additionalProperties'] && ['integer', 'null'] === $reg['workflow_results']['show_in_rest']['schema']['items']['properties']['source_resource_id']['type'] && 'integer' === $reg['workflow_resource_ids']['show_in_rest']['schema']['items']['type']);
+check('meta: rows are typed objects in REST (no extra properties); ledger IDs are kept out of public REST', 'object' === $reg['workflow_results']['show_in_rest']['schema']['items']['type'] && false === $reg['workflow_results']['show_in_rest']['schema']['items']['additionalProperties'] && ['integer', 'null'] === $reg['workflow_results']['show_in_rest']['schema']['items']['properties']['source_resource_id']['type'] && false === $reg['workflow_resource_ids']['show_in_rest']);
 check('practice: the practice schema itself is unchanged (24 keys, same required list)', 24 === count(omochix_core_get_practice_meta_schema()) && ['practice_summary', 'practice_minutes', 'practice_outcome', 'practice_prompts', 'practice_steps', 'practice_verify', 'practice_safety', 'practice_verified_at', 'practice_sources'] === omochix_core_get_practice_required_meta() && !array_intersect($wf_keys, array_keys(omochix_core_get_practice_meta_schema())));
 check('practice: the five format labels the theme filter uses are unchanged (no 導入する chip appears)', ['project' => '作る', 'lesson' => '学ぶ', 'demo' => '試す', 'reference' => '調べる', 'prompt' => '使う'] === omochix_core_get_practice_format_labels());
 check('phase 1: the workflow format term is not created on boot (no new /learn/format/workflow/ archive)', null === ih_term('learn_format', 'workflow') && 5 === count($GLOBALS['terms']['learn_format']));
@@ -36,11 +36,13 @@ $p = ih_add_post(['post_type' => 'learn_practice', 'post_status' => 'draft', 'po
 check('detect: a practice item without the workflow format is not a workflow', false === omochix_core_is_workflow($p));
 wp_set_object_terms($p, ['workflow'], 'learn_format');
 check('detect: stored format', true === omochix_core_is_workflow($p));
-$_POST = ['tax_input' => ['learn_format' => '作る']];
-check('detect: the classic request overrides the stored terms (names, comma separated)', false === omochix_core_is_workflow($p));
-$_POST = ['tax_input' => ['learn_format' => '作る, 導入する']];
-check('detect: classic names', true === omochix_core_is_workflow($p));
+check('detect: the resolved classic tax_input overrides the stored terms (names, comma separated)', false === omochix_core_is_workflow($p, null, ['learn_format' => '作る']));
+check('detect: classic names', true === omochix_core_is_workflow($p, null, ['learn_format' => '作る, 導入する']));
+check('detect: bulk edit (stored names merged with new IDs) still sees the workflow format', true === omochix_core_is_workflow($p, null, ['learn_format' => ['導入する', (string) ih_term('learn_format', 'project')->term_id]]));
+$_POST = ['tax_input' => ['learn_format' => '']];
+check('detect: raw $_POST tax_input is never read (bulk edit posts it empty)', true === omochix_core_is_workflow($p));
 $_POST = [];
+check('detect: nested values are ignored without warnings', true === omochix_core_is_workflow($p, null, ['learn_format' => [['x'], '導入する']]));
 $wid = ih_term('learn_format', 'workflow')->term_id;
 check('detect: REST term IDs under the rest_base', true === omochix_core_is_workflow(0, ['learn-formats' => [$wid]]) && false === omochix_core_is_workflow($p, ['learn-formats' => []]));
 
@@ -82,19 +84,27 @@ check('blockers: a secret-looking string blocks', false !== strpos(implode(' ', 
 
 // ------------------------------------------------------------- classic guard
 foreach ($good as $k => $v) { if ($v) { update_post_meta($p, $k, $v); } }
-$guard = static fn($id, $status = 'publish') => omochix_core_workflow_guard_insert_data(['post_type' => 'learn_practice', 'post_status' => $status], ['ID' => $id]);
+$guard = static fn($id, $status = 'publish', $tax = null) => omochix_core_workflow_guard_insert_data(['post_type' => 'learn_practice', 'post_status' => $status], ['ID' => $id] + (null === $tax ? [] : ['tax_input' => $tax]));
 check('guard: a workflow without industry, tools and provider is held as draft', 'draft' === $guard($p)['post_status'] && 'blocked' === get_transient('omochix_core_workflow_guard_' . $p)['type']);
 wp_set_object_terms($p, ['real-estate', 'restaurant'], 'omx_industry');
+ih_as(['edit_others_posts']);
 wp_set_object_terms($p, ['official'], 'omx_provider_type');
+ih_as([]);
 update_post_meta($p, 'related_tool_ids', [$tool]);
 delete_transient('omochix_core_workflow_guard_' . $p);
 check('guard: complete (two industries, one tool, official) → publish allowed, no notice', 'publish' === $guard($p)['post_status'] && false === get_transient('omochix_core_workflow_guard_' . $p));
-$_POST = ['omochix_core_workflow_meta' => ['workflow_problem' => ''], 'omochix_core_workflow_nonce' => 'x'];
-check('guard: values submitted in the same request count (emptied problem → held)', 'draft' === $guard($p)['post_status']);
-$_POST = ['tax_input' => ['omx_provider_type' => ['0']]];
-check('guard: choosing 未分類 in the same request is held', 'draft' === $guard($p)['post_status']);
-$_POST = ['omochix_core_practice_relation_fields' => ['related_tool_ids'], 'omochix_core_practice_meta' => ['related_tool_ids' => []]];
+$_POST = ['omochix_core_workflow_meta' => ['workflow_problem' => ''], 'omochix_core_workflow_nonce' => 'nonce-omochix_core_save_workflow'];
+check('guard: values submitted with a valid panel nonce count (emptied problem → held)', 'draft' === $guard($p)['post_status']);
+$_POST['omochix_core_workflow_nonce'] = 'forged';
+check('guard: without the panel nonce submitted values are ignored (they would not be saved)', 'publish' === $guard($p)['post_status']);
+$_POST = [];
+check('guard: choosing 未分類 in the same request is held', 'draft' === $guard($p, 'publish', ['omx_provider_type' => ['0']])['post_status']);
+check('guard: a second provider merged in by bulk edit is held (ambiguous)', 'draft' === $guard($p, 'publish', ['omx_provider_type' => [(string) ih_term('omx_provider_type', 'official')->term_id, (string) ih_term('omx_provider_type', 'creator')->term_id]])['post_status']);
+check('guard: bulk edit of a workflow draft (learn_format merged as names) is still checked', 'draft' === $guard($p, 'publish', ['learn_format' => ['導入する'], 'omx_industry' => []])['post_status']);
+$_POST = ['omochix_core_practice_nonce' => 'nonce-omochix_core_save_practice', 'omochix_core_practice_relation_fields' => ['related_tool_ids'], 'omochix_core_practice_meta' => ['related_tool_ids' => []]];
 check('guard: removing every tool in the same request is held', 'draft' === $guard($p)['post_status']);
+$_POST['omochix_core_practice_nonce'] = 'forged';
+check('guard: a tool list posted without the practice nonce is ignored', 'publish' === $guard($p)['post_status']);
 $_POST = [];
 $plain = ih_add_post(['post_type' => 'learn_practice', 'post_status' => 'draft']);
 wp_set_object_terms($plain, ['project'], 'learn_format');

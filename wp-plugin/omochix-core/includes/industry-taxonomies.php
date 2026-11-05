@@ -325,6 +325,12 @@ function omochix_core_industry_pre_insert_term( $term, $taxonomy, $args = array(
 			return new WP_Error( 'omochix_industry_depth', __( '業種は「業種 → サブ業種」の2階層までです。', 'omochix-core' ) );
 		}
 	}
+	// Core lets anyone who may assign terms create new ones in a flat
+	// taxonomy (tag box, REST). Business purposes are a curated vocabulary:
+	// creating one needs manage_categories (seeding on init is exempt).
+	if ( OMOCHIX_CORE_PURPOSE_TAXONOMY === $taxonomy && ! doing_action( 'init' ) && is_user_logged_in() && ! current_user_can( 'manage_categories' ) ) {
+		return new WP_Error( 'omochix_purpose_curated', __( '業務目的の追加は編集者（カテゴリー管理の権限）だけができます。', 'omochix-core' ) );
+	}
 	if ( OMOCHIX_CORE_PROVIDER_TAXONOMY === $taxonomy ) {
 		$vocabulary = omochix_core_get_provider_vocabulary();
 		$slug       = omochix_core_industry_candidate_slug( $term, $args );

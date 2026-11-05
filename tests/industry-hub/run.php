@@ -82,7 +82,12 @@ check('update data: a rename to a reserved slug keeps the stored slug', 'beauty'
 $r = wp_insert_term('自社', 'omx_provider_type', ['slug' => 'own']);
 check('provider: a fifth provider term is refused', $r instanceof WP_Error && 'omochix_provider_fixed' === $r->get_error_code());
 check('provider: a child provider term is refused', wp_insert_term('x', 'omx_provider_type', ['slug' => 'official-2', 'parent' => ih_term('omx_provider_type', 'official')->term_id]) instanceof WP_Error);
-check('provider: purpose terms can be added by editors (not a fixed vocabulary)', is_array(wp_insert_term('採用', 'omx_purpose', ['slug' => 'recruiting'])));
+ih_as(['edit_posts']);
+$r = wp_insert_term('勝手な目的', 'omx_purpose', ['slug' => 'adhoc']);
+check('purpose: a logged-in author cannot create purposes (core would allow it from the tag box / REST)', $r instanceof WP_Error && 'omochix_purpose_curated' === $r->get_error_code());
+ih_as(['manage_categories']);
+check('purpose: editors can add purposes (not a fixed vocabulary)', is_array(wp_insert_term('採用', 'omx_purpose', ['slug' => 'recruiting'])));
+ih_as([]);
 
 $pid = ih_add_post(['post_type' => 'learn_practice', 'post_name' => 'p1']);
 check('provider: no term means unclassified, never official', 'unclassified' === omochix_core_get_provider_type($pid));
@@ -90,15 +95,38 @@ $old = ih_add_post(['post_type' => 'post', 'post_name' => 'old-news', 'post_auth
 check('provider: existing content written by an admin is still unclassified (nothing is inferred)', 'unclassified' === omochix_core_get_provider_type(get_post($old)));
 wp_set_object_terms($pid, ['creator'], 'omx_provider_type');
 check('provider: one term resolves to that provider', 'creator' === omochix_core_get_provider_type($pid));
+ih_as(['edit_others_posts']);
 wp_set_object_terms($pid, ['official', 'partner'], 'omx_provider_type');
-check('provider: two terms are ambiguous → all removed (unclassified) and a notice is queued', 'unclassified' === omochix_core_get_provider_type($pid) && [] === $GLOBALS['post_terms'][$pid]['omx_provider_type'] && 1 === get_transient('omochix_core_provider_notice_' . $pid));
+check('provider: two terms are ambiguous → all removed (unclassified) and a notice is queued', 'unclassified' === omochix_core_get_provider_type($pid) && [] === $GLOBALS['post_terms'][$pid]['omx_provider_type'] && 'multiple' === get_transient('omochix_core_provider_notice_' . $pid));
+wp_set_object_terms($pid, ['creator'], 'omx_provider_type');
+wp_set_object_terms($pid, ['official'], 'omx_provider_type', true);
+check('provider: appending a second provider (wp_add_object_terms / WP-CLI) is caught too', 'unclassified' === omochix_core_get_provider_type($pid) && [] === $GLOBALS['post_terms'][$pid]['omx_provider_type']);
+wp_set_object_terms($pid, ['official'], 'omx_provider_type');
+check('provider: an editor (edit_others_posts) can mark content official', 'official' === omochix_core_get_provider_type($pid));
+ih_as(['edit_posts']);
+wp_set_object_terms($pid, ['official'], 'omx_provider_type');
+check('provider: an author re-saving an official post keeps the value an editor set', 'official' === omochix_core_get_provider_type($pid));
+$own = ih_add_post(['post_type' => 'post', 'post_name' => 'author-post']);
+foreach (['official', 'partner'] as $privileged) {
+    wp_set_object_terms($own, [$privileged], 'omx_provider_type');
+    check("provider: an author cannot set \"$privileged\" (reverted, notice queued)", 'unclassified' === omochix_core_get_provider_type($own) && 'privileged' === get_transient('omochix_core_provider_notice_' . $own));
+}
+wp_set_object_terms($own, ['creator'], 'omx_provider_type');
+check('provider: an author can set creator / external-service', 'creator' === omochix_core_get_provider_type($own));
+wp_set_object_terms($own, ['official'], 'omx_provider_type');
+check('provider: an author switching creator → official keeps nothing privileged', 'unclassified' === omochix_core_get_provider_type($own));
+ih_as([]);
+wp_set_object_terms($own, ['partner'], 'omx_provider_type');
+check('provider: code running with no user is held to the same rule', 'unclassified' === omochix_core_get_provider_type($own));
 check('provider: resolving slugs is strict (unknown or duplicate lists are unclassified)', 'unclassified' === omochix_core_provider_type_from_slugs(['own']) && 'unclassified' === omochix_core_provider_type_from_slugs(['official', 'creator']) && 'official' === omochix_core_provider_type_from_slugs(['official']));
 check('provider: labels, PR flag and link rel', '' === omochix_core_get_provider_label('unclassified') && 'クリエイター' === omochix_core_get_provider_label('creator') && omochix_core_provider_is_pr('partner') && !omochix_core_provider_is_pr('official') && 'sponsored noopener noreferrer' === omochix_core_provider_link_rel('partner') && 'noopener noreferrer' === omochix_core_provider_link_rel('creator'));
 
-ih_as(['assign_terms']);
+ih_as(['edit_others_posts']);
 wp_set_object_terms($pid, ['partner'], 'omx_provider_type');
+ih_as(['assign_terms']);
 ob_start(); omochix_core_provider_meta_box(get_post($pid)); $box = ob_get_clean();
 $partner_id = ih_term('omx_provider_type', 'partner')->term_id;
+check('provider box: for an author, official is locked; the current partner value stays selectable', 1 === substr_count($box, 'disabled="disabled"') && 1 === preg_match('/value="' . ih_term('omx_provider_type', 'official')->term_id . '"\s+disabled="disabled"/', $box));
 check('provider box: radio inputs post term IDs under tax_input, current value checked, 未分類 = 0', 5 === substr_count($box, 'type="radio"') && false !== strpos($box, 'name="tax_input[omx_provider_type][]" value="' . $partner_id . '"  checked="checked"') && false !== strpos($box, 'value="0"') && false !== strpos($box, '未分類'));
 ih_as([]);
 ob_start(); omochix_core_provider_meta_box(get_post($pid)); $box = ob_get_clean();

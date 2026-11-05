@@ -87,6 +87,23 @@ check('provider: two providers through edit_post() fall back to unclassified', '
 $r = ih_rest('POST', '/wp/v2/posts/' . $pid, ['provider-types' => [$official, $partner]]);
 check('provider: two providers through REST also fall back to unclassified', 200 === $r->get_status() && 'unclassified' === omochix_core_get_provider_type($pid));
 
+wp_set_current_user($author);
+$own = wp_insert_post(['post_type' => 'post', 'post_title' => 'IH author post', 'post_status' => 'draft', 'post_author' => $author], true);
+$r = ih_rest('POST', '/wp/v2/posts/' . $own, ['provider-types' => [$official]]);
+check('provider: an author cannot mark a post official through REST (stays unclassified)', 'unclassified' === omochix_core_get_provider_type($own));
+$creator = get_term_by('slug', 'creator', 'omx_provider_type')->term_id;
+ih_rest('POST', '/wp/v2/posts/' . $own, ['provider-types' => [$creator]]);
+check('provider: an author can choose creator through REST', 'creator' === omochix_core_get_provider_type($own));
+$r = ih_rest('POST', '/wp/v2/business-purposes', ['name' => 'IH勝手', 'slug' => 'ih-adhoc']);
+check('purpose: an author cannot create a business purpose through REST', !in_array($r->get_status(), [200, 201], true) && !term_exists('ih-adhoc', 'omx_purpose'));
+wp_set_current_user($admin);
+$_REQUEST['_wpnonce'] = wp_create_nonce('bulk-posts');
+$bulk_res = wp_insert_post(['post_type' => 'omx_resource', 'post_title' => 'IH bulk', 'post_status' => 'draft'], true);
+foreach (['resource_url' => 'https://example.com/b', 'resource_kind' => 'article', 'resource_provider_name' => 'B', 'resource_summary' => 's', 'resource_license_basis' => 'link_only', 'resource_verified_at' => '2026-11-01'] as $k => $v) { update_post_meta($bulk_res, $k, $v); }
+wp_set_object_terms($bulk_res, ['external-service'], 'omx_provider_type');
+$done = bulk_edit_posts(['post_type' => 'omx_resource', 'post' => [$bulk_res], '_status' => 'publish', 'tax_input' => ['omx_provider_type' => []]]);
+check('bulk edit: a complete ledger entry can be bulk-published (stored provider merged by core)', 'publish' === get_post_status($bulk_res));
+
 // --------------------------------------------------------- term meta (core)
 $re = get_term_by('slug', 'real-estate', 'omx_industry')->term_id;
 update_term_meta($re, 'industry_lead', '<script>alert(1)</script>導入');
@@ -126,7 +143,7 @@ check('workflow: editing a live workflow is never blocked or demoted', 200 === $
 check('workflow: workflow meta is registered with REST schema on learn_practice', isset($r->get_data()['meta']['workflow_problem']));
 
 // -------------------------------------------------------------- cleanup
-foreach ([$res, $draft, $pid, $tool, $id] as $p) { if ($p && !is_wp_error($p)) { wp_delete_post((int) $p, true); } }
+foreach ([$res, $draft, $pid, $tool, $id, $own, $bulk_res] as $p) { if ($p && !is_wp_error($p)) { wp_delete_post((int) $p, true); } }
 if (is_array($deep)) { wp_delete_term($deep['term_id'], 'omx_industry'); }
 foreach (get_users(['search' => 'ih-*', 'search_columns' => ['user_login']]) as $u) { require_once ABSPATH . 'wp-admin/includes/user.php'; wp_delete_user($u->ID); }
 echo "\n$pass passed, $fail failed\n";

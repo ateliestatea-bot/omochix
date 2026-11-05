@@ -90,7 +90,12 @@ function omochix_core_get_industry_posts( $industry, $post_type, $args = array()
 		$query['meta_query'] = omochix_get_active_ai_tool_meta_query(); // discontinued tools are never recommended
 	}
 	$posts = get_posts( $query );
-	return is_array( $posts ) ? array_values( array_filter( $posts, static fn( $p ) => $p instanceof WP_Post ) ) : array();
+	$posts = is_array( $posts ) ? array_values( array_filter( $posts, static fn( $p ) => $p instanceof WP_Post ) ) : array();
+	if ( '' !== $raw_provider ) {
+		// Re-check: a post with two providers is unclassified, never a match.
+		$posts = array_values( array_filter( $posts, static fn( $p ) => $provider === omochix_core_get_provider_type( $p ) ) );
+	}
+	return $posts;
 }
 
 /**

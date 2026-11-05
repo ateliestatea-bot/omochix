@@ -257,7 +257,7 @@ function omochix_core_count_official_workflows( $term_id, $limit = 1 ) {
 			'post_status'      => 'publish',
 			'has_password'     => false,
 			'fields'           => 'ids',
-			'posts_per_page'   => max( 1, (int) $limit ),
+			'posts_per_page'   => max( 10, 5 * (int) $limit ), // headroom for the provider re-check below
 			'no_found_rows'    => true,
 			'suppress_filters' => false,
 			'tax_query'        => array(
@@ -268,7 +268,10 @@ function omochix_core_count_official_workflows( $term_id, $limit = 1 ) {
 			),
 		)
 	);
-	return is_array( $ids ) ? count( $ids ) : 0;
+	// The tax_query also matches a post that (against the rules) carries two
+	// providers; count only posts whose single provider is official.
+	$ids = array_filter( is_array( $ids ) ? $ids : array(), static fn( $id ) => 'official' === omochix_core_get_provider_type( (int) $id ) );
+	return min( count( $ids ), max( 1, (int) $limit ) );
 }
 
 /**

@@ -67,8 +67,16 @@ foreach (['resource_url' => 'https://www.youtube.com/watch?v=abc', 'resource_kin
 wp_set_object_terms($rid, ['creator'], 'omx_provider_type');
 $card = omochix_core_get_resource_card($rid);
 check('card: public fields only, never the permission reference', is_array($card) && !array_key_exists('permission_ref', $card) && !in_array('LIC-1', $card, true) && 'https://www.youtube.com/watch?v=abc' === $card['url'] && 'creator' === $card['provider_type'] && false === $card['is_pr'] && 'noopener noreferrer' === $card['rel']);
+ih_as(['edit_post', 'edit_others_posts']); // only editors may mark content as partner (PR)
 wp_set_object_terms($rid, ['partner'], 'omx_provider_type');
 check('card: partner content is PR with rel=sponsored', true === omochix_core_get_resource_card($rid)['is_pr'] && 'sponsored noopener noreferrer' === omochix_core_get_resource_card($rid)['rel']);
+update_post_meta($rid, 'resource_thumbnail', ih_add_post(['post_type' => 'attachment']));
+check('card: a live link-only entry edited to carry a thumbnail is no longer shown (rules re-applied on read)', null === omochix_core_get_resource_card($rid));
+delete_post_meta($rid, 'resource_thumbnail');
+update_post_meta($rid, 'resource_license_basis', '');
+check('card: a live entry whose license basis was cleared is not shown', null === omochix_core_get_resource_card($rid));
+update_post_meta($rid, 'resource_license_basis', 'link_only');
+check('card: shown again once the record is complete', is_array(omochix_core_get_resource_card($rid)));
 $GLOBALS['posts'][$rid]->post_status = 'draft';
 check('card: an unpublished entry is never shown', null === omochix_core_get_resource_card($rid));
 $GLOBALS['posts'][$rid]->post_status = 'publish';
@@ -77,13 +85,16 @@ check('stale: 180 days ok, 181 stale, missing stale', false === omochix_core_res
 
 // --------------------------------------------------------- publish guard
 $draft = ih_add_post(['post_type' => 'omx_resource', 'post_status' => 'draft', 'post_title' => '記事']);
-$guard = static function ($id, $status = 'publish', $title = '記事') { return omochix_core_resource_guard_insert_data(['post_type' => 'omx_resource', 'post_status' => $status, 'post_title' => $title], ['ID' => $id]); };
+// $GLOBALS['ih_tax'] plays the tax_input core resolves into wp_insert_post()'s $postarr.
+$guard = static function ($id, $status = 'publish', $title = '記事') { $arr = ['ID' => $id]; if (isset($GLOBALS['ih_tax'])) { $arr['tax_input'] = $GLOBALS['ih_tax']; } return omochix_core_resource_guard_insert_data(['post_type' => 'omx_resource', 'post_status' => $status, 'post_title' => $title], $arr); };
 $_POST = [];
+ih_as(['edit_post', 'edit_others_posts']);
 check('guard: an empty entry cannot be published (held as draft, reasons recorded)', 'draft' === $guard($draft)['post_status'] && 'blocked' === get_transient('omochix_core_resource_guard_' . $draft)['type']);
 $full = ['resource_url' => 'https://example.com/a', 'resource_kind' => 'article', 'resource_provider_name' => 'B社', 'resource_summary' => '紹介文', 'resource_license_basis' => 'link_only', 'resource_verified_at' => '2026-11-01'];
-$_POST = ['omochix_core_resource_meta' => $full];
+$_POST = ['omochix_core_resource_meta' => $full, 'omochix_core_resource_nonce' => 'nonce-omochix_core_save_resource'];
 check('guard: a complete record without a provider is still held (unclassified is not enough)', 'draft' === $guard($draft)['post_status'] && false !== strpos(implode(' ', get_transient('omochix_core_resource_guard_' . $draft)['lines']), '提供元'));
-$_POST['tax_input'] = ['omx_provider_type' => ['0', (string) ih_term('omx_provider_type', 'external-service')->term_id]];
+$GLOBALS['ih_tax'] = ['omx_provider_type' => ['0', (string) ih_term('omx_provider_type', 'external-service')->term_id]];
+$_POST['tax_input'] = ['omx_provider_type' => [(string) ih_term('omx_provider_type', 'creator')->term_id, (string) ih_term('omx_provider_type', 'official')->term_id]]; // raw POST is ignored
 delete_transient('omochix_core_resource_guard_' . $draft);
 check('guard: link_only + provider from this request → publish allowed', 'publish' === $guard($draft)['post_status'] && false === get_transient('omochix_core_resource_guard_' . $draft));
 $_POST['omochix_core_resource_meta']['resource_license_basis'] = 'licensed';
@@ -107,11 +118,25 @@ $_POST['omochix_core_resource_meta']['resource_license_basis'] = 'link_only';
 $_POST['omochix_core_resource_meta']['resource_summary'] = 'token: ' . 'ghp_' . str_repeat('a', 30);
 check('guard: a secret-looking string blocks publishing', 'draft' === $guard($draft)['post_status']);
 $_POST['omochix_core_resource_meta']['resource_summary'] = '紹介文';
+$saved_nonce = $_POST['omochix_core_resource_nonce'];
+$_POST['omochix_core_resource_nonce'] = 'forged';
+check('guard: without the box nonce the submitted values do not count (stored record is empty → held)', 'draft' === $guard($draft)['post_status']);
+$_POST['omochix_core_resource_nonce'] = $saved_nonce;
+ih_as(['edit_post']);
+$_POST['omochix_core_resource_meta']['resource_license_basis'] = 'licensed';
+check('guard: an author cannot satisfy "licensed" with a reference the save handler will drop', 'draft' === $guard($draft)['post_status'] && false !== strpos(implode(' ', get_transient('omochix_core_resource_guard_' . $draft)['lines']), '許諾の社内参照番号'));
+ih_as(['edit_post', 'edit_others_posts']);
+$_POST['omochix_core_resource_meta']['resource_license_basis'] = 'link_only';
+$GLOBALS['ih_tax'] = ['omx_provider_type' => [(string) ih_term('omx_provider_type', 'external-service')->term_id, (string) ih_term('omx_provider_type', 'creator')->term_id]];
+check('guard: bulk edit merging a second provider into tax_input is treated as unclassified', 'draft' === $guard($draft)['post_status']);
+$GLOBALS['ih_tax'] = ['omx_provider_type' => [['nested']]];
+check('guard: nested tax_input values are ignored without warnings', 'draft' === $guard($draft)['post_status']);
+$GLOBALS['ih_tax'] = ['omx_provider_type' => ['0', (string) ih_term('omx_provider_type', 'external-service')->term_id]];
 check('guard: a complete record may be scheduled (future)', 'future' === $guard($draft, 'future')['post_status']);
 $_POST['omochix_core_resource_meta']['resource_verified_at'] = '';
 check('guard: scheduling (future) is guarded like publish', 'draft' === $guard($draft, 'future')['post_status']);
 $_POST['omochix_core_resource_meta']['resource_verified_at'] = '2026-11-01';
-$_POST = [];
+$_POST = []; unset($GLOBALS['ih_tax']);
 $live = ih_add_post(['post_type' => 'omx_resource', 'post_status' => 'publish']);
 check('guard: an entry that is already published is never demoted (warning only)', 'publish' === $guard($live)['post_status'] && 'warn' === get_transient('omochix_core_resource_guard_' . $live)['type']);
 check('guard: drafts and other post types are not touched', 'draft' === $guard($draft, 'draft')['post_status'] && 'publish' === omochix_core_resource_guard_insert_data(['post_type' => 'post', 'post_status' => 'publish'], ['ID' => 0])['post_status']);

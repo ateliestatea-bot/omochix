@@ -215,6 +215,13 @@ function omochix_core_get_resource_card( $post ) {
 		return null;
 	}
 	$provider = omochix_core_get_provider_type( $post );
+	// A live entry edited into an incomplete record is only warned about by the
+	// guard; the card re-applies the rules, so it is simply not shown.
+	$full = $meta;
+	$full['resource_permission_ref'] = (string) get_post_meta( $post->ID, 'resource_permission_ref', true );
+	if ( omochix_core_resource_publish_blockers( $full, $provider, array( 'title' => (string) $post->post_title ) ) ) {
+		return null;
+	}
 	return array(
 		'id'            => (int) $post->ID,
 		'title'         => get_the_title( $post ),
@@ -230,7 +237,7 @@ function omochix_core_get_resource_card( $post ) {
 		'attribution'   => $meta['resource_attribution'],
 		'verified_at'   => $meta['resource_verified_at'],
 		'stale'         => omochix_core_resource_is_stale( $meta['resource_verified_at'] ),
-		'thumbnail'     => $meta['resource_thumbnail'],
+		'thumbnail'     => in_array( $meta['resource_license_basis'], array( 'licensed', 'partner', 'open_license' ), true ) ? $meta['resource_thumbnail'] : 0,
 	);
 }
 
@@ -301,15 +308,18 @@ function omochix_core_resource_publish_blockers( array $meta, $provider, array $
 }
 
 /**
- * Provider type a request would leave on the entry: the submitted classic
- * tax_input when present, else the stored term.
+ * Provider type a request would leave on the entry: the tax_input core
+ * resolved into wp_insert_post()'s $postarr (post.php, quick and bulk edit)
+ * when present, else the stored term.
  *
- * @param int $post_id Post ID.
+ * @param int        $post_id   Post ID.
+ * @param array|null $tax_input $postarr['tax_input'].
  * @return string
  */
-function omochix_core_resource_effective_provider( $post_id ) {
-	if ( isset( $_POST['tax_input'][ OMOCHIX_CORE_PROVIDER_TAXONOMY ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only overlay; core verifies the post nonce.
-		$ids   = array_filter( array_map( 'absint', (array) wp_unslash( $_POST['tax_input'][ OMOCHIX_CORE_PROVIDER_TAXONOMY ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+function omochix_core_resource_effective_provider( $post_id, $tax_input = null ) {
+	if ( is_array( $tax_input ) && array_key_exists( OMOCHIX_CORE_PROVIDER_TAXONOMY, $tax_input ) ) {
+		$raw   = $tax_input[ OMOCHIX_CORE_PROVIDER_TAXONOMY ];
+		$ids   = array_filter( array_map( 'absint', array_filter( is_array( $raw ) ? $raw : explode( ',', (string) $raw ), 'is_scalar' ) ) );
 		$slugs = array();
 		foreach ( $ids as $id ) {
 			$term = get_term( $id, OMOCHIX_CORE_PROVIDER_TAXONOMY );
@@ -335,11 +345,16 @@ function omochix_core_resource_effective_meta( $post_id ) {
 		$raw          = $post_id ? get_post_meta( (int) $post_id, $key, true ) : '';
 		$meta[ $key ] = '' === $raw ? $field['default'] : omochix_core_sanitize_resource_meta_value( $raw, $key );
 	}
-	if ( isset( $_POST['omochix_core_resource_meta'] ) && is_array( $_POST['omochix_core_resource_meta'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only overlay; the save handler verifies its nonce.
-		foreach ( wp_unslash( $_POST['omochix_core_resource_meta'] ) as $key => $value ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			if ( isset( $meta[ $key ] ) ) {
-				$meta[ $key ] = omochix_core_sanitize_resource_meta_value( $value, $key );
+	// Overlay only what the box's save handler will really store: same nonce,
+	// same capability rule for the internal reference.
+	$nonce = isset( $_POST['omochix_core_resource_nonce'] ) && is_string( $_POST['omochix_core_resource_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['omochix_core_resource_nonce'] ) ) : '';
+	if ( '' !== $nonce && wp_verify_nonce( $nonce, 'omochix_core_save_resource' ) && isset( $_POST['omochix_core_resource_meta'] ) && is_array( $_POST['omochix_core_resource_meta'] ) ) {
+		$schema = omochix_core_get_resource_meta_schema();
+		foreach ( wp_unslash( $_POST['omochix_core_resource_meta'] ) as $key => $value ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized below.
+			if ( ! isset( $meta[ $key ] ) || ( ! $schema[ $key ]['public'] && ! current_user_can( 'edit_others_posts' ) ) ) {
+				continue;
 			}
+			$meta[ $key ] = omochix_core_sanitize_resource_meta_value( $value, $key );
 		}
 	}
 	return $meta;
@@ -362,7 +377,7 @@ function omochix_core_resource_guard_insert_data( $data, $postarr ) {
 	$stored  = $post_id ? (string) get_post_field( 'post_status', $post_id ) : '';
 	$lines   = omochix_core_resource_publish_blockers(
 		omochix_core_resource_effective_meta( $post_id ),
-		omochix_core_resource_effective_provider( $post_id ),
+		omochix_core_resource_effective_provider( $post_id, isset( $postarr['tax_input'] ) && is_array( $postarr['tax_input'] ) ? $postarr['tax_input'] : null ),
 		array( 'title' => wp_unslash( (string) ( $data['post_title'] ?? '' ) ) )
 	);
 	if ( ! $lines ) {

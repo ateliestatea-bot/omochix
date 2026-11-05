@@ -33,6 +33,9 @@ check('by industry: accepts an ID, a slug or a term; unknown industries give not
 check('search: industry + business purpose', [$prompt] === $ids(omochix_core_get_industry_posts('real-estate', 'prompt', ['purpose' => 'marketing'])) && [$prompt2] === $ids(omochix_core_get_industry_posts('real-estate', 'prompt', ['purpose' => 'document'])));
 check('search: an unknown purpose narrows to nothing (not "ignore the filter")', [] === omochix_core_get_industry_posts('real-estate', 'prompt', ['purpose' => '<script>']));
 check('search: array-shaped filter values (?purpose[]=x) narrow to nothing, without warnings', [] === omochix_core_get_industry_posts('real-estate', 'prompt', ['purpose' => ['marketing']]) && [] === omochix_core_get_industry_posts('real-estate', 'prompt', ['provider' => ['creator']]));
+$GLOBALS['post_terms'][$prompt2]['omx_provider_type'][] = ih_term('omx_provider_type', 'official')->term_id; // two providers, written around the API
+check('search: a post carrying two providers matches neither filter', [] === omochix_core_get_industry_posts('real-estate', 'prompt', ['provider' => 'official']) && [] === omochix_core_get_industry_posts('real-estate', 'prompt', ['provider' => 'creator']));
+$GLOBALS['post_terms'][$prompt2]['omx_provider_type'] = [ih_term('omx_provider_type', 'creator')->term_id];
 check('search: provider filter', [$prompt2] === $ids(omochix_core_get_industry_posts('real-estate', 'prompt', ['provider' => 'creator'])));
 check('search: "official" never matches unclassified content', [] === omochix_core_get_industry_posts('real-estate', 'prompt', ['provider' => 'official']));
 check('search: "unclassified" or unknown providers are not filters', [] === omochix_core_get_industry_posts('real-estate', 'prompt', ['provider' => 'unclassified']) && [] === omochix_core_get_industry_posts('real-estate', 'ai_tool', ['provider' => 'official']));
@@ -64,11 +67,14 @@ check('motion: with the catalog, existing slugs only', ['pop-in'] === omochix_co
 
 // ledger cards
 $res_ok = $add('omx_resource', ['real-estate']);
-foreach (['resource_url' => 'https://example.com/a', 'resource_summary' => '紹介', 'resource_license_basis' => 'link_only', 'resource_permission_ref' => 'LIC-1'] as $k => $v) { update_post_meta($res_ok, $k, $v); }
+foreach (['resource_url' => 'https://example.com/a', 'resource_kind' => 'article', 'resource_provider_name' => 'A社', 'resource_summary' => '紹介', 'resource_license_basis' => 'link_only', 'resource_verified_at' => '2026-11-01', 'resource_permission_ref' => 'LIC-1'] as $k => $v) { update_post_meta($res_ok, $k, $v); }
+wp_set_object_terms($res_ok, ['external-service'], 'omx_provider_type');
+$res_half = $add('omx_resource', ['real-estate']);
+update_post_meta($res_half, 'resource_url', 'https://example.com/c'); // published but incomplete record
 $res_draft = $add('omx_resource', ['real-estate'], ['post_status' => 'draft']);
 update_post_meta($res_draft, 'resource_url', 'https://example.com/b');
 $cards = omochix_core_get_industry_resource_cards('real-estate');
-check('ledger cards by industry: published entries only, no permission reference', 1 === count($cards) && $res_ok === $cards[0]['id'] && false === strpos(json_encode($cards), 'LIC-1'));
+check('ledger cards by industry: published, complete entries only, no permission reference', 1 === count($cards) && $res_ok === $cards[0]['id'] && false === strpos(json_encode($cards), 'LIC-1'));
 $wf = $add('learn_practice', ['real-estate']);
 update_post_meta($wf, 'workflow_resource_ids', [$res_draft, $res_ok, $tool_a]);
 check('workflow cards: stored order, unpublished and non-ledger IDs dropped', [$res_ok] === array_column(omochix_core_get_workflow_resource_cards($wf), 'id'));
