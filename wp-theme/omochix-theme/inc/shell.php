@@ -27,7 +27,8 @@ function omochix_shell_enabled() {
     return is_404() || is_search() || is_home() || is_category() || is_tag()
         || is_post_type_archive(['ai_tool', 'prompt', 'learn_practice']) || is_tax(['ai_tool_category', 'prompt_category', 'prompt_model', 'learn_field', 'learn_format', 'learn_usecase', 'learn_ai', 'learn_tech'])
         || is_singular(['prompt', 'ai_tool', 'post', 'learn_practice'])
-        || (is_page() && omochix_shell_page_enabled());
+        || (is_page() && omochix_shell_page_enabled())
+        || (function_exists('omochix_labs_is_request') && omochix_labs_is_request());
 }
 
 add_filter('body_class', static function ($classes) {
