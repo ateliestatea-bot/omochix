@@ -21,7 +21,7 @@
 | 4 | Labs 1.28.0 | `release/theme-1.28.0` @ 076a85e。PR #56 は **Draft/OPEN**（「not for merge yet」）。分岐元 94152a7 から 5 ahead。CI の Tests と Labs は success |
 | 4 | SVG Motion Studio | `feature/svg-motion-s1b` @ b0d0092。PR #55 は **Draft/OPEN**。分岐元 94152a7 から 12 ahead。CI の Tests と SVG Motion は success。Labs には含まれていない |
 | 5 | AGENTS.md の P0 制約 | 未完了の P0 はブランド素材（Site Icon、OGP×3）、初期ニュース・出典、Terms、本番 SEO（Search Console、Sitemap、canonical、robots、Rich Results）。Industry Hub はどれも解消しない＝P0 外の作業。本番・DB・外部サービスへの変更は禁止 |
-| 6 | 新規 worktree | 作成可能。パス `/Users/omochi/Documents/omochix-industry-hub-wt` は未使用、ブランチ名 `feature/industry-hub-p1` はローカル・リモートとも未使用、空き容量 410GiB。既存 worktree 19件（メイン作業ツリーを含む）のうち 7件が prunable（**prune はしない**） |
+| 6 | 新規 worktree | 作成可能。パス `../omochix-industry-hub-wt`（メイン作業ツリーの隣） は未使用、ブランチ名 `feature/industry-hub-p1` はローカル・リモートとも未使用、空き容量 410GiB。既存 worktree 19件（メイン作業ツリーを含む）のうち 7件が prunable（**prune はしない**） |
 | 7 | テスト・CI | `tests.yml`（PHP 8.1/8.3、`php -l` 全件、PHP 7本、Node 4本）。main のスナップショットで手元実行し **PHP 572 PASS / 0 FAIL、Node 4本 exit 0**。手元の PHP は 8.5.8（CI の 8.1/8.3 とは違う）、Node は 24.14.1（CI と同じ） |
 
 ---
@@ -349,7 +349,7 @@ P3-01 `single-learn_practice.php` に workflow セクションを条件付きで
 | `single-learn_practice.php` | — | — | Phase 3 | 衝突なし |
 
 運用ルール：
-- worktree は `/Users/omochi/Documents/omochix-industry-hub-wt`、ブランチ `feature/industry-hub-p1`、ベースは `origin/main` @ 94152a7（ローカル `main` は使わない）。
+- worktree は `../omochix-industry-hub-wt`（メイン作業ツリーの隣）、ブランチ `feature/industry-hub-p1`、ベースは `origin/main` @ 94152a7（ローカル `main` は使わない）。
 - Phase ごとに 1 PR。Draft で出し、レビュー後にマージ。Labs と SVG のブランチには一切 commit しない。
 - 既存の作業ツリー・ローカル `main`・stash・prunable な worktree には触らない。
 
