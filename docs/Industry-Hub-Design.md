@@ -355,19 +355,36 @@ P3-01 `single-learn_practice.php` に workflow セクションを条件付きで
 
 ---
 
-## 12. 残っているブロッカーと未確認事項
+## 12. 決定事項とブロッカー（2026-11-05 更新）
 
-| ID | 内容 | 種別 |
+| ID | 内容 | 状態 |
 |---|---|---|
-| B-1 | 新規 worktree の作成、設計書のリポジトリ保存、commit・push・PR の承認 | 承認待ち |
-| B-2 | ステージングでの読み取り確認：`learn_usecase` の語彙、`learn/industries` 系のページの有無、Slim SEO の sitemap 設定 | 未確認（ステージングのアクセス手段も未確認） |
-| B-3 | Industry Hub（P0 外）を P0 作業と並行して進めてよいかの運営判断 | 承認待ち |
-| B-4 | パートナー提供の PR 表記の文言と収益関係の扱い | 法務判断 |
-| B-5 | 外部コンテンツを `link_only` と `youtube` 埋め込みだけで始めてよいか | 承認待ち |
-| B-6 | 業種 slug（特に `web-production`）とサブ業種の運用方針 | 承認待ち（暫定案あり） |
-| B-7 | Labs #56 のマージ時期（Phase 2 の P2-07 と P2-08 の着手条件） | 未確定 |
-| B-8 | ゲートの閾値（120字・80字・3件・180日）の妥当性 | 承認待ち（暫定案） |
-| — | 手元の PHP は 8.5.8 で、CI の 8.1 / 8.3 による手元検証はしていない | 制約（CI で担保） |
+| B-1 | worktree 作成・設計書の保存・commit・push・Draft PR | **承認済み・完了**（PR #57、Draft のまま） |
+| B-2 | 本番相当データでの確認 | **一部代替済み**（下記 12.1）。ステージング環境は文書化されておらず未確認 |
+| B-3 | P0 との並行開発 | **決定**：並行を許可。ただし P0 を優先する |
+| B-4 | 広告・提携コンテンツの PR 表記 | **決定**：広告・提携コンテンツには適切な PR 表示を義務付け、**公開前に法務確認**を必須とする（実装済みの仕組み：提供元「パートナー（PR）」、`rel="sponsored"`、台帳の「提携（PR）」はパートナー提供元が必須）。表示文言は法務確認で確定 |
+| B-5 | 外部コンテンツを `link_only` と YouTube 埋め込みだけで始めるか | 未決定（Phase 1 の実装は、この2つ以外の埋め込みを許可しない） |
+| B-6 | 業種 slug | **決定**：初期6業種（`real-estate`, `restaurant`, `beauty`, `ecommerce`, `construction`, `web-production`）を承認。サブ業種は seed しない |
+| B-7 | Labs #56 のマージ時期 | 未確定。Phase 1 は Labs・SVG Motion と衝突しない（12.2） |
+| B-8 | 内容ゲートの閾値 | **決定**：G1〜G7 を採用。数値（120字・80字・3件・2目的・180日・出典1件）は**実データで検証するまで暫定**。`omochix_core_industry_gate_thresholds` フィルタで調整できる |
+
+### 12.1 ステージング不在時の代替確認（2026-11-05、読み取り専用）
+
+| 確認項目 | 方法 | 結果 |
+|---|---|---|
+| `/learn/industries/` の URL 衝突 | 公開サイトへの GET、REST `pages?slug=industries`、`/learn` の子ページ一覧 | `/learn/industries/` と `/learn/industries/real-estate/` は 404。`industries` ページは無い。`/learn` の子ページは ai, ai-development, apps, automation, basics, development, devtools, motion, projects, tools, tutorials, video, web, work |
+| 既存 `learn_usecase` の語彙 | REST `learn-usecases` | **0件**。再利用できる語彙は無く、`omx_purpose` 新設の判断は変わらない |
+| `learn_format` | REST `learn-formats` | project, prompt, lesson, demo, reference の5件。`workflow` は無い |
+| sitemap への影響 | 公開サイトの sitemap index、使い捨て WordPress | 現在の index は既存の post type 5種とタクソノミー4種のみ。新タクソノミー・台帳は非公開で、sitemap からも明示的に除外 |
+| 既存公開 URL への影響 | 使い捨て WordPress で base → head の rewrite ルールを比較 | 225件が順序まで同一。公開化フィルタを有効にした場合だけ `learn/industries/{slug}` 系の5件が追加され、無効に戻すと元に戻る |
+| Core の更新・有効化・無効化 | 使い捨て WordPress：base で投稿を作成 → head に更新 → 公開化 ON/OFF → 無効化 → 再有効化 | 既存の投稿・メタ・ターム関係は**完全一致**。seed は17件で、再有効化しても重複しない。無効化中も主要ページで致命的エラーなし |
+
+ステージングでしか確かめられないもの：本番データ量でのクエリ性能、Slim SEO の実際の sitemap 生成設定、キャッシュ層、本番のプラグイン構成との相互作用。
+
+### 12.2 同時開発ブランチとの関係
+
+- `git merge-tree` で、PR #57 と Labs（#56）、PR #57 と SVG Motion（#55）の組み合わせはいずれも衝突なし。
+- 3ブランチを合わせたツリーで、全ワークフローのテスト24ファイルがすべて成功。
 
 ---
 
@@ -401,4 +418,4 @@ php tests/industry-hub/wp-integration.php /path/to/throwaway/wordpress   # 実 W
 Phase 1 で未着手・保留の項目：
 - P1-08 practice JSON 入出力への workflow メタと新タクソノミーの追加（Phase 3 で `workflow` タームを作るときに合わせて行う）。
 - 版番号の更新（Core 1.10.0）はリリース用 PR で行う。
-- ステージングでの確認（B-2）はアクセス手段が未確認のため未実施。
+- ステージングでの確認（B-2）はアクセス手段が無いため未実施。代替確認は §12.1。
