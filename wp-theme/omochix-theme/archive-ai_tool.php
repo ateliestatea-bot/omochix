@@ -34,7 +34,7 @@ if ($omochix_context_term) {
     $omochix_category = $omochix_context_term->slug;
 }
 
-$omochix_pricing_options = [
+$omochix_pricing_options = function_exists('omochix_get_ai_tool_pricing_filter_options') ? omochix_get_ai_tool_pricing_filter_options() : [
     'free'     => __('無料', 'omochix'),
     'freemium' => __('無料プランあり', 'omochix'),
     'paid'     => __('有料', 'omochix'),
@@ -52,6 +52,10 @@ $omochix_order_options = [
     'rating' => __('評価が高い順', 'omochix'),
     'name'   => __('名前順', 'omochix'),
 ];
+// No rating order while ratings are withheld (?order=rating falls back to 新着順).
+if (!(function_exists('omochix_ai_tool_ratings_published') && omochix_ai_tool_ratings_published())) {
+    unset($omochix_order_options['rating']);
+}
 
 if (!array_key_exists($omochix_pricing, $omochix_pricing_options)) {
     $omochix_pricing = '';
@@ -110,7 +114,13 @@ if ($omochix_platform && term_exists($omochix_platform, 'ai_tool_platform')) {
 }
 
 $omochix_meta_query = [];
-if ($omochix_pricing) {
+$omochix_pricing_ids = null;
+if ($omochix_pricing && function_exists('omochix_core_get_tool_ids_by_pricing_class')) {
+    // The same per-post rule as the card label (OmochiX Core), not a meta query:
+    // a tool shown as 要確認 is never listed under 無料プランあり.
+    $omochix_pricing_class = 'freemium' === $omochix_pricing ? 'free_plan' : $omochix_pricing;
+    $omochix_pricing_ids   = omochix_core_get_tool_ids_by_pricing_class($omochix_pricing_class) ?: [0];
+} elseif ($omochix_pricing) {
     $omochix_pricing_compat = [
         'free'     => ['free', '無料'],
         'freemium' => ['freemium', '無料・有料', '無料プランあり'],
@@ -150,6 +160,9 @@ if ($omochix_tax_query) {
 }
 if ($omochix_meta_query) {
     $omochix_query_args['meta_query'] = $omochix_meta_query;
+}
+if (null !== $omochix_pricing_ids) {
+    $omochix_query_args['post__in'] = $omochix_pricing_ids;
 }
 
 switch ($omochix_order) {
@@ -372,14 +385,14 @@ $omochix_compare_hub_post = $omochix_compare_hub_posts ? $omochix_compare_hub_po
                         $omochix_description   = $omochix_description ?: get_the_excerpt();
                         $omochix_description   = wp_trim_words(wp_strip_all_tags($omochix_description), 42, '…');
                         $omochix_company       = get_post_meta($omochix_tool_id, 'company_name', true);
-                        $omochix_rating        = (float) get_post_meta($omochix_tool_id, 'rating_overall', true);
+                        $omochix_rating        = function_exists('omochix_get_ai_tool_display_rating') ? omochix_get_ai_tool_display_rating($omochix_tool_id) : 0.0;
                         $omochix_pricing_value = get_post_meta($omochix_tool_id, 'pricing_type', true) ?: 'contact';
                         $omochix_jp_value      = get_post_meta($omochix_tool_id, 'japanese_support', true) ?: 'unknown';
                         $omochix_tool_terms    = get_the_terms($omochix_tool_id, 'ai_tool_category');
                         $omochix_tool_terms    = is_array($omochix_tool_terms) ? $omochix_tool_terms : [];
-                        $omochix_pricing_label = function_exists('omochix_core_get_pricing_type_label')
-                            ? omochix_core_get_pricing_type_label($omochix_pricing_value)
-                            : ($omochix_pricing_options[$omochix_pricing_value] ?? __('要問い合わせ', 'omochix'));
+                        $omochix_pricing_label = function_exists('omochix_get_ai_tool_pricing_base_label')
+                            ? omochix_get_ai_tool_pricing_base_label($omochix_tool_id)
+                            : (function_exists('omochix_core_get_pricing_type_label') ? omochix_core_get_pricing_type_label($omochix_pricing_value) : ($omochix_pricing_options[$omochix_pricing_value] ?? __('要問い合わせ', 'omochix')));
                         $omochix_pricing_label = omochix_get_ai_tool_pricing_display_label($omochix_tool_id, $omochix_pricing_label);
                         $omochix_jp_label = function_exists('omochix_core_get_japanese_support_label')
                             ? omochix_core_get_japanese_support_label($omochix_jp_value)
