@@ -8,6 +8,14 @@
  * crawler rules, links, footer) and renders every Labs template.
  */
 require __DIR__ . '/stub.php';
+require __DIR__ . '/release-state.php';
+
+// The shipped catalog keeps the cost calculator in draft until its prices are
+// reviewed. The tests below exercise every tool, so they run on a view of the
+// theme with every tool published; the release-state checks at the end use the
+// shipped theme as it is.
+$REAL_THEME = $GLOBALS['THEME'];
+$GLOBALS['THEME'] = labs_published_theme($REAL_THEME);
 
 $pass = 0; $fail = 0;
 function check($name, $cond) { global $pass, $fail; if ($cond) { $pass++; echo "PASS $name\n"; } else { $fail++; echo "FAIL $name\n"; } }
@@ -281,7 +289,7 @@ $weirdRow = $pricing_raw; $weirdRow['models'][0]['approval'] = ['status' => 'App
 check('fail closed: an unexpected row status hides the row', 1 === (omochix_labs_pricing_view($weirdRow, '2026-11-06')['hidden']['invalid'] ?? 0));
 $publicHits = [];
 $ids = array_unique(array_column($pricing_raw['models'], 'id'));
-foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(get_theme_file_path('/assets'), FilesystemIterator::SKIP_DOTS)) as $f) {
+foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(get_theme_file_path('/assets'), FilesystemIterator::SKIP_DOTS | FilesystemIterator::FOLLOW_SYMLINKS)) as $f) {
     $txt = (string) file_get_contents((string) $f);
     foreach ($ids as $id) { if (str_contains($txt, $id)) { $publicHits[] = basename((string) $f) . ':' . $id; } }
 }
@@ -533,6 +541,26 @@ unset($GLOBALS['today_override']);
 labs_reset_statics();
 $learn = file_get_contents(get_theme_file_path('/page-learn.php'));
 check('learn hub: Labs link only when the labs page is published', str_contains($learn, "function_exists('omochix_labs_url') ? omochix_labs_url() : ''") && str_contains($learn, '<?php if ($omochix_labs_url) : ?>'));
+
+// ----------------------------------------------------------- release state
+$GLOBALS['THEME'] = $REAL_THEME;
+labs_reset_statics();
+$shippedCatalog = json_decode(file_get_contents($REAL_THEME . '/assets/data/labs/catalog.json'), true);
+check('release state: the shipped catalog keeps the cost calculator in draft (prices not reviewed)', 'draft' === array_column($shippedCatalog['tools'], 'status', 'slug')[LABS_COST_SLUG]);
+check('release state: the other three tools are published', ['json-formatter' => 'published', 'text-diff' => 'published', 'robots-txt-generator' => 'published'] === array_diff_key(array_column($shippedCatalog['tools'], 'status', 'slug'), [LABS_COST_SLUG => 1]));
+$shipped = labs_release_state_problems($REAL_THEME);
+check('release state: shipped theme passes the gate (calculator unreachable, nothing leaks, no unapproved price)', [] === $shipped);
+foreach ($shipped as $problem) { echo "  - $problem\n"; }
+$published = labs_release_state_problems(labs_published_theme($REAL_THEME));
+check('release state: publishing the calculator with unreviewed prices fails the gate', in_array('cost calculator is published but the price review is not approved', $published, true) && in_array('cost calculator is published but rows are still pending', $published, true));
+// A draft calculator that still leaks fails too: put its name back into the Learn hub copy.
+$leakView = sys_get_temp_dir() . '/omx-labs-leak-' . getmypid();
+@mkdir($leakView);
+foreach (scandir($REAL_THEME) as $entry) { if ('.' !== $entry && '..' !== $entry && 'page-learn.php' !== $entry) { symlink($REAL_THEME . '/' . $entry, $leakView . '/' . $entry); } }
+file_put_contents($leakView . '/page-learn.php', str_replace('JSON整形や差分比較など', 'JSON整形やAPI料金計算など', file_get_contents($REAL_THEME . '/page-learn.php')));
+check('release state: a draft calculator mentioned in public copy fails the gate', in_array('page-learn.php mentions "API料金"', labs_release_state_problems($leakView), true));
+exec('rm -rf ' . escapeshellarg($leakView));
+labs_reset_statics();
 
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

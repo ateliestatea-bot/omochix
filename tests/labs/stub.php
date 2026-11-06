@@ -110,6 +110,42 @@ function labs_request($slug = null, array $get = [], $published = true, $is_page
     labs_reset_statics();
 }
 
+/**
+ * A view of the theme whose catalog publishes every tool: symlinks to the real
+ * files, plus one rewritten assets/data/labs/catalog.json. Lets the tests run a
+ * draft tool's code (for example the cost calculator while its prices await
+ * review) while the shipped catalog keeps it in draft.
+ */
+function labs_published_theme($real) {
+    $catalog = $real . '/assets/data/labs/catalog.json';
+    $dir = sys_get_temp_dir() . '/omochix-labs-published-' . md5($real . "\0" . md5_file($catalog));
+    if (is_file($dir . '/assets/data/labs/catalog.json')) {
+        return $dir;
+    }
+    $build = $dir . '.build-' . getmypid();
+    $levels = ['', '/assets', '/assets/data', '/assets/data/labs'];
+    foreach ($levels as $i => $level) {
+        @mkdir($build . $level, 0777, true);
+        $skip = $levels[$i + 1] ?? '/assets/data/labs/catalog.json';
+        foreach (scandir($real . $level) as $entry) {
+            if ('.' === $entry || '..' === $entry || $level . '/' . $entry === $skip) {
+                continue;
+            }
+            symlink($real . $level . '/' . $entry, $build . $level . '/' . $entry);
+        }
+    }
+    $data = json_decode(file_get_contents($catalog), true);
+    foreach ($data['tools'] as &$tool) {
+        $tool['status'] = 'published';
+    }
+    unset($tool);
+    file_put_contents($build . '/assets/data/labs/catalog.json', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+    if (!@rename($build, $dir)) { // another process won the race: use its copy
+        exec('rm -rf ' . escapeshellarg($build));
+    }
+    return $dir;
+}
+
 /** inc/labs.php caches the page id, catalog and views in statics; re-include it in a fresh scope via a flag. */
 function labs_reset_statics() {
     $GLOBALS['labs_static_epoch'] = ($GLOBALS['labs_static_epoch'] ?? 0) + 1;

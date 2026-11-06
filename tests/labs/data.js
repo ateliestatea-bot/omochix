@@ -6,7 +6,17 @@
  *    several dates (the page re-filters with the browser's own date);
  *  - pricing.json / crawlers.json / catalog.json shape and sources.
  * Run: node tests/labs/data.js              (development)
- *      node tests/labs/data.js --release    (also requires the price review)
+ *      node tests/labs/data.js --release    (release gate, see below)
+ *
+ * Release gate, set by the cost calculator's catalog status (never skipped):
+ *  - published: the price review must be complete (global and every row);
+ *  - draft: the calculator must be unreachable and no unapproved price public
+ *    (tests/labs/release-gate.php: 404, list, search, categories, related
+ *    links, sitemap, structured data, page config, copy).
+ * tests/labs/release-gate.php runs in both cases.
+ *      node tests/labs/data.js --release --published-copy
+ *        the same gate as if every tool were published (the shipped catalog is
+ *        not changed): fails while the prices are unreviewed.
  */
 'use strict';
 
@@ -136,11 +146,6 @@ pricing.models.forEach(function (m) {
     else if (m.approval.status === 'approved' && st !== 'approved') releaseProblems.push(m.id + ': approval incomplete (reviewer, reviewed_at on/after verified_at, acknowledged caveats)');
 });
 if (!pricing.models.some(function (m) { return Cost.approvalState(m) === 'approved'; })) releaseProblems.push('no approved row');
-if (release) {
-    check('release: pricing reviewed (global and per row)', releaseProblems.length === 0, releaseProblems);
-} else if (releaseProblems.length) {
-    console.log('NOTE release gate would fail (' + releaseProblems.length + ' items): run with --release before 1.28.0 to enforce it.');
-}
 
 // ------------------------------------------------------------ crawlers
 check('crawlers: tokens are valid and unique', (function () {
@@ -156,10 +161,37 @@ check('crawlers: each has an https source, a date and a known purpose', crawlers
 check('crawlers: user-initiated agents carry the robots.txt caveat where the operator states one', crawlers.crawlers.filter(function (c) { return c.token === 'ChatGPT-User' || c.token === 'Perplexity-User'; }).every(function (c) { return c.robots_note.length > 0; }));
 
 // ------------------------------------------------------------- catalog
-check('catalog: four published tools with unique slugs and titles', catalog.tools.length === 4 && new Set(catalog.tools.map(function (t) { return t.slug; })).size === 4 && new Set(catalog.tools.map(function (t) { return t.title; })).size === 4);
+check('catalog: tools are published or draft', catalog.tools.every(function (t) { return t.status === 'published' || t.status === 'draft'; }));
+check('catalog: four tools with unique slugs and titles', catalog.tools.length === 4 && new Set(catalog.tools.map(function (t) { return t.slug; })).size === 4 && new Set(catalog.tools.map(function (t) { return t.title; })).size === 4);
 check('catalog: every tool has a UI script and a content template', catalog.tools.every(function (t) {
     return fs.existsSync(path.join(theme, 'assets/js/labs/ui', t.slug + '.js')) && fs.existsSync(path.join(theme, 'template-parts/labs/content', t.slug + '.php'));
 }));
+
+// --------------------------------------------------------- release gate
+function costStatus(cat) {
+    var t = cat.tools.filter(function (x) { return x.slug === 'token-cost-calculator'; })[0];
+    return t ? t.status : 'missing';
+}
+/** Pricing problems that block a release for a given calculator status. */
+function pricingGate(status, problems) {
+    if (status === 'published') return problems.slice();
+    if (status === 'draft') return [];
+    return ['cost calculator status is "' + status + '"'];
+}
+var publishedCopy = process.argv.indexOf('--published-copy') !== -1;
+var status = publishedCopy ? 'published' : costStatus(catalog);
+check('release gate: a published calculator with the current (unreviewed) prices would fail', pricingGate('published', releaseProblems).length > 0 || releaseProblems.length === 0);
+check('release gate: an unknown calculator status fails', pricingGate('live', []).length === 1 && pricingGate('missing', []).length === 1);
+check('release gate: a draft calculator needs no price review (the PHP gate checks it is unreachable)', pricingGate('draft', releaseProblems).length === 0);
+if (release) {
+    console.log('INFO release: cost calculator is ' + status + (publishedCopy ? ' (published copy; shipped catalog unchanged)' : ''));
+    var gate = pricingGate(status, releaseProblems);
+    check('release: price review complete' + (status === 'published' ? ' (the calculator is published)' : ' — not required: the calculator is ' + status), gate.length === 0, gate);
+    var php = spawnSync('php', [path.join(root, 'tests/labs/release-gate.php')].concat(publishedCopy ? ['--published-copy'] : []), { encoding: 'utf8' });
+    check('release: PHP gate (calculator ' + (status === 'published' ? 'reviewed' : 'unreachable') + ', no unapproved price public)', php.status === 0, (php.stdout + php.stderr).trim().split('\n'));
+} else if (pricingGate(status, releaseProblems).length) {
+    console.log('NOTE release gate would fail (' + releaseProblems.length + ' pricing items, calculator ' + status + '): run with --release before a release.');
+}
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

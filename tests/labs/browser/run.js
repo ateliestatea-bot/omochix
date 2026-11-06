@@ -2,7 +2,9 @@
 /**
  * OmochiX Labs browser checks (local only; not part of CI).
  *
- * Starts tests/labs/preview-server.php and, in Chromium and WebKit:
+ * Starts tests/labs/preview-server.php twice and, in Chromium and WebKit:
+ *  - on a published copy (every tool published, so a draft tool's code is
+ *    still tested; the shipped catalog is unchanged):
  *  - 375 / 768 / 1440 px: no horizontal scroll, axe (WCAG 2.2 A/AA) clean
  *  - every tool: sample → run → copy → reset, error states, keyboard-only use
  *  - Web Worker for large input and the time limit
@@ -11,6 +13,9 @@
  *    configuration notices pass (console-policy.js). A deliberate violation
  *    proves the check catches one.
  *  - keyboard focus on a Labs select shows the 2px ring (light and dark)
+ *  - on the shipped theme (the release state): a draft tool is a 404 and absent
+ *    from the list, search, categories, related links, sitemap and pages, at
+ *    375 / 768 / 1440 px, with axe and the console policy
  *  - analytics events: only the six names, only vocabulary values
  *  - unknown slug is a 404
  *
@@ -31,7 +36,10 @@ var playwright = require(process.env.LABS_PLAYWRIGHT || 'playwright');
 var axePath = process.env.LABS_AXE || require.resolve('axe-core/axe.min.js');
 var shots = process.env.LABS_SHOTS || '';
 var PORT = 8791;
-var ORIGIN = 'http://127.0.0.1:' + PORT;
+var ORIGIN = 'http://127.0.0.1:' + PORT; // published copy
+var RELEASE_PORT = 8794;
+var RELEASE_ORIGIN = 'http://127.0.0.1:' + RELEASE_PORT; // shipped catalog
+var COST = 'token-cost-calculator';
 var TOOLS = ['json-formatter', 'text-diff', 'robots-txt-generator', 'token-cost-calculator'];
 var EVENTS = ['labs_tool_view', 'labs_tool_run', 'labs_tool_success', 'labs_tool_error', 'labs_tool_copy', 'labs_related_click'];
 var SECRET = 'SECRET-INPUT-7f3a';
@@ -43,19 +51,21 @@ function check(name, cond, detail) {
     else { fail++; console.log('FAIL ' + name + (detail ? '\n  ' + JSON.stringify(detail).slice(0, 1500) : '')); }
 }
 
-function startServer() {
-    var proc = spawn('php', ['-S', '127.0.0.1:' + PORT, '-t', root, path.join(root, 'tests/labs/preview-server.php')], { stdio: 'ignore' });
+function startServer(port, publishedCopy) {
+    var env = Object.assign({}, process.env, { LABS_PREVIEW_PUBLISHED_COPY: publishedCopy ? '1' : '' });
+    var proc = spawn('php', ['-S', '127.0.0.1:' + port, '-t', root, path.join(root, 'tests/labs/preview-server.php')], { stdio: 'ignore', env: env });
     return new Promise(function (resolve) { setTimeout(function () { resolve(proc); }, 700); });
 }
 
 async function openPage(browser, width, url, opts) {
+    var origin = (opts && opts.origin) || ORIGIN;
     var context = await browser.newContext({ viewport: { width: width, height: 900 }, colorScheme: (opts && opts.dark) ? 'dark' : 'light' });
-    if (browser.browserType().name() === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    if (browser.browserType().name() === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: origin });
     var page = await context.newPage();
     var external = [];
     var status = 0;
-    page.on('request', function (req) { if (req.url().indexOf(ORIGIN) !== 0 && !/^(data|blob):/.test(req.url())) external.push(req.url()); });
-    page.on('response', function (res) { if (res.url().split('?')[0] === (ORIGIN + url).split('?')[0]) status = res.status(); });
+    page.on('request', function (req) { if (req.url().indexOf(origin) !== 0 && !/^(data|blob):/.test(req.url())) external.push(req.url()); });
+    page.on('response', function (res) { if (res.url().split('?')[0] === (origin + url).split('?')[0]) status = res.status(); });
     var errors = [];
     page.on('pageerror', function (e) { errors.push(String(e)); });
     var messages = [];
@@ -68,7 +78,7 @@ async function openPage(browser, width, url, opts) {
         window.__csp = [];
         document.addEventListener('securitypolicyviolation', function (e) { window.__csp.push(e.violatedDirective + ' ' + e.blockedURI); });
     });
-    await page.goto(ORIGIN + url);
+    await page.goto(origin + url);
     return { page: page, context: context, external: external, errors: errors, messages: messages, failed: failed, policy: policy, status: function () { return status; } };
 }
 
@@ -396,8 +406,49 @@ async function toolChecks(browser, name) {
     await upper.context.close();
 }
 
+// Release state: the shipped catalog, with the cost calculator in draft until its prices are reviewed.
+async function releaseStateChecks(browser, name) {
+    var o = { origin: RELEASE_ORIGIN };
+    var pages = ['/labs/', '/labs/json-formatter/', '/labs/text-diff/', '/labs/robots-txt-generator/'];
+    for (var w of [375, 768, 1440]) {
+        for (var url of pages) {
+            var s = await openPage(browser, w, url + '?anon=1', o);
+            await wait(300);
+            var html = await s.page.content();
+            check(name + ' release ' + w + 'px ' + url + ': 200, no horizontal scroll, no trace of the draft calculator', s.status() === 200 && await noHorizontalScroll(s.page) && html.indexOf(COST) === -1 && html.indexOf('API料金') === -1);
+            if (name === 'chromium') {
+                var v = await axe(s.page);
+                check(name + ' release ' + w + 'px ' + url + ': axe WCAG 2.2 AA clean', v.length === 0, v);
+            }
+            await consoleCheck(s, name, 'release ' + w + 'px ' + url);
+            await s.context.close();
+        }
+    }
+    var nf = await openPage(browser, 1440, '/labs/' + COST + '/?anon=1', o);
+    check(name + ' release: the draft calculator URL is a 404', nf.status() === 404);
+    await nf.context.close();
+    var s2 = await openPage(browser, 375, '/labs/?anon=1', o);
+    var p = s2.page;
+    var visible = function () { return p.locator('[data-labs-card]:visible').count(); };
+    check(name + ' release list: three tools, no AI category', (await visible()) === 3 && /3件のツール/.test(await p.textContent('[data-labs-count]')) && (await p.locator('[data-labs-cat="ai"]').count()) === 0);
+    for (var q of ['トークン 料金', 'anthropic', 'API料金']) {
+        await p.fill('#labs-search-q', q);
+        await wait(400);
+        check(name + ' release list: search "' + q + '" finds nothing (empty state)', (await visible()) === 0 && await p.isVisible('[data-labs-empty]'));
+    }
+    await p.fill('#labs-search-q', '');
+    await p.click('[data-labs-cat="dev"]');
+    await wait(300);
+    check(name + ' release list: 開発 → 2, Web運用 → 1', (await visible()) === 2 && (await (async function () { await p.click('[data-labs-cat="web"]'); await wait(300); return visible(); }())) === 1);
+    await s2.context.close();
+    var req = (await browser.newContext()).request;
+    var sm = await (await req.get(RELEASE_ORIGIN + '/labs-sitemap.xml')).text();
+    check(name + ' release sitemap: the three published tools only', (sm.match(/<loc>/g) || []).length === 3 && sm.indexOf(COST) === -1);
+}
+
 (async function main() {
-    var server = await startServer();
+    var server = await startServer(PORT, true);
+    var releaseServer = await startServer(RELEASE_PORT, false);
     try {
         if (shots) fs.mkdirSync(shots, { recursive: true });
         for (var name of (process.env.LABS_BROWSERS || 'chromium,webkit').split(',')) {
@@ -408,6 +459,7 @@ async function toolChecks(browser, name) {
             await toolChecks(browser, name);
             await consoleSelfTest(browser, name);
             await selectFocusChecks(browser, name);
+            await releaseStateChecks(browser, name);
             await browser.close();
         }
     } catch (e) {
@@ -415,6 +467,7 @@ async function toolChecks(browser, name) {
         console.log('FAIL unexpected: ' + (e && e.stack || e));
     } finally {
         server.kill();
+        releaseServer.kill();
     }
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);

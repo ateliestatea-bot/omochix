@@ -4,7 +4,13 @@
  *
  * Drives an installed Firefox over its built-in WebDriver BiDi (no driver
  * download), with a throwaway profile: no telemetry, no updates, no sync.
- * Starts tests/labs/preview-server.php, or uses LABS_ORIGIN (for example a
+ * Functional checks run on a published copy (every tool published, so the
+ * draft cost calculator's code is still tested); release-state checks run on
+ * the shipped catalog (the calculator is a 404 and leaves no trace).
+ * LABS_ORIGIN / LABS_RELEASE_ORIGIN point either part at another site, and
+ * LABS_PARTS=functional or release runs one part only.
+ *
+ * Starts tests/labs/preview-server.php (twice), or uses LABS_ORIGIN (for example a
  * local WordPress QA site) instead. Visits as an anonymous visitor.
  *
  *  - 375 / 768 / 1440 px: no horizontal scroll; console policy (console-policy.js)
@@ -27,9 +33,14 @@ var consolePolicy = require('./console-policy');
 
 var root = path.resolve(__dirname, '..', '..', '..');
 var FIREFOX = process.env.LABS_FIREFOX_PATH || '/Applications/Firefox.app/Contents/MacOS/firefox';
-var PORT = 8793;
+var PORT = 8793;         // published copy
+var RELEASE_PORT = 8795; // shipped catalog
 var BIDI_PORT = 9335;
-var ORIGIN = process.env.LABS_ORIGIN || 'http://127.0.0.1:' + PORT;
+var FUNCTIONAL_ORIGIN = process.env.LABS_ORIGIN || 'http://127.0.0.1:' + PORT;
+var RELEASE_ORIGIN = process.env.LABS_RELEASE_ORIGIN || 'http://127.0.0.1:' + RELEASE_PORT;
+var PARTS = (process.env.LABS_PARTS || 'functional,release').split(',');
+var COST = 'token-cost-calculator';
+var ORIGIN = FUNCTIONAL_ORIGIN; // the origin the current part runs against
 var PAGES = ['/labs/', '/labs/json-formatter/', '/labs/text-diff/', '/labs/robots-txt-generator/', '/labs/token-cost-calculator/'];
 var K = { Tab: '', Enter: '', Meta: '', Shift: '' };
 
@@ -137,7 +148,32 @@ async function takeFocus() {
 }
 var visible = 'Array.from(document.querySelectorAll("[data-labs-card]")).filter(e => e.offsetParent !== null).length';
 
+// Release state: the shipped catalog keeps the cost calculator in draft until its prices are reviewed.
+async function releaseRun() {
+    ORIGIN = RELEASE_ORIGIN;
+    for (var w of [375, 768, 1440]) {
+        for (var u of PAGES.filter(function (p) { return p.indexOf(COST) === -1; })) {
+            await open(u + '?anon=1', w);
+            var r = await js('({ sw: document.documentElement.scrollWidth, iw: window.innerWidth, labs: !!document.querySelector("main.labs"), html: document.documentElement.outerHTML })');
+            check('release ' + w + 'px ' + u + ': no horizontal scroll, no trace of the draft calculator', r.labs && r.sw <= r.iw + 1 && r.html.indexOf(COST) === -1 && r.html.indexOf('API料金') === -1);
+            await consoleCheck('release ' + w + 'px ' + u);
+        }
+    }
+    await open('/labs/' + COST + '/?anon=1', 1440);
+    check('release: the draft calculator URL is a 404 page', !(await js('!!document.querySelector("main.labs")')) && /404|見つかりません|Not Found/i.test(await js('document.title + document.body.textContent')));
+    await open('/labs/?anon=1', 375);
+    check('release list: three tools, no AI category', (await js(visible)) === 3 && /3件のツール/.test(await js(q('[data-labs-count]') + '.textContent')) && !(await js('!!' + q('[data-labs-cat="ai"]'))));
+    for (var term of ['トークン 料金', 'anthropic', 'API料金']) {
+        await setValue('#labs-search-q', term);
+        check('release list: search "' + term + '" finds nothing (empty state)', (await js(visible)) === 0 && await js(q('[data-labs-empty]') + '.offsetParent !== null'));
+    }
+    await setValue('#labs-search-q', '');
+    await consoleCheck('release list');
+    ORIGIN = FUNCTIONAL_ORIGIN;
+}
+
 async function run() {
+    if (PARTS.indexOf('functional') === -1) return;
     // --- layout and console ------------------------------------------------
     for (var w of [375, 768, 1440]) {
         for (var u of PAGES) {
@@ -258,11 +294,13 @@ async function run() {
 }
 
 (async function main() {
-    var server = null;
-    if (!process.env.LABS_ORIGIN) {
-        server = spawn('php', ['-S', '127.0.0.1:' + PORT, '-t', root, path.join(root, 'tests/labs/preview-server.php')], { stdio: 'ignore' });
-        await wait(700);
+    var servers = [];
+    function preview(port, publishedCopy) {
+        servers.push(spawn('php', ['-S', '127.0.0.1:' + port, '-t', root, path.join(root, 'tests/labs/preview-server.php')], { stdio: 'ignore', env: Object.assign({}, process.env, { LABS_PREVIEW_PUBLISHED_COPY: publishedCopy ? '1' : '' }) }));
     }
+    if (!process.env.LABS_ORIGIN) preview(PORT, true);
+    if (!process.env.LABS_RELEASE_ORIGIN) preview(RELEASE_PORT, false);
+    if (servers.length) await wait(700);
     var ff = spawn(FIREFOX, ['-headless', '-no-remote', '-profile', profile, '--remote-debugging-port', String(BIDI_PORT), 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
     try {
         await Promise.race([new Promise(function (res) { function on(d) { if (/WebDriver BiDi listening/.test(String(d))) res(); } ff.stderr.on('data', on); ff.stdout.on('data', on); }), wait(30000)]);
@@ -279,18 +317,19 @@ async function run() {
             }
         };
         var sess = await send('session.new', { capabilities: {} });
-        console.log('Firefox ' + sess.capabilities.browserVersion + ' (headless) → ' + ORIGIN);
+        console.log('Firefox ' + sess.capabilities.browserVersion + ' (headless) → functional ' + FUNCTIONAL_ORIGIN + ', release ' + RELEASE_ORIGIN + ' [' + PARTS.join(',') + ']');
         await send('session.subscribe', { events: ['log.entryAdded', 'network.beforeRequestSent', 'network.responseCompleted'] });
         await send('script.addPreloadScript', { functionDeclaration: '() => { window.__csp = []; document.addEventListener("securitypolicyviolation", e => window.__csp.push(e.violatedDirective + " " + e.blockedURI)); }' });
         ctx = (await send('browsingContext.getTree', {})).contexts[0].context;
         await run();
+        if (PARTS.indexOf('release') !== -1) await releaseRun();
         await send('browser.close', {}).catch(function () {});
     } catch (e) {
         fail++;
         console.log('FAIL firefox unexpected: ' + (e && e.stack || e));
     } finally {
         try { ff.kill(); } catch (e) { /* already closed */ }
-        if (server) server.kill();
+        servers.forEach(function (sv) { sv.kill(); });
         await wait(500);
         fs.rmSync(profile, { recursive: true, force: true });
     }

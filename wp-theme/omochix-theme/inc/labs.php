@@ -51,6 +51,23 @@ function omochix_labs_limits() {
     ];
 }
 
+/**
+ * Limits sent to the browser: published tools only, so a draft tool's slug
+ * never appears in a public page.
+ *
+ * @return array<string, mixed>
+ */
+function omochix_labs_public_limits() {
+    $limits = omochix_labs_limits();
+    $public = ['timeout_ms' => $limits['timeout_ms']];
+    foreach (array_keys(omochix_labs_get_tools()) as $slug) {
+        if (isset($limits[$slug])) {
+            $public[$slug] = $limits[$slug];
+        }
+    }
+    return $public;
+}
+
 /* -------------------------------------------------------------------------
  * Data files: load and validate
  * ---------------------------------------------------------------------- */
@@ -1180,7 +1197,7 @@ function omochix_labs_enqueue_assets() {
     $config = [
         'tool'     => $tool ? $tool['slug'] : null,
         'category' => $tool ? $tool['category'] : null,
-        'limits'   => omochix_labs_limits(),
+        'limits'   => omochix_labs_public_limits(),
         'strings'  => [
             'copied'     => __('コピーしました', 'omochix'),
             'copyFailed' => __('コピーできませんでした。テキストを選択してコピーしてください。', 'omochix'),

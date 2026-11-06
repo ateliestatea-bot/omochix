@@ -28,6 +28,10 @@ if ('/favicon.ico' === $path) {
 }
 
 require __DIR__ . '/stub.php';
+// LABS_PREVIEW_PUBLISHED_COPY=1: every tool published (a draft tool's code under test); otherwise the shipped catalog.
+if ('1' === getenv('LABS_PREVIEW_PUBLISHED_COPY')) {
+    $GLOBALS['THEME'] = labs_published_theme($GLOBALS['THEME']);
+}
 $origin             = 'http://' . $_SERVER['HTTP_HOST'];
 $GLOBALS['home']      = $origin;
 $GLOBALS['theme_uri'] = $origin . '/wp-theme/omochix-theme';

@@ -48,7 +48,7 @@ $omochix_sections   = [
         <form class="labs-search" role="search" method="get" action="<?php echo esc_url($omochix_list_url); ?>" data-labs-search hidden>
             <label class="labs-search__label" for="labs-search-q"><?php esc_html_e('ツールを検索', 'omochix'); ?></label>
             <div class="labs-search__row">
-                <input class="labs-input" type="search" id="labs-search-q" name="q" value="<?php echo esc_attr($omochix_filters['q']); ?>" maxlength="60" autocomplete="off" placeholder="<?php esc_attr_e('例：json、差分、料金', 'omochix'); ?>">
+                <input class="labs-input" type="search" id="labs-search-q" name="q" value="<?php echo esc_attr($omochix_filters['q']); ?>" maxlength="60" autocomplete="off" placeholder="<?php esc_attr_e('例：json、差分、robots', 'omochix'); ?>">
                 <?php if ('' !== $omochix_filters['cat']) : ?>
                     <input type="hidden" name="cat" value="<?php echo esc_attr($omochix_filters['cat']); ?>" data-labs-cat-input>
                 <?php endif; ?>
@@ -94,7 +94,7 @@ $omochix_sections   = [
                 </div>
                 <div>
                     <h3><?php esc_html_e('AI活用とつながる', 'omochix'); ?></h3>
-                    <p><?php esc_html_e('API料金の目安やAIクローラーの設定など、AIを使う・AIに読まれる場面で役立つツールを中心に増やしていきます。', 'omochix'); ?></p>
+                    <p><?php esc_html_e('AIクローラーの設定など、AIを使う・AIに読まれる場面で役立つツールを中心に増やしていきます。', 'omochix'); ?></p>
                 </div>
             </div>
         </section>
