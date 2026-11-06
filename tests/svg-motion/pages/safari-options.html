@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset=utf-8><title>options</title><script src="head.js"></script><style>iframe{width:320px;height:180px;border:1px solid #ccc;display:inline-block}canvas{display:none}</style></head><body><div id=h></div><img id=im width=128 height=128 style="position:fixed;left:400px;top:10px"><canvas id=c width=64 height=64></canvas><script>
+// Options that do not weaken the sandbox. Self-running, so it also works in real Safari, which cannot be driven by a test.
+const q = new URLSearchParams(location.search);
+const logo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="160" height="160"><g data-r="" style="transform-box:fill-box;transform-origin:center"><circle cx="50" cy="50" r="30" fill="#6e4bff"/></g></svg>';
+const body = n => logo + SC + ' nonce="' + n + '">document.querySelector("[data-r]").animate([{transform:"translateX(-20px)"},{transform:"translateX(20px)"}],{duration:1000,iterations:Infinity,direction:"alternate"});var f=0;(function t(){f++;requestAnimationFrame(t)})();setInterval(function(){parent.postMessage({rate:f},"*");f=0},1000);' + SE;
+const page = n => '<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-' + n + '\'; style-src \'unsafe-inline\'"></head><body style="margin:0">' + body(n) + '</body></html>';
+const median = a => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[s.length >> 1] : null; };
+function frameRate(setup, ms) { return new Promise(res => { const n = 'n' + Math.random().toString(36).slice(2), f = document.createElement('iframe'), l = []; setup(f, n); const L = e => { if (e.source === f.contentWindow && e.data.rate !== undefined) l.push(e.data.rate); }; addEventListener('message', L); h.append(f); setTimeout(() => { removeEventListener('message', L); f.remove(); res(median(l.slice(1))); }, ms || 3400); }); }
+// <img> route: redraw the animated image into a canvas on each rAF of the top page, and count how many distinct pictures a second it produces.
+const anim = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="128" height="128"><style>@keyframes m{from{transform:translateX(-20px)}to{transform:translateX(20px)}}.k{animation:m 1s linear infinite alternate}</style><circle class="k" cx="50" cy="50" r="30" fill="#6e4bff"/></svg>';
+function imgRate() { return new Promise(res => { im.onload = () => { const x = c.getContext('2d', { willReadFrequently: true }); const seen = {}; let frames = 0; const start = performance.now(); (function t() { x.clearRect(0, 0, 64, 64); x.drawImage(im, 0, 0, 64, 64); const d = x.getImageData(0, 0, 64, 32).data; let hash = 0; for (let i = 0; i < d.length; i += 4) hash = (hash * 31 + d[i] + d[i + 3]) | 0; seen[hash] = 1; frames++; if (performance.now() - start < 2000) requestAnimationFrame(t); else res({ distinctPerSecond: Object.keys(seen).length / 2, drawsPerSecond: frames / 2 }); })(); }; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(anim); }); }
+window.runAll = async () => { const r = { engine, ua: navigator.userAgent, rates: {} };
+  const V = {
+    'sandbox=allow-scripts (current)': (f, n) => { f.setAttribute('sandbox', 'allow-scripts'); f.srcdoc = page(n); },
+    '+allow-pointer-lock': (f, n) => { f.setAttribute('sandbox', 'allow-scripts allow-pointer-lock'); f.srcdoc = page(n); },
+    '+allow= attribute': (f, n) => { f.setAttribute('sandbox', 'allow-scripts'); f.setAttribute('allow', 'autoplay; fullscreen'); f.srcdoc = page(n); },
+    'blob URL': (f, n) => { f.setAttribute('sandbox', 'allow-scripts'); f.src = URL.createObjectURL(new Blob([page(n)], { type: 'text/html' })); },
+    'large frame (900x500)': (f, n) => { f.setAttribute('sandbox', 'allow-scripts'); f.style.width = '900px'; f.style.height = '500px'; f.srcdoc = page(n); },
+    'control: same-origin frame (NOT safe, reference only)': (f, n) => { f.srcdoc = page(n); }
+  };
+  for (const k in V) r.rates[k] = await frameRate(V[k]);
+  r.img = await imgRate(); im.removeAttribute('src');
+  await post('safari-options-' + engine, r); document.title = 'DONE'; return r; };
+window.frameOnly = () => { const n = 'n' + Math.random().toString(36).slice(2), f = document.createElement('iframe'); f.id = 'k'; f.setAttribute('sandbox', 'allow-scripts'); f.srcdoc = '<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-' + n + '\'; style-src \'unsafe-inline\'"></head><body style="margin:0"><button id=b>x</button>' + body(n) + '</body></html>'; window.lk = []; addEventListener('message', e => { if (e.source === f.contentWindow && e.data.rate !== undefined) lk.push(e.data.rate); }); h.append(f); };
+if (q.has('auto')) window.addEventListener('load', () => setTimeout(runAll, 800)); else document.title = 'READY';
+</script></body></html>
