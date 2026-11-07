@@ -121,10 +121,35 @@ $single = req('/wp-json/wp/v2/posts/' . ($beauty_post ?? 0));
 check('REST post: a post of a hidden industry shows no industry IDs', 200 === $single['code'] && [] === (json_decode($single['body'], true)['industries'] ?? null), substr($single['body'], 0, 80));
 check('REST: purposes and providers stay 401 for visitors', 401 === req('/wp-json/wp/v2/business-purposes')['code'] && 401 === req('/wp-json/wp/v2/provider-types')['code']);
 check('REST: Industries (case variant) answers the same', req('/wp-json/wp/v2/Industries')['code'] === req('/wp-json/wp/v2/industries')['code']);
-$search = req('/?s=' . rawurlencode('美容ニュース') . '&omx_industry=beauty');
-check('search: ?omx_industry=<hidden> does not narrow (the post is still found by its title)', 200 === $search['code'] && false !== strpos($search['body'], '美容ニュース'));
+$search = req('/?s=' . rawurlencode('美容ニュース'));
+check('search without an industry still finds the post (baseline for the probes below)', 200 === $search['code'] && false !== strpos($search['body'], 'ih-news-beauty'));
 $hub = req('/learn/industries/real-estate/');
 check('post_class: no omx_industry-* classes are printed', false === strpos($hub['body'], 'omx_industry-'));
+
+// ------------------------------------------- review round: leaks and probes
+$f = req('/learn/industries/beauty/feed/');
+check('feed of a hidden industry: 404 with no items in the body', 404 === $f['code'] && false === strpos($f['body'], '<item>') && false === strpos($f['body'], '美容ニュース'));
+$f = req('/feed/?omx_industry=beauty');
+check('/feed/?omx_industry=<hidden>: 404 with no items', 404 === $f['code'] && false === strpos($f['body'], '<item>'));
+$ts = json_decode(req('/wp-json/wp/v2/search?type=term&subtype=omx_industry&per_page=100&search=')['body'], true);
+$titles = is_array($ts) ? array_column($ts, 'title') : [];
+check('REST term search: hidden industries are not found', !in_array('美容', $titles, true) && in_array('不動産', $titles, true), implode(',', $titles));
+$hiddenCat = req('/?s=' . rawurlencode('美容ニュース') . '&omx_industry=beauty');
+$missingCat = req('/?s=' . rawurlencode('美容ニュース') . '&omx_industry=no-such-industry');
+check('search + hidden industry is answered like a missing one (no hit either way)', false === strpos($hiddenCat['body'], 'ih-news-beauty') && false === strpos($missingCat['body'], 'ih-news-beauty') && $hiddenCat['code'] === $missingCat['code']);
+$tq = req('/?s=' . rawurlencode('美容ニュース') . '&taxonomy=omx_industry&term=beauty');
+check('?taxonomy=omx_industry&term=<hidden> does not narrow to the hidden industry either', false === strpos($tq['body'], 'ih-news-beauty'));
+$cat = req('/category/uncategorized/?omx_industry=beauty');
+$cat2 = req('/category/uncategorized/?omx_industry=no-such-industry');
+$cat0 = req('/category/uncategorized/');
+// The slug also appears in site-wide widgets, so compare against the unfiltered archive.
+check('category archive narrowed by a hidden vs missing industry: same status, same (narrowed) listing', $cat['code'] === $cat2['code'] && substr_count($cat['body'], 'ih-news-beauty') === substr_count($cat2['body'], 'ih-news-beauty') && substr_count($cat['body'], 'ih-news-beauty') < substr_count($cat0['body'], 'ih-news-beauty'), $cat['code'] . '/' . $cat2['code']);
+$h = req('/learn/industries/beauty/'); $m = req('/learn/industries/no-such/');
+check('404 headers: hidden and missing industries answer the same (status, X-Robots-Tag, Cache-Control)', $h['code'] === $m['code'] && ($h['h']['x-robots-tag'] ?? '') === ($m['h']['x-robots-tag'] ?? '') && ($h['h']['cache-control'] ?? '') === ($m['h']['cache-control'] ?? ''), ($h['h']['x-robots-tag'] ?? '-') . ' vs ' . ($m['h']['x-robots-tag'] ?? '-'));
+check('?s= on a visible hub is a 400 (the hub searches with ?q=)', 400 === req('/learn/industries/real-estate/?s=x')['code']);
+check('?s= on a hidden hub is a 404 (like a missing one)', 404 === req('/learn/industries/beauty/?s=x')['code'] && 404 === req('/learn/industries/no-such/?s=x')['code']);
+check('array query var ?omx_industry[]= answers without a server error', 500 > req('/?omx_industry%5B%5D=a')['code'] && 500 > req('/?s=x&omx_industry%5B%5D=a')['code']);
+check('the index page does not name hidden industries', false === strpos(req('/learn/industries/')['body'], '美容'));
 
 // ------------------------------------------------------- existing URLs
 foreach (['/', '/learn/', '/learn/web/', '/learn/practice/', '/learn/motion/', '/ai-tools/', '/prompts/', '/learn/practice/ih-lesson/', '/ai-tools/ih-chatgpt/'] as $path) {

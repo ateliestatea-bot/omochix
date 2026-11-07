@@ -154,7 +154,7 @@ $GLOBALS['post_terms'][$wf3]['omx_provider_type'] = [ih_term('omx_provider_type'
 update_term_meta($re, 'industry_hub_ready', false);
 check('gate: without the editor flag the hub is never ready', ['G1_editor_ready'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
 check('gate: a sub-industry is never a hub', ['not_top_level'] === omochix_core_industry_hub_gate($sub, $now)['unmet'] && ['missing_term'] === omochix_core_industry_hub_gate(424242, $now)['unmet']);
-$GLOBALS['term_meta'][$re]['industry_lead'] = ['not', 'a', 'string'];
+$GLOBALS['term_meta'][$re]['industry_lead'] = ['not', 'a', 'string']; $GLOBALS['omochix_core_industry_meta_memo'] = []; // written around the API
 check('read: a tampered stored value is re-sanitized on read', '' === omochix_core_get_industry_meta($re)['industry_lead']);
 
 ih_done();

@@ -190,6 +190,24 @@ function omochix_core_register_industry_term_meta() {
  * @return array<string, mixed>
  */
 function omochix_core_get_industry_meta( $term_id ) {
+	$term_id = (int) $term_id;
+	if ( isset( $GLOBALS['omochix_core_industry_meta_memo'][ $term_id ] ) ) {
+		return $GLOBALS['omochix_core_industry_meta_memo'][ $term_id ];
+	}
+	$GLOBALS['omochix_core_industry_meta_memo'][ $term_id ] = omochix_core_read_industry_meta( $term_id );
+	return $GLOBALS['omochix_core_industry_meta_memo'][ $term_id ];
+}
+
+/** Forget the per-request copy of a term's meta when it changes. */
+function omochix_core_forget_industry_meta( $meta_id, $object_id ) {
+	unset( $GLOBALS['omochix_core_industry_meta_memo'][ (int) $object_id ] );
+}
+add_action( 'added_term_meta', 'omochix_core_forget_industry_meta', 1, 2 );
+add_action( 'updated_term_meta', 'omochix_core_forget_industry_meta', 1, 2 );
+add_action( 'deleted_term_meta', 'omochix_core_forget_industry_meta', 1, 2 );
+
+/** Uncached body of omochix_core_get_industry_meta(). */
+function omochix_core_read_industry_meta( $term_id ) {
 	$out    = array();
 	$schema = omochix_core_get_industry_meta_schema();
 	// Re-sanitizing checks the post type of every curated ID; load them in one

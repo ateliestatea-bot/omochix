@@ -54,7 +54,7 @@ check('query: the active-tool rule is not applied to other types', !isset($GLOBA
 update_term_meta($re->term_id, 'industry_tool_ids', [$tool_c, $draft, $tool_a]);
 check('curated: editor order, published only', [$tool_c, $tool_a] === $ids(omochix_core_get_industry_curated('real-estate', 'industry_tool_ids')) && 'post__in' === $GLOBALS['last_query']['orderby'] && isset($GLOBALS['last_query']['meta_query']));
 check('curated: only the two curated keys are readable this way', [] === omochix_core_get_industry_curated('real-estate', 'industry_lead'));
-$GLOBALS['term_meta'][$re->term_id]['industry_tool_ids'] = [$prompt, $tool_a];
+$GLOBALS['term_meta'][$re->term_id]['industry_tool_ids'] = [$prompt, $tool_a]; $GLOBALS['omochix_core_industry_meta_memo'] = []; // written around the API
 check('curated: a tampered list is re-checked by post type on read', [$tool_a] === $ids(omochix_core_get_industry_curated('real-estate', 'industry_tool_ids')));
 
 // industries of a post

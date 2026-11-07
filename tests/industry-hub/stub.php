@@ -32,7 +32,7 @@ set_error_handler(static function ($no, $str, $file, $line) {
 class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_name = '', $post_title = '', $post_parent = 0, $post_excerpt = '', $post_content = '', $post_password = '', $menu_order = 0, $post_author = 1; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 class WP_Term { public $term_id = 0, $term_taxonomy_id = 0, $name = '', $slug = '', $taxonomy = '', $parent = 0, $count = 0, $description = ''; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 class WP_Error { public $code, $message, $data; function __construct($code = '', $message = '', $data = null) { $this->code = $code; $this->message = $message; $this->data = $data; } function get_error_message() { return $this->message; } function get_error_code() { return $this->code; } }
-class WP_Query { public $posts = []; public $found_posts = 0; public $query_vars = []; function __construct($args = []) { $this->query_vars = $args; $GLOBALS['last_query'] = $args; $this->posts = ih_query_posts($args); $this->found_posts = count($this->posts); } }
+class WP_Query { public $posts = []; public $found_posts = 0; public $query_vars = []; public $tax_query = null; public $max_num_pages = 0; function is_main_query() { return false; } function __construct($args = []) { $this->query_vars = $args; $GLOBALS['last_query'] = $args; $this->posts = ih_query_posts($args); $this->found_posts = count($this->posts); } }
 
 function ih_reset() {
     $GLOBALS['hooks'] = [];
@@ -180,8 +180,8 @@ function wp_set_object_terms($post_id, $terms, $tax, $append = false) {
 }
 function wp_set_post_terms($post_id, $terms, $tax, $append = false) { return wp_set_object_terms($post_id, $terms, $tax, $append); }
 function get_term_meta($id, $key = '', $single = false) { return '' === $key ? ($GLOBALS['term_meta'][$id] ?? []) : ($GLOBALS['term_meta'][$id][$key] ?? ''); }
-function update_term_meta($id, $key, $v) { $GLOBALS['term_meta'][$id][$key] = $v; return true; }
-function delete_term_meta($id, $key) { unset($GLOBALS['term_meta'][$id][$key]); return true; }
+function update_term_meta($id, $key, $v) { $GLOBALS['term_meta'][$id][$key] = $v; do_action('updated_term_meta', 0, $id, $key, $v); return true; }
+function delete_term_meta($id, $key) { unset($GLOBALS['term_meta'][$id][$key]); do_action('deleted_term_meta', [0], $id, $key, ''); return true; }
 function get_term_link($t, $tax = '') { return 'https://example.test/learn/industries/' . (is_object($t) ? $t->slug : $t) . '/'; }
 
 // ------------------------------------------------------------------ posts

@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const OMOCHIX_CORE_GATE_CACHE_KEY     = '_industry_gate_cache';
+const OMOCHIX_CORE_GATE_CACHE_OPT     = 'omochix_core_industry_gate_cache';
 const OMOCHIX_CORE_GATE_VERSION_OPT   = 'omochix_core_industry_gate_version';
 const OMOCHIX_CORE_GATE_TTL           = DAY_IN_SECONDS;
 const OMOCHIX_CORE_GATE_VISIBLE_CODES = array( 'G1_editor_ready', 'G2_lead', 'G3_challenges', 'G4_usecases', 'G5_official_workflow' );
@@ -33,12 +33,36 @@ function omochix_core_gate_version() {
 }
 
 /**
- * Invalidate every cached gate (one option write). Bumped on every change,
- * not once per request, so a recompute later in the same request can never
- * keep a result that an even later change made stale.
+ * Invalidate every cached gate. The first change in a request bumps the
+ * version at once; any later change in the same request bumps it again at
+ * shutdown, so a recompute between two changes is never kept. At most two
+ * option writes per request, however many meta keys a save touches.
  */
 function omochix_core_gate_invalidate() {
-	update_option( OMOCHIX_CORE_GATE_VERSION_OPT, omochix_core_gate_version() + 1, true );
+	if ( empty( $GLOBALS['omochix_core_gate_bumped'] ) ) {
+		$GLOBALS['omochix_core_gate_bumped'] = true;
+		update_option( OMOCHIX_CORE_GATE_VERSION_OPT, omochix_core_gate_version() + 1, true );
+		return;
+	}
+	if ( empty( $GLOBALS['omochix_core_gate_dirty'] ) ) {
+		$GLOBALS['omochix_core_gate_dirty'] = true;
+		add_action( 'shutdown', 'omochix_core_gate_invalidate_at_shutdown', 0 );
+	}
+}
+
+/** Second bump of a request (see omochix_core_gate_invalidate()). */
+function omochix_core_gate_invalidate_at_shutdown() {
+	if ( ! empty( $GLOBALS['omochix_core_gate_dirty'] ) ) {
+		$GLOBALS['omochix_core_gate_dirty'] = false;
+		update_option( OMOCHIX_CORE_GATE_VERSION_OPT, omochix_core_gate_version() + 1, true );
+	}
+}
+
+/** Start a new "request" for the coalescing above (tests, long-running CLI jobs). */
+function omochix_core_gate_new_request() {
+	omochix_core_gate_invalidate_at_shutdown();
+	$GLOBALS['omochix_core_gate_bumped'] = false;
+	$GLOBALS['omochix_core_gate_memo']   = null;
 }
 
 /**
@@ -52,11 +76,19 @@ function omochix_core_gate_invalidate() {
 function omochix_core_industry_gates( array $term_ids, $now = 0 ) {
 	$now     = $now ? (int) $now : time();
 	$version = omochix_core_gate_version();
-	$out     = array();
-	$stale   = array();
+	// One option (not autoloaded) holds every industry's result for the
+	// current version. Writing term meta here would bump the terms
+	// last_changed salt and flush every term query cache on a page view.
+	$memo = $GLOBALS['omochix_core_gate_memo'] ?? null;
+	if ( ! is_array( $memo ) || ( $memo['v'] ?? 0 ) !== $version ) {
+		$stored = get_option( OMOCHIX_CORE_GATE_CACHE_OPT, array() );
+		$memo   = is_array( $stored ) && ( $stored['v'] ?? 0 ) === $version ? $stored : array( 'v' => $version, 'gates' => array() );
+	}
+	$out   = array();
+	$stale = array();
 	foreach ( array_values( array_unique( array_map( 'intval', $term_ids ) ) ) as $id ) {
-		$cached = get_term_meta( $id, OMOCHIX_CORE_GATE_CACHE_KEY, true );
-		if ( is_array( $cached ) && ( $cached['v'] ?? 0 ) === $version && ( $now - (int) ( $cached['t'] ?? 0 ) ) < OMOCHIX_CORE_GATE_TTL && isset( $cached['unmet'] ) && is_array( $cached['unmet'] ) ) {
+		$cached = $memo['gates'][ $id ] ?? null;
+		if ( is_array( $cached ) && ( $now - (int) ( $cached['t'] ?? 0 ) ) < OMOCHIX_CORE_GATE_TTL && isset( $cached['unmet'] ) && is_array( $cached['unmet'] ) ) {
 			$out[ $id ] = $cached['unmet'];
 		} else {
 			$stale[] = $id;
@@ -67,12 +99,16 @@ function omochix_core_industry_gates( array $term_ids, $now = 0 ) {
 		foreach ( $stale as $id ) {
 			$gate       = omochix_core_industry_hub_gate( $id, $now, $counts[ $id ] ?? 0 );
 			$out[ $id ] = $gate['unmet'];
-			// Only real top-level industries are cached (unknown IDs stay uncached).
 			if ( ! in_array( 'missing_term', $gate['unmet'], true ) ) {
-				update_term_meta( $id, OMOCHIX_CORE_GATE_CACHE_KEY, array( 'v' => $version, 't' => $now, 'unmet' => $gate['unmet'] ) );
+				$memo['gates'][ $id ] = array( 't' => $now, 'unmet' => $gate['unmet'] );
 			}
 		}
+		// Write only if nothing invalidated meanwhile (a stale compute is never stored).
+		if ( omochix_core_gate_version() === $version ) {
+			update_option( OMOCHIX_CORE_GATE_CACHE_OPT, $memo, false );
+		}
 	}
+	$GLOBALS['omochix_core_gate_memo'] = $memo;
 	return $out;
 }
 
@@ -98,6 +134,16 @@ function omochix_core_industry_visibility( $term, $now = 0 ) {
  * @return array<int, array{term: WP_Term, visible: bool, indexable: bool, unmet: string[]}>
  */
 function omochix_core_get_industries_with_visibility( $only_visible = false, $now = 0 ) {
+	$key = omochix_core_gate_version() . ':' . (int) $only_visible . ':' . (int) $now;
+	if ( isset( $GLOBALS['omochix_core_vis_memo'][ $key ] ) ) {
+		return $GLOBALS['omochix_core_vis_memo'][ $key ];
+	}
+	$GLOBALS['omochix_core_vis_memo'][ $key ] = omochix_core_compute_industries_with_visibility( $only_visible, $now );
+	return $GLOBALS['omochix_core_vis_memo'][ $key ];
+}
+
+/** Uncached body of omochix_core_get_industries_with_visibility(). */
+function omochix_core_compute_industries_with_visibility( $only_visible, $now ) {
 	$terms = get_terms(
 		array(
 			'taxonomy'   => OMOCHIX_CORE_INDUSTRY_TAXONOMY,
@@ -152,7 +198,7 @@ function omochix_core_industry_term_is_visible( $term ) {
 
 /** Term meta changes on industries (except the cache itself). */
 function omochix_core_gate_on_term_meta( $meta_id, $object_id, $meta_key ) {
-	if ( OMOCHIX_CORE_GATE_CACHE_KEY === $meta_key || 0 !== strpos( (string) $meta_key, 'industry_' ) ) {
+	if ( 0 !== strpos( (string) $meta_key, 'industry_' ) ) {
 		return;
 	}
 	$term = get_term( (int) $object_id );
@@ -173,6 +219,31 @@ function omochix_core_gate_on_term_change( $term_id = 0, $tt_id = 0, $taxonomy =
 add_action( 'created_' . OMOCHIX_CORE_INDUSTRY_TAXONOMY, 'omochix_core_gate_on_term_change' );
 add_action( 'edited_' . OMOCHIX_CORE_INDUSTRY_TAXONOMY, 'omochix_core_gate_on_term_change' );
 add_action( 'delete_' . OMOCHIX_CORE_INDUSTRY_TAXONOMY, 'omochix_core_gate_on_term_change' );
+
+/** Business purposes feed G4 (use cases must name existing purposes). */
+add_action( 'edited_' . OMOCHIX_CORE_PURPOSE_TAXONOMY, 'omochix_core_gate_on_term_change' );
+add_action( 'delete_' . OMOCHIX_CORE_PURPOSE_TAXONOMY, 'omochix_core_gate_on_term_change' );
+
+/** A password set or removed on a practice item, or a required AI tool deleted. */
+function omochix_core_gate_on_post_updated( $post_id, $after, $before ) {
+	if ( $after instanceof WP_Post && 'learn_practice' === $after->post_type && $before instanceof WP_Post && $after->post_password !== $before->post_password ) {
+		omochix_core_gate_invalidate();
+	}
+}
+add_action( 'post_updated', 'omochix_core_gate_on_post_updated', 10, 3 );
+function omochix_core_gate_on_tool_removed( $post_id ) {
+	if ( in_array( get_post_type( (int) $post_id ), array( 'ai_tool', 'learn_practice' ), true ) ) {
+		omochix_core_gate_invalidate();
+	}
+}
+add_action( 'before_delete_post', 'omochix_core_gate_on_tool_removed' );
+add_action( 'trashed_post', 'omochix_core_gate_on_tool_removed' );
+
+/** wp_remove_object_terms() does not fire set_object_terms. */
+function omochix_core_gate_on_removed_terms( $object_id, $tt_ids, $taxonomy ) {
+	omochix_core_gate_on_object_terms( $object_id, array(), $tt_ids, $taxonomy );
+}
+add_action( 'deleted_term_relationships', 'omochix_core_gate_on_removed_terms', 10, 3 );
 
 /** A workflow (or any practice item) changed status. */
 function omochix_core_gate_on_status( $new, $old, $post ) {
@@ -299,33 +370,61 @@ function omochix_core_industry_post_class_taxonomies( $taxonomies ) {
 add_filter( 'post_class_taxonomies', 'omochix_core_industry_post_class_taxonomies' );
 
 /**
- * Main front-end query: site search (and any other main query) cannot be
- * narrowed by a hidden industry through ?omx_industry=; the condition is
- * dropped for visitors.
+ * Every front-end main query that is narrowed by an industry (site search,
+ * category or tag archives with ?omx_industry=, ?taxonomy=omx_industry&term=,
+ * feeds, hub archives) treats a hidden industry exactly like one that does
+ * not exist: the clause matches nothing. Dropping the clause instead would
+ * let visitors tell hidden industries from missing ones.
+ *
+ * Runs on parse_tax_query (also re-fired by WP_Query::get_posts()), after
+ * WordPress has turned every query var form into tax_query clauses.
  *
  * @param WP_Query $query Query.
  * @return void
  */
-function omochix_core_industry_main_query_guard( $query ) {
-	if ( is_admin() || ! $query->is_main_query() || ! omochix_core_industry_is_public() || omochix_core_industry_viewer_is_editor() ) {
+function omochix_core_industry_tax_query_guard( $query ) {
+	if ( is_admin() || ! $query instanceof WP_Query || ! $query->is_main_query() || ! omochix_core_industry_is_public() || omochix_core_industry_viewer_is_editor() || ! isset( $query->tax_query->queries ) || ! is_array( $query->tax_query->queries ) ) {
 		return;
 	}
-	if ( ! $query->is_search() ) {
-		return;
-	}
-	$slug = (string) $query->get( OMOCHIX_CORE_INDUSTRY_TAXONOMY );
-	if ( '' === $slug ) {
-		return;
-	}
-	$term = get_term_by( 'slug', sanitize_title( $slug ), OMOCHIX_CORE_INDUSTRY_TAXONOMY );
-	if ( ! $term instanceof WP_Term || ! omochix_core_industry_term_is_visible( $term ) ) {
-		$query->set( OMOCHIX_CORE_INDUSTRY_TAXONOMY, '' );
-		$query->tax_query = null;
-		$tax              = array_filter( (array) $query->get( 'tax_query' ), static fn( $c ) => ! is_array( $c ) || OMOCHIX_CORE_INDUSTRY_TAXONOMY !== ( $c['taxonomy'] ?? '' ) );
-		$query->set( 'tax_query', $tax );
+	foreach ( $query->tax_query->queries as $key => $clause ) {
+		if ( ! is_array( $clause ) || OMOCHIX_CORE_INDUSTRY_TAXONOMY !== ( $clause['taxonomy'] ?? '' ) ) {
+			continue;
+		}
+		$field = (string) ( $clause['field'] ?? 'term_id' );
+		$ids   = array();
+		foreach ( (array) ( $clause['terms'] ?? array() ) as $value ) {
+			if ( ! is_scalar( $value ) ) {
+				continue;
+			}
+			$term = 'term_id' === $field || 'term_taxonomy_id' === $field ? get_term( (int) $value, OMOCHIX_CORE_INDUSTRY_TAXONOMY ) : get_term_by( 'name' === $field ? 'name' : 'slug', (string) $value, OMOCHIX_CORE_INDUSTRY_TAXONOMY );
+			if ( $term instanceof WP_Term && omochix_core_industry_term_is_visible( $term ) ) {
+				$ids[] = (int) $term->term_id;
+			}
+		}
+		$query->tax_query->queries[ $key ]['field'] = 'term_id';
+		$query->tax_query->queries[ $key ]['terms'] = $ids ? $ids : array( 0 );
 	}
 }
-add_action( 'pre_get_posts', 'omochix_core_industry_main_query_guard', 1 );
+add_action( 'parse_tax_query', 'omochix_core_industry_tax_query_guard' );
+
+/** REST /wp/v2/search?type=term: hidden industries (and their sub-industries) are excluded. */
+function omochix_core_industry_rest_term_search( $args ) {
+	if ( ! omochix_core_industry_is_public() || omochix_core_industry_viewer_is_editor() ) {
+		return $args;
+	}
+	$hidden = array();
+	foreach ( omochix_core_get_industries_with_visibility( false ) as $row ) {
+		if ( ! $row['visible'] ) {
+			$hidden[] = (int) $row['term']->term_id;
+			$hidden   = array_merge( $hidden, array_map( 'intval', (array) get_term_children( (int) $row['term']->term_id, OMOCHIX_CORE_INDUSTRY_TAXONOMY ) ) );
+		}
+	}
+	if ( $hidden ) {
+		$args['exclude'] = array_values( array_unique( array_merge( array_map( 'intval', (array) ( $args['exclude'] ?? array() ) ), $hidden ) ) );
+	}
+	return $args;
+}
+add_filter( 'rest_term_search_query', 'omochix_core_industry_rest_term_search' );
 
 /**
  * Feeds and embeds of industries are not offered (hub pages are the only
@@ -339,15 +438,22 @@ function omochix_core_industry_block_feeds() {
 		return;
 	}
 	// Term archives never set is_embed(), but /{term}/embed/ still routes here with embed=true.
-	if ( ! ( is_feed() || is_embed() || '' !== (string) get_query_var( 'embed' ) ) ) {
+	$embed = get_query_var( 'embed' );
+	if ( ! ( is_feed() || is_embed() || ( is_scalar( $embed ) && '' !== (string) $embed ) ) ) {
 		return;
 	}
-	if ( ! is_tax( OMOCHIX_CORE_INDUSTRY_TAXONOMY ) && '' === (string) get_query_var( OMOCHIX_CORE_INDUSTRY_TAXONOMY ) ) {
+	$var = get_query_var( OMOCHIX_CORE_INDUSTRY_TAXONOMY );
+	if ( ! is_tax( OMOCHIX_CORE_INDUSTRY_TAXONOMY ) && ( ! is_scalar( $var ) || '' === (string) $var ) && ! ( is_array( $var ) && $var ) ) {
 		return;
 	}
 	global $wp_query;
 	if ( is_object( $wp_query ) && method_exists( $wp_query, 'set_404' ) ) {
 		$wp_query->set_404();
+		// set_404() keeps is_feed, and template-loader would still print the
+		// feed of the main query's posts: empty both.
+		$wp_query->is_feed    = false;
+		$wp_query->posts      = array();
+		$wp_query->post_count = 0;
 	}
 	status_header( 404 );
 	nocache_headers();
@@ -383,3 +489,9 @@ function omochix_core_industry_sitemap_term_args( $args ) {
 	return $args;
 }
 add_filter( 'slim_seo_taxonomy_query_args', 'omochix_core_industry_sitemap_term_args' );
+
+/** The same rule for core's wp-sitemap (when Slim SEO is not active). */
+function omochix_core_industry_core_sitemap_term_args( $args, $taxonomy ) {
+	return OMOCHIX_CORE_INDUSTRY_TAXONOMY === $taxonomy ? omochix_core_industry_sitemap_term_args( array_merge( (array) $args, array( 'taxonomy' => $taxonomy ) ) ) : $args;
+}
+add_filter( 'wp_sitemaps_taxonomies_query_args', 'omochix_core_industry_core_sitemap_term_args', 10, 2 );

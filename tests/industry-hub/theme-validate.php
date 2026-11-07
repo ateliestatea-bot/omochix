@@ -60,7 +60,7 @@ check('validate: the hub context has no "industry" key (ignored, not 400)', true
 
 // index context
 check('validate index: industry must be a visible top-level industry', false === omochix_industry_hub_validate('industry=real-estate', 'index')['ok'] && false === omochix_industry_hub_validate('industry=rental', 'index')['ok']);
-ih_fill_hub($re->term_id); ih_add_workflow('real-estate'); omochix_core_gate_invalidate();
+ih_fill_hub($re->term_id); ih_add_workflow('real-estate'); omochix_core_gate_new_request(); omochix_core_gate_invalidate();
 check('validate index: a visible industry is accepted', true === omochix_industry_hub_validate('industry=real-estate&purpose=marketing', 'index')['ok']);
 check('validate index: hub-only keys are ignored on the index (sub, level)', true === omochix_industry_hub_validate('sub=rental&level=nope', 'index')['ok']);
 
@@ -71,5 +71,6 @@ check('url: no index page → empty string (index not published)', '' === omochi
 check('challenge chip: purpose → filtered #workflows, none → unfiltered #workflows', 'https://example.test/learn/industries/real-estate/?purpose=document#workflows' === omochix_industry_hub_challenge_url($re, ['purpose' => 'document']) && 'https://example.test/learn/industries/real-estate/#workflows' === omochix_industry_hub_challenge_url($re, ['purpose' => '']));
 check('types and levels vocabularies', ['workflow', 'practice', 'tool', 'prompt', 'learn', 'news'] === array_keys(omochix_industry_hub_types()) && ['beginner', 'intermediate', 'advanced'] === array_keys(omochix_industry_hub_levels()));
 check('public switch: on only with the Phase 2 plugin', true === omochix_industry_hub_public_switch(false));
+check('case redirect: ASCII case only, never for percent-encoded slugs (no loop)', true === omochix_industry_hub_needs_case_redirect('Real-Estate', 'real-estate') && false === omochix_industry_hub_needs_case_redirect('real-estate', 'real-estate') && false === omochix_industry_hub_needs_case_redirect('%E7%BE%8E', '%e7%be%8e') && false === omochix_industry_hub_needs_case_redirect('%e7%be%8e', '%e7%be%8e') && false === omochix_industry_hub_needs_case_redirect('', 'x'));
 
 ih_done();

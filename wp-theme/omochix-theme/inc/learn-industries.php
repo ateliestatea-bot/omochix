@@ -64,8 +64,17 @@ function omochix_industry_hub_is_index_request() {
     return $page && is_page() && (int) get_queried_object_id() === (int) $page->ID;
 }
 
+/**
+ * A hub request is an industry term archive that is not a search: a search
+ * narrowed by ?omx_industry= is a search page (the plugin's tax guard makes a
+ * hidden industry match nothing there, exactly like a missing one).
+ */
 function omochix_industry_hub_is_hub_request() {
-    return omochix_industry_hub_enabled() && is_tax('omx_industry');
+    if (!omochix_industry_hub_enabled() || !is_tax('omx_industry') || is_search()) {
+        return false;
+    }
+    $term = get_queried_object();
+    return $term instanceof WP_Term && 'omx_industry' === $term->taxonomy;
 }
 
 function omochix_industry_hub_is_request() {
@@ -80,10 +89,19 @@ function omochix_industry_hub_path_matches() {
     return 1 === preg_match('#^/learn/industries(/|$)#i', $rel);
 }
 
-/** The industry slug segment exactly as requested (for case normalisation). */
+/** The industry slug segment exactly as requested (raw, not decoded). */
 function omochix_industry_hub_requested_slug() {
-    $path = rawurldecode((string) wp_parse_url(isset($_SERVER['REQUEST_URI']) ? (string) wp_unslash($_SERVER['REQUEST_URI']) : '', PHP_URL_PATH));
+    $path = (string) wp_parse_url(isset($_SERVER['REQUEST_URI']) ? (string) wp_unslash($_SERVER['REQUEST_URI']) : '', PHP_URL_PATH);
     return preg_match('#/learn/industries/([^/]+)#i', $path, $m) ? $m[1] : '';
+}
+
+/**
+ * Whether the requested segment is the term's slug in another ASCII case
+ * (/Real-Estate/). Percent-encoded (non-ASCII) segments are never
+ * normalised: clients may re-encode them, which would loop.
+ */
+function omochix_industry_hub_needs_case_redirect($requested, $slug) {
+    return '' !== $requested && false === strpos($requested, '%') && $requested !== $slug && strtolower($requested) === $slug;
 }
 
 /* -------------------------------------------------------------------------
@@ -262,6 +280,17 @@ function omochix_industry_hub_decide($reset = false) {
     }
     $qs = omochix_industry_hub_query_string();
 
+    // WordPress' own search (?s=) under /learn/industries/ would replace the
+    // hub; the hub searches with ?q=. Hidden or missing industries stay 404.
+    if (isset($_GET['s']) && omochix_industry_hub_path_matches()) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $seg  = strtolower(omochix_industry_hub_requested_slug());
+        $term = '' !== $seg && 'page' !== $seg ? get_term_by('slug', sanitize_title(rawurldecode($seg)), 'omx_industry') : null;
+        if ('' !== $seg && 'page' !== $seg && (!$term instanceof WP_Term || !omochix_core_industry_term_is_visible($term))) {
+            return $decision = array_merge($base, ['action' => 'not_found', 'status' => 404, 'context' => 'hub']);
+        }
+        return $decision = array_merge($base, ['action' => 'bad_request', 'status' => 400, 'context' => $term instanceof WP_Term ? 'hub' : 'index', 'term' => $term instanceof WP_Term ? $term : null, 'errors' => ['s' => 'unsupported']]);
+    }
+
     if (omochix_industry_hub_is_index_request()) {
         $v = omochix_industry_hub_validate($qs, 'index');
         $d = array_merge($base, ['context' => 'index', 'filters' => $v['filters'], 'errors' => $v['errors']]);
@@ -297,7 +326,7 @@ function omochix_industry_hub_decide($reset = false) {
     }
     // 2. Non-canonical slug spelling (e.g. upper case) → permanent canonical URL.
     $requested = omochix_industry_hub_requested_slug();
-    if ('' !== $requested && $requested !== $term->slug && sanitize_title($requested) === $term->slug) {
+    if (omochix_industry_hub_needs_case_redirect($requested, $term->slug)) {
         $link = get_term_link($term, 'omx_industry');
         // The query string is kept verbatim; the target validates it again.
         return $decision = array_merge($d, ['action' => 'redirect', 'status' => 301, 'location' => is_wp_error($link) ? '' : $link . ('' !== $qs ? '?' . $qs : '')]);
@@ -387,6 +416,9 @@ function omochix_industry_hub_template_redirect() {
         default:
             if ($d['preview']) {
                 omochix_industry_hub_send_private_headers('noindex, nofollow');
+            } elseif (is_404() && omochix_industry_hub_path_matches()) {
+                // Core's own 404 (missing industry) answers exactly like a hidden one.
+                omochix_industry_hub_send_private_headers();
             }
     }
 }
@@ -419,8 +451,8 @@ function omochix_industry_hub_pre_get_posts($query) {
     if (is_admin() || !$query->is_main_query() || !omochix_industry_hub_enabled() || !$query->is_tax('omx_industry') || $query->is_feed() || $query->is_embed()) {
         return;
     }
-    $slug = (string) $query->get('omx_industry');
-    $term = '' !== $slug ? get_term_by('slug', sanitize_title($slug), 'omx_industry') : false;
+    $slug = $query->get('omx_industry');
+    $term = is_scalar($slug) && '' !== (string) $slug ? get_term_by('slug', sanitize_title((string) $slug), 'omx_industry') : false;
     if (!$term instanceof WP_Term) {
         return;
     }
@@ -659,7 +691,10 @@ function omochix_industry_hub_schema_graph($graph) {
         return $graph;
     }
     $page_url = omochix_industry_hub_is_hub_request() ? get_term_link(get_queried_object(), 'omx_industry') : omochix_industry_hub_index_url();
-    $id       = (is_wp_error($page_url) ? '' : $page_url) . '#industry-hub-list';
+    if (is_wp_error($page_url) || !$page_url) {
+        return $graph;
+    }
+    $id = $page_url . '#industry-hub-list';
     $list     = ['@type' => 'ItemList', '@id' => $id, 'itemListElement' => []];
     foreach (array_values($items) as $i => $item) {
         $list['itemListElement'][] = ['@type' => 'ListItem', 'position' => $i + 1, 'url' => $item['url'], 'name' => $item['name']];
@@ -766,21 +801,30 @@ function omochix_industry_hub_sections($term, array $filters = []) {
     return $cache[$key] = $out;
 }
 
-/** The hub index: visible industries with their counts (§6.3 shortcuts use the challenges). */
+/**
+ * The hub index: visible industries only (hidden ones are never named, the
+ * same rule as REST), plus how many are still being prepared.
+ *
+ * @return array{rows: array<int, array<string, mixed>>, hidden: int}
+ */
 function omochix_industry_hub_index_rows() {
-    $rows = [];
+    $rows   = [];
+    $hidden = 0;
     foreach (omochix_core_get_industries_with_visibility(false) as $row) {
-        $meta   = $row['visible'] ? omochix_core_get_industry_meta($row['term']->term_id) : null;
+        if (!$row['visible']) {
+            ++$hidden;
+            continue;
+        }
+        $meta   = omochix_core_get_industry_meta($row['term']->term_id);
         $rows[] = [
             'term'       => $row['term'],
-            'visible'    => $row['visible'],
-            'url'        => $row['visible'] ? omochix_industry_hub_url($row['term']) : '',
-            'lead'       => $meta ? (string) $meta['industry_lead'] : '',
-            'icon'       => $meta ? (string) $meta['industry_icon'] : '',
-            'challenges' => $meta ? array_slice(array_values(array_filter((array) $meta['industry_challenges'], static fn($c) => '' !== (string) ($c['title'] ?? ''))), 0, 2) : [],
+            'url'        => omochix_industry_hub_url($row['term']),
+            'lead'       => (string) $meta['industry_lead'],
+            'icon'       => (string) $meta['industry_icon'],
+            'challenges' => array_slice(array_values(array_filter((array) $meta['industry_challenges'], static fn($c) => '' !== (string) ($c['title'] ?? ''))), 0, 3),
         ];
     }
-    return $rows;
+    return ['rows' => $rows, 'hidden' => $hidden];
 }
 
 /** URL of a challenge chip: its purpose filter + #workflows, or #workflows unfiltered (§12 #10). */
