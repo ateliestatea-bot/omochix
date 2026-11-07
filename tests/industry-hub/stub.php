@@ -88,6 +88,7 @@ function wp_date($f, $ts = null) { return gmdate($f, $ts ?? time()); }
 function plugin_dir_path($f) { return rtrim(dirname($f), '/') . '/'; }
 function plugin_dir_url($f) { return 'https://example.test/wp-content/plugins/omochix-core/'; }
 function admin_url($p = '') { return 'https://example.test/wp-admin/' . ltrim($p, '/'); }
+function add_query_arg($args, $url) { [$base, $frag] = array_pad(explode('#', (string) $url, 2), 2, null); $sep = false === strpos($base, '?') ? '?' : '&'; $pairs = []; foreach ((array) $args as $k => $v) { $pairs[] = $k . '=' . $v; } return $base . ($pairs ? $sep . implode('&', $pairs) : '') . (null !== $frag ? '#' . $frag : ''); }
 function home_url($p = '') { return 'https://example.test' . $p; }
 function get_current_user_id() { return 1; }
 function get_userdata($id) { return null; }

@@ -133,6 +133,10 @@ check('feed: /feed/?omx_industry= is a 404', true === $GLOBALS['wp_query']->is40
 $GLOBALS['wp_query']->is404 = false; $GLOBALS['ctx'] = ['is_embed' => true, 'is_tax' => 'omx_industry']; $GLOBALS['query_vars'] = [];
 omochix_core_industry_block_feeds();
 check('embed: an industry embed is a 404', true === $GLOBALS['wp_query']->is404);
+$GLOBALS['wp_query']->is404 = false; $GLOBALS['ctx'] = ['is_tax' => 'omx_industry']; $GLOBALS['query_vars'] = ['embed' => 'true'];
+omochix_core_industry_block_feeds();
+check('embed: a term embed (is_embed() false, embed query var set) is a 404', true === $GLOBALS['wp_query']->is404);
+$GLOBALS['query_vars'] = [];
 $GLOBALS['wp_query']->is404 = false; $GLOBALS['ctx'] = ['is_feed' => true];
 omochix_core_industry_block_feeds();
 check('feed: other feeds are untouched', false === $GLOBALS['wp_query']->is404);

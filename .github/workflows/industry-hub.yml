@@ -8,6 +8,7 @@ on:
     paths:
       - 'wp-plugin/**'
       - 'tests/industry-hub/**'
+      - 'wp-theme/omochix-theme/inc/learn-industries.php'
       - '.github/workflows/industry-hub.yml'
   push:
     branches: [main]
@@ -62,7 +63,8 @@ jobs:
             tests/industry-hub/resource.php \
             tests/industry-hub/workflow.php \
             tests/industry-hub/relations.php \
-            tests/industry-hub/visibility.php
+            tests/industry-hub/visibility.php \
+            tests/industry-hub/theme-validate.php
           do
             echo "::group::$test"
             php "$test" || status=1
