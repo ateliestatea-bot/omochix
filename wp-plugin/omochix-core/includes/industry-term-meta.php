@@ -29,7 +29,8 @@ function omochix_core_get_industry_meta_schema() {
 		'industry_order'        => array( 'type' => 'integer', 'default' => 0, 'sanitize' => 'nonnegative_integer' ),
 		'industry_icon'         => array( 'type' => 'string', 'default' => '', 'sanitize' => 'enum', 'options' => array( '', 'building', 'utensils', 'sparkles', 'cart', 'helmet', 'code' ) ),
 		'industry_lead'         => array( 'type' => 'string', 'default' => '', 'sanitize' => 'textarea', 'max' => 600 ),
-		'industry_challenges'   => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'json_rows', 'max' => 10, 'rows' => array( 'title' => 'text', 'body' => 'textarea' ) ),
+		'industry_benefits'     => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'json_rows', 'max' => 6, 'rows' => array( 'title' => 'text', 'body' => 'textarea' ) ),
+		'industry_challenges'   => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'json_rows', 'max' => 10, 'rows' => array( 'title' => 'text', 'body' => 'textarea', 'purpose' => 'key' ) ),
 		'industry_usecases'     => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'json_rows', 'max' => 12, 'rows' => array( 'title' => 'text', 'body' => 'textarea', 'purpose' => 'key' ) ),
 		'industry_tool_ids'     => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'post_id_array', 'max' => 12, 'post_types' => array( 'ai_tool' ) ),
 		'industry_featured_ids' => array( 'type' => 'array', 'default' => array(), 'sanitize' => 'post_id_array', 'max' => 6, 'post_types' => array( 'learn_practice', 'page' ) ),
@@ -130,7 +131,7 @@ function omochix_core_sanitize_industry_meta_value( $value, $key ) {
 			return omochix_core_sanitize_motion_slugs( $value, $field['max'] );
 		case 'json_rows':
 			$rows = omochix_core_sanitize_practice_rows( $value, $field['rows'], $field['max'] );
-			if ( 'industry_usecases' === $key ) {
+			if ( 'industry_usecases' === $key || 'industry_challenges' === $key ) {
 				foreach ( $rows as &$row ) {
 					$row['purpose'] = term_exists( $row['purpose'], OMOCHIX_CORE_PURPOSE_TAXONOMY ) ? $row['purpose'] : '';
 				}
@@ -189,8 +190,20 @@ function omochix_core_register_industry_term_meta() {
  * @return array<string, mixed>
  */
 function omochix_core_get_industry_meta( $term_id ) {
-	$out = array();
-	foreach ( omochix_core_get_industry_meta_schema() as $key => $field ) {
+	$out    = array();
+	$schema = omochix_core_get_industry_meta_schema();
+	// Re-sanitizing checks the post type of every curated ID; load them in one
+	// query first so a hub costs one query here, not one per ID.
+	$ids = array();
+	foreach ( $schema as $key => $field ) {
+		if ( 'post_id_array' === $field['sanitize'] ) {
+			$ids = array_merge( $ids, array_filter( array_map( 'absint', (array) get_term_meta( (int) $term_id, $key, true ) ) ) );
+		}
+	}
+	if ( $ids && function_exists( '_prime_post_caches' ) ) {
+		_prime_post_caches( array_values( array_unique( $ids ) ), false, false );
+	}
+	foreach ( $schema as $key => $field ) {
 		$raw         = get_term_meta( (int) $term_id, $key, true );
 		$out[ $key ] = '' === $raw ? $field['default'] : omochix_core_sanitize_industry_meta_value( $raw, $key );
 	}
@@ -268,12 +281,78 @@ function omochix_core_count_official_workflows( $term_id, $limit = 1 ) {
 			),
 		)
 	);
-	// The tax_query also matches a post that (against the rules) carries two
-	// providers; count only posts whose single provider is official.
-	// Live workflows edited into an incomplete state are only warned about by
-	// the guard; they do not count here either.
-	$ids = array_filter( is_array( $ids ) ? $ids : array(), static fn( $id ) => 'official' === omochix_core_get_provider_type( (int) $id ) && ! omochix_core_workflow_stored_blockers( (int) $id ) );
+	$ids = omochix_core_filter_counting_workflows( is_array( $ids ) ? $ids : array() );
 	return min( count( $ids ), max( 1, (int) $limit ) );
+}
+
+/**
+ * Of candidate workflow IDs, those that count as OmochiX-official workflows.
+ * The tax_query also matches a post that (against the rules) carries two
+ * providers, and live workflows edited into an incomplete state are only
+ * warned about by the guard; neither counts. Posts, meta, terms and the
+ * referenced tools are loaded in one go first, so the checks below run from
+ * the cache instead of querying per post.
+ *
+ * @param int[] $ids Candidate IDs.
+ * @return int[]
+ */
+function omochix_core_filter_counting_workflows( array $ids ) {
+	$ids = array_values( array_unique( array_map( 'intval', $ids ) ) );
+	if ( ! $ids ) {
+		return array();
+	}
+	if ( function_exists( '_prime_post_caches' ) ) {
+		_prime_post_caches( $ids, true, true );
+		$tools = array();
+		foreach ( $ids as $id ) {
+			$tools = array_merge( $tools, array_map( 'absint', (array) get_post_meta( $id, 'related_tool_ids', true ) ) );
+		}
+		$tools = array_values( array_unique( array_filter( $tools ) ) );
+		if ( $tools ) {
+			_prime_post_caches( $tools, false, false );
+		}
+	}
+	return array_values( array_filter( $ids, static fn( $id ) => 'official' === omochix_core_get_provider_type( $id ) && ! omochix_core_workflow_stored_blockers( $id ) ) );
+}
+
+/**
+ * Official workflow counts for several industries with one query (the hub
+ * index computes the gate of every industry at once).
+ *
+ * @param int[] $term_ids Top-level industry term IDs.
+ * @return array<int, int> term_id => count.
+ */
+function omochix_core_count_official_workflows_batch( array $term_ids ) {
+	$term_ids = array_values( array_unique( array_filter( array_map( 'intval', $term_ids ) ) ) );
+	$counts   = array_fill_keys( $term_ids, 0 );
+	if ( ! $term_ids || ! post_type_exists( 'learn_practice' ) ) {
+		return $counts;
+	}
+	$ids = get_posts(
+		array(
+			'post_type'        => 'learn_practice',
+			'post_status'      => 'publish',
+			'has_password'     => false,
+			'fields'           => 'ids',
+			'posts_per_page'   => 200,
+			'no_found_rows'    => true,
+			'suppress_filters' => false,
+			'tax_query'        => array(
+				'relation' => 'AND',
+				array( 'taxonomy' => OMOCHIX_CORE_INDUSTRY_TAXONOMY, 'field' => 'term_id', 'terms' => $term_ids, 'include_children' => true ),
+				array( 'taxonomy' => 'learn_format', 'field' => 'slug', 'terms' => array( 'workflow' ) ),
+				array( 'taxonomy' => OMOCHIX_CORE_PROVIDER_TAXONOMY, 'field' => 'slug', 'terms' => array( 'official' ) ),
+			),
+		)
+	);
+	foreach ( omochix_core_filter_counting_workflows( is_array( $ids ) ? $ids : array() ) as $id ) {
+		foreach ( omochix_core_get_post_industries( $id ) as $top ) {
+			if ( isset( $counts[ (int) $top->term_id ] ) ) {
+				++$counts[ (int) $top->term_id ];
+			}
+		}
+	}
+	return $counts;
 }
 
 /**
@@ -284,7 +363,7 @@ function omochix_core_count_official_workflows( $term_id, $limit = 1 ) {
  * @param int $now     Unix time (tests).
  * @return array{ready: bool, unmet: string[]}
  */
-function omochix_core_industry_hub_gate( $term_id, $now = 0 ) {
+function omochix_core_industry_hub_gate( $term_id, $now = 0, $workflow_count = null ) {
 	$term = get_term( (int) $term_id, OMOCHIX_CORE_INDUSTRY_TAXONOMY );
 	if ( ! $term instanceof WP_Term ) {
 		return array( 'ready' => false, 'unmet' => array( 'missing_term' ) );
@@ -317,7 +396,8 @@ function omochix_core_industry_hub_gate( $term_id, $now = 0 ) {
 	if ( ! $rich( $m['industry_usecases'], $t['usecases_min'] ) || count( $purposes ) < $t['purposes_min'] ) {
 		$unmet[] = 'G4_usecases';
 	}
-	if ( omochix_core_count_official_workflows( $term->term_id, $t['workflows_min'] ) < $t['workflows_min'] ) {
+	$workflow_count = null === $workflow_count ? omochix_core_count_official_workflows( $term->term_id, $t['workflows_min'] ) : (int) $workflow_count;
+	if ( $workflow_count < $t['workflows_min'] ) {
 		$unmet[] = 'G5_official_workflow';
 	}
 	$verified = (string) $m['industry_verified_at'];

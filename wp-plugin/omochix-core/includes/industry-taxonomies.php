@@ -458,7 +458,11 @@ add_filter(
 add_filter(
 	'slim_seo_sitemap_taxonomies',
 	static function ( $taxonomies ) {
-		if ( ! is_array( $taxonomies ) || ! apply_filters( 'omochix_core_industry_archive_noindex', true ) ) {
+		// While hubs are private there is nothing to list. Once public, the
+		// per-term rule in includes/industry-visibility.php decides which hubs
+		// appear (the archive noindex filter is request-specific and has no
+		// term to judge here).
+		if ( ! is_array( $taxonomies ) || omochix_core_industry_is_public() ) {
 			return $taxonomies;
 		}
 		return array_values( array_diff( $taxonomies, array( OMOCHIX_CORE_INDUSTRY_TAXONOMY ) ) );

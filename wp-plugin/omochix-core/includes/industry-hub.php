@@ -24,6 +24,7 @@ require_once OMOCHIX_CORE_DIR . 'admin/resource-meta-boxes.php';
 require_once OMOCHIX_CORE_DIR . 'includes/workflow-meta-schema.php';
 require_once OMOCHIX_CORE_DIR . 'admin/workflow-meta-panel.php';
 require_once OMOCHIX_CORE_DIR . 'includes/industry-relations.php';
+require_once OMOCHIX_CORE_DIR . 'includes/industry-visibility.php';
 
 /**
  * Register the Industry Hub data model.

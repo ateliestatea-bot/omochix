@@ -196,6 +196,7 @@ function update_post_meta($id, $key, $v) { $GLOBALS['meta'][$id][$key] = $v; ret
 function delete_post_meta($id, $key) { unset($GLOBALS['meta'][$id][$key]); return true; }
 function ih_query_posts($args) {
     $GLOBALS['last_query'] = $args;
+    $GLOBALS['query_count'] = ($GLOBALS['query_count'] ?? 0) + 1;
     $types = isset($args['post_type']) ? (array) $args['post_type'] : ['post'];
     $status = isset($args['post_status']) ? (array) $args['post_status'] : ['publish'];
     $out = [];
@@ -221,6 +222,13 @@ function ih_query_posts($args) {
     if ($n > 0) { $out = array_slice($out, 0, $n); }
     return ($args['fields'] ?? '') === 'ids' ? wp_list_pluck($out, 'ID') : $out;
 }
+function _prime_post_caches($ids, $terms = true, $meta = true) { $GLOBALS['primed'][] = array_values((array) $ids); }
+function is_feed($t = '') { return !empty($GLOBALS['ctx']['is_feed']); }
+function is_embed() { return !empty($GLOBALS['ctx']['is_embed']); }
+function is_search() { return !empty($GLOBALS['ctx']['is_search']); }
+function is_404() { return !empty($GLOBALS['ctx']['is_404']); }
+function get_query_var($k, $d = '') { return $GLOBALS['query_vars'][$k] ?? $d; }
+function add_option($k, $v = '', $d = '', $a = null) { if (!isset($GLOBALS['options'][$k])) { $GLOBALS['options'][$k] = $v; } return true; }
 function get_posts($args = []) { $args['posts_per_page'] = $args['posts_per_page'] ?? ($args['numberposts'] ?? 5); return ih_query_posts($args); }
 function wp_count_posts($t) { return (object) ['publish' => 0]; }
 
@@ -266,3 +274,30 @@ function ih_registration_snapshot() {
     return ['post_types' => $norm($r['post_types']), 'taxonomies' => $norm($r['taxonomies']), 'post_meta' => $norm($r['post_meta']), 'rewrite' => $r['rewrite'], 'hooks' => ih_hook_names()];
 }
 
+
+// ------------------------------------------------------ content fixtures
+/** Fill a top-level industry with content that meets G1..G7 (G5 needs a workflow too). */
+function ih_fill_hub($term_id, $ready = true) {
+    $body = str_repeat('業務の流れを具体的に説明する本文。', 6);
+    update_term_meta($term_id, 'industry_hub_ready', $ready);
+    update_term_meta($term_id, 'industry_lead', str_repeat('この業種のAI活用を独自に解説する導入文です。', 6));
+    update_term_meta($term_id, 'industry_benefits', [['title' => '問い合わせ対応が速くなる', 'body' => $body]]);
+    update_term_meta($term_id, 'industry_challenges', [['title' => '問い合わせ', 'body' => $body, 'purpose' => 'customer-support'], ['title' => '広告文', 'body' => $body, 'purpose' => 'marketing'], ['title' => '書類', 'body' => $body, 'purpose' => 'document']]);
+    update_term_meta($term_id, 'industry_usecases', [['title' => 'a', 'body' => $body, 'purpose' => 'marketing'], ['title' => 'b', 'body' => $body, 'purpose' => 'document'], ['title' => 'c', 'body' => $body, 'purpose' => 'customer-support']]);
+    update_term_meta($term_id, 'industry_verified_at', gmdate('Y-m-d', time() - 10 * DAY_IN_SECONDS));
+    update_term_meta($term_id, 'industry_sources', [['label' => '統計', 'url' => 'https://www.e-stat.go.jp/']]);
+}
+/** A published, complete, official workflow in an industry (slug), with a tool. */
+function ih_add_workflow($industry_slug, $purpose = 'marketing', $provider = 'official') {
+    if (!ih_term('learn_format', 'workflow')) { $c = $GLOBALS['caps']; $GLOBALS['caps'] = ['manage_categories' => true]; wp_insert_term('導入する', 'learn_format', ['slug' => 'workflow']); $GLOBALS['caps'] = $c; }
+    $tool = ih_add_post(['post_type' => 'ai_tool', 'post_name' => 'tool-' . count($GLOBALS['posts']), 'post_status' => 'publish']);
+    $id = ih_add_post(['post_type' => 'learn_practice', 'post_name' => 'wf-' . count($GLOBALS['posts']), 'post_title' => 'WF ' . $industry_slug, 'post_status' => 'publish']);
+    foreach (['workflow_problem' => '課題', 'workflow_audience' => [['role' => '担当者', 'note' => '']], 'workflow_cost' => [['item' => 'x', 'amount' => '0円', 'period' => 'once', 'note' => '', 'checked_at' => '2026-11-01']], 'workflow_metrics' => [['metric' => 'm', 'how' => 'h', 'frequency' => '']], 'related_tool_ids' => [$tool]] as $k => $v) { update_post_meta($id, $k, $v); }
+    $c = $GLOBALS['caps']; $GLOBALS['caps'] = ['*' => true];
+    wp_set_object_terms($id, [$industry_slug], 'omx_industry');
+    wp_set_object_terms($id, ['workflow'], 'learn_format');
+    wp_set_object_terms($id, [$purpose], 'omx_purpose');
+    wp_set_object_terms($id, [$provider], 'omx_provider_type');
+    $GLOBALS['caps'] = $c;
+    return $id;
+}

@@ -57,7 +57,11 @@ require_once OMOCHIX_CORE_DIR . 'admin/save-practice-meta.php';
 require_once OMOCHIX_CORE_DIR . 'admin/practice-json-importer.php';
 require_once OMOCHIX_CORE_DIR . 'admin/practice-json-exporter.php';
 require_once OMOCHIX_CORE_DIR . 'admin/practice-list-table.php';
-require_once OMOCHIX_CORE_DIR . 'includes/industry-hub.php';
+// Guarded like tool-display-facts.php: an FTP upload that writes this file
+// before the Industry Hub files cannot break the site.
+if ( is_readable( OMOCHIX_CORE_DIR . 'includes/industry-hub.php' ) ) {
+	require_once OMOCHIX_CORE_DIR . 'includes/industry-hub.php';
+}
 
 /**
  * Register plugin data structures.
