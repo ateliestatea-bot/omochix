@@ -338,7 +338,8 @@ function omochix_core_industry_block_feeds() {
 	if ( ! omochix_core_industry_is_public() ) {
 		return;
 	}
-	if ( ! ( is_feed() || is_embed() ) ) {
+	// Term archives never set is_embed(), but /{term}/embed/ still routes here with embed=true.
+	if ( ! ( is_feed() || is_embed() || '' !== (string) get_query_var( 'embed' ) ) ) {
 		return;
 	}
 	if ( ! is_tax( OMOCHIX_CORE_INDUSTRY_TAXONOMY ) && '' === (string) get_query_var( OMOCHIX_CORE_INDUSTRY_TAXONOMY ) ) {
