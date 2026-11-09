@@ -14,6 +14,20 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// WordPress can pick this file by name (template hierarchy) even when the hub is off,
+// e.g. with an older Core plugin: answer like any missing page instead of rendering.
+if (!function_exists('omochix_industry_hub_enabled') || !omochix_industry_hub_enabled()) {
+    global $wp_query;
+    $wp_query->set_404();
+    status_header(404);
+    nocache_headers();
+    $omochix_404 = get_404_template();
+    if ($omochix_404) {
+        include $omochix_404;
+    }
+    return;
+}
+
 $omochix_d       = omochix_industry_hub_decide();
 $omochix_term    = $omochix_d['term'] instanceof WP_Term ? $omochix_d['term'] : get_queried_object();
 $omochix_filters = (array) $omochix_d['filters'];
@@ -165,13 +179,13 @@ get_header();
                     <?php if ($omochix_s['tools']) : ?>
                         <h3 class="ih-h3"><?php esc_html_e('AIツール', 'omochix'); ?></h3>
                         <div class="ih-grid ih-grid--compact">
-                            <?php foreach ($omochix_s['tools'] as $omochix_post) : get_template_part('template-parts/learn-industries/content-card', null, ['post' => $omochix_post]); endforeach; ?>
+                            <?php foreach ($omochix_s['tools'] as $omochix_post) : get_template_part('template-parts/learn-industries/content-card', null, ['post' => $omochix_post, 'level' => 4]); endforeach; ?>
                         </div>
                     <?php endif; ?>
                     <?php if ($omochix_s['prompts']) : ?>
                         <h3 class="ih-h3"><?php esc_html_e('プロンプト', 'omochix'); ?></h3>
                         <div class="ih-grid ih-grid--compact">
-                            <?php foreach ($omochix_s['prompts'] as $omochix_post) : get_template_part('template-parts/learn-industries/content-card', null, ['post' => $omochix_post]); endforeach; ?>
+                            <?php foreach ($omochix_s['prompts'] as $omochix_post) : get_template_part('template-parts/learn-industries/content-card', null, ['post' => $omochix_post, 'level' => 4]); endforeach; ?>
                         </div>
                     <?php endif; ?>
                     <?php if ($omochix_s['motion']) : ?>
@@ -180,7 +194,7 @@ get_header();
                             <?php foreach ($omochix_s['motion'] as $omochix_m) : ?>
                                 <article class="ih-card ih-card--motion">
                                     <div class="ih-card__meta"><span class="ih-card__type"><?php esc_html_e('Motion', 'omochix'); ?></span><span class="ih-badge ih-badge--official"><?php esc_html_e('OmochiX公式', 'omochix'); ?></span></div>
-                                    <h3 class="ih-card__title"><a href="<?php echo esc_url(function_exists('omochix_learn_gallery_url') ? omochix_learn_gallery_url($omochix_m) : ''); ?>"><?php echo esc_html((string) ($omochix_m['name']['ja'] ?? $omochix_m['slug'])); ?></a></h3>
+                                    <h4 class="ih-card__title"><a href="<?php echo esc_url(function_exists('omochix_learn_gallery_url') ? omochix_learn_gallery_url($omochix_m) : ''); ?>"><?php echo esc_html((string) ($omochix_m['name']['ja'] ?? $omochix_m['slug'])); ?></a></h4>
                                     <?php if (!empty($omochix_m['summary'])) : ?><p class="ih-card__text"><?php echo esc_html((string) $omochix_m['summary']); ?></p><?php endif; ?>
                                 </article>
                             <?php endforeach; ?>
@@ -204,7 +218,7 @@ get_header();
                     <h3 class="ih-h3"><?php esc_html_e('外部のコンテンツ', 'omochix'); ?></h3>
                     <p class="ih-note"><?php esc_html_e('外部サイトのコンテンツです。内容は各提供元の責任で公開されています。', 'omochix'); ?></p>
                     <div class="ih-grid ih-grid--compact">
-                        <?php foreach ($omochix_s['resources'] as $omochix_card) : get_template_part('template-parts/learn-industries/resource-card', null, ['card' => $omochix_card]); endforeach; ?>
+                        <?php foreach ($omochix_s['resources'] as $omochix_card) : get_template_part('template-parts/learn-industries/resource-card', null, ['card' => $omochix_card, 'level' => 4]); endforeach; ?>
                     </div>
                 <?php endif; ?>
 
@@ -216,9 +230,9 @@ get_header();
                             <?php
                             $omochix_p = get_post();
                             if ('learn_practice' === $omochix_p->post_type && has_term('workflow', 'learn_format', $omochix_p)) {
-                                get_template_part('template-parts/learn-industries/workflow-card', null, ['post' => $omochix_p]);
+                                get_template_part('template-parts/learn-industries/workflow-card', null, ['post' => $omochix_p, 'level' => 4]);
                             } else {
-                                get_template_part('template-parts/learn-industries/content-card', null, ['post' => $omochix_p]);
+                                get_template_part('template-parts/learn-industries/content-card', null, ['post' => $omochix_p, 'level' => 4]);
                             }
                             ?>
                         <?php endwhile; ?>

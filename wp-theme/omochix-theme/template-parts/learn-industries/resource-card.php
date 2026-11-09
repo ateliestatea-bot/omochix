@@ -6,12 +6,15 @@
  *
  * Args: card (array from omochix_core_get_resource_card()).
  *
+ * Optional arg: level (heading level of the card title, 2–6; default 3).
+ *
  * @package OmochiX
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
+$omochix_h = isset($args['level']) && in_array((int) $args['level'], [2, 3, 4, 5, 6], true) ? 'h' . (int) $args['level'] : 'h3';
 $omochix_card = isset($args['card']) && is_array($args['card']) ? $args['card'] : null;
 if (!$omochix_card || '' === (string) ($omochix_card['url'] ?? '')) {
     return;
@@ -23,9 +26,9 @@ if (!$omochix_card || '' === (string) ($omochix_card['url'] ?? '')) {
         <?php get_template_part('template-parts/learn-industries/provider-badge', null, ['type' => (string) $omochix_card['provider_type']]); ?>
         <?php if (!empty($omochix_card['is_pr']) && 'partner' !== $omochix_card['provider_type']) : ?><span class="ih-badge ih-badge--partner"><?php esc_html_e('PR', 'omochix'); ?></span><?php endif; ?>
     </div>
-    <h3 class="ih-card__title">
+    <<?php echo $omochix_h; ?> class="ih-card__title">
         <a href="<?php echo esc_url($omochix_card['url']); ?>" rel="<?php echo esc_attr((string) $omochix_card['rel']); ?> external" target="_blank"><?php echo esc_html((string) $omochix_card['title']); ?><span class="screen-reader-text"><?php esc_html_e('（外部サイト・新しいタブで開きます）', 'omochix'); ?></span><span class="ih-card__external" aria-hidden="true">↗</span></a>
-    </h3>
+    </<?php echo $omochix_h; ?>>
     <?php if ('' !== (string) $omochix_card['summary']) : ?><p class="ih-card__text"><?php echo esc_html((string) $omochix_card['summary']); ?></p><?php endif; ?>
     <p class="ih-card__note">
         <?php if ('' !== (string) $omochix_card['provider_name']) : ?><?php echo esc_html(sprintf(__('提供：%s', 'omochix'), (string) $omochix_card['provider_name'])); ?><?php endif; ?>
