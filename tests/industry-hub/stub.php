@@ -44,9 +44,11 @@ function ih_reset() {
 ih_reset();
 
 // ------------------------------------------------------------------- hooks
-function add_filter($hook, $cb, $priority = 10, $args = 1) { $GLOBALS['hooks'][$hook][$priority][] = [$cb, $args]; return true; }
+/** Mirror of WordPress's $wp_filter (WP_Hook->callbacks), read by omochix_core_industry_hub_unhook(). */
+if (!class_exists('WP_Hook')) { class WP_Hook { public $callbacks = []; } }
+function add_filter($hook, $cb, $priority = 10, $args = 1) { $GLOBALS['hooks'][$hook][$priority][] = [$cb, $args]; $GLOBALS['wp_filter'][$hook] ??= new WP_Hook(); $GLOBALS['wp_filter'][$hook]->callbacks[$priority][] = ['function' => $cb, 'accepted_args' => $args]; return true; }
 function add_action($hook, $cb, $priority = 10, $args = 1) { return add_filter($hook, $cb, $priority, $args); }
-function remove_filter($hook, $cb, $priority = 10) { foreach ($GLOBALS['hooks'][$hook][$priority] ?? [] as $i => $h) { if ($h[0] === $cb) { unset($GLOBALS['hooks'][$hook][$priority][$i]); } } return true; }
+function remove_filter($hook, $cb, $priority = 10) { foreach ($GLOBALS['hooks'][$hook][$priority] ?? [] as $i => $h) { if ($h[0] === $cb) { unset($GLOBALS['hooks'][$hook][$priority][$i]); } } foreach (isset($GLOBALS['wp_filter'][$hook]) ? $GLOBALS['wp_filter'][$hook]->callbacks[$priority] ?? [] : [] as $i => $h) { if ($h['function'] === $cb) { unset($GLOBALS['wp_filter'][$hook]->callbacks[$priority][$i]); } } return true; }
 function has_filter($hook, $cb = false) { if (false === $cb) { return !empty($GLOBALS['hooks'][$hook]); } foreach ($GLOBALS['hooks'][$hook] ?? [] as $p => $list) { foreach ($list as $h) { if ($h[0] === $cb) { return $p; } } } return false; }
 function has_action($hook, $cb = false) { return has_filter($hook, $cb); }
 function apply_filters($hook, $value, ...$args) { $list = $GLOBALS['hooks'][$hook] ?? []; ksort($list); foreach ($list as $hs) { foreach ($hs as $h) { $value = call_user_func_array($h[0], array_slice(array_merge([$value], $args), 0, $h[1])); } } return $value; }
@@ -234,7 +236,7 @@ function get_posts($args = []) { $args['posts_per_page'] = $args['posts_per_page
 function wp_count_posts($t) { return (object) ['publish' => 0]; }
 
 // ---------------------------------------------------------------- loading
-$PLUGIN = realpath(__DIR__ . '/../../wp-plugin/omochix-core');
+$PLUGIN = getenv('IH_PLUGIN_DIR') ?: realpath(__DIR__ . '/../../wp-plugin/omochix-core'); // IH_PLUGIN_DIR: a copy (partial-upload.php)
 require $PLUGIN . '/omochix-core.php';
 
 /** Run the plugin's init the way WordPress would (after resetting stores). */

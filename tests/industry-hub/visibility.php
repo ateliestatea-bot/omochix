@@ -201,4 +201,25 @@ check('blocked: every published workflow is checked in batches of 200 (no cap le
 update_post_meta($wfs[0], 'workflow_problem', '課題');
 $nr(); omochix_core_gate_invalidate(); $nr();
 
+// a required AI tool permanently deleted while a page view recomputes (race)
+$wf = ih_add_workflow('real-estate');
+$tool = (int) get_post_meta($wf, 'related_tool_ids', true)[0];
+$nr(); omochix_core_gate_invalidate(); $nr();
+check('delete race: fixture workflow is complete', !in_array($wf, omochix_core_blocked_workflow_ids(), true));
+$nr();
+omochix_core_gate_on_tool_removed($tool); // before_delete_post: bumps while the row still exists
+$v_window = omochix_core_gate_version();
+$GLOBALS['omochix_core_blocked_memo'] = null; // another request reads in that window
+$stale = omochix_core_blocked_workflow_ids();
+check('delete race: a read between before_delete_post and the delete still sees the tool (stored under the new version)', !in_array($wf, $stale, true) && $v_window === get_option('omochix_core_blocked_workflow_cache')['v']);
+$post = $GLOBALS['posts'][$tool]; unset($GLOBALS['posts'][$tool]); // the row is deleted
+do_action('deleted_post', $tool, $post);
+check('delete race: deleted_post bumps the version at once (not at shutdown)', omochix_core_gate_version() === $v_window + 1);
+$nr();
+check('delete race: the next request recomputes and the workflow is blocked (tool gone)', in_array($wf, omochix_core_blocked_workflow_ids(), true));
+$nr();
+do_action('deleted_post', 999999, new WP_Post(['ID' => 999999, 'post_type' => 'post']));
+check('delete race: deleting other post types does not invalidate', omochix_core_gate_version() === $v_window + 1);
+$GLOBALS['posts'][$tool] = $post; $nr(); omochix_core_gate_invalidate(); $nr();
+
 ih_done();

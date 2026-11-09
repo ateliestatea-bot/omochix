@@ -1,4 +1,5 @@
 <?php
+// omochix-industry-hub-api: 2
 /**
  * Industry Hub visibility, gate cache and leak protection (Industry Hub Phase 2).
  *
@@ -307,6 +308,21 @@ function omochix_core_gate_on_tool_removed( $post_id ) {
 }
 add_action( 'before_delete_post', 'omochix_core_gate_on_tool_removed' );
 add_action( 'trashed_post', 'omochix_core_gate_on_tool_removed' );
+/**
+ * A permanent delete bumps the version before the row is gone; a page view
+ * in between would store a result that still sees the post under the new
+ * version. Bumping again at once when the post is gone (the post type is
+ * passed in, the row no longer exists) makes that entry stale before any
+ * other request can read it; the usual coalescing would wait for shutdown.
+ * One extra option write per permanent delete.
+ */
+function omochix_core_gate_on_deleted( $post_id, $post = null ) {
+	if ( $post instanceof WP_Post && in_array( $post->post_type, array( 'ai_tool', 'learn_practice' ), true ) ) {
+		$GLOBALS['omochix_core_gate_bumped'] = true;
+		update_option( OMOCHIX_CORE_GATE_VERSION_OPT, omochix_core_gate_version() + 1, true );
+	}
+}
+add_action( 'deleted_post', 'omochix_core_gate_on_deleted', 10, 2 );
 
 /** wp_remove_object_terms() does not fire set_object_terms. */
 function omochix_core_gate_on_removed_terms( $object_id, $tt_ids, $taxonomy ) {
@@ -564,3 +580,4 @@ function omochix_core_industry_core_sitemap_term_args( $args, $taxonomy ) {
 	return OMOCHIX_CORE_INDUSTRY_TAXONOMY === $taxonomy ? omochix_core_industry_sitemap_term_args( array_merge( (array) $args, array( 'taxonomy' => $taxonomy ) ) ) : $args;
 }
 add_filter( 'wp_sitemaps_taxonomies_query_args', 'omochix_core_industry_core_sitemap_term_args', 10, 2 );
+// omochix-industry-hub-api: 2 (end)

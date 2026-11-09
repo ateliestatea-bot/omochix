@@ -1,4 +1,5 @@
 <?php
+// omochix-industry-hub-api: 2
 /**
  * Industry Hub read side (Industry Hub Phase 1): what a hub or a workflow
  * shows, assembled from references only (taxonomy terms, curated IDs, Motion
@@ -235,3 +236,4 @@ function omochix_core_prime_workflow_tools( array $posts ) {
 		_prime_post_caches( $ids, false, false );
 	}
 }
+// omochix-industry-hub-api: 2 (end)

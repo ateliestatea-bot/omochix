@@ -1,4 +1,5 @@
 <?php
+// omochix-industry-hub-api: 2
 /**
  * Industry hub term meta (Industry Hub Phase 1).
  *
@@ -456,3 +457,4 @@ function omochix_core_industry_gate_label( $code ) {
 	);
 	return $labels[ $code ] ?? $code;
 }
+// omochix-industry-hub-api: 2 (end)

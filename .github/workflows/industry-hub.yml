@@ -64,7 +64,8 @@ jobs:
             tests/industry-hub/workflow.php \
             tests/industry-hub/relations.php \
             tests/industry-hub/visibility.php \
-            tests/industry-hub/theme-validate.php
+            tests/industry-hub/theme-validate.php \
+            tests/industry-hub/partial-upload.php
           do
             echo "::group::$test"
             php "$test" || status=1

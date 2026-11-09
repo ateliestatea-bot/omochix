@@ -1,4 +1,5 @@
 <?php
+// omochix-industry-hub-api: 2
 /**
  * Industry Hub taxonomies (Industry Hub Phase 1).
  *
@@ -584,3 +585,4 @@ foreach ( array( 'post', 'page', 'ai_tool', 'prompt', 'learn_practice' ) as $omo
 	add_filter( 'rest_' . $omochix_core_rest_type . '_query', 'omochix_core_industry_rest_strip_query', 20 );
 }
 unset( $omochix_core_rest_type );
+// omochix-industry-hub-api: 2 (end)
