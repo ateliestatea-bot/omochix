@@ -68,6 +68,7 @@ class BuildAndVerify(unittest.TestCase):
         self.assertEqual(29, len(plan['steps']))
         self.assertEqual(6, sum(1 for s in plan['steps'] if s['action'] == 'replace'))
         self.assertEqual(['plugins/omochix-core/omochix-core.php'], [s['target'] for s in plan['steps'] if s['n'] == 14])
+        self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
 
 
 class Rehearse(unittest.TestCase):
@@ -91,7 +92,8 @@ class Rehearse(unittest.TestCase):
             steps.append({'n': n, 'package': 'p', 'path': rel, 'target': f'plugins/pkg/{rel}', 'action': 'replace' if rel in self.old else 'add',
                           'old_sha256': rl.sha256_bytes(self.old[rel]) if rel in self.old else None, 'new_sha256': rl.sha256_bytes(self.files[rel])})
         self.plan = {'packages': {'p': {'name': 'pkg', 'target': 'plugins/pkg'}}, 'steps': steps,
-                     'rollback_order': [['p', 'switch.php'], ['p', 'b.php']], 'after_apply': ['reset opcache']}
+                     'rollback_order': [['p', 'switch.php'], ['p', 'b.php']], 'after_apply': ['reset opcache'],
+                     'after_rollback': ['save permalinks']}
         self.logger = rehearse.Log(self.log, quiet=True)
 
     def tearDown(self):
@@ -171,6 +173,7 @@ class Rehearse(unittest.TestCase):
         restored = [e['path'] for e in self._entries() if e['action'] == 'restore']
         self.assertEqual(['plugins/pkg/switch.php', 'plugins/pkg/b.php'], restored)
         self.assertEqual([], rehearse.verify(self.plan, self.tgt, 'production'))
+        self.assertIn('save permalinks', [e.get('detail') for e in self._entries() if e['action'] == 'todo'])
         rehearse.rollback(self.plan, self.tgt, self.bak, self.logger, remove_added=True)
         self.assertIsNone(self._read('new/dir/a.php'))
 

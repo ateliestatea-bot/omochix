@@ -52,7 +52,7 @@ def make_plan(commit):
     plan = {'release': cfg['release'], 'commit': sha, 'note': cfg['note'],
             'packages': {k: {'name': v['name'], 'version': v['version'], 'from': v['baseline_version'], 'target': v['target']} for k, v in packages.items()},
             'steps': steps, 'switches': cfg['switches'], 'gates': cfg['gates'],
-            'rollback_order': cfg['rollback_order'], 'after_apply': cfg['after_apply']}
+            'rollback_order': cfg['rollback_order'], 'after_apply': cfg['after_apply'], 'after_rollback': cfg['after_rollback']}
     return plan, packages, problems
 
 

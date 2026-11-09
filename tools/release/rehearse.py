@@ -180,6 +180,8 @@ def rollback(plan, target, backup, log, probe=None, remove_added=False):
             if s['action'] == 'add' and file_sha(dst) == s['new_sha256']:
                 os.unlink(dst)
                 log.write(action='remove', step=s['n'], path=s['target'])
+    for note in plan.get('after_rollback', []):
+        log.write(action='todo', detail=note)
 
 
 def main():
