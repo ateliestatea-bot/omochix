@@ -541,3 +541,9 @@ function omochix_get_page_or_search_url($path, $search_term) {
 
     return add_query_arg('s', $search_term, home_url('/'));
 }
+
+// Industry Hub (docs/Industry-Hub-Phase2-Design.md). Loaded last and guarded,
+// like the Core plugin's optional files: a partial upload cannot break the site.
+if (is_readable(get_theme_file_path('/inc/learn-industries.php'))) {
+    require_once get_theme_file_path('/inc/learn-industries.php');
+}

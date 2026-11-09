@@ -196,6 +196,8 @@ function omochix_get_learn_categories() {
         ['name' => __('開発入門', 'omochix'), 'description' => __('AIを使った開発の基礎を学ぶ', 'omochix'), 'path' => 'learn/development'],
         ['name' => __('Tools', 'omochix'), 'description' => __('学習・開発に使う定番ツール', 'omochix'), 'path' => 'learn/tools'],
         ['name' => __('Tutorials', 'omochix'), 'description' => __('手順に沿って実際に手を動かす', 'omochix'), 'path' => 'learn/tutorials'],
+        // Shown only once the fixed page /learn/industries/ is published (D-1).
+        ['name' => __('業種別AI活用', 'omochix'), 'description' => __('業種の課題から、AIの使い方と実践手順を探す', 'omochix'), 'path' => 'learn/industries'],
     ];
 
     $resolved = [];

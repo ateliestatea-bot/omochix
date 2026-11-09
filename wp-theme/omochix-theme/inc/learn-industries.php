@@ -769,8 +769,15 @@ function omochix_industry_hub_schema_graph($graph) {
 }
 add_filter('slim_seo_schema_graph', 'omochix_industry_hub_schema_graph', 30);
 
-/** The index page leaves the page sitemap while no hub is indexable. */
+/**
+ * The index page leaves the page sitemap while no hub is indexable. Without a
+ * usable hub (an older Core, or its Industry Hub module off during an upload)
+ * the sitemap is left exactly as it was.
+ */
 function omochix_industry_hub_sitemap_post_ignore($ignore, $post) {
+    if (!omochix_industry_hub_enabled() || !function_exists('omochix_core_get_industries_with_visibility')) {
+        return $ignore;
+    }
     $page = omochix_industry_hub_page();
     if ($page && $post instanceof WP_Post && (int) $post->ID === (int) $page->ID) {
         return !array_filter(omochix_core_get_industries_with_visibility(true), static fn($r) => $r['indexable']);
@@ -900,3 +907,26 @@ function omochix_industry_hub_challenge_url($term, array $challenge) {
     $url     = omochix_industry_hub_url($term, '' !== $purpose ? ['purpose' => $purpose] : []);
     return $url ? $url . '#ih-workflows' : '';
 }
+
+/* -------------------------------------------------------------------------
+ * Assets
+ * ---------------------------------------------------------------------- */
+
+/** Styles of the hub pages (practice cards are reused, so their CSS too). */
+function omochix_industry_hub_enqueue_assets() {
+    if (!omochix_industry_hub_is_request() || is_404()) {
+        return;
+    }
+    $deps = wp_style_is('omochix-shell', 'enqueued') ? ['omochix-style', 'omochix-shell'] : ['omochix-style'];
+    if (!wp_style_is('omochix-learn-practice', 'enqueued') && file_exists(get_theme_file_path('/assets/css/learn-practice.css'))) {
+        wp_enqueue_style('omochix-learn-practice', get_theme_file_uri('/assets/css/learn-practice.css'), $deps, (string) filemtime(get_theme_file_path('/assets/css/learn-practice.css')));
+    }
+    wp_enqueue_style('omochix-learn-industries', get_theme_file_uri('/assets/css/learn-industries.css'), $deps, (string) filemtime(get_theme_file_path('/assets/css/learn-industries.css')));
+}
+add_action('wp_enqueue_scripts', 'omochix_industry_hub_enqueue_assets', 23);
+
+/** Use the shared shell (left navigation, editorial footer) on hub pages. */
+function omochix_industry_hub_shell($enabled) {
+    return $enabled || omochix_industry_hub_is_request();
+}
+add_filter('omochix_shell_enabled_for_request', 'omochix_industry_hub_shell');
