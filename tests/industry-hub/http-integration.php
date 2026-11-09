@@ -158,6 +158,12 @@ foreach (['/', '/learn/', '/learn/web/', '/learn/practice/', '/learn/motion/', '
 }
 
 // ------------------------------------------------------------ performance
+// Budget (throwaway WordPress, no persistent object cache; not production figures).
+$hub = req('/learn/industries/real-estate/')['queries'];
+$sparse = req('/learn/industries/restaurant/')['queries'];
+check("queries: hub page within budget (≤ 80) [$hub]", $hub > 0 && $hub <= 80);
+check("queries: a content-rich hub costs at most 20 more than a sparse one [$hub vs $sparse]", $hub - $sparse <= 20);
+check('queries: index page within budget (≤ 60)', req('/learn/industries/')['queries'] <= 60);
 $r = req('/learn/industries/real-estate/');
 echo "INFO queries: hub " . $r['queries'] . ", index " . req('/learn/industries/')['queries'] . ", hub ?purpose=marketing " . req('/learn/industries/real-estate/?purpose=marketing')['queries'] . "\n";
 
