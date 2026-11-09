@@ -917,3 +917,9 @@ function omochix_industry_hub_enqueue_assets() {
     wp_enqueue_style('omochix-learn-industries', get_theme_file_uri('/assets/css/learn-industries.css'), $deps, (string) filemtime(get_theme_file_path('/assets/css/learn-industries.css')));
 }
 add_action('wp_enqueue_scripts', 'omochix_industry_hub_enqueue_assets', 23);
+
+/** Use the shared shell (left navigation, editorial footer) on hub pages. */
+function omochix_industry_hub_shell($enabled) {
+    return $enabled || omochix_industry_hub_is_request();
+}
+add_filter('omochix_shell_enabled_for_request', 'omochix_industry_hub_shell');
