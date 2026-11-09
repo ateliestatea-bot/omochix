@@ -29,7 +29,7 @@ set_error_handler(static function ($no, $str, $file, $line) {
 });
 
 
-class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_name = '', $post_title = '', $post_parent = 0, $post_excerpt = '', $post_content = '', $post_password = '', $menu_order = 0, $post_author = 1; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
+class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_date_gmt = '0000-00-00 00:00:00', $post_name = '', $post_title = '', $post_parent = 0, $post_excerpt = '', $post_content = '', $post_password = '', $menu_order = 0, $post_author = 1; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 class WP_Term { public $term_id = 0, $term_taxonomy_id = 0, $name = '', $slug = '', $taxonomy = '', $parent = 0, $count = 0, $description = ''; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 class WP_Error { public $code, $message, $data; function __construct($code = '', $message = '', $data = null) { $this->code = $code; $this->message = $message; $this->data = $data; } function get_error_message() { return $this->message; } function get_error_code() { return $this->code; } }
 class WP_Query { public $posts = []; public $found_posts = 0; public $query_vars = []; public $tax_query = null; public $max_num_pages = 0; function is_main_query() { return false; } function __construct($args = []) { $this->query_vars = $args; $GLOBALS['last_query'] = $args; $this->posts = ih_query_posts($args); $this->found_posts = count($this->posts); } }
@@ -190,6 +190,11 @@ function get_term_link($t, $tax = '') { return 'https://example.test/learn/indus
 // ------------------------------------------------------------------ posts
 function ih_add_post($a) { $id = $a['ID'] ?? (max(array_keys($GLOBALS['posts'] ?: [0])) + 1); $a['ID'] = $id; $GLOBALS['posts'][$id] = new WP_Post($a); return $id; }
 function get_post($p = null) { if ($p instanceof WP_Post) { return $p; } return $GLOBALS['posts'][(int) $p] ?? null; }
+/** Scheduled publishing as WordPress does it (wp-includes/post.php): status written directly, no wp_insert_post_data. */
+function wp_update_post($a) { $id = (int) ($a['ID'] ?? 0); $p = $GLOBALS['posts'][$id] ?? null; if (!$p) { return 0; } $old = $p->post_status; foreach ($a as $k => $v) { if ('ID' !== $k) { $p->$k = $v; } } if ($old !== $p->post_status) { do_action('transition_post_status', $p->post_status, $old, $p); } return $id; }
+function wp_schedule_single_event($t, $hook, $args = []) { $GLOBALS['scheduled'][] = [$t, $hook, $args]; return true; }
+function check_and_publish_future_post($post) { $p = get_post($post); if (!$p || 'future' !== $p->post_status) { return; } if (strtotime($p->post_date_gmt . ' GMT') > time()) { wp_schedule_single_event(strtotime($p->post_date_gmt . ' GMT'), 'publish_future_post', [$p->ID]); return; } $p->post_status = 'publish'; $GLOBALS['cron_published'][] = (int) $p->ID; do_action('transition_post_status', 'publish', 'future', $p); }
+add_action('publish_future_post', 'check_and_publish_future_post', 10, 1); // default-filters.php
 function get_post_type($p = null) { $p = get_post($p); return $p ? $p->post_type : false; }
 function get_post_status($p = null) { $p = get_post($p); return $p ? $p->post_status : false; }
 function get_post_field($f, $p) { $p = get_post($p); return $p ? ($p->$f ?? '') : ''; }

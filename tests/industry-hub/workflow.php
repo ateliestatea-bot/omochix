@@ -206,4 +206,34 @@ check('rest: editors keep them in the edit context', 12 === omochix_core_workflo
 ih_as([]);
 check('rest: edit context without edit_post is still stripped', !isset(omochix_core_workflow_rest_strip_ledger_ids(clone $resp, get_post($p), $editc)->get_data()['meta']['workflow_results'][0]['source_resource_id']));
 
+// ------------------------------------------------- scheduled publishing (cron)
+// WordPress publishes a due post with wp_publish_post(): no wp_insert_post_data, no REST filter.
+$sched = static function ($minutes_ago = 2) { $id = ih_add_workflow('real-estate'); $GLOBALS['posts'][$id]->post_status = 'future'; $GLOBALS['posts'][$id]->post_date_gmt = gmdate('Y-m-d H:i:s', time() - 60 * $minutes_ago); return $id; };
+$fire = static function ($id) { $GLOBALS['cron_published'] = []; $GLOBALS['scheduled'] = []; do_action('publish_future_post', $id); return get_post_status($id); };
+check('cron: the re-check runs before WordPress publishes (priority 8 < 10)', 8 === has_filter('publish_future_post', 'omochix_core_workflow_guard_future') && 10 === has_filter('publish_future_post', 'check_and_publish_future_post'));
+$ok = $sched();
+check('cron: a complete scheduled workflow is published at its time', 'publish' === $fire($ok) && [$ok] === $GLOBALS['cron_published'] && '' === get_post_meta($ok, '_omochix_workflow_schedule_held', true));
+$gone = $sched(); delete_post_meta($gone, 'workflow_problem');
+check('cron: a workflow emptied after scheduling is not published (back to draft)', 'draft' === $fire($gone) && [] === $GLOBALS['cron_published']);
+$held = get_post_meta($gone, '_omochix_workflow_schedule_held', true);
+check('cron: the reasons are recorded for editors (time and §7 lines)', is_array($held) && $held['at'] > 0 && false !== strpos(implode(' ', $held['lines']), '解決する業務課題'));
+check('cron: the list shows "予約公開を保留"', ['omochix_schedule_held' => '予約公開を保留'] === omochix_core_workflow_schedule_held_state([], get_post($gone)));
+$GLOBALS['caps'] = ['edit_post' => true]; $_GET['post'] = $gone; ob_start(); omochix_core_workflow_schedule_held_notice(); $notice = ob_get_clean(); unset($_GET['post']); $GLOBALS['caps'] = [];
+check('cron: the edit screen explains why it was not published', false !== strpos($notice, '下書きに戻しました') && false !== strpos($notice, '解決する業務課題'));
+$tool = $sched(); update_post_meta($tool, 'related_tool_ids', [987654]);
+check('cron: a workflow whose required AI tool was deleted is not published', 'draft' === $fire($tool));
+$prov = $sched(); wp_set_object_terms($prov, [], 'omx_provider_type');
+check('cron: a workflow whose provider was removed is not published', 'draft' === $fire($prov));
+$ind = $sched(); wp_set_object_terms($ind, [], 'omx_industry');
+check('cron: a workflow whose industries were removed is not published', 'draft' === $fire($ind));
+check('cron: the next event publishes again (WordPress handler restored)', 'publish' === $fire($sched()));
+$early = $sched(-30);
+check('cron: an event that fires early is left to WordPress (rescheduled, not checked or demoted)', 'future' === $fire($early) && 'publish_future_post' === ($GLOBALS['scheduled'][0][1] ?? ''));
+$plain = ih_add_post(['post_type' => 'learn_practice', 'post_status' => 'future', 'post_date_gmt' => gmdate('Y-m-d H:i:s', time() - 120)]);
+$post  = ih_add_post(['post_type' => 'post', 'post_status' => 'future', 'post_date_gmt' => gmdate('Y-m-d H:i:s', time() - 120)]);
+check('cron: non-workflow practice items and other posts publish as usual', 'publish' === $fire($plain) && 'publish' === $fire($post));
+check('cron: running the same event twice is safe (a held workflow stays a draft, nothing is published)', 'draft' === $fire($gone) && [] === $GLOBALS['cron_published']);
+update_post_meta($gone, 'workflow_problem', '課題'); wp_update_post(['ID' => $gone, 'post_status' => 'future']);
+check('cron: the record is cleared once the editor schedules it again', '' === get_post_meta($gone, '_omochix_workflow_schedule_held', true) && 'publish' === $fire($gone));
+
 ih_done();

@@ -25,6 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const OMOCHIX_CORE_WORKFLOW_FORMAT          = 'workflow';
+const OMOCHIX_CORE_WORKFLOW_SCHEDULE_HELD_META = '_omochix_workflow_schedule_held';
 const OMOCHIX_CORE_WORKFLOW_GUARD_TRANSIENT = 'omochix_core_workflow_guard_';
 
 /**
@@ -513,6 +514,78 @@ function omochix_core_workflow_guard_rest( $prepared, $request ) {
 	return new WP_Error( 'omochix_workflow_blocked', __( 'ワークフローとして公開できません。', 'omochix-core' ) . ' ' . implode( ' / ', $lines ) . ' ' . __( '入力した項目は「下書き保存」で保存してから、もう一度「公開」してください。', 'omochix-core' ), array( 'status' => 400 ) );
 }
 add_filter( 'rest_pre_insert_learn_practice', 'omochix_core_workflow_guard_rest', 11, 2 );
+
+/**
+ * Scheduled publishing. WordPress's cron publishes a due post with
+ * wp_publish_post(), which writes the status straight to the database: no
+ * wp_insert_post_data, no REST filter, so the guards above never see it.
+ * A scheduled workflow is also treated as live once saved (edits only
+ * warn), and a required tool deleted or a term removed later is not a
+ * save at all. So the stored workflow is checked again right before
+ * WordPress publishes it, with the same rules the hubs use
+ * (omochix_core_workflow_stored_blockers). When it fails it is not
+ * published: it goes back to draft, and the reasons are kept for editors
+ * (post meta, a post state in the list, a notice on the edit screen).
+ *
+ * Runs before check_and_publish_future_post (10). WordPress's handler is
+ * put back for the next event at priority 11 (omochix-core.php). A post
+ * that is not due yet, or no longer scheduled, is left to WordPress.
+ *
+ * @param int $post_id Post ID.
+ * @return void
+ */
+function omochix_core_workflow_guard_future( $post_id ) {
+	$post = get_post( (int) $post_id );
+	if ( ! $post instanceof WP_Post || 'learn_practice' !== $post->post_type || 'future' !== $post->post_status || strtotime( $post->post_date_gmt . ' GMT' ) > time() ) {
+		return;
+	}
+	$lines = omochix_core_workflow_stored_blockers( (int) $post->ID );
+	if ( ! $lines ) {
+		return;
+	}
+	remove_action( 'publish_future_post', 'check_and_publish_future_post', 10 );
+	update_post_meta( (int) $post->ID, OMOCHIX_CORE_WORKFLOW_SCHEDULE_HELD_META, array( 'at' => time(), 'lines' => array_values( $lines ) ) );
+	wp_update_post( array( 'ID' => (int) $post->ID, 'post_status' => 'draft' ) );
+}
+add_action( 'publish_future_post', 'omochix_core_workflow_guard_future', 8 );
+
+/** Forget the record once the workflow is scheduled or published again. */
+function omochix_core_workflow_schedule_held_clear( $new, $old, $post ) {
+	if ( $post instanceof WP_Post && 'learn_practice' === $post->post_type && in_array( $new, array( 'publish', 'future' ), true ) ) {
+		delete_post_meta( (int) $post->ID, OMOCHIX_CORE_WORKFLOW_SCHEDULE_HELD_META );
+	}
+}
+add_action( 'transition_post_status', 'omochix_core_workflow_schedule_held_clear', 10, 3 );
+
+/** "予約公開を保留" in the posts list. */
+function omochix_core_workflow_schedule_held_state( $states, $post ) {
+	if ( $post instanceof WP_Post && 'learn_practice' === $post->post_type && get_post_meta( (int) $post->ID, OMOCHIX_CORE_WORKFLOW_SCHEDULE_HELD_META, true ) ) {
+		$states['omochix_schedule_held'] = __( '予約公開を保留', 'omochix-core' );
+	}
+	return $states;
+}
+add_filter( 'display_post_states', 'omochix_core_workflow_schedule_held_state', 10, 2 );
+
+/** On the edit screen: why the scheduled workflow was not published. */
+function omochix_core_workflow_schedule_held_notice() {
+	$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$held    = $post_id && 'learn_practice' === get_post_type( $post_id ) ? get_post_meta( $post_id, OMOCHIX_CORE_WORKFLOW_SCHEDULE_HELD_META, true ) : '';
+	if ( ! is_array( $held ) || empty( $held['lines'] ) || ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+	echo '<div class="notice notice-error"><p><strong>' . esc_html(
+		sprintf(
+			/* translators: %s: date and time */
+			__( '予約していたワークフローは、公開時刻（%s）の確認で条件を満たしていなかったため公開せず、下書きに戻しました。', 'omochix-core' ),
+			wp_date( 'Y-m-d H:i', (int) ( $held['at'] ?? 0 ) )
+		)
+	) . '</strong></p><ul>';
+	foreach ( (array) $held['lines'] as $line ) {
+		echo '<li>' . esc_html( (string) $line ) . '</li>';
+	}
+	echo '</ul></div>';
+}
+add_action( 'admin_notices', 'omochix_core_workflow_schedule_held_notice' );
 
 /** Admin notice after a held-back classic save. */
 function omochix_core_workflow_guard_notice() {

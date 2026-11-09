@@ -22,9 +22,6 @@ if ('--child' === ($argv[1] ?? '')) {
     }
     if ('hold' === $mode) {
         // The fail-closed hold, through the same filters WordPress runs for each path.
-        if (!function_exists('wp_schedule_single_event')) { function wp_schedule_single_event($t, $hook, $args = []) { $GLOBALS['scheduled'][] = [$hook, $args]; return true; } }
-        if (!function_exists('check_and_publish_future_post')) { function check_and_publish_future_post($id) { $GLOBALS['cron_published'][] = (int) $id; } }
-        add_action('publish_future_post', 'check_and_publish_future_post', 10, 1);
         ih_boot();
         if (!ih_term('learn_format', 'workflow')) { $c = $GLOBALS['caps']; $GLOBALS['caps'] = ['manage_categories' => true]; wp_insert_term('導入する', 'learn_format', ['slug' => 'workflow']); $GLOBALS['caps'] = $c; }
         $GLOBALS['caps'] = ['*' => true];
@@ -45,10 +42,10 @@ if ('--child' === ($argv[1] ?? '')) {
         $r['REST adds the workflow format'] = $rest($mk('draft', false), [(int) $wf_term->term_id]);
         $r['REST non-workflow'] = $rest($mk('draft', false));
         $r['REST live workflow'] = $rest($mk('publish', true));
-        $due = $mk('future', true); $GLOBALS['cron_published'] = []; $GLOBALS['scheduled'] = [];
+        $due = $mk('future', true); $GLOBALS['posts'][$due]->post_date_gmt = gmdate('Y-m-d H:i:s', time() - 60); $GLOBALS['cron_published'] = []; $GLOBALS['scheduled'] = [];
         do_action('publish_future_post', $due);
-        $r['cron: due scheduled workflow'] = in_array($due, $GLOBALS['cron_published'], true) ? 'published' : ('rescheduled' === (($GLOBALS['scheduled'][0][0] ?? '') === 'publish_future_post' ? 'rescheduled' : '') ? 'rescheduled' : 'not published, not rescheduled');
-        $plain = $mk('future', false); $GLOBALS['cron_published'] = [];
+        $r['cron: due scheduled workflow'] = in_array($due, $GLOBALS['cron_published'], true) ? 'published' : (($GLOBALS['scheduled'][0][1] ?? '') === 'publish_future_post' ? 'rescheduled' : 'not published, not rescheduled');
+        $plain = $mk('future', false); $GLOBALS['posts'][$plain]->post_date_gmt = gmdate('Y-m-d H:i:s', time() - 60); $GLOBALS['cron_published'] = [];
         do_action('publish_future_post', $plain);
         $r['cron: next event (non-workflow) still publishes'] = in_array($plain, $GLOBALS['cron_published'], true) ? 'published' : 'NOT published';
         echo json_encode(['loaded' => $out['loaded'], 'hold' => $r], JSON_UNESCAPED_UNICODE);
