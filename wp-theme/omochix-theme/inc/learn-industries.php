@@ -769,8 +769,15 @@ function omochix_industry_hub_schema_graph($graph) {
 }
 add_filter('slim_seo_schema_graph', 'omochix_industry_hub_schema_graph', 30);
 
-/** The index page leaves the page sitemap while no hub is indexable. */
+/**
+ * The index page leaves the page sitemap while no hub is indexable. Without a
+ * usable hub (an older Core, or its Industry Hub module off during an upload)
+ * the sitemap is left exactly as it was.
+ */
 function omochix_industry_hub_sitemap_post_ignore($ignore, $post) {
+    if (!omochix_industry_hub_enabled() || !function_exists('omochix_core_get_industries_with_visibility')) {
+        return $ignore;
+    }
     $page = omochix_industry_hub_page();
     if ($page && $post instanceof WP_Post && (int) $post->ID === (int) $page->ID) {
         return !array_filter(omochix_core_get_industries_with_visibility(true), static fn($r) => $r['indexable']);

@@ -71,3 +71,6 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
+
+      - name: Industry Hub theme without a usable Core module
+        run: php tests/industry-hub/theme-without-core.php
