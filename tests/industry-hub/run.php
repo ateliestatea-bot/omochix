@@ -53,8 +53,9 @@ check('public switch: industry archives stay noindex,follow until the theme lift
 $GLOBALS['ctx']['is_tax'] = 'learn_field';
 check('robots: other taxonomies are not touched by Industry Hub', !isset(apply_filters('wp_robots', [])['noindex']) && true === apply_filters('slim_seo_robots_index', true));
 $GLOBALS['ctx']['is_tax'] = '';
-check('sitemap: purpose, provider and (while noindex) industry are removed; others kept', ['learn_usecase', 'prompt_category'] === apply_filters('slim_seo_sitemap_taxonomies', ['learn_usecase', 'omx_purpose', 'prompt_category', 'omx_provider_type', 'omx_industry']));
+check('sitemap: once public, purpose and provider are removed and industry stays (per-term rule in industry-visibility.php)', ['learn_usecase', 'prompt_category', 'omx_industry'] === apply_filters('slim_seo_sitemap_taxonomies', ['learn_usecase', 'omx_purpose', 'prompt_category', 'omx_provider_type', 'omx_industry']));
 remove_filter('omochix_core_industry_public', '__return_true');
+check('sitemap: while private, industry is removed too', ['learn_usecase'] === apply_filters('slim_seo_sitemap_taxonomies', ['learn_usecase', 'omx_industry', 'omx_purpose']));
 ih_fresh();
 
 // ---------------------------------------------------------- industry rules

@@ -1,4 +1,5 @@
 <?php
+// omochix-industry-hub-version: 1.10.0-dev
 /**
  * Industry Hub taxonomies (Industry Hub Phase 1).
  *
@@ -458,7 +459,11 @@ add_filter(
 add_filter(
 	'slim_seo_sitemap_taxonomies',
 	static function ( $taxonomies ) {
-		if ( ! is_array( $taxonomies ) || ! apply_filters( 'omochix_core_industry_archive_noindex', true ) ) {
+		// While hubs are private there is nothing to list. Once public, the
+		// per-term rule in includes/industry-visibility.php decides which hubs
+		// appear (the archive noindex filter is request-specific and has no
+		// term to judge here).
+		if ( ! is_array( $taxonomies ) || omochix_core_industry_is_public() ) {
 			return $taxonomies;
 		}
 		return array_values( array_diff( $taxonomies, array( OMOCHIX_CORE_INDUSTRY_TAXONOMY ) ) );
@@ -580,3 +585,4 @@ foreach ( array( 'post', 'page', 'ai_tool', 'prompt', 'learn_practice' ) as $omo
 	add_filter( 'rest_' . $omochix_core_rest_type . '_query', 'omochix_core_industry_rest_strip_query', 20 );
 }
 unset( $omochix_core_rest_type );
+// omochix-industry-hub-version: 1.10.0-dev (end)

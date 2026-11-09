@@ -11,7 +11,7 @@ $re  = ih_term('omx_industry', 'real-estate')->term_id;
 $reg = $GLOBALS['registered']['term_meta']['omx_industry'] ?? [];
 
 // ------------------------------------------------------------ registration
-check('register: 11 industry term meta keys, single, not in REST, with sanitize and auth callbacks', 11 === count($reg) && !array_filter($reg, static fn($a) => true !== $a['single'] || false !== $a['show_in_rest'] || 'omochix_core_sanitize_registered_industry_meta' !== $a['sanitize_callback'] || 'omochix_core_auth_registered_industry_meta' !== $a['auth_callback']));
+check('register: 12 industry term meta keys, single, not in REST, with sanitize and auth callbacks', 12 === count($reg) && !array_filter($reg, static fn($a) => true !== $a['single'] || false !== $a['show_in_rest'] || 'omochix_core_sanitize_registered_industry_meta' !== $a['sanitize_callback'] || 'omochix_core_auth_registered_industry_meta' !== $a['auth_callback']));
 check('register: term meta only on omx_industry (no other taxonomy gets meta)', ['omx_industry'] === array_keys($GLOBALS['registered']['term_meta']));
 ih_as([]);
 check('auth: a user who cannot edit the term cannot write meta', false === omochix_core_auth_registered_industry_meta(true, 'industry_lead', $re));
@@ -58,10 +58,10 @@ check('save: a valid nonce without edit_term is refused', '' === get_term_meta($
 ih_as(['edit_term']);
 $post_form(['industry_lead' => '<em>不動産</em>の導入文', 'industry_hub_ready' => '1', 'industry_tool_ids' => "$tool, $prm", 'industry_challenges' => '[{"title":"T","body":"B"}]'], null, $re);
 omochix_core_save_industry_fields($re);
-check('save: valid request writes sanitized values', '不動産の導入文' === get_term_meta($re, 'industry_lead', true) && true === get_term_meta($re, 'industry_hub_ready', true) && [$tool] === get_term_meta($re, 'industry_tool_ids', true) && [['title' => 'T', 'body' => 'B']] === get_term_meta($re, 'industry_challenges', true));
+check('save: valid request writes sanitized values', '不動産の導入文' === get_term_meta($re, 'industry_lead', true) && true === get_term_meta($re, 'industry_hub_ready', true) && [$tool] === get_term_meta($re, 'industry_tool_ids', true) && [['title' => 'T', 'body' => 'B', 'purpose' => '']] === get_term_meta($re, 'industry_challenges', true));
 $post_form(['industry_challenges' => '[{"title":"broken"', 'industry_lead' => '新しい導入文'], null, $re);
 omochix_core_save_industry_fields($re);
-check('save: malformed JSON keeps the stored rows, other fields still save, a notice is queued', [['title' => 'T', 'body' => 'B']] === get_term_meta($re, 'industry_challenges', true) && '新しい導入文' === get_term_meta($re, 'industry_lead', true) && is_array(get_transient('omochix_core_industry_notice_1')));
+check('save: malformed JSON keeps the stored rows, other fields still save, a notice is queued', [['title' => 'T', 'body' => 'B', 'purpose' => '']] === get_term_meta($re, 'industry_challenges', true) && '新しい導入文' === get_term_meta($re, 'industry_lead', true) && is_array(get_transient('omochix_core_industry_notice_1')));
 check('save: the unchecked hub_ready box (not posted) clears the flag', '' === get_term_meta($re, 'industry_hub_ready', true));
 $post_form(['industry_lead' => 'api_key = "' . str_repeat('A', 30) . '"'], null, $re);
 omochix_core_save_industry_fields($re);
@@ -82,7 +82,7 @@ update_term_meta($re, 'industry_sources', [['label' => '"><svg onload=alert(1)>'
 ob_start(); omochix_core_industry_edit_fields(get_term($re, 'omx_industry')); $form = ob_get_clean();
 check('form: our nonce for this term is printed', false !== strpos($form, 'name="omochix_core_industry_nonce" value="nonce-omochix_core_save_industry_' . $re . '"'));
 check('form: stored values are escaped (no textarea break-out, no markup injection)', false === strpos($form, '<script>') && false === strpos($form, '<svg') && false === strpos($form, '</textarea><script'));
-check('form: every schema field is rendered with a label', 11 === substr_count($form, 'name="omochix_core_industry_meta['));
+check('form: every schema field is rendered with a label', 12 === substr_count($form, 'name="omochix_core_industry_meta['));
 check('form: the content gate is listed for editors', false !== strpos($form, '検索エンジン登録の条件') && false !== strpos($form, '導入文'));
 ob_start(); omochix_core_industry_edit_fields(get_term($sub, 'omx_industry')); $subform = ob_get_clean();
 check('form: a sub-industry shows a note instead of hub fields', false === strpos($subform, 'omochix_core_industry_meta[') && false !== strpos($subform, 'サブ業種'));
@@ -154,7 +154,7 @@ $GLOBALS['post_terms'][$wf3]['omx_provider_type'] = [ih_term('omx_provider_type'
 update_term_meta($re, 'industry_hub_ready', false);
 check('gate: without the editor flag the hub is never ready', ['G1_editor_ready'] === omochix_core_industry_hub_gate($re, $now)['unmet']);
 check('gate: a sub-industry is never a hub', ['not_top_level'] === omochix_core_industry_hub_gate($sub, $now)['unmet'] && ['missing_term'] === omochix_core_industry_hub_gate(424242, $now)['unmet']);
-$GLOBALS['term_meta'][$re]['industry_lead'] = ['not', 'a', 'string'];
+$GLOBALS['term_meta'][$re]['industry_lead'] = ['not', 'a', 'string']; $GLOBALS['omochix_core_industry_meta_memo'] = []; // written around the API
 check('read: a tampered stored value is re-sanitized on read', '' === omochix_core_get_industry_meta($re)['industry_lead']);
 
 ih_done();

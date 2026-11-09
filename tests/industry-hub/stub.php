@@ -29,10 +29,10 @@ set_error_handler(static function ($no, $str, $file, $line) {
 });
 
 
-class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_name = '', $post_title = '', $post_parent = 0, $post_excerpt = '', $post_content = '', $post_password = '', $menu_order = 0, $post_author = 1; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
+class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_date_gmt = '0000-00-00 00:00:00', $post_name = '', $post_title = '', $post_parent = 0, $post_excerpt = '', $post_content = '', $post_password = '', $menu_order = 0, $post_author = 1; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 class WP_Term { public $term_id = 0, $term_taxonomy_id = 0, $name = '', $slug = '', $taxonomy = '', $parent = 0, $count = 0, $description = ''; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 class WP_Error { public $code, $message, $data; function __construct($code = '', $message = '', $data = null) { $this->code = $code; $this->message = $message; $this->data = $data; } function get_error_message() { return $this->message; } function get_error_code() { return $this->code; } }
-class WP_Query { public $posts = []; public $found_posts = 0; public $query_vars = []; function __construct($args = []) { $this->query_vars = $args; $GLOBALS['last_query'] = $args; $this->posts = ih_query_posts($args); $this->found_posts = count($this->posts); } }
+class WP_Query { public $posts = []; public $found_posts = 0; public $query_vars = []; public $tax_query = null; public $max_num_pages = 0; function is_main_query() { return false; } function __construct($args = []) { $this->query_vars = $args; $GLOBALS['last_query'] = $args; $this->posts = ih_query_posts($args); $this->found_posts = count($this->posts); } }
 
 function ih_reset() {
     $GLOBALS['hooks'] = [];
@@ -44,13 +44,16 @@ function ih_reset() {
 ih_reset();
 
 // ------------------------------------------------------------------- hooks
-function add_filter($hook, $cb, $priority = 10, $args = 1) { $GLOBALS['hooks'][$hook][$priority][] = [$cb, $args]; return true; }
+/** Mirror of WordPress's $wp_filter (WP_Hook->callbacks), read by omochix_core_industry_hub_unhook(). */
+if (!class_exists('WP_Hook')) { class WP_Hook { public $callbacks = []; } }
+function add_filter($hook, $cb, $priority = 10, $args = 1) { $GLOBALS['hooks'][$hook][$priority][] = [$cb, $args]; $GLOBALS['wp_filter'][$hook] ??= new WP_Hook(); $GLOBALS['wp_filter'][$hook]->callbacks[$priority][] = ['function' => $cb, 'accepted_args' => $args]; return true; }
 function add_action($hook, $cb, $priority = 10, $args = 1) { return add_filter($hook, $cb, $priority, $args); }
-function remove_filter($hook, $cb, $priority = 10) { foreach ($GLOBALS['hooks'][$hook][$priority] ?? [] as $i => $h) { if ($h[0] === $cb) { unset($GLOBALS['hooks'][$hook][$priority][$i]); } } return true; }
+function remove_filter($hook, $cb, $priority = 10) { foreach ($GLOBALS['hooks'][$hook][$priority] ?? [] as $i => $h) { if ($h[0] === $cb) { unset($GLOBALS['hooks'][$hook][$priority][$i]); } } foreach (isset($GLOBALS['wp_filter'][$hook]) ? $GLOBALS['wp_filter'][$hook]->callbacks[$priority] ?? [] : [] as $i => $h) { if ($h['function'] === $cb) { unset($GLOBALS['wp_filter'][$hook]->callbacks[$priority][$i]); } } return true; }
 function has_filter($hook, $cb = false) { if (false === $cb) { return !empty($GLOBALS['hooks'][$hook]); } foreach ($GLOBALS['hooks'][$hook] ?? [] as $p => $list) { foreach ($list as $h) { if ($h[0] === $cb) { return $p; } } } return false; }
 function has_action($hook, $cb = false) { return has_filter($hook, $cb); }
 function apply_filters($hook, $value, ...$args) { $list = $GLOBALS['hooks'][$hook] ?? []; ksort($list); foreach ($list as $hs) { foreach ($hs as $h) { $value = call_user_func_array($h[0], array_slice(array_merge([$value], $args), 0, $h[1])); } } return $value; }
-function do_action($hook, ...$args) { $GLOBALS['action_stack'][] = $hook; $list = $GLOBALS['hooks'][$hook] ?? []; ksort($list); foreach ($list as $hs) { foreach ($hs as $h) { call_user_func_array($h[0], array_slice($args, 0, $h[1])); } } array_pop($GLOBALS['action_stack']); }
+function do_action($hook, ...$args) { $GLOBALS['action_stack'][] = $hook; $list = $GLOBALS['hooks'][$hook] ?? []; ksort($list); foreach ($list as $p => $hs) { foreach ($hs as $h) { if (!in_array($h, $GLOBALS['hooks'][$hook][$p] ?? [], true)) { continue; } /* removed meanwhile (WP_Hook does the same) */ call_user_func_array($h[0], array_slice($args, 0, $h[1])); } } array_pop($GLOBALS['action_stack']); }
+function remove_action($hook, $cb, $priority = 10) { return remove_filter($hook, $cb, $priority); }
 function doing_action($hook = null) { $st = $GLOBALS['action_stack'] ?? []; return null === $hook ? (bool) $st : in_array($hook, $st, true); }
 function did_action($hook) { return 0; }
 function is_user_logged_in() { return !empty($GLOBALS['ctx']['logged_in']) || !empty($GLOBALS['caps']); }
@@ -88,6 +91,7 @@ function wp_date($f, $ts = null) { return gmdate($f, $ts ?? time()); }
 function plugin_dir_path($f) { return rtrim(dirname($f), '/') . '/'; }
 function plugin_dir_url($f) { return 'https://example.test/wp-content/plugins/omochix-core/'; }
 function admin_url($p = '') { return 'https://example.test/wp-admin/' . ltrim($p, '/'); }
+function add_query_arg($args, $url) { [$base, $frag] = array_pad(explode('#', (string) $url, 2), 2, null); $sep = false === strpos($base, '?') ? '?' : '&'; $pairs = []; foreach ((array) $args as $k => $v) { $pairs[] = $k . '=' . $v; } return $base . ($pairs ? $sep . implode('&', $pairs) : '') . (null !== $frag ? '#' . $frag : ''); }
 function home_url($p = '') { return 'https://example.test' . $p; }
 function get_current_user_id() { return 1; }
 function get_userdata($id) { return null; }
@@ -179,13 +183,18 @@ function wp_set_object_terms($post_id, $terms, $tax, $append = false) {
 }
 function wp_set_post_terms($post_id, $terms, $tax, $append = false) { return wp_set_object_terms($post_id, $terms, $tax, $append); }
 function get_term_meta($id, $key = '', $single = false) { return '' === $key ? ($GLOBALS['term_meta'][$id] ?? []) : ($GLOBALS['term_meta'][$id][$key] ?? ''); }
-function update_term_meta($id, $key, $v) { $GLOBALS['term_meta'][$id][$key] = $v; return true; }
-function delete_term_meta($id, $key) { unset($GLOBALS['term_meta'][$id][$key]); return true; }
+function update_term_meta($id, $key, $v) { $GLOBALS['term_meta'][$id][$key] = $v; do_action('updated_term_meta', 0, $id, $key, $v); return true; }
+function delete_term_meta($id, $key) { unset($GLOBALS['term_meta'][$id][$key]); do_action('deleted_term_meta', [0], $id, $key, ''); return true; }
 function get_term_link($t, $tax = '') { return 'https://example.test/learn/industries/' . (is_object($t) ? $t->slug : $t) . '/'; }
 
 // ------------------------------------------------------------------ posts
 function ih_add_post($a) { $id = $a['ID'] ?? (max(array_keys($GLOBALS['posts'] ?: [0])) + 1); $a['ID'] = $id; $GLOBALS['posts'][$id] = new WP_Post($a); return $id; }
 function get_post($p = null) { if ($p instanceof WP_Post) { return $p; } return $GLOBALS['posts'][(int) $p] ?? null; }
+/** Scheduled publishing as WordPress does it (wp-includes/post.php): status written directly, no wp_insert_post_data. */
+function wp_update_post($a) { $id = (int) ($a['ID'] ?? 0); $p = $GLOBALS['posts'][$id] ?? null; if (!$p) { return 0; } $old = $p->post_status; foreach ($a as $k => $v) { if ('ID' !== $k) { $p->$k = $v; } } if ($old !== $p->post_status) { do_action('transition_post_status', $p->post_status, $old, $p); } return $id; }
+function wp_schedule_single_event($t, $hook, $args = []) { $GLOBALS['scheduled'][] = [$t, $hook, $args]; return true; }
+function check_and_publish_future_post($post) { $p = get_post($post); if (!$p || 'future' !== $p->post_status) { return; } if (strtotime($p->post_date_gmt . ' GMT') > time()) { wp_schedule_single_event(strtotime($p->post_date_gmt . ' GMT'), 'publish_future_post', [$p->ID]); return; } $p->post_status = 'publish'; $GLOBALS['cron_published'][] = (int) $p->ID; do_action('transition_post_status', 'publish', 'future', $p); }
+add_action('publish_future_post', 'check_and_publish_future_post', 10, 1); // default-filters.php
 function get_post_type($p = null) { $p = get_post($p); return $p ? $p->post_type : false; }
 function get_post_status($p = null) { $p = get_post($p); return $p ? $p->post_status : false; }
 function get_post_field($f, $p) { $p = get_post($p); return $p ? ($p->$f ?? '') : ''; }
@@ -196,6 +205,7 @@ function update_post_meta($id, $key, $v) { $GLOBALS['meta'][$id][$key] = $v; ret
 function delete_post_meta($id, $key) { unset($GLOBALS['meta'][$id][$key]); return true; }
 function ih_query_posts($args) {
     $GLOBALS['last_query'] = $args;
+    $GLOBALS['query_count'] = ($GLOBALS['query_count'] ?? 0) + 1;
     $types = isset($args['post_type']) ? (array) $args['post_type'] : ['post'];
     $status = isset($args['post_status']) ? (array) $args['post_status'] : ['publish'];
     $out = [];
@@ -218,14 +228,21 @@ function ih_query_posts($args) {
     }
     if (!empty($args['post__in']) && ($args['orderby'] ?? '') === 'post__in') { $order = array_flip(array_map('intval', $args['post__in'])); usort($out, static fn($a, $b) => $order[$a->ID] <=> $order[$b->ID]); }
     $n = (int) ($args['posts_per_page'] ?? 10);
-    if ($n > 0) { $out = array_slice($out, 0, $n); }
+    if ($n > 0) { $out = array_slice($out, max(0, (int) ($args['paged'] ?? 1) - 1) * $n, $n); }
     return ($args['fields'] ?? '') === 'ids' ? wp_list_pluck($out, 'ID') : $out;
 }
+function _prime_post_caches($ids, $terms = true, $meta = true) { $GLOBALS['primed'][] = array_values((array) $ids); }
+function is_feed($t = '') { return !empty($GLOBALS['ctx']['is_feed']); }
+function is_embed() { return !empty($GLOBALS['ctx']['is_embed']); }
+function is_search() { return !empty($GLOBALS['ctx']['is_search']); }
+function is_404() { return !empty($GLOBALS['ctx']['is_404']); }
+function get_query_var($k, $d = '') { return $GLOBALS['query_vars'][$k] ?? $d; }
+function add_option($k, $v = '', $d = '', $a = null) { if (!isset($GLOBALS['options'][$k])) { $GLOBALS['options'][$k] = $v; } return true; }
 function get_posts($args = []) { $args['posts_per_page'] = $args['posts_per_page'] ?? ($args['numberposts'] ?? 5); return ih_query_posts($args); }
 function wp_count_posts($t) { return (object) ['publish' => 0]; }
 
 // ---------------------------------------------------------------- loading
-$PLUGIN = realpath(__DIR__ . '/../../wp-plugin/omochix-core');
+$PLUGIN = getenv('IH_PLUGIN_DIR') ?: realpath(__DIR__ . '/../../wp-plugin/omochix-core'); // IH_PLUGIN_DIR: a copy (partial-upload.php)
 require $PLUGIN . '/omochix-core.php';
 
 /** Run the plugin's init the way WordPress would (after resetting stores). */
@@ -266,3 +283,30 @@ function ih_registration_snapshot() {
     return ['post_types' => $norm($r['post_types']), 'taxonomies' => $norm($r['taxonomies']), 'post_meta' => $norm($r['post_meta']), 'rewrite' => $r['rewrite'], 'hooks' => ih_hook_names()];
 }
 
+
+// ------------------------------------------------------ content fixtures
+/** Fill a top-level industry with content that meets G1..G7 (G5 needs a workflow too). */
+function ih_fill_hub($term_id, $ready = true) {
+    $body = str_repeat('業務の流れを具体的に説明する本文。', 6);
+    update_term_meta($term_id, 'industry_hub_ready', $ready);
+    update_term_meta($term_id, 'industry_lead', str_repeat('この業種のAI活用を独自に解説する導入文です。', 6));
+    update_term_meta($term_id, 'industry_benefits', [['title' => '問い合わせ対応が速くなる', 'body' => $body]]);
+    update_term_meta($term_id, 'industry_challenges', [['title' => '問い合わせ', 'body' => $body, 'purpose' => 'customer-support'], ['title' => '広告文', 'body' => $body, 'purpose' => 'marketing'], ['title' => '書類', 'body' => $body, 'purpose' => 'document']]);
+    update_term_meta($term_id, 'industry_usecases', [['title' => 'a', 'body' => $body, 'purpose' => 'marketing'], ['title' => 'b', 'body' => $body, 'purpose' => 'document'], ['title' => 'c', 'body' => $body, 'purpose' => 'customer-support']]);
+    update_term_meta($term_id, 'industry_verified_at', gmdate('Y-m-d', time() - 10 * DAY_IN_SECONDS));
+    update_term_meta($term_id, 'industry_sources', [['label' => '統計', 'url' => 'https://www.e-stat.go.jp/']]);
+}
+/** A published, complete, official workflow in an industry (slug), with a tool. */
+function ih_add_workflow($industry_slug, $purpose = 'marketing', $provider = 'official') {
+    if (!ih_term('learn_format', 'workflow')) { $c = $GLOBALS['caps']; $GLOBALS['caps'] = ['manage_categories' => true]; wp_insert_term('導入する', 'learn_format', ['slug' => 'workflow']); $GLOBALS['caps'] = $c; }
+    $tool = ih_add_post(['post_type' => 'ai_tool', 'post_name' => 'tool-' . count($GLOBALS['posts']), 'post_status' => 'publish']);
+    $id = ih_add_post(['post_type' => 'learn_practice', 'post_name' => 'wf-' . count($GLOBALS['posts']), 'post_title' => 'WF ' . $industry_slug, 'post_status' => 'publish']);
+    foreach (['workflow_problem' => '課題', 'workflow_audience' => [['role' => '担当者', 'note' => '']], 'workflow_cost' => [['item' => 'x', 'amount' => '0円', 'period' => 'once', 'note' => '', 'checked_at' => '2026-11-01']], 'workflow_metrics' => [['metric' => 'm', 'how' => 'h', 'frequency' => '']], 'related_tool_ids' => [$tool]] as $k => $v) { update_post_meta($id, $k, $v); }
+    $c = $GLOBALS['caps']; $GLOBALS['caps'] = ['*' => true];
+    wp_set_object_terms($id, [$industry_slug], 'omx_industry');
+    wp_set_object_terms($id, ['workflow'], 'learn_format');
+    wp_set_object_terms($id, [$purpose], 'omx_purpose');
+    wp_set_object_terms($id, [$provider], 'omx_provider_type');
+    $GLOBALS['caps'] = $c;
+    return $id;
+}
