@@ -92,6 +92,7 @@ function omochix_core_get_industry_posts( $industry, $post_type, $args = array()
 	$posts = get_posts( $query );
 	$posts = is_array( $posts ) ? array_values( array_filter( $posts, static fn( $p ) => $p instanceof WP_Post ) ) : array();
 	if ( 'learn_practice' === $post_type && function_exists( 'omochix_core_workflow_stored_blockers' ) ) {
+		omochix_core_prime_workflow_tools( $posts );
 		// A live workflow that no longer meets its rules is not listed.
 		$posts = array_values( array_filter( $posts, static fn( $p ) => ! omochix_core_workflow_stored_blockers( $p->ID ) ) );
 	}
@@ -209,4 +210,28 @@ function omochix_core_get_industry_resource_cards( $industry, $limit = 6 ) {
 		)
 	);
 	return array_values( array_filter( array_map( 'omochix_core_get_resource_card', is_array( $ids ) ? $ids : array() ) ) );
+}
+
+/**
+ * Load the AI tools that practice items reference in one query, so the
+ * workflow re-check (which checks each tool's post type) does not query
+ * once per item.
+ *
+ * @param WP_Post[] $posts Practice items (meta already cached).
+ * @return void
+ */
+function omochix_core_prime_workflow_tools( array $posts ) {
+	if ( ! function_exists( '_prime_post_caches' ) ) {
+		return;
+	}
+	$ids = array();
+	foreach ( $posts as $post ) {
+		if ( $post instanceof WP_Post && 'learn_practice' === $post->post_type ) {
+			$ids = array_merge( $ids, array_map( 'absint', (array) get_post_meta( $post->ID, 'related_tool_ids', true ) ) );
+		}
+	}
+	$ids = array_values( array_unique( array_filter( $ids ) ) );
+	if ( $ids ) {
+		_prime_post_caches( $ids, false, false );
+	}
 }

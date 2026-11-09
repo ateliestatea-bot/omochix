@@ -220,7 +220,7 @@ function ih_query_posts($args) {
     }
     if (!empty($args['post__in']) && ($args['orderby'] ?? '') === 'post__in') { $order = array_flip(array_map('intval', $args['post__in'])); usort($out, static fn($a, $b) => $order[$a->ID] <=> $order[$b->ID]); }
     $n = (int) ($args['posts_per_page'] ?? 10);
-    if ($n > 0) { $out = array_slice($out, 0, $n); }
+    if ($n > 0) { $out = array_slice($out, max(0, (int) ($args['paged'] ?? 1) - 1) * $n, $n); }
     return ($args['fields'] ?? '') === 'ids' ? wp_list_pluck($out, 'ID') : $out;
 }
 function _prime_post_caches($ids, $terms = true, $meta = true) { $GLOBALS['primed'][] = array_values((array) $ids); }

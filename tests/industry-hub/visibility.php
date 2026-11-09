@@ -173,4 +173,32 @@ update_term_meta($re, 'industry_sources', []); update_term_meta($rs, 'industry_s
 omochix_core_gate_new_request(); omochix_core_gate_invalidate();
 check('sitemap: no indexable hub → include [0] (matches nothing, never "all")', [0] === omochix_core_industry_sitemap_term_args(['taxonomy' => 'omx_industry'])['include']);
 
+// blocked workflows (§7 re-check of live workflows, cached per gate version)
+$nr(); omochix_core_gate_invalidate(); $nr();
+$wfs = []; for ($i = 0; $i < 3; $i++) { $wfs[] = ih_add_workflow('real-estate'); }
+delete_post_meta($wfs[1], 'workflow_problem');
+$nr();
+$b = omochix_core_blocked_workflow_ids();
+check('blocked: a live workflow emptied after publishing is listed, complete ones are not', in_array($wfs[1], $b, true) && !in_array($wfs[0], $b, true) && !in_array($wfs[2], $b, true));
+$opt = get_option('omochix_core_blocked_workflow_cache');
+check('blocked: stored in one option for the current gate version', is_array($opt) && omochix_core_gate_version() === $opt['v'] && $b === $opt['ids']);
+$nr();
+$GLOBALS['query_count'] = 0;
+check('blocked: a new request reads the stored list (no workflow query)', $b === omochix_core_blocked_workflow_ids() && 0 === $GLOBALS['query_count']);
+update_post_meta($wfs[1], 'workflow_problem', '課題');
+$nr(); omochix_core_gate_invalidate(); // what the updated_post_meta hook does (wired on a real site; see http-access-matrix)
+check('blocked: after a gate version bump the list is recomputed (restored workflow listed again)', !in_array($wfs[1], omochix_core_blocked_workflow_ids(), true));
+$nr();
+$GLOBALS['query_count'] = 0;
+omochix_core_blocked_workflow_ids(time() + DAY_IN_SECONDS + 5);
+check('blocked: entries expire after a day (the word list is a filter)', $GLOBALS['query_count'] >= 1);
+delete_post_meta($wfs[0], 'workflow_problem'); // the oldest workflow
+for ($i = 0; $i < 450; $i++) { ih_add_workflow('restaurant'); }
+$nr(); omochix_core_gate_invalidate();
+$GLOBALS['query_count'] = 0;
+$b = omochix_core_blocked_workflow_ids();
+check('blocked: every published workflow is checked in batches of 200 (no cap lets the oldest through)', in_array($wfs[0], $b, true) && 3 === $GLOBALS['query_count'], 'queries=' . $GLOBALS['query_count']);
+update_post_meta($wfs[0], 'workflow_problem', '課題');
+$nr(); omochix_core_gate_invalidate(); $nr();
+
 ih_done();

@@ -26,6 +26,7 @@ const OMOCHIX_CORE_GATE_CACHE_OPT     = 'omochix_core_industry_gate_cache';
 const OMOCHIX_CORE_GATE_VERSION_OPT   = 'omochix_core_industry_gate_version';
 const OMOCHIX_CORE_GATE_TTL           = DAY_IN_SECONDS;
 const OMOCHIX_CORE_GATE_VISIBLE_CODES = array( 'G1_editor_ready', 'G2_lead', 'G3_challenges', 'G4_usecases', 'G5_official_workflow' );
+const OMOCHIX_CORE_BLOCKED_CACHE_OPT  = 'omochix_core_blocked_workflow_cache';
 
 /** Current gate cache version. */
 function omochix_core_gate_version() {
@@ -63,6 +64,7 @@ function omochix_core_gate_new_request() {
 	omochix_core_gate_invalidate_at_shutdown();
 	$GLOBALS['omochix_core_gate_bumped'] = false;
 	$GLOBALS['omochix_core_gate_memo']   = null;
+	$GLOBALS['omochix_core_blocked_memo'] = null;
 }
 
 /**
@@ -110,6 +112,73 @@ function omochix_core_industry_gates( array $term_ids, $now = 0 ) {
 	}
 	$GLOBALS['omochix_core_gate_memo'] = $memo;
 	return $out;
+}
+
+/**
+ * Published workflows that fail the §7 rules now (for example a required
+ * field emptied after publishing). Hub lists leave them out.
+ *
+ * Every published workflow is checked, 200 at a time, so no count cap lets
+ * one through. The result is kept in one option (not autoloaded) for the
+ * current gate version: everything a check reads (workflow fields, required
+ * tools, industry / format / provider terms, status, password, deletion)
+ * already bumps that version. Entries also expire daily (the assertive-word
+ * list is a filter). A page view on a fresh cache costs one option read.
+ *
+ * @param int $now Unix time (tests).
+ * @return int[] Post IDs.
+ */
+function omochix_core_blocked_workflow_ids( $now = 0 ) {
+	$now     = $now ? (int) $now : time();
+	$version = omochix_core_gate_version();
+	$fresh   = static fn( $e ) => is_array( $e ) && ( $e['v'] ?? 0 ) === $version && isset( $e['ids'] ) && is_array( $e['ids'] ) && ( $now - (int) ( $e['t'] ?? 0 ) ) < OMOCHIX_CORE_GATE_TTL;
+	$memo    = $GLOBALS['omochix_core_blocked_memo'] ?? null;
+	if ( $fresh( $memo ) ) {
+		return $memo['ids'];
+	}
+	$stored = get_option( OMOCHIX_CORE_BLOCKED_CACHE_OPT, array() );
+	if ( $fresh( $stored ) ) {
+		$GLOBALS['omochix_core_blocked_memo'] = $stored;
+		return $stored['ids'];
+	}
+	$blocked = array();
+	if ( post_type_exists( 'learn_practice' ) && function_exists( 'omochix_core_workflow_stored_blockers' ) ) {
+		for ( $page = 1; $page <= 500; $page++ ) {
+			$ids = get_posts(
+				array(
+					'post_type'           => 'learn_practice',
+					'post_status'         => 'publish',
+					'fields'              => 'ids',
+					'posts_per_page'      => 200,
+					'paged'               => $page,
+					'orderby'             => 'ID',
+					'order'               => 'ASC',
+					'no_found_rows'       => true,
+					'ignore_sticky_posts' => true,
+					'tax_query'           => array( array( 'taxonomy' => 'learn_format', 'field' => 'slug', 'terms' => array( OMOCHIX_CORE_WORKFLOW_FORMAT ) ) ),
+				)
+			);
+			$ids = array_map( 'intval', is_array( $ids ) ? $ids : array() );
+			if ( $ids ) {
+				_prime_post_caches( $ids, true, true );
+				foreach ( $ids as $id ) {
+					if ( omochix_core_workflow_stored_blockers( $id ) ) {
+						$blocked[] = $id;
+					}
+				}
+			}
+			if ( count( $ids ) < 200 ) {
+				break;
+			}
+		}
+	}
+	$entry = array( 'v' => $version, 't' => $now, 'ids' => $blocked );
+	// Write only if nothing invalidated meanwhile (a stale compute is never stored).
+	if ( omochix_core_gate_version() === $version ) {
+		update_option( OMOCHIX_CORE_BLOCKED_CACHE_OPT, $entry, false );
+	}
+	$GLOBALS['omochix_core_blocked_memo'] = $entry;
+	return $blocked;
 }
 
 /**

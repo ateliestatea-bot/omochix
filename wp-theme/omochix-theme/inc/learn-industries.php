@@ -59,9 +59,16 @@ function omochix_industry_hub_index_url() {
     return $page ? (string) get_permalink($page) : '';
 }
 
+/**
+ * Whether the main request is the index page. Decided from the queried page
+ * itself (no lookup query), so other requests do not pay for it.
+ */
 function omochix_industry_hub_is_index_request() {
-    $page = omochix_industry_hub_page();
-    return $page && is_page() && (int) get_queried_object_id() === (int) $page->ID;
+    if (!is_page()) {
+        return false;
+    }
+    $page = get_queried_object();
+    return $page instanceof WP_Post && 'industries' === $page->post_name && 'publish' === $page->post_status && OMOCHIX_INDUSTRY_HUB_PAGE_PATH === get_page_uri($page);
 }
 
 /**
@@ -441,6 +448,35 @@ add_filter('do_redirect_guess_404_permalink', 'omochix_industry_hub_no_guess');
  * ---------------------------------------------------------------------- */
 
 /**
+ * Published workflows under these industries that no longer meet their rules
+ * (§7). They are excluded in SQL, so the counts and the pagination match what
+ * is listed.
+ *
+ * @param int[] $industry_ids Top-level industry term IDs (children included).
+ * @return int[]
+ */
+function omochix_industry_hub_blocked_workflow_ids(array $industry_ids) {
+    // Site-wide list, cached by Core for the current gate version (one option
+    // read per request). Excluding a blocked workflow of another industry is a no-op.
+    return $industry_ids && function_exists('omochix_core_blocked_workflow_ids') ? omochix_core_blocked_workflow_ids() : [];
+}
+
+/** Meta clauses shared by the hub list and the index search: level, and no discontinued AI tools. */
+function omochix_industry_hub_meta_query($post_types, $level) {
+    $meta = [];
+    if ('' !== (string) $level) {
+        $meta[] = ['key' => 'practice_difficulty', 'value' => (string) $level];
+    }
+    if (in_array('ai_tool', (array) $post_types, true) && function_exists('omochix_get_active_ai_tool_meta_query')) {
+        $meta[] = omochix_get_active_ai_tool_meta_query(); // non-tools have no tool_status, so they pass
+    }
+    if (count($meta) > 1) {
+        $meta['relation'] = 'AND';
+    }
+    return $meta;
+}
+
+/**
  * Hub main query = "other related content": all listable types of the
  * industry, narrowed by the validated filters, 12 per page.
  *
@@ -492,13 +528,20 @@ function omochix_industry_hub_pre_get_posts($query) {
     }
     if ('' !== $filters['level']) {
         $query->set('post_type', 'learn_practice');
-        $query->set('meta_query', [['key' => 'practice_difficulty', 'value' => $filters['level']]]);
     }
     if ('' !== $filters['q']) {
         $query->set('s', $filters['q']);
     }
-    if ('ai_tool' === $query->get('post_type') && function_exists('omochix_get_active_ai_tool_meta_query')) {
-        $query->set('meta_query', omochix_get_active_ai_tool_meta_query());
+    $meta = omochix_industry_hub_meta_query($query->get('post_type'), $filters['level']);
+    if ($meta) {
+        $query->set('meta_query', $meta);
+    }
+    if (in_array('learn_practice', (array) $query->get('post_type'), true)) {
+        $top     = (int) $term->parent ? (int) $term->parent : (int) $term->term_id;
+        $blocked = omochix_industry_hub_blocked_workflow_ids([$top]);
+        if ($blocked) {
+            $query->set('post__not_in', $blocked);
+        }
     }
 }
 add_action('pre_get_posts', 'omochix_industry_hub_pre_get_posts', 20);
@@ -507,6 +550,9 @@ add_action('pre_get_posts', 'omochix_industry_hub_pre_get_posts', 20);
 function omochix_industry_hub_the_posts($posts, $query) {
     if (!$query instanceof WP_Query || !$query->is_main_query() || !$query->is_tax('omx_industry') || !function_exists('omochix_core_workflow_stored_blockers')) {
         return $posts;
+    }
+    if (function_exists('omochix_core_prime_workflow_tools')) {
+        omochix_core_prime_workflow_tools((array) $posts);
     }
     return array_values(array_filter((array) $posts, static fn($p) => !$p instanceof WP_Post || 'learn_practice' !== $p->post_type || !omochix_core_workflow_stored_blockers($p->ID)));
 }
@@ -529,9 +575,12 @@ function omochix_industry_hub_index_search(array $filters, $paged = 1) {
     }
     if ('workflow' === ($filters['type'] ?? '')) {
         $tax[] = ['taxonomy' => 'learn_format', 'field' => 'slug', 'terms' => ['workflow']];
+    } elseif ('practice' === ($filters['type'] ?? '')) {
+        $tax[] = ['taxonomy' => 'learn_format', 'field' => 'slug', 'terms' => ['workflow'], 'operator' => 'NOT IN'];
     }
+    $post_type = '' !== ($filters['type'] ?? '') ? $types[$filters['type']]['post_type'] : array_values(array_unique(array_column($types, 'post_type')));
     $args = [
-        'post_type'      => '' !== ($filters['type'] ?? '') ? $types[$filters['type']]['post_type'] : array_values(array_unique(array_column($types, 'post_type'))),
+        'post_type'      => $post_type,
         'post_status'    => 'publish',
         'has_password'   => false,
         'posts_per_page' => OMOCHIX_INDUSTRY_HUB_PER_PAGE,
@@ -541,6 +590,16 @@ function omochix_industry_hub_index_search(array $filters, $paged = 1) {
     ];
     if ('' !== ($filters['q'] ?? '')) {
         $args['s'] = $filters['q'];
+    }
+    $meta = omochix_industry_hub_meta_query($post_type, '');
+    if ($meta) {
+        $args['meta_query'] = $meta;
+    }
+    if (in_array('learn_practice', (array) $post_type, true)) {
+        $blocked = omochix_industry_hub_blocked_workflow_ids($ids);
+        if ($blocked) {
+            $args['post__not_in'] = $blocked;
+        }
     }
     return $cache[$key] = new WP_Query($args);
 }
@@ -749,7 +808,12 @@ function omochix_industry_hub_sections($term, array $filters = []) {
 
     // Section 4: workflows (official first), narrowed by the purpose.
     $practice  = omochix_core_get_industry_posts($term, 'learn_practice', ['limit' => 12, 'purpose' => $purpose]);
-    $featured  = array_values(array_filter(omochix_core_get_industry_curated($term, 'industry_featured_ids'), static fn($p) => 'learn_practice' === $p->post_type));
+    $blocked   = omochix_industry_hub_blocked_workflow_ids([(int) $term->term_id]);
+    $featured  = array_values(array_filter(
+        omochix_core_get_industry_curated($term, 'industry_featured_ids'),
+        // Curated items follow the same rules as the rest: no blocked workflow, and only the chosen challenge's purpose.
+        static fn($p) => 'learn_practice' === $p->post_type && !in_array((int) $p->ID, $blocked, true) && ('' === $purpose || has_term($purpose, 'omx_purpose', $p))
+    ));
     $workflows = [];
     $lessons   = [];
     foreach (array_merge($featured, $practice) as $post) {
@@ -767,6 +831,9 @@ function omochix_industry_hub_sections($term, array $filters = []) {
     // Section 5: tools (curated first), prompts, Motion.
     $tools = [];
     foreach (array_merge(omochix_core_get_industry_curated($term, 'industry_tool_ids'), omochix_core_get_industry_posts($term, 'ai_tool', ['limit' => OMOCHIX_INDUSTRY_HUB_SECTION])) as $post) {
+        if (function_exists('omochix_is_ai_tool_discontinued') && omochix_is_ai_tool_discontinued($post->ID)) {
+            continue; // discontinued tools are never recommended, curated or not
+        }
         $tools[$post->ID] = $post;
     }
     $prompts = omochix_core_get_industry_posts($term, 'prompt', ['limit' => OMOCHIX_INDUSTRY_HUB_SECTION, 'purpose' => $purpose]);
@@ -827,9 +894,9 @@ function omochix_industry_hub_index_rows() {
     return ['rows' => $rows, 'hidden' => $hidden];
 }
 
-/** URL of a challenge chip: its purpose filter + #workflows, or #workflows unfiltered (§12 #10). */
+/** URL of a challenge chip: its purpose filter + #ih-workflows, or #ih-workflows unfiltered (§12 #10). */
 function omochix_industry_hub_challenge_url($term, array $challenge) {
     $purpose = (string) ($challenge['purpose'] ?? '');
     $url     = omochix_industry_hub_url($term, '' !== $purpose ? ['purpose' => $purpose] : []);
-    return $url ? $url . '#workflows' : '';
+    return $url ? $url . '#ih-workflows' : '';
 }
