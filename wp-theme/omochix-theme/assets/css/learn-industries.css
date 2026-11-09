@@ -45,7 +45,10 @@
 .ih-chip[aria-current="true"] { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
 .ih-chip[aria-current="true"]::before { content: "✓"; margin-right: 6px; }
 .ih-chip--small { min-height: 36px; padding: 0 12px; font-size: 13px; }
-.ih-chip:focus-visible, .ih-link:focus-visible, .ih-button:focus-visible, .ih-jump a:focus-visible, .ih-industry__name a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+/* Every focusable in the hub gets a visible ring (card title links use the card's :focus-within ring below). */
+.ih :is(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--ih-accent); outline-offset: 2px; }
+/* Keyboard focus must not land behind the fixed header or the phone bottom bar. */
+.ih--hub :is(a, button, input, select, textarea, summary) { scroll-margin-top: calc(var(--header-height, 72px) + 8px); scroll-margin-bottom: calc(var(--ih-jump-h) + env(safe-area-inset-bottom) + 16px); }
 
 /* Grids and cards */
 .ih-grid { display: grid; gap: var(--ih-gap); grid-template-columns: 1fr; }
@@ -122,7 +125,9 @@
 .ih-jump__list li { flex: 1 0 auto; }
 .ih-jump a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 56px; height: 100%; padding: 0 6px; color: var(--color-text); font-size: 12px; font-weight: 700; text-decoration: none; }
 .ih-jump__num { color: var(--ih-accent); font-size: 10px; }
-.ih--hub { padding-bottom: calc(var(--ih-jump-h) + env(safe-area-inset-bottom) + 8px); }
+/* Reserve room for the fixed bar at the end of the document so the footer is never covered. */
+body:has(.ih-jump) { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+.ih--hub { padding-bottom: 8px; }
 html:has(.ih-jump) { scroll-padding-top: calc(var(--header-height, 72px) + 8px); scroll-padding-bottom: calc(var(--ih-jump-h, 56px) + 16px); }
 
 @media (min-width: 768px) {
@@ -138,7 +143,9 @@ html:has(.ih-jump) { scroll-padding-top: calc(var(--header-height, 72px) + 8px);
     .ih-jump__list li { flex: 0 0 auto; }
     .ih-jump a { flex-direction: row; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--color-line); border-radius: var(--radius-pill, 999px); font-size: 13px; }
     .ih--hub { padding-bottom: 32px; }
+    body:has(.ih-jump) { padding-bottom: 0; }
     html:has(.ih-jump) { scroll-padding-bottom: 16px; }
+    .ih--hub :is(a, button, input, select, textarea, summary) { scroll-margin-bottom: 16px; }
     .ih-section { padding: 28px 0; }
     .ih-h2 { font-size: 24px; }
 }
