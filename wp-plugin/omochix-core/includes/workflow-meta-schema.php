@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-api: 2
+// omochix-industry-hub-version: 1.10.0-dev
 /**
  * Workflow data layer on learn_practice (Industry Hub Phase 1).
  *
@@ -533,4 +533,4 @@ function omochix_core_workflow_guard_notice() {
 	echo '</ul></div>';
 }
 add_action( 'admin_notices', 'omochix_core_workflow_guard_notice' );
-// omochix-industry-hub-api: 2 (end)
+// omochix-industry-hub-version: 1.10.0-dev (end)

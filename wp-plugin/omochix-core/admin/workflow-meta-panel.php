@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-api: 2
+// omochix-industry-hub-version: 1.10.0-dev
 /**
  * Workflow fields panel on the practice edit screen (Industry Hub Phase 1).
  *
@@ -122,4 +122,4 @@ function omochix_core_workflow_save_notice() {
 	echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( sprintf( __( '次の項目はJSONが正しくないか秘密情報らしき文字列を含むため、前の値を残しました：%s', 'omochix-core' ), implode( ', ', array_map( 'sanitize_key', $keys ) ) ) ) . '</p></div>';
 }
 add_action( 'admin_notices', 'omochix_core_workflow_save_notice' );
-// omochix-industry-hub-api: 2 (end)
+// omochix-industry-hub-version: 1.10.0-dev (end)

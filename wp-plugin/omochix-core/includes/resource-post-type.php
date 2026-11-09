@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-api: 2
+// omochix-industry-hub-version: 1.10.0-dev
 /**
  * External resource ledger: omx_resource (Industry Hub Phase 1).
  *
@@ -110,4 +110,4 @@ function omochix_core_resource_sitemap_post_types( $post_types ) {
 }
 add_filter( 'wp_sitemaps_post_types', 'omochix_core_resource_sitemap_post_types' );
 add_filter( 'slim_seo_sitemap_post_types', 'omochix_core_resource_sitemap_post_types' );
-// omochix-industry-hub-api: 2 (end)
+// omochix-industry-hub-version: 1.10.0-dev (end)

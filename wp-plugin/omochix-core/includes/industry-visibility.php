@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-api: 2
+// omochix-industry-hub-version: 1.10.0-dev
 /**
  * Industry Hub visibility, gate cache and leak protection (Industry Hub Phase 2).
  *
@@ -580,4 +580,4 @@ function omochix_core_industry_core_sitemap_term_args( $args, $taxonomy ) {
 	return OMOCHIX_CORE_INDUSTRY_TAXONOMY === $taxonomy ? omochix_core_industry_sitemap_term_args( array_merge( (array) $args, array( 'taxonomy' => $taxonomy ) ) ) : $args;
 }
 add_filter( 'wp_sitemaps_taxonomies_query_args', 'omochix_core_industry_core_sitemap_term_args', 10, 2 );
-// omochix-industry-hub-api: 2 (end)
+// omochix-industry-hub-version: 1.10.0-dev (end)

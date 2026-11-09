@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-api: 2
+// omochix-industry-hub-version: 1.10.0-dev
 /**
  * External resource ledger: edit screen box and save handler (Industry Hub Phase 1).
  *
@@ -126,4 +126,4 @@ function omochix_core_save_resource_meta( $post_id ) {
 	}
 }
 add_action( 'save_post_' . OMOCHIX_CORE_RESOURCE_POST_TYPE, 'omochix_core_save_resource_meta' );
-// omochix-industry-hub-api: 2 (end)
+// omochix-industry-hub-version: 1.10.0-dev (end)

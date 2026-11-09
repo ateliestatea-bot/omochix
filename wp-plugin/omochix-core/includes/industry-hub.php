@@ -13,13 +13,13 @@
  * is half done (a file missing, still being written, or left over from an
  * older release) switches the Industry Hub off instead of breaking the
  * site; the rest of the plugin is not affected. Each module file carries
- * the marker below on its second and last lines, and the files are checked
- * before any of them is loaded (a left-over file could otherwise redeclare
- * a function, which PHP cannot recover from).
- *
- * Bump OMOCHIX_CORE_INDUSTRY_HUB_API, and the marker in every module file,
- * in every release that changes a module file
- * (tests/industry-hub/partial-upload.php checks they agree).
+ * "// omochix-industry-hub-version: <OMOCHIX_CORE_VERSION>" on its second and
+ * last lines, and the files are checked before any of them is loaded (a
+ * left-over file could otherwise redeclare a function, which PHP cannot
+ * recover from). The marker follows the plugin version, so a version bump
+ * must update every module file; tests/industry-hub/partial-upload.php fails
+ * when one is missed. Files replaced without a version bump are not
+ * detected here: the release is checked against its SHA-256 manifest.
  *
  * @package OmochiXCore
  */
@@ -27,8 +27,6 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
-const OMOCHIX_CORE_INDUSTRY_HUB_API = 2;
 
 /**
  * Module files, in load order (a file may use at load time only constants of
@@ -54,8 +52,8 @@ function omochix_core_industry_hub_files() {
 
 /**
  * Whether a module file is present, completely written and from this
- * release: its second line and its last line carry the API marker. Reads
- * only the first and last few bytes.
+ * release: its second line and its last line carry the version marker.
+ * Reads only the first and last few bytes.
  *
  * @param string $path Absolute path.
  * @return bool
@@ -71,13 +69,16 @@ function omochix_core_industry_hub_file_ok( $path ) {
 	fseek( $handle, max( 0, $size - 80 ) );
 	$tail = (string) fread( $handle, 80 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
 	fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-	$mark = '// omochix-industry-hub-api: ' . OMOCHIX_CORE_INDUSTRY_HUB_API;
+	$mark = '// omochix-industry-hub-version: ' . OMOCHIX_CORE_VERSION;
 	return 0 === strpos( str_replace( "\r\n", "\n", $head ), "<?php\n" . $mark . "\n" ) && false !== strpos( $tail, $mark . ' (end)' );
 }
 
 /**
  * Remove every hook callback defined in the given files (a module file that
- * failed while loading leaves the earlier ones registered).
+ * failed while loading leaves the earlier ones registered), and any callback
+ * that cannot be called. Functions already defined stay defined (PHP cannot
+ * undefine them); nothing calls them once their hooks are gone, and the
+ * theme checks taxonomy_exists( 'omx_industry' ), which stays false.
  *
  * @param string[] $files Absolute paths.
  * @return void
@@ -99,6 +100,11 @@ function omochix_core_industry_hub_unhook( array $files ) {
 						continue;
 					}
 				} catch ( ReflectionException $e ) {
+					// A callback to a function that never got defined (its file
+					// failed) would be a fatal error when the hook runs.
+					if ( ! is_callable( $fn ) ) {
+						remove_filter( $hook, $fn, $priority );
+					}
 					continue;
 				}
 				if ( in_array( $ref->getFileName(), $files, true ) ) {

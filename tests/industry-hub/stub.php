@@ -52,7 +52,8 @@ function remove_filter($hook, $cb, $priority = 10) { foreach ($GLOBALS['hooks'][
 function has_filter($hook, $cb = false) { if (false === $cb) { return !empty($GLOBALS['hooks'][$hook]); } foreach ($GLOBALS['hooks'][$hook] ?? [] as $p => $list) { foreach ($list as $h) { if ($h[0] === $cb) { return $p; } } } return false; }
 function has_action($hook, $cb = false) { return has_filter($hook, $cb); }
 function apply_filters($hook, $value, ...$args) { $list = $GLOBALS['hooks'][$hook] ?? []; ksort($list); foreach ($list as $hs) { foreach ($hs as $h) { $value = call_user_func_array($h[0], array_slice(array_merge([$value], $args), 0, $h[1])); } } return $value; }
-function do_action($hook, ...$args) { $GLOBALS['action_stack'][] = $hook; $list = $GLOBALS['hooks'][$hook] ?? []; ksort($list); foreach ($list as $hs) { foreach ($hs as $h) { call_user_func_array($h[0], array_slice($args, 0, $h[1])); } } array_pop($GLOBALS['action_stack']); }
+function do_action($hook, ...$args) { $GLOBALS['action_stack'][] = $hook; $list = $GLOBALS['hooks'][$hook] ?? []; ksort($list); foreach ($list as $p => $hs) { foreach ($hs as $h) { if (!in_array($h, $GLOBALS['hooks'][$hook][$p] ?? [], true)) { continue; } /* removed meanwhile (WP_Hook does the same) */ call_user_func_array($h[0], array_slice($args, 0, $h[1])); } } array_pop($GLOBALS['action_stack']); }
+function remove_action($hook, $cb, $priority = 10) { return remove_filter($hook, $cb, $priority); }
 function doing_action($hook = null) { $st = $GLOBALS['action_stack'] ?? []; return null === $hook ? (bool) $st : in_array($hook, $st, true); }
 function did_action($hook) { return 0; }
 function is_user_logged_in() { return !empty($GLOBALS['ctx']['logged_in']) || !empty($GLOBALS['caps']); }
