@@ -12,7 +12,7 @@
 
     var MAX_ROWS = 5000;
     var SAMPLE_OLD = 'OmochiX Labs は無料のツール集です。\nJSON整形・テキスト差分・robots.txt生成を公開しています。\n入力はブラウザの中で処理します。\nfunction greet(name) {\n  return "Hello, " + name;\n}';
-    var SAMPLE_NEW = 'OmochiX Labs は無料のオンラインツール集です。\nJSON整形・テキスト差分・robots.txt生成・API料金計算を公開しています。\n入力はブラウザの中で処理します。\nfunction greet(name, greeting) {\n  return greeting + ", " + name;\n}\n// 新しい行';
+    var SAMPLE_NEW = 'OmochiX Labs は無料のオンラインツール集です。\nJSON整形・テキスト差分・robots.txt生成のツールを公開しています。\n入力はブラウザの中で処理します。\nfunction greet(name, greeting) {\n  return greeting + ", " + name;\n}\n// 新しい行';
     var LABEL = { insert: '追加', delete: '削除', equal: '変更なし' };
     var MARK = { insert: '+', delete: '−', equal: ' ' };
 

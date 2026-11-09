@@ -162,5 +162,201 @@ function labs_release_state_draft_problems() {
 
     // Copy outside Labs that points at Labs.
     $leaks('page-learn.php', file_get_contents(get_theme_file_path('/page-learn.php')));
+
+    // Copy that the public pages' scripts put on screen (sample inputs, messages).
+    $catalog = omochix_labs_load_catalog_from_file(omochix_labs_data_file('catalog'));
+    return array_merge($problems, labs_release_state_script_problems($catalog['catalog']['tools']));
+}
+
+/* -------------------------------------------------------------------------
+ * Script copy: a draft tool must not be named, linked or presented as
+ * published by any script that a public Labs page loads.
+ * ---------------------------------------------------------------------- */
+
+/** Words that present a tool as available (「…を公開しています」「…が使えます」). */
+const LABS_PUBLISH_CLAIM = '/公開|提供|使え|利用でき|ご利用|お試し|ツール集|揃え|リリース|\b(?:available|launched|try)\b/iu';
+
+/**
+ * String literals of a JavaScript source, with their line numbers. Comments
+ * and regular-expression literals are skipped; escapes are decoded.
+ *
+ * @return array<int, array{0: int, 1: string}>
+ */
+function labs_js_string_literals($src) {
+    $out  = [];
+    $n    = strlen($src);
+    $line = 1;
+    $prev = '';   // last significant character outside strings and comments
+    $word = '';   // last identifier, to tell "return /re/" from "a / b"
+    for ($i = 0; $i < $n; $i++) {
+        $c = $src[$i];
+        if ("\n" === $c) { $line++; continue; }
+        if (ctype_space($c)) { continue; }
+        if ('/' === $c && '/' === ($src[$i + 1] ?? '')) { // line comment
+            while ($i < $n && "\n" !== $src[$i]) { $i++; }
+            $i--;
+            continue;
+        }
+        if ('/' === $c && '*' === ($src[$i + 1] ?? '')) { // block comment
+            $end = strpos($src, '*/', $i + 2);
+            $end = false === $end ? $n : $end + 2;
+            $line += substr_count($src, "\n", $i, $end - $i);
+            $i = $end - 1;
+            continue;
+        }
+        if ("'" === $c || '"' === $c || '`' === $c) {
+            $start = $line;
+            $buf   = '';
+            for ($i++; $i < $n && $src[$i] !== $c; $i++) {
+                if ("\n" === $src[$i]) { $line++; }
+                if ('\\' === $src[$i] && $i + 1 < $n) {
+                    $e = $src[++$i];
+                    if ('u' === $e && preg_match('/\G[0-9a-fA-F]{4}/', $src, $m, 0, $i + 1)) {
+                        $buf .= mb_chr(hexdec($m[0]), 'UTF-8');
+                        $i   += 4;
+                    } else {
+                        $buf .= ['n' => "\n", 't' => "\t", 'r' => "\r"][$e] ?? $e;
+                        if ("\n" === $e) { $line++; }
+                    }
+                    continue;
+                }
+                $buf .= $src[$i];
+            }
+            $out[] = [$start, $buf];
+            $prev  = $c;
+            $word  = '';
+            continue;
+        }
+        if ('/' === $c && ('' === $prev || false !== strpos('(,=:[!&|?{};+-*%<>~^', $prev) || in_array($word, ['return', 'typeof', 'case', 'in', 'of', 'new', 'delete', 'void', 'throw'], true))) {
+            $class = false; // regular-expression literal: skip to the closing slash
+            for ($i++; $i < $n; $i++) {
+                $r = $src[$i];
+                if ('\\' === $r) { $i++; continue; }
+                if ('[' === $r) { $class = true; } elseif (']' === $r) { $class = false; } elseif ('/' === $r && !$class) { break; } elseif ("\n" === $r) { break; }
+            }
+            $prev = '/';
+            $word = '';
+            continue;
+        }
+        if (preg_match('/\G[A-Za-z_$][A-Za-z0-9_$]*/', $src, $m, 0, $i)) {
+            $word = $m[0];
+            $prev = 'a';
+            $i   += strlen($m[0]) - 1;
+            continue;
+        }
+        $prev = $c;
+        $word = '';
+    }
+    return $out;
+}
+
+/** Whether a string literal is text for people (not a key, class name, slug or URL). */
+function labs_is_display_copy($s) {
+    return 1 === preg_match('/[^\x00-\x7F]/', $s) || 1 === preg_match('/[A-Za-z]{2,}[ ,.!?][ ]*[A-Za-z]{2,}/', $s);
+}
+
+/**
+ * Names that identify each draft tool in copy: its slug, name, title (before
+ * "｜") and the parts of its name that no published tool uses. The cost
+ * calculator also keeps its fixed markers.
+ *
+ * @param array<int, array<string, mixed>> $tools Catalog tools.
+ * @return array<string, string[]> slug => names
+ */
+function labs_draft_tool_names(array $tools) {
+    $public = '';
+    foreach ($tools as $t) {
+        if ('published' === ($t['status'] ?? null)) {
+            $public .= ' ' . mb_strtolower(($t['name'] ?? '') . ' ' . ($t['title'] ?? '') . ' ' . implode(' ', $t['keywords'] ?? []));
+        }
+    }
+    $names = [];
+    foreach ($tools as $t) {
+        if ('draft' !== ($t['status'] ?? null)) {
+            continue;
+        }
+        $list = [$t['slug'], $t['name'], explode('｜', $t['title'])[0]];
+        foreach (preg_split('/[・｜\s]+/u', $t['name']) as $part) {
+            if (mb_strlen($part) >= 3 && false === mb_strpos($public, mb_strtolower($part))) {
+                $list[] = $part;
+            }
+        }
+        if (LABS_COST_SLUG === $t['slug']) {
+            $list = array_merge($list, labs_cost_markers());
+        }
+        $names[$t['slug']] = array_values(array_unique(array_filter($list, 'strlen')));
+    }
+    return $names;
+}
+
+/**
+ * Theme-relative paths of every script a public Labs page loads (list and
+ * each published tool, plus the Worker and the files it imports).
+ *
+ * @return string[]
+ */
+function labs_public_script_files() {
+    $base  = get_theme_file_uri('');
+    $files = [];
+    $add   = static function ($url) use ($base, &$files) {
+        $url = (string) strtok((string) $url, '?');
+        if (0 === strpos($url, $base)) {
+            $files[substr($url, strlen($base))] = true;
+        }
+    };
+    labs_request();
+    $pages = array_merge([null], array_keys(omochix_labs_get_tools()));
+    foreach ($pages as $slug) {
+        labs_request($slug);
+        $GLOBALS['enqueued'] = ['styles' => [], 'scripts' => [], 'inline' => []];
+        do_action('wp_enqueue_scripts');
+        foreach ($GLOBALS['enqueued']['scripts'] as $script) {
+            $add($script['src']);
+        }
+        foreach ($GLOBALS['enqueued']['inline']['omochix-labs-shared'] ?? [] as $inline) {
+            if (preg_match('/^window\.omochixLabs = (.*);$/s', $inline, $m)) {
+                $config = json_decode($m[1], true);
+                $add($config['worker']['url'] ?? '');
+                foreach ($config['worker']['scripts'] ?? [] as $w) {
+                    $add($w);
+                }
+            }
+        }
+    }
+    ksort($files);
+    return array_keys($files);
+}
+
+/**
+ * @param array<int, array<string, mixed>> $tools Catalog tools.
+ * @return string[]
+ */
+function labs_release_state_script_problems(array $tools) {
+    $names    = labs_draft_tool_names($tools);
+    $problems = [];
+    if ([] === $names) {
+        return $problems;
+    }
+    foreach (labs_public_script_files() as $file) {
+        $src = (string) file_get_contents(get_theme_file_path($file));
+        foreach (labs_js_string_literals($src) as [$line, $s]) {
+            foreach ($names as $slug => $list) {
+                if (preg_match('#(?:^|/)labs/' . preg_quote($slug, '#') . '(?:/|$|\?|\#)#', $s)) {
+                    $problems[] = "$file:$line links to draft tool \"$slug\"";
+                    continue;
+                }
+                if (!labs_is_display_copy($s)) {
+                    continue; // a key, class name, slug or URL: code, not copy
+                }
+                foreach ($list as $name) {
+                    if (false !== mb_stripos($s, $name)) {
+                        $what = preg_match(LABS_PUBLISH_CLAIM, $s) ? 'presents draft tool "' . $slug . '" as published' : 'names draft tool "' . $slug . '"';
+                        $problems[] = "$file:$line $what (\"$name\")";
+                        break;
+                    }
+                }
+            }
+        }
+    }
     return $problems;
 }

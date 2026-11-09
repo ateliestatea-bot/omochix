@@ -562,5 +562,77 @@ check('release state: a draft calculator mentioned in public copy fails the gate
 exec('rm -rf ' . escapeshellarg($leakView));
 labs_reset_statics();
 
+// ------------------------------------- rollback: page-labs.php without inc/labs.php
+$fallback = static function ($template = null) {
+    $cmd = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/rollback-fallback.php') . (null === $template ? '' : ' ' . escapeshellarg($template));
+    return json_decode((string) shell_exec($cmd), true);
+};
+$fb = $fallback();
+check('rollback: page-labs.php without inc/labs.php answers 404 with the theme\'s 404 template, no-cache, no fatal', is_array($fb) && null === $fb['error'] && ['status:404', 'nocache', '404-template:is_404'] === $fb['log'] && [] === $fb['labs_functions']);
+$noGuard = sys_get_temp_dir() . '/omx-labs-noguard-' . getmypid() . '.php';
+file_put_contents($noGuard, preg_replace('/\nif \(!function_exists\(\'omochix_labs_current_tool\'\)\) \{.*?\n\}\n/s', "\n", file_get_contents($REAL_THEME . '/page-labs.php'), 1, $stripped));
+$fbOld = $fallback($noGuard);
+unlink($noGuard);
+check('rollback: control — the same template without the guard is the fatal error the guard prevents', 1 === $stripped && is_array($fbOld) && str_contains((string) $fbOld['error'], 'Call to undefined function omochix_labs_current_tool()'));
+
+// ------------------------------------------- release state: script copy
+/** A view of $base where only the files in $replace (theme-relative path => contents) differ. */
+function labs_variant_theme($base, array $replace) {
+    $dir = sys_get_temp_dir() . '/omx-labs-variant-' . getmypid() . '-' . md5(serialize($replace) . $base);
+    $link = static function ($from, $to, array $replace, $prefix) use (&$link) {
+        @mkdir($to, 0777, true);
+        $here = [];
+        foreach (array_keys($replace) as $path) {
+            if (0 === strpos($path, $prefix)) { $here[explode('/', substr($path, strlen($prefix)))[0]] = true; }
+        }
+        foreach (scandir($from) as $entry) {
+            if ('.' === $entry || '..' === $entry) { continue; }
+            if (!isset($here[$entry])) { symlink($from . '/' . $entry, $to . '/' . $entry); }
+            elseif (isset($replace[$prefix . $entry])) { file_put_contents($to . '/' . $entry, $replace[$prefix . $entry]); }
+            else { $link($from . '/' . $entry, $to . '/' . $entry, $replace, $prefix . $entry . '/'); }
+        }
+    };
+    $link($base, $dir, $replace, '');
+    return $dir;
+}
+$lits = labs_js_string_literals("var a = 'x'; // 'not a string'\n/* \"nor this\" */ var r = /it's \\/ [\"]/g, b = \"y\\n\\u3042\";\nreturn `t\${1}`;");
+check('script copy: literals are found with lines; comments and regex literals are skipped; escapes decoded', [[1, 'x'], [2, "y\nあ"], [3, 't${1}']] === $lits);
+check('script copy: display copy vs code (keys, slugs, URLs)', labs_is_display_copy('入力例を入れました') && labs_is_display_copy('Copy the result.') && !labs_is_display_copy('token-cost-calculator') && !labs_is_display_copy('labs-diff__code') && !labs_is_display_copy('/labs/x/'));
+$diffJs = 'assets/js/labs/ui/text-diff.js';
+$fixed  = file_get_contents($REAL_THEME . '/' . $diffJs);
+$cases  = [
+    'the old sample (B-1)'      => [str_replace('robots.txt生成のツールを公開しています。', 'robots.txt生成・API料金計算を公開しています。', $fixed), 'presents draft tool "token-cost-calculator" as published'],
+    'a mention without a claim' => [str_replace('var LABEL = {', "var NOTE = '料金計算は準備中です';\n    var LABEL = {", $fixed), 'names draft tool "token-cost-calculator"'],
+    'a link to the draft tool'  => [str_replace('var LABEL = {', "var MORE = '/labs/token-cost-calculator/';\n    var LABEL = {", $fixed), 'links to draft tool "token-cost-calculator"'],
+    'a comment (internal note)' => [str_replace('var LABEL = {', "// TODO: API料金計算を公開したら入力例に足す\n    var LABEL = {", $fixed), null],
+    'the slug as an identifier' => [str_replace('var LABEL = {', "var SKIP = 'token-cost-calculator';\n    var LABEL = {", $fixed), null],
+];
+check('script copy: every seeded case changes the file', count(array_unique(array_column($cases, 0))) === count($cases) && !in_array($fixed, array_column($cases, 0), true));
+check('script copy: the shipped scripts name no draft tool', [] === labs_release_state_script_problems($shippedCatalog['tools']));
+check('script copy: public pages load the Worker and the three tools\' scripts, never the calculator\'s', (static function () {
+    $f = labs_public_script_files();
+    return in_array('/assets/js/labs/ui/text-diff.js', $f, true) && in_array('/assets/js/labs/worker.js', $f, true) && in_array('/assets/js/labs/core/text.js', $f, true)
+        && [] === array_intersect(['/assets/js/labs/ui/token-cost-calculator.js', '/assets/js/labs/core/cost.js', '/assets/js/labs/core/tokens.js'], $f);
+})());
+labs_reset_statics();
+foreach ($cases as $label => [$src, $want]) {
+    $view = labs_variant_theme($REAL_THEME, [$diffJs => $src]);
+    $got  = labs_release_state_problems($view);
+    $hit  = array_values(array_filter($got, static fn($p) => str_starts_with($p, '/' . $diffJs . ':')));
+    if (null === $want) {
+        check("script copy: $label passes (no false positive)", [] === $got);
+    } else {
+        check("script copy: $label fails the gate", 1 === count($hit) && str_contains($hit[0], $want));
+    }
+    foreach ($got as $problem) { echo "    $problem\n"; }
+    exec('rm -rf ' . escapeshellarg($view));
+    labs_reset_statics();
+}
+// Once the calculator is published, naming it is correct: the check follows the catalog, not a word list.
+$pubView = labs_variant_theme(labs_published_theme($REAL_THEME), [$diffJs => $cases['the old sample (B-1)'][0]]);
+check('script copy: naming a published tool is allowed (only the price review then fails)', [] === array_filter(labs_release_state_problems($pubView), static fn($p) => str_starts_with($p, '/assets/')));
+exec('rm -rf ' . escapeshellarg($pubView));
+labs_reset_statics();
+
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
