@@ -100,8 +100,8 @@ if (post_type_exists('learn_practice')) {
                             $omochix_description = get_post_meta($omochix_tool_id, 'short_description', true) ?: get_the_excerpt();
                             $omochix_pricing = get_post_meta($omochix_tool_id, 'pricing_type', true) ?: 'contact';
                             $omochix_japanese = get_post_meta($omochix_tool_id, 'japanese_support', true) ?: 'unknown';
-                            $omochix_rating = (float) get_post_meta($omochix_tool_id, 'rating_overall', true);
-                            $omochix_pricing_label = function_exists('omochix_core_get_pricing_type_label') ? omochix_core_get_pricing_type_label($omochix_pricing) : __('料金未確認', 'omochix');
+                            $omochix_rating = function_exists('omochix_get_ai_tool_display_rating') ? omochix_get_ai_tool_display_rating($omochix_tool_id) : 0.0;
+                            $omochix_pricing_label = function_exists('omochix_get_ai_tool_pricing_base_label') ? omochix_get_ai_tool_pricing_base_label($omochix_tool_id) : (function_exists('omochix_core_get_pricing_type_label') ? omochix_core_get_pricing_type_label($omochix_pricing) : __('料金未確認', 'omochix'));
                             $omochix_pricing_label = omochix_get_ai_tool_pricing_display_label($omochix_tool_id, $omochix_pricing_label);
                             $omochix_japanese_label = function_exists('omochix_core_get_japanese_support_label') ? omochix_core_get_japanese_support_label($omochix_japanese) : __('日本語対応未確認', 'omochix');
                             ?>
