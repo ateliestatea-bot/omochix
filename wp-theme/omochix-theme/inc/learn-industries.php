@@ -900,3 +900,20 @@ function omochix_industry_hub_challenge_url($term, array $challenge) {
     $url     = omochix_industry_hub_url($term, '' !== $purpose ? ['purpose' => $purpose] : []);
     return $url ? $url . '#ih-workflows' : '';
 }
+
+/* -------------------------------------------------------------------------
+ * Assets
+ * ---------------------------------------------------------------------- */
+
+/** Styles of the hub pages (practice cards are reused, so their CSS too). */
+function omochix_industry_hub_enqueue_assets() {
+    if (!omochix_industry_hub_is_request() || is_404()) {
+        return;
+    }
+    $deps = wp_style_is('omochix-shell', 'enqueued') ? ['omochix-style', 'omochix-shell'] : ['omochix-style'];
+    if (!wp_style_is('omochix-learn-practice', 'enqueued') && file_exists(get_theme_file_path('/assets/css/learn-practice.css'))) {
+        wp_enqueue_style('omochix-learn-practice', get_theme_file_uri('/assets/css/learn-practice.css'), $deps, (string) filemtime(get_theme_file_path('/assets/css/learn-practice.css')));
+    }
+    wp_enqueue_style('omochix-learn-industries', get_theme_file_uri('/assets/css/learn-industries.css'), $deps, (string) filemtime(get_theme_file_path('/assets/css/learn-industries.css')));
+}
+add_action('wp_enqueue_scripts', 'omochix_industry_hub_enqueue_assets', 23);
