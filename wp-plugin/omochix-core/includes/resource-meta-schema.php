@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-version: 1.10.0-dev
+// omochix-industry-hub-version: 1.10.0
 /**
  * External resource ledger meta and publish guard (Industry Hub Phase 1).
  *
@@ -413,4 +413,4 @@ function omochix_core_resource_guard_notice() {
 	echo '</ul></div>';
 }
 add_action( 'admin_notices', 'omochix_core_resource_guard_notice' );
-// omochix-industry-hub-version: 1.10.0-dev (end)
+// omochix-industry-hub-version: 1.10.0 (end)
