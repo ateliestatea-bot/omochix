@@ -1,0 +1,7 @@
+{
+  "name": "omochix-svg-motion-tests",
+  "private": true,
+  "description": "Browser tests for SVG Motion Studio. Separate from the repository's dependency-free tests.",
+  "scripts": { "test": "node run.js" },
+  "devDependencies": { "playwright": "1.64.1" }
+}

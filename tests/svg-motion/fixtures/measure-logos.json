@@ -1,0 +1,77 @@
+{
+ "about": "Logos for the measuring-frame tests (csp-tests.js). box: measured with the previous srcdoc method in Chromium 156 and WebKit 27.2 (identical), 2026-11-09, l5/final/14-CSP-DESIGN.md. Units: the logo viewBox.",
+ "logos": {
+  "sample-prism": {
+   "sample": "prism",
+   "box": [
+    16,
+    14,
+    88,
+    96
+   ]
+  },
+  "sample-orbit": {
+   "sample": "orbit",
+   "box": [
+    18,
+    18,
+    84,
+    84
+   ]
+  },
+  "sample-stack": {
+   "sample": "stack",
+   "box": [
+    20,
+    22,
+    80,
+    76
+   ]
+  },
+  "simple": {
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"#6e4bff\"/><path d=\"M30 50h40\" stroke=\"#fff\" stroke-width=\"8\"/></svg>",
+   "box": [
+    10,
+    10,
+    80,
+    80
+   ]
+  },
+  "gradient": {
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><linearGradient id=\"g\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f06\"/><stop offset=\"1\" stop-color=\"#06f\"/></linearGradient></defs><rect x=\"10\" y=\"10\" width=\"80\" height=\"80\" rx=\"16\" fill=\"url(#g)\"/></svg>",
+   "box": [
+    10,
+    10,
+    80,
+    80
+   ]
+  },
+  "clip": {
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><clipPath id=\"c\"><circle cx=\"50\" cy=\"50\" r=\"30\"/></clipPath><mask id=\"m\"><rect width=\"100\" height=\"100\" fill=\"#fff\"/><rect x=\"40\" y=\"0\" width=\"20\" height=\"100\" fill=\"#000\"/></mask></defs><rect width=\"100\" height=\"100\" fill=\"#e63\" clip-path=\"url(#c)\"/><rect y=\"70\" width=\"100\" height=\"30\" fill=\"#36e\" mask=\"url(#m)\"/></svg>",
+   "box": [
+    0,
+    0,
+    100,
+    100
+   ]
+  },
+  "thick-stroke": {
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><circle cx=\"40\" cy=\"50\" r=\"20\" fill=\"#36c\" stroke=\"#36c\" stroke-width=\"16\"/><rect x=\"70\" y=\"45\" width=\"10\" height=\"10\" fill=\"#c33\"/></svg>",
+   "box": [
+    20,
+    30,
+    60,
+    40
+   ]
+  },
+  "plain-rect": {
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><rect x=\"20\" y=\"30\" width=\"40\" height=\"10\"/></svg>",
+   "box": [
+    20,
+    30,
+    40,
+    10
+   ]
+  }
+ }
+}

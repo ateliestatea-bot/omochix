@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset=utf-8><title>fidelity</title><script src="/theme/assets/js/svg-motion/lib/purify.min.js"></script><script src="/theme/assets/js/svg-motion/safety.js"></script><script src="/theme/assets/js/svg-motion/compile.js"></script><script src="/theme/assets/js/svg-motion/frame.js"></script><script src="/fixtures/corpus.js"></script><script src="head.js"></script></head><body><script>
+const SIZE = 200;
+function sized(s) { const d = new DOMParser().parseFromString(s, 'image/svg+xml'), r = d.documentElement; r.setAttribute('width', SIZE); r.setAttribute('height', SIZE); return new XMLSerializer().serializeToString(d); }
+function raster(s) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = c.height = SIZE; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, SIZE, SIZE); x.drawImage(i, 0, 0, SIZE, SIZE); res(x.getImageData(0, 0, SIZE, SIZE).data); }; i.onerror = () => rej(new Error('img')); i.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s); }); }
+function diff(a, b) { let n = 0; for (let i = 0; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) > 48) n++; return +(n / (SIZE * SIZE) * 100).toFixed(2); }
+function ink(a) { let t = 0; for (let i = 0; i < a.length; i += 4) if (a[i] + a[i + 1] + a[i + 2] < 740) t++; return t; }
+(async () => {
+  const res = { engine, ua: navigator.userAgent, logos: {} };
+  for (const k in LOGOS) { const row = {}; try {
+    const src = LOGOS[k].replace(/^<\?xml[^>]*\?>/, '');
+    const n = OmxSvgSafety.normalize(LOGOS[k]), p = OmxSvgSafety.normalize(LOGOS[k], { prefix: 'omx1-' }), st = OmxSvgFrame.prepare(p.svg, { maxParts: 200 }), ov = OmxSvgFrame.prepare(p.svg, { maxParts: 200, overlay: true });
+    const [a, b, c, e, o] = await Promise.all([raster(sized(src)), raster(sized(n.svg)), raster(sized(p.svg)), raster(sized(st.svg)), raster(sized(ov.svg))]); row.overlayDiff = diff(a, o); row.overlayClean = !OmxSvgSafety.verify(ov.svg, { extraAttribute: OmxSvgFrame.EXTRA_ATTRIBUTE }).length;
+    row.ink = ink(a); row.diff = diff(a, b); row.prefixDiff = diff(a, c); row.preparedDiff = diff(a, e); row.removed = [...new Set(n.report.removed)];
+    row.idempotent = OmxSvgSafety.normalize(n.svg).svg === n.svg; row.refs = (n.svg.match(/url\(#|href="#/g) || []).length; row.refsSource = (src.match(/url\(#|href="#/g) || []).length; row.parts = st.layout.parts; row.geometry = st.layout.geometry;
+  } catch (e) { row.error = e.code || e.message; } res.logos[k] = row; }
+  // Same ids in two logos must not capture each other's gradient once prefixed.
+  const a1 = OmxSvgSafety.normalize(LOGOS.gradient, { prefix: 'a-' }).svg, b1 = OmxSvgSafety.normalize(LOGOS.gradient.replace('#f06', '#0f0').replace('#06f', '#0f0'), { prefix: 'b-' }).svg;
+  res.idCollision = { uniqueIds: !/id="a-g"/.test(b1) && /id="b-g"/.test(b1), refsOwn: /url\(#b-g\)/.test(b1) && /url\(#a-g\)/.test(a1) };
+  await post('fidelity-' + engine, res); document.title = 'DONE';
+})().catch(e => { document.title = 'ERR'; post('fidelity-' + engine + '-error', { error: String(e) }); });
+</script></body></html>

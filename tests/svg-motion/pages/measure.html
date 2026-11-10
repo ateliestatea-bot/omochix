@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset=utf-8><title>measure</title><script src="/theme/assets/js/svg-motion/lib/purify.min.js"></script><script src="/theme/assets/js/svg-motion/safety.js"></script><script src="/theme/assets/js/svg-motion/compile.js"></script><script src="/theme/assets/js/svg-motion/frame.js"></script><script src="/theme/assets/js/svg-motion/analyze.js"></script><script src="/theme/assets/js/svg-motion/import.js"></script><script src="head.js"></script></head><body><script>
+// Harness for csp-tests.js: the real measuring frame (/theme/assets/svg-motion/measure-frame.html), driven from the test.
+window.H = {
+  async prepared(text) { const data = await loadData(); const prep = s => OmxSvgFrame.prepare(s, Object.assign({ overlay: false }, data.budget || {})); const r = await OmxSvgImport.fromText(text, { prepare: prep }); return prep(r.svg).svg; },
+  sample: async id => (await loadData()).samples.find(s => s.id === id).svg,
+  measure: (svg, opt) => OmxSvgFrame.measure(svg, Object.assign({ detail: true }, opt || {})),
+  frameUrl: () => new URL('/theme/assets/svg-motion/measure-frame.html', location.href).href,
+  // A raw frame, outside measure(): for the protocol and attack tests.
+  rawFrame(url) { return new Promise((res, rej) => { setTimeout(() => rej(new Error('raw frame not ready in 5 s')), 5000); const f = document.createElement('iframe'); f.setAttribute('sandbox', 'allow-scripts'); f.style.cssText = 'position:absolute;left:-9999px;width:200px;height:200px'; const replies = []; const on = ev => { if (ev.source !== f.contentWindow) return; if (ev.data && ev.data.type === 'omx:ready' && !window.__raw) { window.__raw = { f, replies }; res(true); } else replies.push(ev.data); }; window.__raw = null; addEventListener('message', on); document.body.appendChild(f); f.src = url || H.frameUrl(); }); },
+  send(msg) { window.__raw.f.contentWindow.postMessage(msg, '*'); },
+  replies: () => window.__raw.replies.map(r => ({ type: r && r.type, id: r && r.id, box: r && r.box, attempts: r && r.attempts }))
+};
+document.title = 'READY';
+</script></body></html>

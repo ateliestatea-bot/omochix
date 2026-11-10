@@ -1,0 +1,954 @@
+{
+  "version": 2,
+  "common": [
+    {
+      "key": "delay",
+      "label": "開始の遅れ",
+      "type": "range",
+      "min": 0,
+      "max": 2000,
+      "step": 50,
+      "default": 0,
+      "unit": "ms"
+    },
+    {
+      "key": "easing",
+      "label": "動き方",
+      "type": "select",
+      "options": [
+        {
+          "value": "preset",
+          "label": "モーションの標準"
+        },
+        {
+          "value": "linear",
+          "label": "一定"
+        },
+        {
+          "value": "ease",
+          "label": "なめらか"
+        },
+        {
+          "value": "ease-in",
+          "label": "徐々に速く"
+        },
+        {
+          "value": "ease-out",
+          "label": "徐々に遅く"
+        },
+        {
+          "value": "ease-in-out",
+          "label": "ゆっくり始まり終わる"
+        },
+        {
+          "value": "soft",
+          "label": "やわらかく止まる"
+        },
+        {
+          "value": "back",
+          "label": "少し行き過ぎる"
+        }
+      ],
+      "default": "preset"
+    },
+    {
+      "key": "loop",
+      "label": "繰り返し",
+      "type": "select",
+      "options": [
+        {
+          "value": "preset",
+          "label": "モーションの標準"
+        },
+        {
+          "value": "1",
+          "label": "1 回"
+        },
+        {
+          "value": "2",
+          "label": "2 回"
+        },
+        {
+          "value": "3",
+          "label": "3 回"
+        },
+        {
+          "value": "infinite",
+          "label": "繰り返す"
+        }
+      ],
+      "default": "preset"
+    },
+    {
+      "key": "stagger",
+      "label": "図形の時間差",
+      "type": "range",
+      "min": 0,
+      "max": 400,
+      "step": 10,
+      "default": 0,
+      "unit": "ms"
+    },
+    {
+      "key": "opacity",
+      "label": "不透明度",
+      "type": "range",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 1,
+      "unit": ""
+    },
+    {
+      "key": "scale",
+      "label": "大きさ",
+      "type": "range",
+      "min": 0.3,
+      "max": 2,
+      "step": 0.05,
+      "default": 1,
+      "unit": "倍"
+    },
+    {
+      "key": "x",
+      "label": "横の位置",
+      "type": "range",
+      "min": -50,
+      "max": 50,
+      "step": 1,
+      "default": 0,
+      "unit": "%"
+    },
+    {
+      "key": "y",
+      "label": "縦の位置",
+      "type": "range",
+      "min": -50,
+      "max": 50,
+      "step": 1,
+      "default": 0,
+      "unit": "%"
+    },
+    {
+      "key": "rotate",
+      "label": "回転",
+      "type": "range",
+      "min": -180,
+      "max": 180,
+      "step": 5,
+      "default": 0,
+      "unit": "deg"
+    }
+  ],
+  "presets": [
+    {
+      "ref": "P03",
+      "id": "logo-pop",
+      "name": "ポップイン",
+      "description": "縮んだ状態から弾んで等倍になる、定番の登場。",
+      "category": "entrance",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 700,
+          "unit": "ms"
+        },
+        {
+          "key": "from",
+          "label": "開始の大きさ",
+          "type": "range",
+          "min": 0.2,
+          "max": 0.9,
+          "step": 0.05,
+          "default": 0.5,
+          "unit": "倍"
+        },
+        {
+          "key": "overshoot",
+          "label": "弾みの量",
+          "type": "range",
+          "min": 0,
+          "max": 0.3,
+          "step": 0.01,
+          "default": 0.08,
+          "unit": ""
+        }
+      ]
+    },
+    {
+      "ref": "P13",
+      "id": "logo-breathe",
+      "name": "呼吸",
+      "description": "ゆっくり大きくなったり小さくなったりを繰り返す。",
+      "category": "loop",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 600,
+          "max": 6000,
+          "step": 100,
+          "default": 1800,
+          "unit": "ms"
+        },
+        {
+          "key": "amount",
+          "label": "振れ幅",
+          "type": "range",
+          "min": 0.01,
+          "max": 0.2,
+          "step": 0.01,
+          "default": 0.05,
+          "unit": ""
+        }
+      ]
+    },
+    {
+      "ref": "P14",
+      "id": "logo-float",
+      "name": "浮遊",
+      "description": "ふわふわと上下しながら、わずかに傾く。",
+      "category": "loop",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 600,
+          "max": 6000,
+          "step": 100,
+          "default": 2000,
+          "unit": "ms"
+        },
+        {
+          "key": "amount",
+          "label": "上下の幅",
+          "type": "range",
+          "min": 0.01,
+          "max": 0.2,
+          "step": 0.01,
+          "default": 0.04,
+          "unit": ""
+        },
+        {
+          "key": "tilt",
+          "label": "傾き",
+          "type": "range",
+          "min": -10,
+          "max": 10,
+          "step": 1,
+          "default": 2,
+          "unit": "deg"
+        }
+      ]
+    },
+    {
+      "ref": "P15",
+      "id": "logo-wiggle",
+      "name": "小さく揺れる",
+      "description": "間を置いて小さく左右に揺れ、視線を集める。",
+      "category": "loop",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 800,
+          "max": 6000,
+          "step": 100,
+          "default": 2400,
+          "unit": "ms"
+        },
+        {
+          "key": "angle",
+          "label": "揺れる角度",
+          "type": "range",
+          "min": 2,
+          "max": 20,
+          "step": 1,
+          "default": 6,
+          "unit": "deg"
+        },
+        {
+          "key": "rest",
+          "label": "休む割合",
+          "type": "range",
+          "min": 0,
+          "max": 0.8,
+          "step": 0.05,
+          "default": 0.5,
+          "unit": ""
+        }
+      ]
+    },
+    {
+      "ref": "P01",
+      "id": "logo-draw",
+      "name": "線で描く",
+      "description": "輪郭が一筆書きのように描かれて完成する。",
+      "category": "entrance",
+      "structure": "outline",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 1400,
+          "unit": "ms"
+        },
+        {
+          "key": "gap",
+          "label": "図形ごとの時間差",
+          "type": "range",
+          "min": 0,
+          "max": 400,
+          "step": 10,
+          "default": 80,
+          "unit": "ms"
+        },
+        {
+          "key": "width",
+          "label": "線の太さ",
+          "type": "range",
+          "min": 0.5,
+          "max": 8,
+          "step": 0.5,
+          "default": 2,
+          "unit": ""
+        },
+        {
+          "key": "color",
+          "label": "線の色",
+          "type": "color",
+          "default": "#6e4bff"
+        }
+      ]
+    },
+    {
+      "ref": "P02",
+      "id": "logo-draw-fill",
+      "name": "描いて塗る",
+      "description": "輪郭を描いたあと塗りが現れ、元のロゴになる。",
+      "category": "entrance",
+      "structure": "outline",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 600,
+          "max": 5000,
+          "step": 100,
+          "default": 2000,
+          "unit": "ms"
+        },
+        {
+          "key": "fillAt",
+          "label": "塗り始める位置",
+          "type": "range",
+          "min": 0.3,
+          "max": 0.9,
+          "step": 0.05,
+          "default": 0.6,
+          "unit": ""
+        },
+        {
+          "key": "width",
+          "label": "線の太さ",
+          "type": "range",
+          "min": 0.5,
+          "max": 8,
+          "step": 0.5,
+          "default": 2,
+          "unit": ""
+        },
+        {
+          "key": "color",
+          "label": "線の色",
+          "type": "color",
+          "default": "#6e4bff"
+        }
+      ]
+    },
+    {
+      "ref": "P04",
+      "id": "logo-assemble",
+      "name": "パーツ集合",
+      "description": "各パーツが外側から集まって組み上がる。",
+      "category": "entrance",
+      "structure": "parts",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 800,
+          "unit": "ms"
+        },
+        {
+          "key": "distance",
+          "label": "集まる距離",
+          "type": "range",
+          "min": 0.1,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.4,
+          "unit": ""
+        },
+        {
+          "key": "gap",
+          "label": "パーツの時間差",
+          "type": "range",
+          "min": 0,
+          "max": 300,
+          "step": 10,
+          "default": 70,
+          "unit": "ms"
+        }
+      ]
+    },
+    {
+      "ref": "P11",
+      "id": "logo-stagger-pop",
+      "name": "順番に弾む",
+      "description": "パーツが順番に弾みながら現れる。",
+      "category": "entrance",
+      "structure": "parts",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 200,
+          "max": 2000,
+          "step": 100,
+          "default": 500,
+          "unit": "ms"
+        },
+        {
+          "key": "from",
+          "label": "開始の大きさ",
+          "type": "range",
+          "min": 0.2,
+          "max": 0.9,
+          "step": 0.05,
+          "default": 0.4,
+          "unit": "倍"
+        },
+        {
+          "key": "gap",
+          "label": "パーツの時間差",
+          "type": "range",
+          "min": 0,
+          "max": 400,
+          "step": 10,
+          "default": 110,
+          "unit": "ms"
+        }
+      ]
+    },
+    {
+      "ref": "P06",
+      "id": "logo-rise-mask",
+      "name": "せり上がり",
+      "description": "枠の下からせり上がって現れる。",
+      "category": "entrance",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 800,
+          "unit": "ms"
+        },
+        {
+          "key": "distance",
+          "label": "せり上がる距離",
+          "type": "range",
+          "min": 0.3,
+          "max": 1.2,
+          "step": 0.05,
+          "default": 1,
+          "unit": ""
+        }
+      ]
+    },
+    {
+      "ref": "P05",
+      "id": "logo-wipe",
+      "name": "ワイプ表示",
+      "description": "端から順に現れていく。",
+      "category": "entrance",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 800,
+          "unit": "ms"
+        },
+        {
+          "key": "direction",
+          "label": "方向",
+          "type": "select",
+          "options": [
+            {
+              "value": "right",
+              "label": "左から右へ"
+            },
+            {
+              "value": "left",
+              "label": "右から左へ"
+            },
+            {
+              "value": "down",
+              "label": "上から下へ"
+            },
+            {
+              "value": "up",
+              "label": "下から上へ"
+            }
+          ],
+          "default": "right"
+        },
+        {
+          "key": "easing",
+          "label": "動き方",
+          "type": "select",
+          "options": [
+            {
+              "value": "ease-out",
+              "label": "徐々に遅く"
+            },
+            {
+              "value": "linear",
+              "label": "一定"
+            },
+            {
+              "value": "ease-in-out",
+              "label": "なめらか"
+            }
+          ],
+          "default": "ease-out"
+        }
+      ]
+    },
+    {
+      "ref": "P09",
+      "id": "logo-drop",
+      "name": "バウンド落下",
+      "description": "上から落ちて、弾んで止まる。",
+      "category": "entrance",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 1100,
+          "unit": "ms"
+        },
+        {
+          "key": "height",
+          "label": "落ちる高さ",
+          "type": "range",
+          "min": 0.2,
+          "max": 1.2,
+          "step": 0.05,
+          "default": 0.7,
+          "unit": ""
+        },
+        {
+          "key": "bounces",
+          "label": "跳ねる回数",
+          "type": "range",
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "default": 2,
+          "unit": "回"
+        }
+      ]
+    },
+    {
+      "ref": "P10",
+      "id": "logo-spin-in",
+      "name": "回転登場",
+      "description": "回りながら等倍になって現れる。",
+      "category": "entrance",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 900,
+          "unit": "ms"
+        },
+        {
+          "key": "turns",
+          "label": "回転量",
+          "type": "range",
+          "min": 0.25,
+          "max": 3,
+          "step": 0.25,
+          "default": 1,
+          "unit": "回転"
+        },
+        {
+          "key": "from",
+          "label": "開始の大きさ",
+          "type": "range",
+          "min": 0,
+          "max": 0.9,
+          "step": 0.05,
+          "default": 0.3,
+          "unit": "倍"
+        },
+        {
+          "key": "direction",
+          "label": "方向",
+          "type": "select",
+          "options": [
+            {
+              "value": "cw",
+              "label": "時計回り"
+            },
+            {
+              "value": "ccw",
+              "label": "反時計回り"
+            }
+          ],
+          "default": "cw"
+        }
+      ]
+    },
+    {
+      "ref": "P16",
+      "id": "logo-parts-wave",
+      "name": "パーツの波",
+      "description": "パーツが波のように順番に上下する。",
+      "category": "loop",
+      "structure": "parts",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 3000,
+          "step": 100,
+          "default": 700,
+          "unit": "ms"
+        },
+        {
+          "key": "height",
+          "label": "波の高さ",
+          "type": "range",
+          "min": 0.01,
+          "max": 0.2,
+          "step": 0.01,
+          "default": 0.05,
+          "unit": ""
+        },
+        {
+          "key": "phase",
+          "label": "パーツの時間差",
+          "type": "range",
+          "min": 0,
+          "max": 400,
+          "step": 10,
+          "default": 120,
+          "unit": "ms"
+        }
+      ]
+    },
+    {
+      "ref": "P17",
+      "id": "logo-color-shift",
+      "name": "色の移ろい",
+      "description": "塗りの色がゆっくり移り変わる。",
+      "category": "loop",
+      "structure": "any",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 600,
+          "max": 8000,
+          "step": 100,
+          "default": 2400,
+          "unit": "ms"
+        },
+        {
+          "key": "color1",
+          "label": "色 1",
+          "type": "color",
+          "default": "#6e4bff"
+        },
+        {
+          "key": "color2",
+          "label": "色 2",
+          "type": "color",
+          "default": "#ff4b8b"
+        }
+      ]
+    },
+    {
+      "ref": "P19",
+      "id": "logo-dash-flow",
+      "name": "線が流れる",
+      "description": "破線が輪郭に沿って流れ続ける。",
+      "category": "loop",
+      "structure": "outline",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 400,
+          "max": 6000,
+          "step": 100,
+          "default": 1600,
+          "unit": "ms"
+        },
+        {
+          "key": "dash",
+          "label": "破線の長さ",
+          "type": "range",
+          "min": 0.02,
+          "max": 0.3,
+          "step": 0.01,
+          "default": 0.08,
+          "unit": ""
+        },
+        {
+          "key": "width",
+          "label": "線の太さ",
+          "type": "range",
+          "min": 0.5,
+          "max": 8,
+          "step": 0.5,
+          "default": 1.5,
+          "unit": ""
+        },
+        {
+          "key": "color",
+          "label": "線の色",
+          "type": "color",
+          "default": "#6e4bff"
+        }
+      ]
+    },
+    {
+      "ref": "P07",
+      "id": "logo-focus",
+      "name": "ピント合わせ",
+      "description": "ぼやけた状態から、ピントが合うように現れる。",
+      "category": "entrance",
+      "structure": "stage",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 900,
+          "unit": "ms"
+        },
+        {
+          "key": "blur",
+          "label": "ぼかしの量",
+          "type": "range",
+          "min": 1,
+          "max": 24,
+          "step": 1,
+          "default": 10,
+          "unit": "px"
+        }
+      ]
+    },
+    {
+      "ref": "P08",
+      "id": "logo-flip",
+      "name": "3D 反転",
+      "description": "ロゴ全体が奥行きをもって回転して正面を向く。",
+      "category": "entrance",
+      "structure": "stage",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 300,
+          "max": 4000,
+          "step": 100,
+          "default": 900,
+          "unit": "ms"
+        },
+        {
+          "key": "angle",
+          "label": "開始の角度",
+          "type": "range",
+          "min": 20,
+          "max": 170,
+          "step": 5,
+          "default": 90,
+          "unit": "deg"
+        },
+        {
+          "key": "depth",
+          "label": "奥行き",
+          "type": "range",
+          "min": 200,
+          "max": 1200,
+          "step": 50,
+          "default": 600,
+          "unit": "px"
+        },
+        {
+          "key": "axis",
+          "label": "回転の軸",
+          "type": "select",
+          "options": [
+            {
+              "value": "Y",
+              "label": "縦軸（左右に回る）"
+            },
+            {
+              "value": "X",
+              "label": "横軸（上下に回る）"
+            }
+          ],
+          "default": "Y"
+        }
+      ]
+    },
+    {
+      "ref": "P12",
+      "id": "logo-shine",
+      "name": "光が走る",
+      "description": "ロゴの形に沿って、斜めの光が横切る。",
+      "category": "loop",
+      "structure": "overlay",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 1000,
+          "max": 8000,
+          "step": 100,
+          "default": 2800,
+          "unit": "ms"
+        },
+        {
+          "key": "rest",
+          "label": "休む割合",
+          "type": "range",
+          "min": 0,
+          "max": 0.8,
+          "step": 0.05,
+          "default": 0.5,
+          "unit": ""
+        },
+        {
+          "key": "strength",
+          "label": "光の強さ",
+          "type": "range",
+          "min": 0.2,
+          "max": 1,
+          "step": 0.05,
+          "default": 0.7,
+          "unit": ""
+        }
+      ]
+    },
+    {
+      "ref": "P18",
+      "id": "logo-glow",
+      "name": "光のパルス",
+      "description": "ロゴの周りの光が、ゆっくり脈打つ。",
+      "category": "loop",
+      "structure": "stage",
+      "params": [
+        {
+          "key": "duration",
+          "label": "長さ",
+          "type": "range",
+          "min": 500,
+          "max": 5000,
+          "step": 100,
+          "default": 1400,
+          "unit": "ms"
+        },
+        {
+          "key": "size",
+          "label": "光の広がり",
+          "type": "range",
+          "min": 2,
+          "max": 32,
+          "step": 1,
+          "default": 12,
+          "unit": "px"
+        },
+        {
+          "key": "color",
+          "label": "光の色",
+          "type": "color",
+          "default": "#6e4bff"
+        }
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "id": "prism",
+      "name": "プリズム",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 120 120\"><title>Prism (sample logo)</title><defs><linearGradient id=\"a\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6e4bff\"/><stop offset=\"1\" stop-color=\"#ff4b8b\"/></linearGradient></defs><path d=\"M60 14 104 90H16Z\" fill=\"url(#a)\"/><path d=\"M60 42 80 78H40Z\" fill=\"#fff\" fill-opacity=\".85\"/><circle cx=\"60\" cy=\"104\" r=\"6\" fill=\"#6e4bff\"/></svg>"
+    },
+    {
+      "id": "orbit",
+      "name": "オービット",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 120 120\"><title>Orbit (sample logo)</title><circle cx=\"60\" cy=\"60\" r=\"20\" fill=\"#2563eb\"/><circle cx=\"60\" cy=\"60\" r=\"42\" fill=\"none\" stroke=\"#2563eb\" stroke-width=\"5\"/><circle cx=\"90\" cy=\"30\" r=\"9\" fill=\"#d9851f\"/><circle cx=\"30\" cy=\"90\" r=\"6\" fill=\"#d9851f\"/></svg>"
+    },
+    {
+      "id": "stack",
+      "name": "スタック",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 120 120\"><title>Stack (sample logo)</title><g transform=\"translate(20 22)\"><rect width=\"80\" height=\"18\" rx=\"9\" fill=\"#0ea5a4\"/></g><g transform=\"translate(20 51)\"><rect width=\"56\" height=\"18\" rx=\"9\" fill=\"#2563eb\"/></g><g transform=\"translate(20 80)\"><rect width=\"32\" height=\"18\" rx=\"9\" fill=\"#6e4bff\"/></g></svg>"
+    }
+  ]
+}
