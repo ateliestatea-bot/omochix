@@ -20,16 +20,7 @@ if (!defined('ABSPATH')) {
         <link rel="icon" href="<?php echo esc_url(get_theme_file_uri('/assets/img/favicon.png')); ?>" sizes="512x512" type="image/png">
         <link rel="apple-touch-icon" href="<?php echo esc_url(get_theme_file_uri('/assets/img/apple-touch-icon.png')); ?>" sizes="180x180">
     <?php endif; ?>
-    <script>
-        /* Apply the saved theme before paint to avoid a flash. */
-        (function () {
-            try {
-                var savedTheme = localStorage.getItem('omochix-theme');
-                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.documentElement.dataset.theme = savedTheme || (prefersDark ? 'dark' : 'light');
-            } catch (error) {}
-        }());
-    </script>
+    <script><?php echo omochix_theme_boot_script(); // phpcs:ignore WordPress.Security.EscapeOutput -- a fixed string from functions.php ?></script>
     <?php wp_head(); ?>
 </head>
 

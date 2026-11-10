@@ -68,7 +68,8 @@ jobs:
             tests/learn-gallery/run.php \
             tests/learn-composer/run.php \
             tests/article-v2/run.php \
-            tests/editorial-home/run.php
+            tests/editorial-home/run.php \
+            tests/svg-motion/shortcode.php
           do
             echo "::group::$test"
             php "$test" || status=1
