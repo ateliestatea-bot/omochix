@@ -15,12 +15,19 @@
 # Each engine runs as two jobs: "core" (security, upload, fidelity, presets, page, compose, shortcode, the 53 lessons)
 # and "export". Firefox's export is split in two shards (SVGM_SHARD): its real-time image checks alone took most of a
 # 20-minute job (PR #55, MVP-1 run). Every check still runs exactly once per engine.
+#
+# The "*-csp" jobs run the same core checks, and the export checks in Chromium, with the studio page's Content Security
+# Policy enforced (SVGM_CSP=enforce), plus the CSP checks of csp-tests.js (measuring frame, JSONP routes, script-src,
+# harness self-check). csp-tests.js sets the policy it needs per page, so it runs only in these jobs.
 name: SVG Motion
 
 on:
   pull_request:
     paths:
       - 'wp-theme/omochix-theme/assets/js/svg-motion/**'
+      - 'wp-theme/omochix-theme/assets/svg-motion/**'
+      - 'wp-theme/omochix-theme/functions.php'
+      - 'wp-theme/omochix-theme/header.php'
       - 'wp-theme/omochix-theme/assets/data/svg-motion/**'
       - 'wp-theme/omochix-theme/assets/css/learn-svg-motion.css'
       - 'wp-theme/omochix-theme/inc/learn-svg-motion.php'
@@ -66,10 +73,15 @@ jobs:
           - { id: firefox-export-2, engine: firefox, os: ubuntu-24.04, parallel: 3, steps: export, shard: '2/2' }
           - { id: webkit-core, engine: webkit, os: macos-15, parallel: 6, steps: core, shard: '1/1' }
           - { id: webkit-export, engine: webkit, os: macos-15, parallel: 6, steps: export, shard: '1/1' }
+          - { id: chromium-core-csp, engine: chromium, os: ubuntu-24.04, parallel: 6, steps: core, shard: '1/1', csp: enforce }
+          - { id: firefox-core-csp, engine: firefox, os: ubuntu-24.04, parallel: 3, steps: core, shard: '1/1', csp: enforce }
+          - { id: webkit-core-csp, engine: webkit, os: macos-15, parallel: 6, steps: core, shard: '1/1', csp: enforce }
+          - { id: chromium-export-csp, engine: chromium, os: ubuntu-24.04, parallel: 6, steps: export, shard: '1/1', csp: enforce }
     env:
       SVGM_ENGINE: ${{ matrix.engine }}
       SVGM_PARALLEL: ${{ matrix.parallel }}
       SVGM_SHARD: ${{ matrix.shard }}
+      SVGM_CSP: ${{ matrix.csp || 'off' }}
       # macOS can hold 8770 for its sharing service (seen locally); 8790 is free on both runners.
       SVGM_PORT: '8790'
       SVGM_PROFILE: ${{ github.event_name == 'pull_request' && 'fast' || (github.event_name == 'workflow_dispatch' && inputs.profile || 'full') }}
@@ -106,9 +118,9 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps ${{ matrix.engine }}
-      - name: Browser tests (${{ matrix.steps }}, ${{ env.SVGM_PROFILE }})
+      - name: Browser tests (${{ matrix.steps }}, ${{ env.SVGM_PROFILE }}, CSP ${{ env.SVGM_CSP }})
         working-directory: tests/svg-motion
-        run: node run.js "${{ matrix.steps == 'core' && 'security,upload,fidelity,presets,page,compose,shortcode,regression' || 'export' }}"
+        run: node run.js "${{ matrix.steps != 'core' && 'export' || (matrix.csp == 'enforce' && 'security,upload,fidelity,presets,page,compose,shortcode,csp,regression' || 'security,upload,fidelity,presets,page,compose,shortcode,regression') }}"
       - name: Keep the results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
