@@ -24,6 +24,8 @@ function omochix_shell_page_enabled() {
 /** Templates that currently use the shell. Extend this list as more templates are migrated. */
 function omochix_shell_enabled() {
     if (is_front_page()) { return false; }
+    // Extension point for modules that render their own templates (Industry Hub).
+    if (apply_filters('omochix_shell_enabled_for_request', false)) { return true; }
     return is_404() || is_search() || is_home() || is_category() || is_tag()
         || is_post_type_archive(['ai_tool', 'prompt', 'learn_practice']) || is_tax(['ai_tool_category', 'prompt_category', 'prompt_model', 'learn_field', 'learn_format', 'learn_usecase', 'learn_ai', 'learn_tech'])
         || is_singular(['prompt', 'ai_tool', 'post', 'learn_practice'])

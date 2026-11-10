@@ -2,7 +2,7 @@
 Contributors: omochix
 Requires at least: 6.8
 Requires PHP: 8.1
-Stable tag: 1.9.2
+Stable tag: 1.9.3
 License: GPLv2 or later
 
 OmochiXのAIツール投稿タイプ、タクソノミー、投稿メタ、管理画面を提供します。

@@ -10,6 +10,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * dateModified for an AI tool: the article date from tool-display-facts.php,
+ * or post_modified when that file is not loaded (during a file-by-file upload).
+ *
+ * @param WP_Post $post AI tool post.
+ * @return string ISO 8601.
+ */
+function omochix_core_get_schema_date_modified( $post ) {
+	if ( function_exists( 'omochix_core_get_tool_content_modified_iso' ) ) {
+		return omochix_core_get_tool_content_modified_iso( $post->ID );
+	}
+	return get_post_modified_time( DATE_W3C, true, $post );
+}
+
+/**
  * Determine whether the current request may expose AI tool structured data.
  *
  * @return bool
@@ -110,7 +124,9 @@ function omochix_core_get_software_application_schema() {
 		'name'          => $name,
 		'url'           => $url,
 		'datePublished' => get_post_time( DATE_W3C, true, $post ),
-		'dateModified'  => get_post_modified_time( DATE_W3C, true, $post ),
+		// The article's own update date, not post_modified (which also moves on
+		// term-only changes); see omochix_core_get_tool_content_modified_gmt().
+		'dateModified'  => omochix_core_get_schema_date_modified( $post ),
 		'inLanguage'    => 'ja-JP',
 	);
 
@@ -156,10 +172,10 @@ function omochix_core_get_software_application_schema() {
 	// A single editorial rating is represented as a Review (one identified
 	// author, OmochiX), never as AggregateRating: AggregateRating implies an
 	// aggregation of many independent ratings, which a lone editorial score
-	// is not. Only emitted when rating_overall is real, verified data (see
-	// save-meta.php, which deletes the meta entirely rather than storing 0).
-	$rating = get_post_meta( $post->ID, 'rating_overall', true );
-	if ( '' !== $rating && is_numeric( $rating ) && (float) $rating > 0 ) {
+	// is not. Only emitted when rating_overall is set and the post carries the
+	// editorial review behind it (omochix_core_tool_rating_has_basis()).
+	$rating = function_exists( 'omochix_core_get_tool_display_rating' ) ? omochix_core_get_tool_display_rating( $post->ID ) : 0;
+	if ( $rating > 0 ) {
 		$schema['review'] = array(
 			'@type'        => 'Review',
 			'reviewRating' => array(
@@ -209,12 +225,36 @@ function omochix_core_add_software_application_to_slim_seo( $graph ) {
 		)
 	);
 
+	// Slim SEO dates its WebPage node with post_modified; use the same article
+	// date as the SoftwareApplication node so the two never disagree.
+	foreach ( $graph as $index => $entity ) {
+		if ( is_array( $entity ) && in_array( 'WebPage', (array) ( $entity['@type'] ?? array() ), true ) && isset( $entity['dateModified'] ) ) {
+			$graph[ $index ]['dateModified'] = $schema['dateModified'];
+		}
+	}
+
 	$graph[] = $schema;
 	$GLOBALS['omochix_core_software_application_in_slim_seo'] = true;
 
 	return $graph;
 }
 add_filter( 'slim_seo_schema_graph', 'omochix_core_add_software_application_to_slim_seo', PHP_INT_MAX );
+
+/**
+ * Slim SEO's article:modified_time and og:updated_time are post_modified; on an
+ * AI tool detail page use the same article date as the structured data.
+ *
+ * @param string $value Slim SEO's value.
+ * @return string
+ */
+function omochix_core_slim_seo_tool_modified_time( $value ) {
+	if ( '' === $value || ! omochix_core_should_output_software_application_schema() ) {
+		return $value;
+	}
+	return omochix_core_get_schema_date_modified( get_queried_object() );
+}
+add_filter( 'slim_seo_open_graph_article_modified_time', 'omochix_core_slim_seo_tool_modified_time' );
+add_filter( 'slim_seo_open_graph_updated_time', 'omochix_core_slim_seo_tool_modified_time' );
 
 /**
  * Output one standalone node when Slim SEO did not generate its schema graph.

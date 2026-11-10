@@ -573,3 +573,9 @@ function omochix_theme_boot_script() {
 function omochix_theme_header_script_url() {
     return get_template_directory_uri() . '/assets/js/header.js';
 }
+
+// Industry Hub (docs/Industry-Hub-Phase2-Design.md). Loaded last and guarded,
+// like the Core plugin's optional files: a partial upload cannot break the site.
+if (is_readable(get_theme_file_path('/inc/learn-industries.php'))) {
+    require_once get_theme_file_path('/inc/learn-industries.php');
+}

@@ -74,6 +74,92 @@ function omochix_get_ai_tool_pricing_display_label($post_id, $pricing_label) {
 }
 
 /**
+ * Pricing label before the discontinued wording. OmochiX Core 1.9.3+ derives
+ * it from pricing_type and has_free_plan together ("要確認" when they disagree).
+ *
+ * @param int $post_id AI Tool post ID.
+ * @return string
+ */
+function omochix_get_ai_tool_pricing_base_label($post_id) {
+    if (function_exists('omochix_core_get_tool_pricing_display_label')) {
+        return omochix_core_get_tool_pricing_display_label($post_id);
+    }
+    $pricing = get_post_meta($post_id, 'pricing_type', true) ?: 'contact';
+    return function_exists('omochix_core_get_pricing_type_label') ? omochix_core_get_pricing_type_label($pricing) : __('料金未確認', 'omochix');
+}
+
+/**
+ * Pricing filter options of the AI Tools archive, keyed by the ?pricing= value.
+ * With OmochiX Core 1.9.3+ these are the pricing classes the cards show.
+ *
+ * @return array<string, string>
+ */
+function omochix_get_ai_tool_pricing_filter_options() {
+    if (function_exists('omochix_core_get_tool_pricing_class_labels')) {
+        $labels = omochix_core_get_tool_pricing_class_labels();
+        // ?pricing=freemium is the existing URL for 無料プランあり.
+        return [
+            'free'        => $labels['free'],
+            'freemium'    => $labels['free_plan'],
+            'trial'       => $labels['trial'],
+            'paid'        => $labels['paid'],
+            'contact'     => $labels['contact'],
+            'unconfirmed' => $labels['unconfirmed'],
+        ];
+    }
+    return [
+        'free'     => __('無料', 'omochix'),
+        'freemium' => __('無料プランあり', 'omochix'),
+        'paid'     => __('有料', 'omochix'),
+        'trial'    => __('無料体験あり', 'omochix'),
+        'contact'  => __('要問い合わせ', 'omochix'),
+    ];
+}
+
+/**
+ * Whether editorial ratings are published. Off unless OmochiX Core 1.9.3+ says
+ * otherwise (ratings are withheld until the rating method is approved).
+ *
+ * @return bool
+ */
+function omochix_ai_tool_ratings_published() {
+    return function_exists('omochix_core_tool_ratings_published') && omochix_core_tool_ratings_published();
+}
+
+/**
+ * Editorial rating to show, or 0 when none may be shown.
+ *
+ * @param int $post_id AI Tool post ID.
+ * @return float
+ */
+function omochix_get_ai_tool_display_rating($post_id) {
+    return function_exists('omochix_core_get_tool_display_rating') ? omochix_core_get_tool_display_rating($post_id) : 0.0;
+}
+
+/**
+ * The article date shown on a tool page: label, ISO datetime and display text.
+ * Never post_modified, which also moves on term-only changes. Without OmochiX
+ * Core 1.9.3+ the publish date is shown and labelled as such.
+ *
+ * @param int $post_id AI Tool post ID.
+ * @return array{label: string, datetime: string, text: string}
+ */
+function omochix_get_ai_tool_article_date($post_id) {
+    if (function_exists('omochix_core_get_tool_content_modified_gmt') && function_exists('omochix_core_get_tool_content_modified_iso')) {
+        return [
+            'label'    => __('記事更新日', 'omochix'),
+            'datetime' => omochix_core_get_tool_content_modified_iso($post_id),
+            'text'     => get_date_from_gmt(omochix_core_get_tool_content_modified_gmt($post_id), 'Y.m.d'),
+        ];
+    }
+    return [
+        'label'    => __('公開日', 'omochix'),
+        'datetime' => get_the_date('c', $post_id),
+        'text'     => get_the_date('Y.m.d', $post_id),
+    ];
+}
+
+/**
  * "提供終了" badge for AI Tool cards; an empty string for any other status.
  *
  * @param int $post_id AI Tool post ID.

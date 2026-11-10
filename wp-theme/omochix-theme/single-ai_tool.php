@@ -23,7 +23,10 @@ if (have_posts()) :
         $omochix_company       = get_post_meta($omochix_tool_id, 'company_name', true);
         $omochix_short         = get_post_meta($omochix_tool_id, 'short_description', true);
         $omochix_short         = $omochix_short ?: get_the_excerpt();
-        $omochix_rating        = (float) get_post_meta($omochix_tool_id, 'rating_overall', true);
+        // Each call into inc/ai-tool-detail.php is guarded so the template still
+        // renders while theme files are uploaded one by one.
+        $omochix_rating        = function_exists('omochix_get_ai_tool_display_rating') ? omochix_get_ai_tool_display_rating($omochix_tool_id) : 0.0;
+        $omochix_ratings_shown = function_exists('omochix_ai_tool_ratings_published') && omochix_ai_tool_ratings_published();
         $omochix_pricing       = get_post_meta($omochix_tool_id, 'pricing_type', true) ?: 'contact';
         $omochix_japanese      = get_post_meta($omochix_tool_id, 'japanese_support', true) ?: 'unknown';
         $omochix_status        = get_post_meta($omochix_tool_id, 'tool_status', true) ?: 'active';
@@ -109,9 +112,9 @@ if (have_posts()) :
             'active' => __('提供中', 'omochix'), 'beta' => __('ベータ版', 'omochix'),
             'waitlist' => __('招待・待機中', 'omochix'), 'discontinued' => __('提供終了', 'omochix'),
         ];
-        $omochix_pricing_label = function_exists('omochix_core_get_pricing_type_label')
-            ? omochix_core_get_pricing_type_label($omochix_pricing)
-            : ($omochix_pricing_labels[$omochix_pricing] ?? __('未確認', 'omochix'));
+        $omochix_pricing_label = function_exists('omochix_get_ai_tool_pricing_base_label')
+            ? omochix_get_ai_tool_pricing_base_label($omochix_tool_id)
+            : (function_exists('omochix_core_get_pricing_type_label') ? omochix_core_get_pricing_type_label($omochix_pricing) : ($omochix_pricing_labels[$omochix_pricing] ?? __('未確認', 'omochix')));
         $omochix_japanese_label = function_exists('omochix_core_get_japanese_support_label')
             ? omochix_core_get_japanese_support_label($omochix_japanese)
             : ($omochix_japanese_labels[$omochix_japanese] ?? __('未確認', 'omochix'));
@@ -130,9 +133,12 @@ if (have_posts()) :
             };
         $omochix_api_label        = call_user_func($omochix_get_support_label, $omochix_api);
         $omochix_commercial_label = call_user_func($omochix_get_support_label, $omochix_commercial);
-        $omochix_free_plan_label = !$omochix_has_free_meta
-            ? __('未確認', 'omochix')
-            : (in_array($omochix_free_plan, [true, 1, '1', 'true', 'yes', 'on'], true) ? __('あり', 'omochix') : __('なし', 'omochix'));
+        // Core compares has_free_plan with pricing_type and returns "要確認" when they disagree.
+        $omochix_free_plan_label = function_exists('omochix_core_get_tool_free_plan_label')
+            ? omochix_core_get_tool_free_plan_label($omochix_tool_id)
+            : (!$omochix_has_free_meta
+                ? __('未確認', 'omochix')
+                : (in_array($omochix_free_plan, [true, 1, '1', 'true', 'yes', 'on'], true) ? __('あり', 'omochix') : __('なし', 'omochix')));
         // 対応環境: supported_devices is the researched source; the normalized
         // platform terms are the fallback when it is empty.
         if ($omochix_supported_devices) {
@@ -317,7 +323,7 @@ if (have_posts()) :
                                 </div>
                                 <?php if ($omochix_short) : ?><p class="tool-detail__lead"><?php echo esc_html(wp_strip_all_tags($omochix_short)); ?></p><?php endif; ?>
                                 <dl class="tool-detail__hero-facts">
-                                    <div><dt><?php esc_html_e('編集部評価', 'omochix'); ?></dt><dd><?php echo $omochix_rating > 0 ? esc_html(number_format_i18n($omochix_rating, 1) . ' / 5.0') : esc_html__('未評価', 'omochix'); ?></dd></div>
+                                    <div><dt><?php esc_html_e('編集部評価', 'omochix'); ?></dt><dd><?php echo $omochix_rating > 0 ? esc_html(number_format_i18n($omochix_rating, 1) . ' / 5.0') : ($omochix_ratings_shown ? esc_html__('未評価', 'omochix') : esc_html__('準備中', 'omochix')); ?></dd></div>
                                     <div><dt><?php esc_html_e('料金', 'omochix'); ?></dt><dd><?php echo esc_html($omochix_pricing_label); ?></dd></div>
                                     <div><dt><?php esc_html_e('日本語', 'omochix'); ?></dt><dd><?php echo esc_html($omochix_japanese_label); ?></dd></div>
                                     <div><dt><?php esc_html_e('提供状況', 'omochix'); ?></dt><dd><?php echo esc_html($omochix_status_label); ?></dd></div>
@@ -335,7 +341,8 @@ if (have_posts()) :
                                     </div>
                                 <?php endif; ?>
                                 <p class="tool-detail__updated">
-                                    <?php esc_html_e('最終更新', 'omochix'); ?> <time datetime="<?php echo esc_attr(get_the_modified_date(DATE_W3C)); ?>"><?php echo esc_html(get_the_modified_date('Y.m.d')); ?></time> · <?php echo esc_html(sprintf(__('編集：%s', 'omochix'), get_the_author())); ?>
+                                    <?php $omochix_article_date = function_exists('omochix_get_ai_tool_article_date') ? omochix_get_ai_tool_article_date($omochix_tool_id) : ['label' => __('公開日', 'omochix'), 'datetime' => get_the_date('c'), 'text' => get_the_date('Y.m.d')]; ?>
+                                    <?php echo esc_html($omochix_article_date['label']); ?> <time datetime="<?php echo esc_attr($omochix_article_date['datetime']); ?>"><?php echo esc_html($omochix_article_date['text']); ?></time> · <?php echo esc_html(sprintf(__('編集：%s', 'omochix'), get_the_author())); ?>
                                     <?php if ($omochix_info_checked) : ?>
                                         · <?php esc_html_e('情報確認日', 'omochix'); ?> <time datetime="<?php echo esc_attr($omochix_info_checked); ?>"><?php echo esc_html(mysql2date('Y.m.d', $omochix_info_checked)); ?></time>
                                     <?php endif; ?>
@@ -364,7 +371,7 @@ if (have_posts()) :
                         <?php if ($omochix_has_overview) : ?><a href="#tool-overview" data-tool-nav-link><?php esc_html_e('概要', 'omochix'); ?></a><?php endif; ?>
                         <?php if ($omochix_feature_cards) : ?><a href="#tool-feature-cards" data-tool-nav-link><?php esc_html_e('できること', 'omochix'); ?></a><?php endif; ?>
                         <?php if (array_filter(wp_list_pluck($omochix_structured_sections, 'items'))) : ?><a href="#tool-features" data-tool-nav-link><?php esc_html_e('特徴', 'omochix'); ?></a><?php endif; ?>
-                        <a href="#tool-rating" data-tool-nav-link><?php esc_html_e('評価', 'omochix'); ?></a>
+                        <?php if ($omochix_ratings_shown) : ?><a href="#tool-rating" data-tool-nav-link><?php esc_html_e('評価', 'omochix'); ?></a><?php endif; ?>
                         <?php if ($omochix_product_updates) : ?><a href="#tool-updates" data-tool-nav-link><?php esc_html_e('アップデート', 'omochix'); ?></a><?php endif; ?>
                         <?php if ($omochix_related_learn || $omochix_related_news || $omochix_related_lab || $omochix_related_compare || $omochix_related_prompts) : ?><a href="#tool-hub" data-tool-nav-link><?php esc_html_e('関連コンテンツ', 'omochix'); ?></a><?php endif; ?>
                         <?php if ($omochix_related_tools && $omochix_related_tools->have_posts()) : ?><a href="#related-tools-title" data-tool-nav-link><?php esc_html_e('関連ツール', 'omochix'); ?></a><?php endif; ?>
@@ -472,6 +479,8 @@ if (have_posts()) :
                             </section>
                         <?php endif; ?>
 
+                        <?php // Withheld until the rating method is approved (omochix_core_tool_ratings_published()). ?>
+                        <?php if ($omochix_ratings_shown) : ?>
                         <section class="tool-editor-rating" id="tool-rating" aria-labelledby="tool-rating-title">
                             <div><p><?php esc_html_e('OMOCHIX EDITORIAL RATING', 'omochix'); ?></p><h2 id="tool-rating-title"><?php esc_html_e('OmochiX編集部評価', 'omochix'); ?></h2></div>
                             <?php if ($omochix_rating > 0) : ?>
@@ -480,6 +489,7 @@ if (have_posts()) :
                                 <p class="tool-editor-rating__empty"><?php esc_html_e('未評価', 'omochix'); ?></p>
                             <?php endif; ?>
                         </section>
+                        <?php endif; ?>
 
                         <?php if ($omochix_product_updates) : ?>
                             <section class="tool-updates" id="tool-updates" aria-labelledby="tool-updates-title">
@@ -660,7 +670,7 @@ if (have_posts()) :
                                     $omochix_related_id = get_the_ID();
                                     $omochix_related_logo = absint(get_post_meta($omochix_related_id, 'tool_logo', true));
                                     $omochix_related_description = get_post_meta($omochix_related_id, 'short_description', true) ?: get_the_excerpt();
-                                    $omochix_related_rating = (float) get_post_meta($omochix_related_id, 'rating_overall', true);
+                                    $omochix_related_rating = function_exists('omochix_get_ai_tool_display_rating') ? omochix_get_ai_tool_display_rating($omochix_related_id) : 0.0;
                                     ?>
                                     <article class="tool-list-card"><a class="tool-list-card__link" href="<?php the_permalink(); ?>">
                                         <div class="tool-list-card__top"><div class="tool-list-card__logo"><?php if ($omochix_related_logo) { echo wp_kses_post(wp_get_attachment_image($omochix_related_logo, 'thumbnail', false, ['alt' => '', 'width' => 64, 'height' => 64, 'loading' => 'lazy'])); } else { ?><span aria-hidden="true"><?php echo esc_html(function_exists('mb_substr') ? mb_substr(get_the_title(), 0, 1) : substr(get_the_title(), 0, 1)); ?></span><?php } ?></div><?php if ($omochix_related_rating > 0) : ?><p class="tool-list-card__rating" aria-label="<?php echo esc_attr(sprintf(__('OmochiX編集部評価、5点満点中%s', 'omochix'), number_format_i18n($omochix_related_rating, 1))); ?>"><span aria-hidden="true">★</span><strong><?php echo esc_html(number_format_i18n($omochix_related_rating, 1)); ?></strong><small>/ 5</small></p><?php endif; ?></div>
