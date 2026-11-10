@@ -210,6 +210,9 @@ while (have_posts()) :
             }
         }
         $omochix_practice_featured = $omochix_practice_url ? omochix_learn_practice_featured(3) : [];
+        // SVG Motion Studio: linked only while its page is published (no placeholder, so no dead link and no empty slot).
+        $omochix_svg_motion_page = function_exists('omochix_svg_motion_page_id') ? omochix_svg_motion_page_id() : 0;
+        $omochix_svg_motion_url  = $omochix_svg_motion_page ? get_permalink($omochix_svg_motion_page) : '';
         ?>
         <?php if (count($omochix_practice_fields) >= 2) : ?>
             <section class="learn-hub-v2__section" aria-labelledby="learn-fields-title">
@@ -238,6 +241,14 @@ while (have_posts()) :
                     </div>
                 </header>
                 <div class="learn-hub-v2__soon-grid">
+                    <?php if ($omochix_svg_motion_url) : ?>
+                        <a class="learn-hub-v2__soon learn-hub-v2__soon--ready" href="<?php echo esc_url($omochix_svg_motion_url); ?>">
+                            <small><?php esc_html_e('無料ツール', 'omochix'); ?></small>
+                            <strong><?php esc_html_e('SVG Motion Studio', 'omochix'); ?></strong>
+                            <span><?php esc_html_e('19種類のアニメーションでSVGロゴを動かし、ブラウザで編集・書き出し。', 'omochix'); ?></span>
+                            <span class="learn-hub-v2__soon-cta"><?php esc_html_e('無料でロゴを動かす', 'omochix'); ?></span>
+                        </a>
+                    <?php endif; ?>
                     <?php if ($omochix_composer_url) : ?>
                         <a class="learn-hub-v2__soon learn-hub-v2__soon--ready" href="<?php echo esc_url($omochix_composer_url); ?>">
                             <small><?php esc_html_e('Motion Composer', 'omochix'); ?></small>
