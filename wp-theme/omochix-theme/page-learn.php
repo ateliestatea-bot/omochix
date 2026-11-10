@@ -74,6 +74,10 @@ while (have_posts()) :
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
+                <?php $omochix_labs_url = function_exists('omochix_labs_url') ? omochix_labs_url() : ''; ?>
+                <?php if ($omochix_labs_url) : ?>
+                    <p class="motion-gallery__compose"><a href="<?php echo esc_url($omochix_labs_url); ?>"><?php esc_html_e('JSON整形や差分比較など、ブラウザで使える無料ツール（OmochiX Labs） →', 'omochix'); ?></a></p>
+                <?php endif; ?>
             </div>
         </header>
 
