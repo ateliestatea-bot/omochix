@@ -2,7 +2,7 @@
 /**
  * Plugin Name: OmochiX Core
  * Description: Provides the AI tool data model and editorial interface for OmochiX.
- * Version: 1.9.2
+ * Version: 1.9.3
  * Requires at least: 6.8
  * Requires PHP: 8.1
  * Author: OmochiX
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OMOCHIX_CORE_VERSION', '1.9.2' );
+define( 'OMOCHIX_CORE_VERSION', '1.9.3' );
 define( 'OMOCHIX_CORE_FILE', __FILE__ );
 define( 'OMOCHIX_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'OMOCHIX_CORE_URL', plugin_dir_url( __FILE__ ) );
@@ -22,6 +22,11 @@ require_once OMOCHIX_CORE_DIR . 'includes/post-types.php';
 require_once OMOCHIX_CORE_DIR . 'includes/taxonomies.php';
 require_once OMOCHIX_CORE_DIR . 'includes/meta-schema.php';
 require_once OMOCHIX_CORE_DIR . 'includes/compatibility.php';
+// Guarded so an FTP upload that writes omochix-core.php before this new file
+// cannot break the site; every caller checks function_exists().
+if ( is_readable( OMOCHIX_CORE_DIR . 'includes/tool-display-facts.php' ) ) {
+	require_once OMOCHIX_CORE_DIR . 'includes/tool-display-facts.php';
+}
 require_once OMOCHIX_CORE_DIR . 'includes/software-application-schema.php';
 require_once OMOCHIX_CORE_DIR . 'includes/relations.php';
 require_once OMOCHIX_CORE_DIR . 'includes/product-timeline.php';
