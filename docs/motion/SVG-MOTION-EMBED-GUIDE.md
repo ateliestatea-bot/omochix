@@ -85,38 +85,65 @@ wp-content/uploads/omochix-logo-motion/omochix-logo-motion-pop-static.svg
 | `pair` | 2 つが同じ書き出しのものではない |
 | `size` | ファイルが大きすぎる（1MB まで） |
 
-**サーバーの設定（推奨、公開前に確認）**
+**サーバーの設定（公開前に必須）**
 
-ショートコードのファイルは `<img>` として表示するので、中のスクリプトや外部参照は動きません。ただし SVG の URL を直接開くと、ブラウザーはそのファイルをサイトの一部として表示します。フォルダーに次の応答ヘッダーを付けると、直接開いてもスクリプトは動かず、`<img>` での表示や「動きを減らす」設定には影響しません（3 エンジンで確認）。
+ショートコードのファイルは `<img>` として表示するので、中のスクリプトや外部参照は動きません。ただし、フォルダーのファイルの URL を直接開くと、ブラウザーはそのファイルをサイトの一部として表示します。スタジオの書き出し以外のファイル（大文字の `.SVG`、`logo.svg.bak`、`.html`、`.xml` など）が置かれた場合も同じです。そこで、このフォルダーでは次のようにします（2026-11-09、ローカルの Apache 2.4 と 3 エンジンで確認）。
+
+- 配信するのは、小文字の `{name}.svg` と `{name}-static.svg` だけ。それ以外のファイルは 403 で拒否します。
+- すべての応答（403・404 を含む）に、CSP・`nosniff`・`Content-Disposition: attachment`・`noindex` を付けます。`attachment` があると、URL を直接開いたときは表示されずにダウンロードになります。`<img>` と `<picture>` の表示には影響しません。
+- PHP などのハンドラーは、このフォルダーでは動かしません。
+- 設定は `<IfModule>` で囲みません。必要なモジュールがないサーバーでは、このフォルダーが 500 エラーになり、何も配信されません（守りのない状態で黙って配信されるのを防ぐため）。
 
 Apache / LiteSpeed（`wp-content/uploads/omochix-logo-motion/.htaccess`）：
 
 ```
-<IfModule mod_mime.c>
-  AddType image/svg+xml .svg
-</IfModule>
-<IfModule mod_headers.c>
-  <FilesMatch "\.svg$">
-    Header set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
-    Header set X-Content-Type-Options "nosniff"
-  </FilesMatch>
-</IfModule>
 Options -Indexes
+<FilesMatch ".">
+  Require all denied
+</FilesMatch>
+<FilesMatch "^[a-z0-9][a-z0-9-]{0,70}\.svg$">
+  Require all granted
+</FilesMatch>
+SetHandler none
+ForceType image/svg+xml
+Header always set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
+Header always set X-Content-Type-Options "nosniff"
+Header always set Content-Disposition "attachment"
+Header always set X-Robots-Tag "noindex"
 ```
 
-nginx：
+`{0,70}` は、64 文字の `name` に `-static` を足した長さまで許すためです。LiteSpeed は、対応していない指定を黙って無視することがあります [推定]。そのため、配置したあとに必ず下の確認を行います。
+
+nginx（ローカルでは未確認）：
 
 ```
 location ^~ /wp-content/uploads/omochix-logo-motion/ {
-    types { image/svg+xml svg; }
-    default_type application/octet-stream;
+    autoindex off;
     add_header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox" always;
     add_header X-Content-Type-Options "nosniff" always;
-    autoindex off;
+    add_header Content-Disposition "attachment" always;
+    add_header X-Robots-Tag "noindex" always;
+    location ~ "^/wp-content/uploads/omochix-logo-motion/[a-z0-9][a-z0-9-]{0,70}\.svg$" {
+        types { }
+        default_type image/svg+xml;
+    }
+    return 403;
 }
 ```
 
-設定後に `curl -I <SVG の URL>` で 3 つのヘッダーが付くことを確かめます。キャッシュ（CDN やサーバーのアクセラレータ）を挟む場合は、ヘッダーがそのまま返ることも確かめます。
+nginx では、`location` の中の `add_header` が、サーバー全体の `add_header`（HSTS など）を打ち消します。必要なヘッダーは、この中にも書き足してください。
+
+**配置したあとの確認（必須）**
+
+本物の書き出しと、わざと置いた確認用のファイルの両方で確かめます。確認用のファイルは、終わったら削除します。
+
+| 確認 | 期待 |
+|---|---|
+| `curl -I <フォルダー>/<name>.svg` | 200、`Content-Type: image/svg+xml`、CSP・`X-Content-Type-Options`・`Content-Disposition`・`X-Robots-Tag` の 4 つ |
+| 確認用の `probe.SVG`（大文字）、`probe.svg.bak`、`probe.html` を置いて `curl -I` | どれも 403 で、同じ 4 つのヘッダー |
+| ページの表示 | ショートコードのロゴが表示される |
+
+確認用のファイルが 200 になる、またはヘッダーが欠けるときは、設定が効いていません。確認用のファイルを消し、フォルダーには書き出し以外のファイルを置かない状態で、原因を調べます。キャッシュ（CDN やサーバーのアクセラレータ）を挟む場合は、ヘッダーがそのまま返ることも確かめます。
 
 **差し替え・削除**
 

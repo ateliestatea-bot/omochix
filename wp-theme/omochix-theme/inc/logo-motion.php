@@ -122,7 +122,7 @@ function omochix_logo_motion_generated_css_ok($css, $scope) {
         foreach (explode(';', $body) as $decl) {
             $colon = strpos($decl, ':');
             $name  = false === $colon ? '' : substr($decl, 0, $colon);
-            if (!isset($values[$name]) || !preg_match('/^(?:' . $values[$name] . ')$/', substr($decl, $colon + 1))) {
+            if (!isset($values[$name]) || !preg_match('/^(?:' . $values[$name] . ')$/D', substr($decl, $colon + 1))) {
                 return false;
             }
         }
@@ -130,7 +130,7 @@ function omochix_logo_motion_generated_css_ok($css, $scope) {
     };
     $selectors_ok = function ($list) use ($selector) {
         foreach (explode(',', $list) as $part) {
-            if (!preg_match('/^' . $selector . '$/', $part)) {
+            if (!preg_match('/^' . $selector . '$/D', $part)) {
                 return false;
             }
         }
@@ -238,7 +238,7 @@ function omochix_logo_motion_check_svg($text) {
         return $out;
     }
     $scope = (string) $svg->getAttribute('class');
-    if (!preg_match('/^omx-[a-z0-9]{8}$/', $scope)) {
+    if (!preg_match('/^omx-[a-z0-9]{8}$/D', $scope)) {
         $out['problems'][] = 'class';
         return $out;
     }
@@ -287,18 +287,18 @@ function omochix_logo_motion_check_svg($text) {
             if (0 === strpos($lower, 'on')) {
                 $out['problems'][] = 'handler:' . $lower;
             }
-            if ('id' === $key && (!preg_match('/^[A-Za-z_][\w.:-]{0,127}$/', $value) || !$own_id($value))) {
+            if ('id' === $key && (!preg_match('/^[A-Za-z_][\w.:-]{0,127}$/D', $value) || !$own_id($value))) {
                 $out['problems'][] = 'id';
             }
             if ('d' === $key && ($path += strlen($value)) > OMOCHIX_LOGO_MOTION_PATH) {
                 $out['problems'][] = 'path';
             }
-            if (!isset($rules['attributes'][$key]) && !preg_match('/^data-omx-(?:stage|base|root|part|geometry|overlay)$/', $key)) {
+            if (!isset($rules['attributes'][$key]) && !preg_match('/^data-omx-(?:stage|base|root|part|geometry|overlay)$/D', $key)) {
                 $out['problems'][] = 'attribute:' . $key;
             }
             if ('href' === $lower || 'xlink:href' === $lower) {
-                $local = preg_match('/^#[A-Za-z_][\w.:-]*$/', $value);
-                $image = 'image' === $name && preg_match('/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+\/=\s]+$/i', $value);
+                $local = preg_match('/^#[A-Za-z_][\w.:-]*$/D', $value);
+                $image = 'image' === $name && preg_match('/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+\/=\s]+$/iD', $value);
                 if (!$local && !$image) {
                     $out['problems'][] = 'href:' . $name;
                 }
@@ -406,7 +406,7 @@ function omochix_logo_motion_read($path, $base) {
  */
 function omochix_logo_motion_resolve($name) {
     static $cache = [];
-    if (!is_string($name) || !preg_match('/^[a-z0-9][a-z0-9-]{0,63}$/', $name)) {
+    if (!is_string($name) || !preg_match('/^[a-z0-9][a-z0-9-]{0,63}$/D', $name)) {
         return ['error' => 'name'];
     }
     $uploads = wp_upload_dir(null, false);
@@ -463,7 +463,7 @@ function omochix_logo_motion_render($atts) {
         return current_user_can('edit_posts') && !is_feed() ? '<!-- omochix_logo_motion: ' . esc_html($pair['error']) . ' -->' : '';
     }
     $size = (string) $atts['size'];
-    $size = preg_match('/^\d{1,4}$/', $size) ? max(16, min(1024, (int) $size)) : 200;
+    $size = preg_match('/^\d{1,4}$/D', $size) ? max(16, min(1024, (int) $size)) : 200;
     $box  = array_map('floatval', preg_split('/[\s,]+/', trim($pair['viewBox'])) ?: []);
     $ratio = 4 === count($box) && $box[2] > 0 && $box[3] > 0 ? $box[3] / $box[2] : 1;
     $height = max(1, (int) round($size * $ratio));

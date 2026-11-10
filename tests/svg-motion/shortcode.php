@@ -84,7 +84,20 @@ $bad = ['', '../acme', 'acme/../acme', 'a/b', 'ACME', 'Acme', '-acme', 'acme.svg
 $ok = true; foreach ($bad as $name) { if ('name' !== (omochix_logo_motion_resolve($name)['error'] ?? '')) { $ok = false; echo '  accepted name ' . json_encode($name) . "\n"; } }
 check('names other than [a-z0-9][a-z0-9-]{0,63} are refused before any file is touched', $ok);
 check('a name that is not a string is refused', 'name' === omochix_logo_motion_resolve(['acme'])['error'] && 'name' === omochix_logo_motion_resolve(null)['error']);
-check('a 64-character name is accepted when its files exist', (function () use ($dir, $pop, $popStill) { $n = str_repeat('a', 64); put($dir, $n, $pop, $popStill); return !isset(omochix_logo_motion_resolve($n)['error']); })());
+// L-2: "$" without the D modifier also matches before a final "\n"; WordPress runs stripcslashes() on shortcode
+// attributes, so name="acme\n" arrives with a real newline. Every full-match pattern must anchor at the very end.
+$edge = ["acme\n", "acme\r\n", "acme\r", "\nacme", "acme\n\n", "acme\t", "acme\x0b", "acme\x0c", "acme\u{85}", "acme\u{2028}", "acme\u{200b}",
+    "ａｃｍｅ", "acmé", "acme\u{301}", "acme/", "acme\\", "acme\\n", "acme%0a", "acme%0d%0a", "acme/..", "./acme", "acme\0"];
+$ok = true; foreach ($edge as $name) { if ('name' !== (omochix_logo_motion_resolve($name)['error'] ?? '')) { $ok = false; echo '  accepted name ' . json_encode($name) . "\n"; } }
+check('L-2: newline, CRLF, other line breaks, Unicode look-alikes and path separators are refused as names (' . count($edge) . ' cases)', $ok);
+// A real pair whose file names end in a newline must not be shown, and must not make the page load "acme.svg" instead.
+put($dir, "nl\n", $pop, $popStill); put($dir, 'nl', $wipe, $wipeStill);
+$GLOBALS['caps'] = []; $visitor = render(['name' => "nl\n"]); $GLOBALS['caps'] = ['edit_posts' => true]; $editor = render(['name' => "nl\n"]); $GLOBALS['caps'] = [];
+check('L-2: name="nl\n" with files "nl\n.svg" in the folder is refused (nothing for visitors, the name code for editors)', '' === $visitor && '<!-- omochix_logo_motion: name -->' === $editor);
+unlink("$dir/nl\n.svg"); unlink("$dir/nl\n-static.svg");
+$ok = true; foreach (["320\n", "320\r\n", "\n320", "3\n20"] as $in) { if (!preg_match('/width="200" height="200"/', render(['name' => 'acme', 'size' => $in]))) { $ok = false; echo '  size ' . json_encode($in) . "\n"; } }
+check('L-2: a size with a line break falls back to 200', $ok);
+check('a 64-character name is accepted when its files exist',(function () use ($dir, $pop, $popStill) { $n = str_repeat('a', 64); put($dir, $n, $pop, $popStill); return !isset(omochix_logo_motion_resolve($n)['error']); })());
 
 check('missing pair: nothing shown to visitors', '' === render(['name' => 'nothing-here']));
 $GLOBALS['caps'] = ['edit_posts' => true];
@@ -172,6 +185,10 @@ $cases = [
     'cssForeignKeyframe'=> [str_replace('@keyframes omx-e40839bd-k0{', '@keyframes evil{', $pop), 'style'],
     'cssUnbalanced'     => [preg_replace('/<\/style>/', '{</style>', $pop, 1), 'style'],
     'cssEscape'         => [str_replace('opacity:0;', 'opa\\63ity:0;', $pop), 'style'],
+    // L-2: a character reference keeps a real line break in the attribute value after XML parsing.
+    'scopeNewline'      => [str_replace('class="omx-e40839bd"', 'class="omx-e40839bd&#10;"', $pop), 'class'],
+    'idNewline'         => [str_replace('id="omx-e40839bd-omx-a"', 'id="omx-e40839bd-omx-a&#10;"', $pop), 'id'],
+    'hrefNewline'       => [str_replace('<title>', '<linearGradient id="omx-e40839bd-omx-z" href="#omx-e40839bd-omx-a&#10;"/><title>', $pop), 'href:linearGradient'],
 ];
 $ok = true;
 foreach ($cases as $k => [$text, $want]) {
