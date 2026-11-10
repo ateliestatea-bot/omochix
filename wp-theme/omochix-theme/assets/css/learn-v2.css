@@ -545,8 +545,10 @@ body.omx-shell .prompt-detail-related-motion__more a { color: var(--shell-accent
 .learn-hub-v2__soon strong { color: var(--color-text); font-size: 16px; }
 .learn-hub-v2__soon small { font-size: 11px; font-weight: 650; }
 .learn-hub-v2__soon-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.learn-hub-v2__soon-cta { margin-top: 4px; color: var(--color-primary); font-size: 13px; font-weight: 700; }
+/* Text on the shell pages uses --shell-accent (light #6735c7 / dark #bf9afa); --color-primary stays a fill colour there. */
+.learn-hub-v2__soon-cta { margin-top: 4px; color: var(--shell-accent, var(--color-primary)); font-size: 13px; font-weight: 700; }
 .learn-hub-v2__soon-cta::after { content: " →"; }
+body.omx-shell .learn-hub-v2__soon--ready small { color: var(--shell-accent); }
 
 /* --- Dark mode ---------------------------------------------------------- */
 :root[data-theme="dark"] .motion-badge--intermediate { color: #f5a455; background: rgba(245, 164, 85, 0.12); }
