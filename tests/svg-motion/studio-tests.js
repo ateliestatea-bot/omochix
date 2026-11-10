@@ -4,15 +4,57 @@ const U = 'http://127.0.0.1:8788/learn/svg-motion/', R = path.join(__dirname, 'r
 const sandbox = { window: {} }; vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'fixtures/corpus.js'), 'utf8'), sandbox);
 const { ATTACKS, BOMBS, LOGOS } = sandbox.window;
 
-async function open(ctx, errors, url) {
+// ---- CSP reports in the console (harness policy; csp-tests.js checks it with synthetic and real negative controls) ----
+// Under an enforced page CSP, Chromium reports (never runs) on* attributes, and refuses a <base href>, that DOMParser meets
+// in an untrusted SVG inside safety.js. Execution stays covered by the hit, marker and canary detectors. Such a report is
+// set aside ONLY when all of these hold; anything else in the console is an error (P1, P2, P6):
+//   1. the page CSP is enforced;  2. the message is one of the two known kinds;  3. it comes from safety.js;
+//   4. it arrives while an attack is being sent (ctl.window), and that attack is one of the six whose SVG has a LIVE on*
+//      attribute or <base> element after XML parsing (ALLOWED_ATTACKS, an explicit list: V-4, 2026-11-10). Normal operation
+//      has no window, so it is never set aside. The nine corpus cases whose text only mentions on* or <base> (escaped, in
+//      CDATA or a comment, inside an attribute value, or in upper case) are mXSS / break-out probes: a report from one of
+//      them would mean the sanitizer let something live through, so it is an error (csp-tests.js checks both lists).
+const ALLOWED_ATTACKS = new Set(['onload', 'onerrorImg', 'onbegin', 'onclickAuto', 'foreignImg', 'base']);
+const MENTION_ONLY_ATTACKS = new Set(['onUpper', 'cssStyleBreak', 'mxssTitle', 'mxssStyle', 'mxssDesc', 'mxssMath', 'mxssText', 'mxssComment', 'idBreak']);
+const GENERIC_CONSOLE = /404|Failed to load resource|Not allowed to load|XML Parsing Error/;
+const KNOWN_CSP_REPORT = /inline event handler|Setting the document's base URI/;
+const KNOWN_SOURCE = /\/svg-motion\/safety\.js$/;
+const KNOWN_CAP_PER_KEY = 2; // Chromium reports each allowed attack once (csp-full-run7); Firefox and WebKit not at all
+/** @returns {null|'known'|string} null: not an error here; 'known': set aside (counted in ctl.known); string: the error text. */
+function consoleVerdict(type, text, sourceUrl, ctl, enforce) {
+  if (type !== 'error' || GENERIC_CONSOLE.test(text)) return null;
+  if (enforce && /\/control\/blocked/.test(text)) return null; // the detector control: a request the page CSP is meant to stop
+  if (enforce && KNOWN_CSP_REPORT.test(text) && KNOWN_SOURCE.test(sourceUrl || '')) {
+    const w = ctl && ctl.window;
+    if (w && w.allowed) { ctl.known[w.key] = (ctl.known[w.key] || 0) + 1; return 'known'; }
+    return 'unexpected CSP report outside an allowed attack window (' + (w ? w.key + ' is not an allowed attack' : 'no attack is being sent') + '): ' + text.slice(0, 160);
+  }
+  return text;
+}
+/** Runs fn with the attack window open (reports in it may be set aside if the attack is allowed); always closes it, after the console has caught up. */
+async function inWindow(p, ctl, key, allowed, fn) {
+  ctl.window = { key, allowed: !!allowed };
+  try { return await fn(); } finally { await p.evaluate(() => 0).catch(() => {}); ctl.window = null; }
+}
+
+async function open(ctx, errors, url, ctl) {
   const p = await ctx.newPage();
   p.on('pageerror', x => errors.push('pageerror: ' + x.message));
-  p.on('console', m => { if (m.type() === 'error' && !/404|Failed to load resource|Not allowed to load|XML Parsing Error/.test(m.text())) errors.push(m.text()); });
+  const enforce = ctl && ctl.enforce !== undefined ? ctl.enforce : process.env.SVGM_CSP === 'enforce';
+  p.on('console', m => {
+    const loc = m.location() || {}; const v = consoleVerdict(m.type(), m.text(), loc.url, ctl, enforce);
+    if (v && v !== 'known') errors.push(v + (loc.url ? ' @ ' + loc.url.slice(0, 80) + ':' + loc.lineNumber : ''));
+  });
+  // Test instrumentation: keep the Blob behind every object URL the page makes, so a test reads it without fetch()
+  // (under the studio's CSP, connect-src 'self' blocks fetch(blob:), as it should). Same URLs, nothing else changes.
+  await p.addInitScript(() => { if (window.__blobOf) return; const m = new Map(); window.__blobOf = m; const make = URL.createObjectURL, drop = URL.revokeObjectURL;
+    URL.createObjectURL = function (b) { const u = make.apply(this, arguments); m.set(u, b); return u; }; URL.revokeObjectURL = function (u) { m.delete(u); return drop.apply(this, arguments); };
+    window.__readBlob = u => { const b = m.get(u); return b ? b.text() : fetch(u).then(r => r.text()); }; });
   await p.goto(url || U); await p.waitForSelector('[data-svgm-ready="true"]'); await p.waitForSelector('[data-svgm-preview]');
   await p.evaluate(() => {
     window.__ink = b64 => new Promise((res, rej) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0); const d = x.getImageData(0, 0, c.width, c.height).data; let bg = [d[0], d[1], d[2]], n = 0, m = 0; for (let j = 0; j < d.length; j += 4) { if (Math.abs(d[j] - bg[0]) + Math.abs(d[j + 1] - bg[1]) + Math.abs(d[j + 2] - bg[2]) > 30) n++; if (Math.abs(d[j] - 0x12) < 28 && Math.abs(d[j + 1] - 0x34) < 28 && Math.abs(d[j + 2] - 0x56) < 28) m++; } res({ ink: +(n / (d.length / 4) * 100).toFixed(2), marker: m }); }; i.onerror = rej; i.src = 'data:image/png;base64,' + b64; });
     window.__diff = (a, b) => Promise.all([a, b].map(u => new Promise((res, rej) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, c.width, c.height).data); }; i.onerror = rej; i.src = 'data:image/png;base64,' + u; }))).then(([p, q]) => { if (p.length !== q.length) return 100; let n = 0; for (let i = 0; i < p.length; i += 4) if (Math.abs(p[i] - q[i]) + Math.abs(p[i + 1] - q[i + 1]) + Math.abs(p[i + 2] - q[i + 2]) > 30) n++; return +(n / (p.length / 4) * 100).toFixed(2); });
-    window.__previewText = () => fetch(document.querySelector('[data-svgm-preview]').src).then(r => r.text());
+    window.__previewText = () => window.__readBlob(document.querySelector('[data-svgm-preview]').src);
     // Reference raster and displayed raster at one size, from their SVG text.
     window.__rasterDiff = async (a, b) => { const r = s => new Promise((ok, no) => { const d = new DOMParser().parseFromString(s, 'image/svg+xml'), e = d.documentElement; e.setAttribute('width', 200); e.setAttribute('height', 200); const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = c.height = 200; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 200, 200); x.drawImage(i, 0, 0, 200, 200); ok(x.getImageData(0, 0, 200, 200).data); }; i.onerror = () => no(new Error('img')); i.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(d)); }); const [p, q] = await Promise.all([r(a), r(b)]); let n = 0, ink = 0; for (let i = 0; i < p.length; i += 4) { if (Math.abs(p[i] - q[i]) + Math.abs(p[i + 1] - q[i + 1]) + Math.abs(p[i + 2] - q[i + 2]) > 48) n++; if (p[i] + p[i + 1] + p[i + 2] < 740) ink++; } return { diff: +(n / 40000 * 100).toFixed(2), ink }; };
   });
@@ -34,17 +76,27 @@ async function uploadSecurity(br, e, fail) {
   const C = 'http://127.0.0.1:8771', run = 'up' + e + Date.now(), out = { routes: {} }; const errors = [];
   const ctx = await br.newContext({ reducedMotion: 'reduce', viewport: { width: 1280, height: 900 } });
   await ctx.addInitScript(() => { window.__hits = []; addEventListener('message', ev => { if (ev.data && ev.data.hit) window.__hits.push(ev.data.hit); }); });
-  const p = await open(ctx, errors);
+  const ctl = { window: null, known: {} };
+  const p = await open(ctx, errors, undefined, ctl);
   const outbound = []; p.on('request', q => { const u = q.url(); if (!/^(data:|blob:)/.test(u) && !u.startsWith('http://127.0.0.1:8788/')) outbound.push(u); if (q.method() !== 'GET' && !u.startsWith('data:')) outbound.push(q.method() + ' ' + u); });
   await upload(p, LOGOS.simple); const known = await shot(p);
   // Controls: each detector must fire on a real event, or a zero below means nothing.
-  const ctlHit = await p.evaluate(async () => { window.postMessage({ hit: 'control' }, '*'); await new Promise(r => setTimeout(r, 50)); const seen = window.__hits.includes('control'); window.__hits = []; return seen; }); await p.evaluate(u => fetch(u, { mode: 'no-cors' }).catch(() => {}), C + '/c/' + run + '/control/x'); await p.waitForTimeout(100); const ctlNet = (await (await fetch(C + '/__dump?run=' + run)).json()).some(u => u.includes('/control/')); const ctlOut = outbound.some(u => u.includes('/control/')); outbound.length = 0; const ctlMarker = await upload(p, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect id="omxkeep" x="80" y="80" width="12" height="16" fill="#123456"/></svg>').then(() => shot(p)).then(x => ink(p, x)); const noMarker = await upload(p, LOGOS.simple).then(() => shot(p)).then(x => ink(p, x)); out.controls = { hit: ctlHit, canary: ctlNet, outbound: ctlOut, marker: ctlMarker.marker, noMarker: noMarker.marker }; if (!ctlHit) fail(e, 'control: hit detector dead'); if (!ctlNet) fail(e, 'control: canary dead'); if (!ctlOut) fail(e, 'control: outbound detector dead'); if (ctlMarker.marker <= 0) fail(e, 'control: marker detector dead'); if (noMarker.marker > 0) fail(e, 'control: marker detector fires on anything');
+  const ctlHit = await p.evaluate(async () => { window.postMessage({ hit: 'control' }, '*'); await new Promise(r => setTimeout(r, 50)); const seen = window.__hits.includes('control'); window.__hits = []; return seen; }); let cspBlockedControl = null;
+  if (process.env.SVGM_CSP === 'enforce') {
+    // The studio page's CSP blocks this request, as it should (checked below); the detectors are proven from a page
+    // without that CSP, with the same listener logic.
+    cspBlockedControl = await p.evaluate(u => new Promise(res => { let v = false; const on = ev => { if (String(ev.blockedURI).includes('/control/')) v = true; }; document.addEventListener('securitypolicyviolation', on); fetch(u, { mode: 'no-cors' }).catch(() => {}).finally(() => setTimeout(() => { document.removeEventListener('securitypolicyviolation', on); res(v); }, 100)); }), C + '/c/' + run + '/control/blocked');
+    const pc = await p.context().newPage(); pc.on('request', q => { const u = q.url(); if (!/^(data:|blob:)/.test(u) && !u.startsWith('http://127.0.0.1:8788/')) outbound.push(u); });
+    await pc.evaluate(u => fetch(u, { mode: 'no-cors' }).catch(() => {}), C + '/c/' + run + '/control/x'); await pc.close();
+    if (!cspBlockedControl) fail(e, 'control: the studio page CSP did not block a request to the canary');
+  } else { await p.evaluate(u => fetch(u, { mode: 'no-cors' }).catch(() => {}), C + '/c/' + run + '/control/x'); }
+  await p.waitForTimeout(100); const ctlNet = (await (await fetch(C + '/__dump?run=' + run)).json()).some(u => u.includes('/control/')); const ctlOut = outbound.some(u => u.includes('/control/')); outbound.length = 0; const ctlMarker = await upload(p, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect id="omxkeep" x="80" y="80" width="12" height="16" fill="#123456"/></svg>').then(() => shot(p)).then(x => ink(p, x)); const noMarker = await upload(p, LOGOS.simple).then(() => shot(p)).then(x => ink(p, x)); out.controls = { cspBlockedControl, hit: ctlHit, canary: ctlNet, outbound: ctlOut, marker: ctlMarker.marker, noMarker: noMarker.marker }; if (!ctlHit) fail(e, 'control: hit detector dead'); if (!ctlNet) fail(e, 'control: canary dead'); if (!ctlOut) fail(e, 'control: outbound detector dead'); if (ctlMarker.marker <= 0) fail(e, 'control: marker detector dead'); if (noMarker.marker > 0) fail(e, 'control: marker detector fires on anything');
   for (const [route, send] of [['file', t => upload(p, t, { settle: 120 })], ['paste', t => paste(p, t)]]) {
     const r = out.routes[route] = { accepted: 0, rejected: {}, markerPainted: 0, hadMarker: 0, lost: [], exec: [], blankAccepted: [] };
     for (const k in ATTACKS) {
       const text = ATTACKS[k].split('{C}').join(C + '/c/' + run + '/' + route + '/' + k + '/');
       await upload(p, LOGOS.simple); // a known logo before each, to prove rejection keeps it
-      const res = await send(text);
+      const res = await inWindow(p, ctl, route + ':' + k, ALLOWED_ATTACKS.has(k), () => send(text));
       const had = ATTACKS[k].includes('omxkeep'); const s = await shot(p); const v = await ink(p, s);
       if (res === 'ok') { r.accepted++; if (v.ink <= 0) r.blankAccepted.push(k); if (had) { r.hadMarker++; if (v.marker > 0) r.markerPainted++; else r.lost.push(k); } if (!had && k in EXPECT_REJECT) fail(e, route + ' should reject ' + k); }
       else { r.rejected[k] = res; if (EXPECT_REJECT[k] !== res) fail(e, route + ' unexpected rejection ' + k + ' ' + res); if ((await diff(p, s, known)) > 0.5) fail(e, route + ' lost the current logo after rejecting ' + k); const msg = await p.evaluate(() => { const a = document.querySelector('[data-svgm-error]'); return a.hidden ? '' : a.textContent; }); if (!/[ぁ-ん一-龠]/.test(msg)) fail(e, route + ' no Japanese reason for ' + k); }
@@ -56,14 +108,21 @@ async function uploadSecurity(br, e, fail) {
   }
   await p.waitForTimeout(500); out.canary = (await (await fetch(C + '/__dump?run=' + run)).json()).filter(u => !u.includes('/control/')); if (out.canary.length) fail(e, 'upload route reached the canary: ' + out.canary.slice(0, 5)); out.outbound = [...new Set(outbound)]; if (out.outbound.length) fail(e, 'outbound ' + out.outbound.slice(0, 3));
   const b = out.bombs = {};
-  for (const k in BOMBS) { await upload(p, LOGOS.simple); const t0 = Date.now(); const res = BOMBS[k] === '' ? await paste(p, '') : (k === 'hugeFile' ? await upload(p, BOMBS[k]) : await upload(p, BOMBS[k])); b[k] = { result: res, ms: Date.now() - t0 }; if (!EXPECT_BOMB[k].test(res)) fail(e, 'bomb ' + k + ' gave ' + res); const s = await shot(p); if (res !== 'ok' && (await diff(p, s, known)) > 0.5) fail(e, 'bomb lost the logo: ' + k); }
+  for (const k in BOMBS) { await upload(p, LOGOS.simple); const t0 = Date.now(); const res = await inWindow(p, ctl, 'bomb:' + k, false, async () => BOMBS[k] === '' ? await paste(p, '') : (k === 'hugeFile' ? await upload(p, BOMBS[k]) : await upload(p, BOMBS[k]))); b[k] = { result: res, ms: Date.now() - t0 }; if (!EXPECT_BOMB[k].test(res)) fail(e, 'bomb ' + k + ' gave ' + res); const s = await shot(p); if (res !== 'ok' && (await diff(p, s, known)) > 0.5) fail(e, 'bomb lost the logo: ' + k); }
   // Normal logos: what is displayed must match the source, through the upload route.
+  const knownBeforeLogos = JSON.stringify(ctl.known); // P6: the normal logos below run with no attack window
   const l = out.logos = {};
   for (const k in LOGOS) { const src = LOGOS[k].replace(/^<\?xml[^>]*\?>/, ''); const res = await upload(p, LOGOS[k]); if (res !== 'ok') { fail(e, 'logo refused ' + k + ' ' + res); continue; } const d = await p.evaluate(s => __previewText().then(t => __rasterDiff(s, t)), src); l[k] = d; if (d.ink <= 0) fail(e, 'logo reference blank ' + k); if (d.diff !== 0) fail(e, 'logo differs ' + k + ' ' + d.diff); }
+  if (JSON.stringify(ctl.known) !== knownBeforeLogos) fail(e, 'P6 normal logos produced CSP reports that were set aside: ' + JSON.stringify(ctl.known));
   // Hostile data placed directly in storage goes through the pipeline again on load.
   const hostile = ATTACKS.foreignImg.split('{C}').join(C + '/c/' + run + '/idb/');
   const idbPut = (svg, schema) => p.evaluate(([s, sc]) => new Promise((ok, no) => { const r = indexedDB.open('omx-svg-motion', 1); r.onsuccess = () => { const t = r.result.transaction('state', 'readwrite'); t.objectStore('state').put({ schema: sc, svg: s, settings: { preset: 'logo-pop' } }, 'current'); t.oncomplete = () => { r.result.close(); ok(); }; t.onerror = no; }; }), [svg, schema]);
-  await p.waitForTimeout(300); await idbPut(hostile + '<script>parent.postMessage({hit:"idb"},"*")</script>', 1); await p.goto(U); await p.waitForSelector('[data-svgm-ready="true"]'); await p.waitForTimeout(300); out.idbHostile = { hits: await p.evaluate(() => window.__hits), logo: await attr(p, 'data-svgm-logo'), inlineIds: await p.evaluate(() => document.querySelectorAll('[data-svg-motion] svg, [id^="omx-"]:not(#omx-svg-motion-data)').length) }; if (out.idbHostile.hits.length || out.idbHostile.inlineIds) fail(e, 'stored hostile data ' + JSON.stringify(out.idbHostile));
+  await p.waitForTimeout(300); await idbPut(hostile + '<script>parent.postMessage({hit:"idb"},"*")</script>', 1); await inWindow(p, ctl, 'idb:foreignImg', ALLOWED_ATTACKS.has('foreignImg'), async () => { await p.goto(U); await p.waitForSelector('[data-svgm-ready="true"]'); await p.waitForTimeout(300); }); out.idbHostile = { hits: await p.evaluate(() => window.__hits), logo: await attr(p, 'data-svgm-logo'), inlineIds: await p.evaluate(() => document.querySelectorAll('[data-svg-motion] svg, [id^="omx-"]:not(#omx-svg-motion-data)').length) }; if (out.idbHostile.hits.length || out.idbHostile.inlineIds) fail(e, 'stored hostile data ' + JSON.stringify(out.idbHostile));
+  // P2: what was set aside is recorded and bounded; only allowed attacks (windows) can appear here.
+  const knownKeys = Object.keys(ctl.known); const enforced = process.env.SVGM_CSP === 'enforce';
+  out.cspKnownReports = { enforced, allowedAttacks: ALLOWED_ATTACKS.size, total: knownKeys.reduce((n, k) => n + ctl.known[k], 0), byKey: ctl.known };
+  for (const k of knownKeys) { const attack = k.split(':')[1]; if (!ALLOWED_ATTACKS.has(attack)) fail(e, 'P2 a CSP report was set aside for an attack that is not allowed: ' + k); if (ctl.known[k] > KNOWN_CAP_PER_KEY) fail(e, 'P2 too many CSP reports set aside for ' + k + ': ' + ctl.known[k]); }
+  if (!enforced && knownKeys.length) fail(e, 'P2 CSP reports were set aside without an enforced page CSP');
   await ctx.close(); out.errors = errors; if (errors.length) fail(e, 'upload console: ' + errors.slice(0, 3).join(' | '));
   fs.writeFileSync(path.join(R, 'upload-security-' + e + '.json'), JSON.stringify(out, null, 1)); return out;
 }
@@ -149,8 +208,8 @@ async function pageTests(br, e, fail) {
   await upload(s, LOGOS.gradient, { name: 'keep.svg' }); await choose(s, 'logo-wipe'); await s.selectOption('select[data-svgm-param="direction"]', 'up'); await setControl(s, 'data-svgm-common', 'scale', 0.6); await s.waitForTimeout(500);
   const url = await s.evaluate(() => location.href); sv.url = url; if (/svg|%3C|stop-color|base64/i.test(url.split('#')[1] || '') && !/svg-motion/.test(url.split('#')[1] || '')) fail(e, 'logo data in the URL'); if (/%3C|<|linearGradient/i.test(url)) fail(e, 'logo data in the URL');
   const dbRead = () => s.evaluate(() => new Promise(ok => { const r = indexedDB.open('omx-svg-motion', 1); r.onsuccess = () => { const q = r.result.transaction('state').objectStore('state').get('current'); q.onsuccess = () => { r.result.close(); ok(q.result || null); }; }; })); const rec = await dbRead(); sv.saved = rec && { schema: rec.schema, hasSvg: !!rec.svg, preset: rec.settings.preset, hasPlayback: 'playing' in (rec.settings || {}) || 'time' in (rec.settings || {}) }; if (!rec || !rec.svg || rec.svg.includes('stop-color') === false) fail(e, 'logo not saved'); if (rec && (rec.settings.playing !== undefined || rec.settings.time !== undefined)) fail(e, 'playback state in saved settings');
-  await s.goto('http://127.0.0.1:8788/learn/svg-motion/'); await s.waitForSelector('[data-svgm-ready="true"]'); await s.waitForTimeout(200); const rest = await s.evaluate(() => ({ preset: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-preset'), logo: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-logo'), dir: document.querySelector('[data-svgm-param="direction"]').value, scale: document.querySelector('[data-svgm-common="scale"]').value, remove: !document.querySelector('[data-svgm-remove]').hidden })); sv.restored = rest; if (rest.logo !== 'user' || rest.preset !== 'logo-wipe' || rest.dir !== 'up' || rest.scale !== '0.6' || !rest.remove) fail(e, 'restore ' + JSON.stringify(rest)); await s.evaluate(() => 0); const t1 = await s.evaluate(() => fetch(document.querySelector('[data-svgm-preview]').src).then(r => r.text())); if (!t1.includes('stop-color')) fail(e, 'restored logo missing'); if (/omx-omx-/.test(t1)) fail(e, 'id prefix grew on reload');
-  await s.reload(); await s.waitForSelector('[data-svgm-ready="true"]'); await s.waitForTimeout(150); const t2 = await s.evaluate(() => fetch(document.querySelector('[data-svgm-preview]').src).then(r => r.text())); if (/omx-omx-/.test(t2)) fail(e, 'id prefix grew on the second reload');
+  await s.goto('http://127.0.0.1:8788/learn/svg-motion/'); await s.waitForSelector('[data-svgm-ready="true"]'); await s.waitForTimeout(200); const rest = await s.evaluate(() => ({ preset: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-preset'), logo: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-logo'), dir: document.querySelector('[data-svgm-param="direction"]').value, scale: document.querySelector('[data-svgm-common="scale"]').value, remove: !document.querySelector('[data-svgm-remove]').hidden })); sv.restored = rest; if (rest.logo !== 'user' || rest.preset !== 'logo-wipe' || rest.dir !== 'up' || rest.scale !== '0.6' || !rest.remove) fail(e, 'restore ' + JSON.stringify(rest)); await s.evaluate(() => 0); const t1 = await s.evaluate(() => window.__readBlob(document.querySelector('[data-svgm-preview]').src)); if (!t1.includes('stop-color')) fail(e, 'restored logo missing'); if (/omx-omx-/.test(t1)) fail(e, 'id prefix grew on reload');
+  await s.reload(); await s.waitForSelector('[data-svgm-ready="true"]'); await s.waitForTimeout(150); const t2 = await s.evaluate(() => window.__readBlob(document.querySelector('[data-svgm-preview]').src)); if (/omx-omx-/.test(t2)) fail(e, 'id prefix grew on the second reload');
   await s.click('[data-svgm-remove]'); await s.waitForTimeout(400); const afterDel = await s.evaluate(() => ({ logo: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-logo'), remove: !document.querySelector('[data-svgm-remove]').hidden })); await s.waitForTimeout(300); const rec2 = await dbRead(); sv.deleted = { ...afterDel, svgLeft: !!(rec2 && rec2.svg) }; if (afterDel.logo !== 'sample' || afterDel.remove || (rec2 && rec2.svg)) fail(e, 'delete ' + JSON.stringify(sv.deleted));
   await s.goto('http://127.0.0.1:8788/learn/svg-motion/'); await s.waitForSelector('[data-svgm-ready="true"]'); if ((await s.getAttribute('[data-svg-motion]', 'data-svgm-logo')) !== 'sample') fail(e, 'deleted logo came back');
   // Old and unknown formats.
@@ -160,8 +219,8 @@ async function pageTests(br, e, fail) {
   await c4.close();
 
   // Filter and reduced motion.
-  const c5 = await br.newContext({ reducedMotion: 'reduce', viewport: { width: 1000, height: 800 } }); const t = await open(c5, errors); await t.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; document.querySelector('[data-svgm-card]').scrollIntoView(); }); await t.waitForTimeout(400); const rm = await t.evaluate(async () => { const thumbs = [...document.querySelectorAll('[data-svgm-thumb]')].filter(i => i.getAttribute('src')); const texts = await Promise.all(thumbs.map(i => fetch(i.src).then(r => r.text()))); return { playing: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-playing'), thumbs: thumbs.length, allPaused: texts.every(x => /paused/.test(x)), main: await __previewText().then(x => /paused/.test(x)) }; }); out.reduced = rm; if (rm.playing !== 'false' || !rm.main) fail(e, 'autoplay under reduced motion'); if (!rm.thumbs || !rm.allPaused) fail(e, 'thumbs move under reduced motion'); await t.click('[data-svgm-toggle]'); await t.waitForTimeout(150); if ((await attr(t, 'data-svgm-playing')) !== 'true') fail(e, 'explicit play refused'); await t.click('[data-svgm-filter="loop"]'); const loops = await t.evaluate(() => [...document.querySelectorAll('[data-svgm-card]')].filter(c => !c.hidden).length); await t.click('[data-svgm-filter="entrance"]'); const ent = await t.evaluate(() => [...document.querySelectorAll('[data-svgm-card]')].filter(c => !c.hidden).length); out.filter = { loops, entrance: ent }; if (loops + ent !== 19) fail(e, 'filter'); await c5.close();
+  const c5 = await br.newContext({ reducedMotion: 'reduce', viewport: { width: 1000, height: 800 } }); const t = await open(c5, errors); await t.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; document.querySelector('[data-svgm-card]').scrollIntoView(); }); await t.waitForTimeout(400); const rm = await t.evaluate(async () => { const thumbs = [...document.querySelectorAll('[data-svgm-thumb]')].filter(i => i.getAttribute('src')); const texts = await Promise.all(thumbs.map(i => window.__readBlob(i.src))); return { playing: document.querySelector('[data-svg-motion]').getAttribute('data-svgm-playing'), thumbs: thumbs.length, allPaused: texts.every(x => /paused/.test(x)), main: await __previewText().then(x => /paused/.test(x)) }; }); out.reduced = rm; if (rm.playing !== 'false' || !rm.main) fail(e, 'autoplay under reduced motion'); if (!rm.thumbs || !rm.allPaused) fail(e, 'thumbs move under reduced motion'); await t.click('[data-svgm-toggle]'); await t.waitForTimeout(150); if ((await attr(t, 'data-svgm-playing')) !== 'true') fail(e, 'explicit play refused'); await t.click('[data-svgm-filter="loop"]'); const loops = await t.evaluate(() => [...document.querySelectorAll('[data-svgm-card]')].filter(c => !c.hidden).length); await t.click('[data-svgm-filter="entrance"]'); const ent = await t.evaluate(() => [...document.querySelectorAll('[data-svgm-card]')].filter(c => !c.hidden).length); out.filter = { loops, entrance: ent }; if (loops + ent !== 19) fail(e, 'filter'); await c5.close();
   out.network = [...new Set(net)]; if (net.length) fail(e, 'network ' + out.network.slice(0, 3));
   out.consoleErrors = errors; if (errors.length) fail(e, 'console: ' + errors.slice(0, 3).join(' | ')); fs.writeFileSync(path.join(R, 'page-' + e + '.json'), JSON.stringify(out, null, 1)); return { combos: apply.combos };
 }
-module.exports = { pageTests, uploadSecurity };
+module.exports = { pageTests, uploadSecurity, open, inWindow, consoleVerdict, ALLOWED_ATTACKS, MENTION_ONLY_ATTACKS, KNOWN_CAP_PER_KEY, ATTACKS, LOGOS };

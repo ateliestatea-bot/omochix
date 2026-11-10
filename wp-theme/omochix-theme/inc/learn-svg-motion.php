@@ -142,11 +142,124 @@ function omochix_svg_motion_messages() {
 
 /** JSON for studio.js, safe inside a script element. */
 function omochix_svg_motion_data_json() {
-    $data             = omochix_svg_motion_data();
-    $data['budget']   = OMOCHIX_SVG_MOTION_BUDGET;
-    $data['messages'] = omochix_svg_motion_messages();
+    $data                 = omochix_svg_motion_data();
+    $data['budget']       = OMOCHIX_SVG_MOTION_BUDGET;
+    $data['messages']     = omochix_svg_motion_messages();
+    $data['measureFrame'] = omochix_svg_motion_measure_frame_url();
     return (string) wp_json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 }
+
+/**
+ * The measuring frame: a static page with an external script, opened with src by frame.js (never srcdoc, so the
+ * page's CSP below does not have to allow an inline script). ?ver= comes from the contents of both files, so a
+ * cached copy is never used after either changes. The page refers to its script with that script's own hash
+ * (tests/svg-motion/csp-tests.js checks both).
+ */
+function omochix_svg_motion_measure_frame_url() {
+    $html    = get_theme_file_path('/assets/svg-motion/measure-frame.html');
+    $script  = get_theme_file_path('/assets/js/svg-motion/measure-frame.js');
+    $version = is_readable($html) && is_readable($script) ? substr(hash('sha256', (string) file_get_contents($html) . "\n" . (string) file_get_contents($script)), 0, 12) : '0';
+    return get_theme_file_uri('/assets/svg-motion/measure-frame.html') . '?ver=' . $version;
+}
+
+/**
+ * Every script URL the studio page loads, exactly: the theme's header script (functions.php) and the studio's own
+ * (OMOCHIX_SVG_MOTION_SCRIPTS). Absolute URLs only (a CSP source needs the scheme and host); query strings are left
+ * out (CSP ignores them when matching).
+ *
+ * @return string[]
+ */
+function omochix_svg_motion_script_urls() {
+    $urls = [];
+    if (function_exists('omochix_theme_header_script_url')) {
+        $urls[] = omochix_theme_header_script_url();
+    }
+    foreach (OMOCHIX_SVG_MOTION_SCRIPTS as [$path]) {
+        $urls[] = get_theme_file_uri($path);
+    }
+    return array_values(array_unique(array_filter($urls, static function ($url) {
+        return is_string($url) && 1 === preg_match('~^https?://[^/\s;,\'"]+/[^\s;,\'"?#]*[^/\s;,\'"?#]$~D', $url);
+    })));
+}
+
+/**
+ * Content Security Policy for the studio page only (CSP design, 2026-11-09; V-2 2026-11-10). Scripts: the exact files
+ * the page loads (omochix_svg_motion_script_urls(), no trailing slash, so each is an exact path match) and the theme's
+ * one inline script (header.php) by its hash. Not 'self' and not a folder prefix: on WordPress both also allow the REST
+ * API's JSONP (/wp-json/?_jsonp=, any URL + ?rest_route=, and a missing file under the folder + ?rest_route=), which
+ * would let injected markup call script past the policy. No 'unsafe-inline' or 'unsafe-eval' for scripts. Styles keep
+ * 'unsafe-inline' for WordPress's own inline styles. Images: the previews (blob:) and the import checks (data:).
+ * Frames: the measuring frame only ('self'; a path source would break behind a host-rewriting proxy).
+ * The measuring frame has its own, stricter policy in measure-frame.html.
+ */
+function omochix_svg_motion_csp_policy() {
+    $scripts = omochix_svg_motion_script_urls();
+    if (function_exists('omochix_theme_boot_script')) {
+        $scripts[] = "'sha256-" . base64_encode(hash('sha256', omochix_theme_boot_script(), true)) . "'";
+    }
+    return implode('; ', [
+        "default-src 'self'",
+        'script-src ' . implode(' ', $scripts),
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self'",
+        "frame-src 'self'",
+        "manifest-src 'self'",
+        "worker-src 'none'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'self'",
+    ]);
+}
+
+/**
+ * 'report' (default: Content-Security-Policy-Report-Only), 'enforce' or 'off'. Set with the
+ * OMOCHIX_SVG_MOTION_CSP constant or the omochix_svg_motion_csp_mode filter. Enforcing in production needs the
+ * report-only stage first (l5/final/15-CSP-FINAL-DESIGN.md, 3-1).
+ */
+function omochix_svg_motion_csp_mode() {
+    $mode = defined('OMOCHIX_SVG_MOTION_CSP') ? OMOCHIX_SVG_MOTION_CSP : 'report';
+    if (function_exists('apply_filters')) {
+        $mode = apply_filters('omochix_svg_motion_csp_mode', $mode);
+    }
+    return in_array($mode, ['off', 'report', 'enforce'], true) ? $mode : 'report';
+}
+
+/** Sends the studio page's CSP header (call only for the studio page). */
+function omochix_svg_motion_send_csp($mode = null) {
+    $mode = null === $mode ? omochix_svg_motion_csp_mode() : $mode;
+    if ('off' === $mode || headers_sent()) {
+        return;
+    }
+    // Added, not replaced (L-2): a policy another plugin sent stays in force too, and both apply.
+    header(('enforce' === $mode ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only') . ': ' . omochix_svg_motion_csp_policy(), false);
+}
+
+/**
+ * The studio page only: WordPress's emoji detection is an inline <script type="module"> that the page CSP blocks, and
+ * the studio does not need it (browsers draw emoji themselves). Removed before the template prints (V-1). Other pages
+ * keep it. Also: the page is never framed by another site (L-3; frame-ancestors only works once the CSP is enforced).
+ */
+function omochix_svg_motion_page_headers() {
+    if (!omochix_svg_motion_is_request()) {
+        return;
+    }
+    remove_action('wp_head', 'print_emoji_detection_script', 7);
+    remove_action('wp_enqueue_scripts', 'wp_enqueue_emoji_styles');
+    remove_action('wp_print_styles', 'print_emoji_styles');
+    if (!headers_sent()) {
+        header('X-Frame-Options: SAMEORIGIN');
+    }
+    omochix_svg_motion_send_csp();
+}
+add_action('template_redirect', 'omochix_svg_motion_page_headers');
+
+// No speculation rules (an inline script) on the studio page: one page without prefetching, and no hash to keep.
+add_filter('wp_speculation_rules_configuration', static function ($config) {
+    return omochix_svg_motion_is_request() ? null : $config;
+});
 
 /** Serve page-learn-svg-motion.php; runs before the Learn article swap (10). */
 function omochix_svg_motion_template_include($template) {
@@ -178,6 +291,24 @@ function omochix_svg_motion_exclude_from_siblings($query) {
 }
 add_action('pre_get_posts', 'omochix_svg_motion_exclude_from_siblings');
 
+/**
+ * The studio's scripts, in dependency order: handle => [theme path, dependencies, version]. 'theme' means the theme's
+ * version. The same list feeds the enqueue below and the page CSP (omochix_svg_motion_script_urls()), so a script the
+ * page loads is always one the CSP names (V-2, l5/final/25-SECURITY-REVIEW-CONFIRMED.md).
+ */
+const OMOCHIX_SVG_MOTION_SCRIPTS = [
+    'omochix-dompurify'   => ['/assets/js/svg-motion/lib/purify.min.js', [], '3.4.17'],
+    'omochix-svg-safety'  => ['/assets/js/svg-motion/safety.js', ['omochix-dompurify'], 'theme'],
+    'omochix-svg-compile' => ['/assets/js/svg-motion/compile.js', [], 'theme'],
+    'omochix-svg-frame'   => ['/assets/js/svg-motion/frame.js', ['omochix-svg-safety', 'omochix-svg-compile'], 'theme'],
+    'omochix-svg-analyze' => ['/assets/js/svg-motion/analyze.js', [], 'theme'],
+    'omochix-svg-import'  => ['/assets/js/svg-motion/import.js', ['omochix-svg-frame', 'omochix-svg-analyze'], 'theme'],
+    'omochix-svg-preview' => ['/assets/js/svg-motion/preview-image.js', ['omochix-svg-frame'], 'theme'],
+    'omochix-svg-store'   => ['/assets/js/svg-motion/store.js', [], 'theme'],
+    'omochix-svg-export'  => ['/assets/js/svg-motion/export.js', ['omochix-svg-frame'], 'theme'],
+    'omochix-svg-studio'  => ['/assets/js/svg-motion/studio.js', ['omochix-svg-import', 'omochix-svg-preview', 'omochix-svg-store', 'omochix-svg-export'], 'theme'],
+];
+
 function omochix_svg_motion_enqueue_assets() {
     if (!omochix_svg_motion_is_request()) {
         return;
@@ -186,15 +317,8 @@ function omochix_svg_motion_enqueue_assets() {
     $deps    = wp_style_is('omochix-shell', 'enqueued') ? ['omochix-style', 'omochix-shell'] : ['omochix-style'];
     wp_enqueue_style('omochix-svg-motion', get_theme_file_uri('/assets/css/learn-svg-motion.css'), $deps, (string) filemtime(get_theme_file_path('/assets/css/learn-svg-motion.css')));
     // In dependency order; only this page loads them.
-    wp_enqueue_script('omochix-dompurify', get_theme_file_uri('/assets/js/svg-motion/lib/purify.min.js'), [], '3.4.17', true);
-    wp_enqueue_script('omochix-svg-safety', get_theme_file_uri('/assets/js/svg-motion/safety.js'), ['omochix-dompurify'], $version, true);
-    wp_enqueue_script('omochix-svg-compile', get_theme_file_uri('/assets/js/svg-motion/compile.js'), [], $version, true);
-    wp_enqueue_script('omochix-svg-frame', get_theme_file_uri('/assets/js/svg-motion/frame.js'), ['omochix-svg-safety', 'omochix-svg-compile'], $version, true);
-    wp_enqueue_script('omochix-svg-analyze', get_theme_file_uri('/assets/js/svg-motion/analyze.js'), [], $version, true);
-    wp_enqueue_script('omochix-svg-import', get_theme_file_uri('/assets/js/svg-motion/import.js'), ['omochix-svg-frame', 'omochix-svg-analyze'], $version, true);
-    wp_enqueue_script('omochix-svg-preview', get_theme_file_uri('/assets/js/svg-motion/preview-image.js'), ['omochix-svg-frame'], $version, true);
-    wp_enqueue_script('omochix-svg-store', get_theme_file_uri('/assets/js/svg-motion/store.js'), [], $version, true);
-    wp_enqueue_script('omochix-svg-export', get_theme_file_uri('/assets/js/svg-motion/export.js'), ['omochix-svg-frame'], $version, true);
-    wp_enqueue_script('omochix-svg-studio', get_theme_file_uri('/assets/js/svg-motion/studio.js'), ['omochix-svg-import', 'omochix-svg-preview', 'omochix-svg-store', 'omochix-svg-export'], $version, true);
+    foreach (OMOCHIX_SVG_MOTION_SCRIPTS as $handle => [$path, $requires, $ver]) {
+        wp_enqueue_script($handle, get_theme_file_uri($path), $requires, 'theme' === $ver ? $version : $ver, true);
+    }
 }
 add_action('wp_enqueue_scripts', 'omochix_svg_motion_enqueue_assets', 20);

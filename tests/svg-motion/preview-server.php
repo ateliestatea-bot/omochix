@@ -7,7 +7,16 @@
 $ROOT  = realpath(__DIR__ . '/../..');
 $THEME = $ROOT . '/wp-theme/omochix-theme';
 $path  = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-if ($path !== '/' && is_file($ROOT . $path)) { return false; }
+if ($path !== '/' && is_file($ROOT . rawurldecode($path))) { return false; }
+// WordPress's REST API answers JSONP for /wp-json/... and for ANY other URL that carries ?rest_route= when the file does
+// not exist (WordPress handles every missing file). Modelled here so csp-tests.js can check, without WordPress, that the
+// studio's script-src stops all of these routes (V-2). Existing files are served as they are (above), as on a real server.
+if (isset($_GET['_jsonp']) && (0 === strpos($path, '/wp-json') || isset($_GET['rest_route']))) {
+    $cb = (string) $_GET['_jsonp'];
+    if (!preg_match('/^[\w.]+$/D', $cb)) { http_response_code(400); header('Content-Type: application/json'); echo '{"code":"rest_callback_invalid"}'; exit; }
+    header('Content-Type: application/javascript; charset=UTF-8'); header('X-Content-Type-Options: nosniff');
+    echo '/**/' . $cb . '({"name":"preview stub","url":"http://127.0.0.1:8788"})'; exit;
+}
 
 define('ABSPATH', '/');
 define('OBJECT', 'OBJECT');
@@ -21,6 +30,9 @@ function esc_url($t) { return esc_html($t); }
 function esc_html_e($t, $d = '') { echo esc_html($t); }
 function esc_attr_e($t, $d = '') { echo esc_attr($t); }
 function get_theme_file_path($f) { global $THEME; return $THEME . $f; }
+// Absolute, as WordPress returns it (the studio CSP names each script by its full URL).
+function get_theme_file_uri($f) { return 'http://' . ($_SERVER['HTTP_HOST'] ?? '127.0.0.1:8788') . '/wp-theme/omochix-theme' . $f; }
+function remove_action() {}
 function wp_json_encode($d, $f = 0) { return json_encode($d, $f); }
 function wp_strip_all_tags($t) { return trim(strip_tags((string) $t)); }
 function home_url($p = '/') { return $p; }
@@ -45,6 +57,20 @@ function get_footer() {
     echo '</body></html>';
 }
 require $THEME . '/inc/learn-svg-motion.php';
-if (preg_match('#^/learn/svg-motion/?$#', $path)) { include $THEME . '/page-learn-svg-motion.php'; exit; }
+// The studio page's headers as the theme sends them (omochix_svg_motion_page_headers(): X-Frame-Options and the CSP):
+// SVGM_CSP (or ?csp=) off | report | enforce; off when unset. Test only: ?csp=enforce-self sends the policy with
+// script-src 'self' (the policy V-2 replaced), as the positive control for the JSONP tests.
+if (preg_match('#^/learn/svg-motion/?$#', $path)) {
+    $csp = isset($_GET['csp']) ? (string) $_GET['csp'] : (string) getenv('SVGM_CSP');
+    if ('enforce-self' === $csp) {
+        header('X-Frame-Options: SAMEORIGIN');
+        header('Content-Security-Policy: ' . preg_replace('/script-src [^;]*/', "script-src 'self'", omochix_svg_motion_csp_policy()));
+    } else {
+        define('OMOCHIX_SVG_MOTION_CSP', in_array($csp, ['report', 'enforce'], true) ? $csp : 'off');
+        omochix_svg_motion_page_headers();
+    }
+    include $THEME . '/page-learn-svg-motion.php';
+    exit;
+}
 http_response_code(404);
 echo 'not found (preview stub)';

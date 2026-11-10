@@ -10,6 +10,8 @@ function start() {
   const main = http.createServer((q, s) => {
     const u = new URL(q.url, 'http://x');
     if (q.method === 'POST' && u.pathname === '/results') { let b = ''; q.on('data', d => b += d); q.on('end', () => { fs.writeFileSync(path.join(results, u.searchParams.get('name').replace(/[^\w.-]/g, '') + '.json'), b); s.end('ok'); }); return; }
+    // Control for csp-tests.js only: the real measuring frame without its CSP (so a test can show the CSP is what blocks requests).
+    if (u.pathname === '/control/measure-frame-nocsp.html') { const html = fs.readFileSync(path.join(routes['/theme/'], 'assets/svg-motion/measure-frame.html'), 'utf8').replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\n?/, '').replace('../js/svg-motion/', '/theme/assets/js/svg-motion/'); s.setHeader('Content-Type', types['.html']); return s.end(html); }
     for (const pre in routes) if (u.pathname.startsWith(pre)) {
       const f = path.normalize(path.join(routes[pre], u.pathname.slice(pre.length)));
       if (!f.startsWith(routes[pre]) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) break;

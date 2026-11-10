@@ -12,6 +12,9 @@
  * use it (WebKit limits such frames to about 22fps until they are clicked). It
  * stays for the tests that compare the CSS output with WAAPI, and for later
  * features an image cannot do, such as picking a shape on screen.
+ *
+ * measure() finds the logo's own box in a separate static page with an external script
+ * (assets/svg-motion/measure-frame.html), so it also works under the studio page's CSP.
  */
 (function (root) {
     'use strict';
@@ -299,55 +302,91 @@
             '<script nonce="' + value + '">' + runtime.replace(/<\/script/gi, '<\\/script') + '</' + 'script></body></html>';
     }
 
-    /* Runs inside the measuring frame: reports the root's untransformed box, numbers only. Serialized with toString(). */
-    /* eslint-disable */
-    function measureRuntime() {
-        var el = document.querySelector('[data-omx-root]') || document.querySelector('svg');
-        var box = null;
-        try { var b = el.getBBox(); box = { x: b.x, y: b.y, width: b.width, height: b.height }; } catch (e) { box = null; }
-        window.parent.postMessage({ type: 'omx:measure', box: box }, '*');
+    /*
+     * Measuring frame (CSP design, docs: l5/final/15-CSP-FINAL-DESIGN.md). The frame is a static page with an external
+     * script (assets/svg-motion/measure-frame.html + assets/js/svg-motion/measure-frame.js), opened with src, never
+     * srcdoc: a srcdoc document inherits the studio page's CSP, which cannot allow its inline script without a hash or
+     * nonce; a page loaded with src keeps only its own CSP. The studio page passes the versioned URL (configure());
+     * without it, the URL is found next to this file.
+     */
+    var currentScript = root.document && root.document.currentScript;
+    var measureFrameUrl = currentScript && currentScript.src ? new URL('../../svg-motion/measure-frame.html', currentScript.src).href : '';
+    var BOX_KEYS = ['x', 'y', 'width', 'height'];
+
+    function configure(options) {
+        if (options && typeof options.measureFrame === 'string' && options.measureFrame) {
+            measureFrameUrl = new URL(options.measureFrame, root.location.href).href;
+        }
     }
-    /* eslint-enable */
+
+    function requestId() {
+        return nonce(); // 128 random bits as 32 hex characters
+    }
+
+    function validBox(b) {
+        if (!b || typeof b !== 'object') return null;
+        var ok = BOX_KEYS.every(function (k) { return typeof b[k] === 'number' && isFinite(b[k]) && Math.abs(b[k]) < 1e5; });
+        // 0 x 0 is "not measured" (a drawable logo always has a box; Firefox answers 0 before layout).
+        if (!ok || (b.width === 0 && b.height === 0) || b.width < 0 || b.height < 0) return null;
+        return { x: b.x, y: b.y, width: b.width, height: b.height };
+    }
 
     /**
-     * Measures the logo's own box in a sandboxed frame (no same-origin access, nonce CSP, no network), so the
+     * Measures the logo's own box in a sandboxed frame (no same-origin access, its own CSP, no network), so the
      * studio page never holds the logo inline. Resolves with {x, y, width, height} in viewBox units, or null.
+     * With options.detail, resolves with {box, attempts, outcome, ms} (tests and diagnostics).
      * @param {string} preparedSvg Verified output of prepare().
      */
     function measure(preparedSvg, options) {
+        var detail = !!(options && options.detail);
+        var started = Date.now();
+        var result = function (box, attempts, outcome) {
+            return detail ? { box: box, attempts: attempts, outcome: outcome, ms: Date.now() - started } : box;
+        };
         var problems = root.OmxSvgSafety.verify(preparedSvg, { extraAttribute: EXTRA_ATTRIBUTE });
-        if (problems.length) return Promise.resolve(null);
-        var value = nonce();
-        var doc = '<!doctype html><html><head><meta charset="utf-8">' +
-            '<meta http-equiv="Content-Security-Policy" content="' + contentSecurityPolicy(value) + '">' +
-            '<style>html,body{margin:0}svg{display:block;width:200px;height:200px}</style></head><body>' + preparedSvg +
-            '<script nonce="' + value + '">(' + measureRuntime.toString().replace(/<\/script/gi, '<\\/script') + '())</' + 'script></body></html>';
+        if (problems.length) return Promise.resolve(result(null, 0, 'unverified'));
+        var url = options && options.frameUrl ? new URL(options.frameUrl, root.location.href).href : measureFrameUrl;
+        if (!url) return Promise.resolve(result(null, 0, 'no-frame'));
         var timeout = options && options.timeout || 3000;
+        var id = requestId();
         return new Promise(function (resolve) {
             var frame = document.createElement('iframe');
+            // Set before the frame is inserted or navigated: scripts only, opaque origin, no forms, popups or navigation.
             frame.setAttribute('sandbox', 'allow-scripts');
+            frame.setAttribute('referrerpolicy', 'no-referrer');
             frame.setAttribute('aria-hidden', 'true');
             frame.setAttribute('tabindex', '-1');
             frame.style.cssText = 'position:absolute;width:200px;height:200px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none';
-            var done = false;
-            var finish = function (box) {
+            var done = false, sent = false;
+            var finish = function (box, attempts, outcome) {
                 if (done) return;
                 done = true;
                 root.removeEventListener('message', onMessage);
                 root.clearTimeout(timer);
                 frame.remove();
-                resolve(box);
+                resolve(result(box, attempts, outcome));
             };
             var onMessage = function (event) {
-                if (event.source !== frame.contentWindow || !event.data || event.data.type !== 'omx:measure') return;
-                var b = event.data.box;
-                var ok = b && typeof b === 'object' && ['x', 'y', 'width', 'height'].every(function (k) { return typeof b[k] === 'number' && isFinite(b[k]) && Math.abs(b[k]) < 1e5; });
-                finish(ok ? { x: b.x, y: b.y, width: b.width, height: b.height } : null);
+                if (event.source !== frame.contentWindow || !frame.contentWindow) return;
+                var data = event.data;
+                if (!data || typeof data !== 'object' || data.v !== 1) return;
+                if (data.type === 'omx:ready') {
+                    if (sent) return;
+                    sent = true;
+                    // The frame's origin is opaque, so it cannot be named as the target; the message holds only the
+                    // user's own (verified) logo, and the reply is checked here by source, id, shape and numbers.
+                    frame.contentWindow.postMessage({ type: 'omx:measure', v: 1, id: id, svg: preparedSvg }, '*');
+                    return;
+                }
+                if (data.type !== 'omx:measure' || !sent || data.id !== id) return;
+                var attempts = typeof data.attempts === 'number' && isFinite(data.attempts) && data.attempts >= 0 && data.attempts <= 10 ? Math.floor(data.attempts) : 0;
+                var box = validBox(data.box);
+                finish(box, attempts, box ? 'measured' : 'empty');
             };
-            var timer = root.setTimeout(function () { finish(null); }, timeout);
+            var timer = root.setTimeout(function () { finish(null, 0, 'timeout'); }, timeout);
             root.addEventListener('message', onMessage);
             document.body.appendChild(frame);
-            frame.srcdoc = doc;
+            frame.src = url;
         });
     }
 
@@ -371,5 +410,5 @@
         return root.OmxSvgSafety.verify(preparedSvg, { extraAttribute: EXTRA_ATTRIBUTE });
     }
 
-    root.OmxSvgFrame = { prepare: prepare, buildDocument: buildDocument, animatedSvg: animatedSvg, verifyPrepared: verifyPrepared, measure: measure, EXTRA_ATTRIBUTE: EXTRA_ATTRIBUTE };
+    root.OmxSvgFrame = { prepare: prepare, buildDocument: buildDocument, animatedSvg: animatedSvg, verifyPrepared: verifyPrepared, measure: measure, configure: configure, EXTRA_ATTRIBUTE: EXTRA_ATTRIBUTE };
 }(window));

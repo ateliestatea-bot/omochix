@@ -16,6 +16,7 @@
     var data = JSON.parse(dataElement.textContent);
     var Compile = window.OmxSvgCompile;
     var Frame = window.OmxSvgFrame;
+    Frame.configure({ measureFrame: data.measureFrame }); // the versioned measuring frame from the page data
     var Analyze = window.OmxSvgAnalyze;
     var Import = window.OmxSvgImport;
     var Store = window.OmxSvgStore;
