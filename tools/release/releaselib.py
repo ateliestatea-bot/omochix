@@ -1,18 +1,38 @@
 """Shared helpers for the OmochiX release tools (Python 3 standard library only).
 
 Packages are always built from a git commit, never from a working tree, so a
-package is byte-for-byte the files of that commit.
+package is byte-for-byte the files of that commit. Every path that comes from a
+zip, a manifest, a plan or git goes through safe_rel(): relative, POSIX, no
+"..", "." or empty segment, no backslash, no NUL.
 """
 import hashlib
 import io
 import json
 import os
 import re
+import stat
 import subprocess
 import time
 import zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+HEX64 = re.compile(r'^[0-9a-f]{64}$')
+
+
+class UnsafeInput(ValueError):
+    """A path, archive or manifest that the release tools refuse."""
+
+
+def safe_rel(path):
+    """The path itself when it is a safe relative POSIX path, else UnsafeInput."""
+    if not isinstance(path, str) or not path:
+        raise UnsafeInput(f'empty or non-text path: {path!r}')
+    if '\0' in path or '\\' in path or path.startswith('/') or re.match(r'^[A-Za-z]:', path):
+        raise UnsafeInput(f'unsafe path: {path!r}')
+    parts = path.split('/')
+    if any(p in ('', '.', '..') for p in parts):
+        raise UnsafeInput(f'unsafe path segment in {path!r}')
+    return path
 
 
 def load_config():
@@ -43,12 +63,26 @@ def commit_info(commit):
     return sha, ts
 
 
+def parse_ls_tree(text, directory):
+    """[(relative path, blob sha)] from `git ls-tree -r -z` output; only regular files are allowed."""
+    out = []
+    for rec in filter(None, text.split('\0')):
+        meta, name = rec.split('\t', 1)
+        mode, kind, obj = meta.split(' ')
+        if kind != 'blob' or mode not in ('100644', '100755'):
+            raise UnsafeInput(f'{name}: git mode {mode} {kind} (symlinks and submodules are not shipped)')
+        rel = name[len(directory) + 1:]
+        out.append((safe_rel(rel), obj))
+    return out
+
+
 def tree_files(commit, directory):
     """{relative path: bytes} for every file under directory at commit."""
-    names = git('ls-tree', '-r', '-z', '--name-only', commit, '--', directory).split('\0')
     files = {}
-    for name in filter(None, names):
-        files[name[len(directory) + 1:]] = git('show', f'{commit}:{name}', binary=True)
+    for rel, obj in parse_ls_tree(git('ls-tree', '-r', '-z', commit, '--', directory), directory):
+        if rel in files:
+            raise UnsafeInput(f'duplicate path in git tree: {rel}')
+        files[rel] = git('cat-file', 'blob', obj, binary=True)
     return files
 
 
@@ -68,18 +102,30 @@ def package_version(key, files):
 
 def manifest_lines(files):
     """sha256sum format, paths relative to the package root, sorted bytewise (LC_ALL=C)."""
-    return ''.join(f'{sha256_bytes(files[p])}  {p}\n' for p in sorted(files, key=lambda s: s.encode('utf-8')))
+    return ''.join(f'{sha256_bytes(files[p])}  {safe_rel(p)}\n' for p in sorted(files, key=lambda s: s.encode('utf-8')))
+
+
+def parse_manifest(text):
+    """{path: sha256}; refuses malformed lines, unsafe paths and duplicate paths."""
+    entries = {}
+    for n, line in enumerate(text.split('\n'), 1):
+        if not line:
+            continue
+        if '  ' not in line:
+            raise UnsafeInput(f'manifest line {n}: not "<sha256>  <path>"')
+        digest, rel = line.split('  ', 1)
+        if not HEX64.match(digest):
+            raise UnsafeInput(f'manifest line {n}: not a SHA-256')
+        safe_rel(rel)
+        if rel in entries:
+            raise UnsafeInput(f'manifest line {n}: duplicate path {rel}')
+        entries[rel] = digest
+    return entries
 
 
 def read_manifest(path):
-    entries = {}
     with open(path, encoding='utf-8') as fh:
-        for line in fh:
-            line = line.rstrip('\n')
-            if line:
-                digest, rel = line.split('  ', 1)
-                entries[rel] = digest
-    return entries
+        return parse_manifest(fh.read())
 
 
 def build_zip(files, top, ts):
@@ -89,7 +135,7 @@ def build_zip(files, top, ts):
     with zipfile.ZipFile(buf, 'w') as z:
         seen = set()
         for rel in sorted(files, key=lambda s: s.encode('utf-8')):
-            parts = rel.split('/')
+            parts = safe_rel(rel).split('/')
             for i in range(1, len(parts)):
                 d = '/'.join([top] + parts[:i]) + '/'
                 if d not in seen:
@@ -107,13 +153,32 @@ def build_zip(files, top, ts):
 
 
 def zip_files(path, top):
-    """{relative path: bytes} of the files inside a package zip (top folder stripped)."""
+    """{relative path: bytes} of the files in a package zip (top folder stripped).
+
+    Refuses: an entry outside <top>/, an unsafe path, a duplicate name, a
+    symlink or other non-regular entry, and a directory entry with content.
+    """
     out = {}
     with zipfile.ZipFile(path) as z:
-        for info in z.infolist():
-            if info.filename.endswith('/'):
+        infos = z.infolist()
+        names = [i.filename for i in infos]
+        dupes = sorted({n for n in names if names.count(n) > 1})
+        if dupes:
+            raise UnsafeInput(f'duplicate zip entries: {dupes}')
+        for info in infos:
+            name = info.filename
+            if not name.startswith(top + '/'):
+                raise UnsafeInput(f'entry outside {top}/: {name!r}')
+            mode = info.external_attr >> 16
+            is_dir = name.endswith('/')
+            rel = name[len(top) + 1:].rstrip('/') if is_dir else name[len(top) + 1:]
+            if rel:
+                safe_rel(rel)
+            if is_dir:
+                if info.file_size:
+                    raise UnsafeInput(f'directory entry with content: {name!r}')
                 continue
-            if not info.filename.startswith(top + '/'):
-                raise ValueError(f'entry outside {top}/: {info.filename}')
-            out[info.filename[len(top) + 1:]] = z.read(info.filename)
+            if mode and not stat.S_ISREG(mode):
+                raise UnsafeInput(f'not a regular file (mode {oct(mode)}): {name!r}')
+            out[rel] = z.read(info)
     return out

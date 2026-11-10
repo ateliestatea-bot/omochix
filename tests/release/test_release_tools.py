@@ -5,6 +5,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import warnings
 import zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -71,8 +72,8 @@ class BuildAndVerify(unittest.TestCase):
         self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
 
 
-class Rehearse(unittest.TestCase):
-    """The staged replace procedure on a synthetic package (no WordPress needed)."""
+class Fixture(unittest.TestCase):
+    """A synthetic package and a throwaway target (no WordPress needed)."""
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -91,7 +92,12 @@ class Rehearse(unittest.TestCase):
         for n, rel in enumerate(['new/dir/a.php', 'b.php', 'switch.php'], 1):
             steps.append({'n': n, 'package': 'p', 'path': rel, 'target': f'plugins/pkg/{rel}', 'action': 'replace' if rel in self.old else 'add',
                           'old_sha256': rl.sha256_bytes(self.old[rel]) if rel in self.old else None, 'new_sha256': rl.sha256_bytes(self.files[rel])})
-        self.plan = {'packages': {'p': {'name': 'pkg', 'target': 'plugins/pkg'}}, 'steps': steps,
+        self.man = os.path.join(self.tmp, 'dist')
+        mtext = rl.manifest_lines(self.files).encode('utf-8')
+        self._write(os.path.join(self.man, 'pkg-1.manifest.sha256'), mtext)
+        self.plan = {'packages': {'p': {'name': 'pkg', 'target': 'plugins/pkg', 'manifest': 'pkg-1.manifest.sha256',
+                                        'manifest_sha256': rl.sha256_bytes(mtext), 'zip': 'pkg-1.zip', 'zip_sha256': '0' * 64}},
+                     'steps': steps,
                      'rollback_order': [['p', 'switch.php'], ['p', 'b.php']], 'after_apply': ['reset opcache'],
                      'after_rollback': ['save permalinks']}
         self.logger = rehearse.Log(self.log, quiet=True)
@@ -116,29 +122,32 @@ class Rehearse(unittest.TestCase):
         with open(self.log, encoding='utf-8') as fh:
             return [json.loads(line) for line in fh]
 
+class Rehearse(Fixture):
+    """The staged replace procedure."""
+
     def test_refuses_a_target_without_the_rehearsal_marker(self):
         os.unlink(os.path.join(self.tgt, rehearse.MARKER))
         with self.assertRaises(rehearse.Stop):
-            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger)
+            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
         self.assertEqual(self.old['b.php'], self._read('b.php'))
 
     def test_a_missing_release_file_stops_before_any_write(self):
         os.unlink(os.path.join(self.src, 'pkg', 'switch.php'))
         with self.assertRaises(rehearse.Stop):
-            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger)
+            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
         self.assertIsNone(self._read('new/dir/a.php'))
         self.assertEqual(self.old['b.php'], self._read('b.php'))
         self.assertFalse(os.path.exists(self.bak))
 
     def test_an_unexpected_production_file_stops_before_any_write(self):
         self._write(os.path.join(self.tgt, 'plugins', 'pkg', 'b.php'), b'<?php // edited on the server')
-        self.assertTrue(rehearse.preflight(self.plan, self.src, self.tgt))
+        self.assertTrue(rehearse.preflight(self.plan, self.src, self.tgt, self.man))
         with self.assertRaises(rehearse.Stop):
-            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger)
+            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
         self.assertIsNone(self._read('new/dir/a.php'))
 
     def test_apply_creates_folders_backs_up_and_logs(self):
-        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger)
+        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
         for rel, data in self.files.items():
             self.assertEqual(data, self._read(rel))
         self.assertEqual([], rehearse.verify(self.plan, self.tgt, 'release'))
@@ -152,20 +161,20 @@ class Rehearse(unittest.TestCase):
 
     def test_an_interrupted_run_resumes_where_it_stopped(self):
         with self.assertRaises(rehearse.Stop):
-            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, stop_after=1)
+            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man, stop_after=1)
         self.assertEqual(self.files['new/dir/a.php'], self._read('new/dir/a.php'))
         self.assertEqual(self.old['switch.php'], self._read('switch.php'))
-        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger)
+        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
         self.assertEqual([], rehearse.verify(self.plan, self.tgt, 'release'))
         self.assertIn('skip', [e['action'] for e in self._entries()])
 
     def test_a_failing_probe_stops_the_run(self):
         with self.assertRaises(rehearse.Stop):
-            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, probe='exit 1')
+            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man, probe='exit 1')
         self.assertEqual(self.old['b.php'], self._read('b.php'))
 
     def test_rollback_restores_switch_files_first_and_keeps_added_files(self):
-        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger)
+        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
         rehearse.rollback(self.plan, self.tgt, self.bak, self.logger)
         self.assertEqual(self.old['b.php'], self._read('b.php'))
         self.assertEqual(self.old['switch.php'], self._read('switch.php'))
@@ -178,11 +187,216 @@ class Rehearse(unittest.TestCase):
         self.assertIsNone(self._read('new/dir/a.php'))
 
     def test_rollback_refuses_a_broken_backup(self):
-        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger)
+        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
         self._write(os.path.join(self.bak, 'plugins', 'pkg', 'b.php'), b'corrupt')
         with self.assertRaises(rehearse.Stop):
             rehearse.rollback(self.plan, self.tgt, self.bak, self.logger)
         self.assertEqual(self.files['switch.php'], self._read('switch.php'))
+
+
+class Attacks(Fixture):
+    """Attacks found in the 2026-11-11 review. Each one wrote outside the target, followed a
+    symlink, accepted a tampered input or leaked data before the fix (35c90e5)."""
+
+    def _outside(self):
+        return os.path.join(self.tmp, 'outside')
+
+    def _assert_nothing_outside(self):
+        out = self._outside()
+        written = [f for _, _, fs in os.walk(out) for f in fs] if os.path.isdir(out) else []
+        self.assertEqual([], written, 'nothing may be written outside the target')
+
+    def _retarget(self, n, path, target=None):
+        s = self.plan['steps'][n - 1]
+        s['path'] = path
+        s['target'] = target if target is not None else f'plugins/pkg/{path}'
+
+    def _refused(self):
+        with self.assertRaises((rehearse.Stop, rl.UnsafeInput)):
+            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
+        self._assert_nothing_outside()
+        self.assertIsNone(self._read('new/dir/a.php'))
+
+    # --- paths in the plan
+    def test_dotdot_step_path_is_refused(self):
+        self._write(os.path.join(self.src, 'outside', 'x.php'), self.files['new/dir/a.php'])
+        self._retarget(1, '../../../outside/x.php')
+        self._refused()
+
+    def test_absolute_step_target_is_refused(self):
+        self._retarget(1, 'new/dir/a.php', os.path.join(self._outside(), 'x.php'))
+        self._refused()
+
+    def test_target_that_is_not_package_target_plus_path_is_refused(self):
+        self._retarget(1, 'new/dir/a.php', 'themes/other/new/dir/a.php')
+        self._refused()
+
+    def test_dotdot_package_target_is_refused(self):
+        self.plan['packages']['p']['target'] = '../outside'
+        for s in self.plan['steps']:
+            s['target'] = '../outside/' + s['path']
+        self._refused()
+
+    # --- symlinks
+    def test_symlinked_folder_in_the_target_is_refused(self):
+        os.makedirs(self._outside())
+        os.makedirs(os.path.join(self.tgt, 'plugins', 'pkg', 'new'))
+        os.symlink(self._outside(), os.path.join(self.tgt, 'plugins', 'pkg', 'new', 'dir'))
+        self._refused()
+
+    def test_symlinked_destination_file_is_refused(self):
+        os.makedirs(self._outside())
+        victim = os.path.join(self._outside(), 'victim.php')
+        os.makedirs(os.path.join(self.tgt, 'plugins', 'pkg', 'new', 'dir'))
+        os.symlink(victim, os.path.join(self.tgt, 'plugins', 'pkg', 'new', 'dir', 'a.php'))
+        self._refused()
+        self.assertFalse(os.path.exists(victim))
+
+    def test_symlinked_source_file_is_refused(self):
+        os.makedirs(self._outside())
+        real = os.path.join(self._outside(), 'secret.php')
+        with open(real, 'wb') as fh:
+            fh.write(self.files['new/dir/a.php'])
+        os.unlink(os.path.join(self.src, 'pkg', 'new', 'dir', 'a.php'))
+        os.symlink(real, os.path.join(self.src, 'pkg', 'new', 'dir', 'a.php'))
+        with self.assertRaises(rehearse.Stop):
+            rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man)
+        self.assertIsNone(self._read('new/dir/a.php'))
+
+    def test_folder_swapped_for_a_symlink_after_preflight_is_not_followed(self):
+        os.makedirs(self._outside())
+        real = rehearse.preflight
+
+        def swap(*args):
+            problems = real(*args)
+            d = os.path.join(self.tgt, 'plugins', 'pkg', 'new')
+            if not os.path.lexists(d):
+                os.symlink(self._outside(), d)
+            return problems
+        rehearse.preflight = swap
+        try:
+            self._refused()
+        finally:
+            rehearse.preflight = real
+
+    # --- tampered inputs
+    def test_plan_and_source_tampered_together_are_refused(self):
+        evil = b'<?php system($_GET["c"]);'
+        self._write(os.path.join(self.src, 'pkg', 'b.php'), evil)
+        self.plan['steps'][1]['new_sha256'] = rl.sha256_bytes(evil)
+        self._refused()
+        self.assertEqual(self.old['b.php'], self._read('b.php'))
+
+    def test_tampered_manifest_is_refused(self):
+        evil = b'<?php system($_GET["c"]);'
+        self._write(os.path.join(self.src, 'pkg', 'b.php'), evil)
+        self.plan['steps'][1]['new_sha256'] = rl.sha256_bytes(evil)
+        files = dict(self.files, **{'b.php': evil})
+        self._write(os.path.join(self.man, 'pkg-1.manifest.sha256'), rl.manifest_lines(files).encode())
+        self._refused()
+
+    def test_tampered_plan_file_fails_its_recorded_sha256(self):
+        path = os.path.join(self.tmp, 'release-plan.json')
+        data = json.dumps(self.plan).encode()
+        self._write(path, data)
+        self._write(path + '.sha256', f'{rl.sha256_bytes(data)}  release-plan.json\n'.encode())
+        self.assertEqual(self.plan['steps'], rehearse.load_plan(path)['steps'])
+        self._write(path, data.replace(b'plugins/pkg/b.php', b'plugins/pkg/c.php'))
+        with self.assertRaises(rehearse.Stop):
+            rehearse.load_plan(path)
+        with self.assertRaises(rehearse.Stop):
+            rehearse.load_plan(path, expected_sha='0' * 64)
+
+    def test_missing_manifest_is_refused(self):
+        os.unlink(os.path.join(self.man, 'pkg-1.manifest.sha256'))
+        self._refused()
+
+    # --- audit log
+    def test_log_has_no_command_output_and_no_absolute_paths(self):
+        rehearse.apply(self.plan, self.src, self.tgt, self.bak, self.logger, self.man,
+                       probe='echo DB_PASSWORD=hunter2; echo token-abc >&2')
+        with open(self.log, encoding='utf-8') as fh:
+            text = fh.read()
+        for leak in ('hunter2', 'token-abc', self.tmp, os.path.realpath(self.tmp)):
+            self.assertNotIn(leak, text)
+        for e in self._entries():
+            if 'path' in e:
+                rl.safe_rel(e['path'])
+
+    def test_stop_message_has_no_absolute_paths(self):
+        os.makedirs(self._outside())
+        os.makedirs(os.path.join(self.tgt, 'plugins', 'pkg', 'new'))
+        os.symlink(self._outside(), os.path.join(self.tgt, 'plugins', 'pkg', 'new', 'dir'))
+        problems = rehearse.preflight(self.plan, self.src, self.tgt, self.man)
+        self.assertTrue(problems)
+        self.assertFalse(any(self.tmp in p or os.path.realpath(self.tmp) in p for p in problems))
+
+
+class ArchiveAttacks(unittest.TestCase):
+    """Zips and manifests that verify must refuse."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def _zip(self, entries):
+        path = os.path.join(self.tmp, 'p.zip')
+        with zipfile.ZipFile(path, 'w') as z:
+            for name, data, mode in entries:
+                zi = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0))
+                zi.create_system = 3
+                zi.external_attr = mode << 16
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    z.writestr(zi, data)
+        return path
+
+    def test_duplicate_zip_entries_are_refused(self):
+        p = self._zip([('pkg/a.php', b'evil', 0o100644), ('pkg/a.php', b'good', 0o100644)])
+        with self.assertRaises(rl.UnsafeInput):
+            rl.zip_files(p, 'pkg')
+
+    def test_dotdot_absolute_and_outside_zip_entries_are_refused(self):
+        for name in ('pkg/../evil.php', '/pkg/a.php', 'other/a.php', 'pkg/./a.php', 'pkg//a.php', 'pkg/a\\..\\b.php'):
+            with self.subTest(name=name), self.assertRaises(rl.UnsafeInput):
+                rl.zip_files(self._zip([(name, b'x', 0o100644)]), 'pkg')
+
+    def test_symlink_zip_entry_is_refused(self):
+        p = self._zip([('pkg/a.php', b'/etc/passwd', 0o120777)])
+        with self.assertRaises(rl.UnsafeInput):
+            rl.zip_files(p, 'pkg')
+
+    def test_verify_reports_a_refused_zip_instead_of_passing(self):
+        r = build.build('HEAD', self.tmp, allow_dev=True)
+        core = os.path.join(self.tmp, r['packages']['core']['zip'])
+        with zipfile.ZipFile(core, 'a') as z, warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            z.writestr('omochix-core/readme.txt', b'second copy')
+        self.assertTrue(any('refused' in p for p in verify.verify('HEAD', self.tmp)))
+
+    def test_bad_manifest_lines_are_refused(self):
+        good = 'a' * 64
+        for text in (f'{good}  a.php\n{good}  a.php\n', f'{good}  ../a.php\n', f'{good}  /etc/a\n',
+                     'nothex  a.php\n', f'{good} a.php\n', f'{good}  \n'):
+            with self.subTest(text=text), self.assertRaises(rl.UnsafeInput):
+                rl.parse_manifest(text)
+
+    def test_git_symlinks_and_submodules_are_not_shipped(self):
+        for mode, kind in (('120000', 'blob'), ('160000', 'commit')):
+            with self.subTest(mode=mode), self.assertRaises(rl.UnsafeInput):
+                rl.parse_ls_tree(f'{mode} {kind} {"b" * 40}\tdir/link.php\0', 'dir')
+        self.assertEqual([('a.php', 'c' * 40)], rl.parse_ls_tree(f'100644 blob {"c" * 40}\tdir/a.php\0', 'dir'))
+
+    def test_plan_records_zip_and_manifest_sha256_of_the_commit(self):
+        plan, packages, _ = planmod.make_plan('HEAD')
+        r = build.build('HEAD', self.tmp, allow_dev=True)
+        for key, p in plan['packages'].items():
+            self.assertEqual(r['packages'][key]['sha256'], p['zip_sha256'])
+            self.assertEqual(r['packages'][key]['zip'], p['zip'])
+            self.assertEqual(rl.sha256_file(os.path.join(self.tmp, p['manifest'])), p['manifest_sha256'])
+        self.assertEqual([], rehearse.check_plan(plan))
 
 
 if __name__ == '__main__':

@@ -6,7 +6,8 @@
 Exit 0 only when, for every package: the .zip.sha256 matches the zip; every zip
 entry is in the manifest with the same SHA-256 (nothing missing, nothing extra);
 and the manifest lists exactly the files of the package directory at that commit,
-byte for byte.
+byte for byte. A zip with a duplicate, absolute, ".." or symlink entry, or a
+manifest with a duplicate or malformed line, is refused.
 """
 import argparse
 import os
@@ -31,8 +32,12 @@ def verify(commit, directory):
             want_zip = fh.read().split()[0]
         if rl.sha256_file(zpath) != want_zip:
             problems.append(f'{base}.zip: SHA-256 differs from {base}.zip.sha256')
-        manifest = rl.read_manifest(os.path.join(directory, base + '.manifest.sha256'))
-        inzip = rl.zip_files(zpath, pkg['name'])
+        try:
+            manifest = rl.read_manifest(os.path.join(directory, base + '.manifest.sha256'))
+            inzip = rl.zip_files(zpath, pkg['name'])
+        except rl.UnsafeInput as e:
+            problems.append(f'{base}: refused: {e}')
+            continue
         for rel, data in inzip.items():
             if rel not in manifest:
                 problems.append(f'{base}: {rel} is in the zip but not in the manifest')
