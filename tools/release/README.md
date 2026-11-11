@@ -14,6 +14,6 @@ Safety rules (all tools): every path from a zip, a manifest, a plan or git must 
 
 Production is deployed by the operator's replace tool (v2) with the same `release-plan.json`; connection details stay in the operator's private runbook, never in this repository.
 
-The production baseline (`baseline/`) holds only SHA-256 values: Core 1.9.3 as released on 2026-11-06 (`docs/P0-RELEASE-RECORD-20261106.md`), and theme 1.28.0 as released on 2026-11-11 (Labs on 1.27.2 with SVG Motion Studio, release commit 599efe9; the 161-line release manifest of the operator's release record, sha256 38dd3dd5…).
+The production baseline (`baseline/`) holds only SHA-256 values: Core 1.9.3 as released on 2026-11-06 (`docs/P0-RELEASE-RECORD-20261106.md`), and theme 1.28.1 as released on 2026-11-12 (release commit 422399a: 1.28.0 = 599efe9 with the three Learn-card files; 161 files, sha256 92bbc7b7…). The 1.28.0 manifest (38dd3dd5…) stays for configs/theme-1.28.1.json.
 
 Checks: `php tests/release/release-gate.php` and `python3 -m unittest discover -s tests/release` (CI: `.github/workflows/release.yml`).

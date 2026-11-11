@@ -4,8 +4,8 @@
 
 ## 0. 前提と順序
 
-- リリースの順序は運営者の決定どおり：テーマ 1.28.0（済み）→ **1.28.1（Learn カード）** → 1.29.0（Industry Hub）。本番への反映は 1 回に 1 つ。
-- 1.28.1 が本番に入るまでは、下の「変更前の SHA-256」を**確定しない**。1.28.1 が入ったら、その本番マニフェストを基準にして計画を作り直す（6 章）。
+- リリースの順序は運営者の決定どおり：テーマ 1.28.0（済み）→ 1.28.1（Learn カード、2026-11-12 済み）→ **1.29.0（Industry Hub）**。本番への反映は 1 回に 1 つ。
+- 基準は本番 1.28.1（`422399a`。1.28.0 の 161 ファイルのマニフェストに、反映後にサーバーで 3/3 一致を確かめた 1.28.1 の 3 ファイルを入れたもの）。
 - この文書のどの確認も、本番のファイル・DB・キャッシュ・設定に書き込まない。
 
 ## 1. 本番での読み取りだけの確認（運営者が自分で開いた SSH の画面で実行）
@@ -18,16 +18,16 @@
 cd ~/web/wp-content && sha256sum plugins/omochix-core/readme.txt plugins/omochix-core/omochix-core.php themes/omochix-theme/inc/learn.php themes/omochix-theme/inc/shell.php themes/omochix-theme/functions.php themes/omochix-theme/style.css
 ```
 
-| ファイル | 期待する値（本番 1.28.0 / Core 1.9.3） | これまでの照合 |
+| ファイル | 期待する値（本番 1.28.1 / Core 1.9.3） | これまでの照合 |
 | --- | --- | --- |
 | `plugins/omochix-core/readme.txt` | `73ba8b51c09d258a8e9b04d096fa7b2e66016169c45dcee0d0fe744b3ec7fd7e` | 公開 GET で一致 |
 | `plugins/omochix-core/omochix-core.php` | `65bd0bfa4c70e80152c476d370f011ec8635f1862321a673f054a8d359df030e` | **未照合** |
 | `themes/omochix-theme/inc/learn.php` | `6f42d2129af68ccedf0bcfbe0d43a7ece9bbcdfa28e2aede175b445788b121a2` | **未照合** |
 | `themes/omochix-theme/inc/shell.php` | `1421a8f2e676ccc38b3cd669b889fb8f06ad93af9f240a68b174c8c712d6926c` | 1.28.0 のリリース時にサーバーで一致 |
 | `themes/omochix-theme/functions.php` | `2382649ee378aac2ae583b09b4a6fade8989b5e0575acdc4dac2f7d0790c3d59` | 同上 |
-| `themes/omochix-theme/style.css` | `725a4a58c79678f3a7af8b23a529c8f616729d3d2f19ff6fa9b9a5fcd430fbd8` | 同上、公開 GET でも一致 |
+| `themes/omochix-theme/style.css` | `3fed17e5e21aeecc68144655ac182dc9ef7271c12cdee76b7995132f576a3589` | 1.28.1 の反映後にサーバーで一致、公開 GET でも一致 |
 
-1 つでも違えば中止する（反映しない）。1.28.1 の後は、`style.css` などの値が変わる。
+1 つでも違えば中止する（反映しない）。
 
 ### 1-2. 配置場所・版・有効なプラグインとテーマ
 
@@ -43,7 +43,7 @@ grep -m1 "OMOCHIX_CORE_VERSION'" ~/web/wp-content/plugins/omochix-core/omochix-c
 cd ~/web && wp plugin list --fields=name,status,version && wp theme list --fields=name,status,version
 ```
 
-期待：2 つとも実在のフォルダー（`l` で始まらない）、Core 1.9.3、テーマ 1.28.0、`omochix-core` と `omochix-theme` が有効。`wp` が無い場合は管理画面の一覧で確認する。
+期待：2 つとも実在のフォルダー（`l` で始まらない）、Core 1.9.3、テーマ 1.28.1、`omochix-core` と `omochix-theme` が有効。`wp` が無い場合は管理画面の一覧で確認する。
 
 ### 1-3. 新規 23 ファイルが無いこと
 
@@ -82,7 +82,7 @@ cd ~/web && wp plugin get litespeed-cache --fields=name,status,version
 | # | 確認 | 方法 | 合格 |
 | --- | --- | --- | --- |
 | L1 | キャッシュ更新の手順 | 反映の後に Toolbox → Purge All - Opcode Cache → Purge All | 既存 31 URL が反映後の内容、業種のハブは 404 |
-| L2 | 新旧の PHP が混ざった状態 | 関門 A（Core 1.10.0・テーマ 1.28.0）で止め、opcache をリセットせずに 31 URL を確認 | critical error 0、ハブは 404 |
+| L2 | 新旧の PHP が混ざった状態 | 関門 A（Core 1.10.0・テーマ 1.28.1）で止め、opcache をリセットせずに 31 URL を確認 | critical error 0、ハブは 404 |
 | L3 | opcache のリセットと再検証 | 1-4 の値を記録し、リセット前後で `omochix-core.php` の版の表示（管理画面のプラグイン一覧）が切り替わるかを見る | リセットの後に 1.10.0 |
 | L4 | ロールバック後のキャッシュ | ロールバック → パーマリンクの保存 → opcache リセット → Purge All | `/learn/industries/real-estate/` と存在しない業種が 404、31 URL が反映前と同じ |
 | L5 | Labs・SVG Motion | 各段の後に `/labs/`、`/labs-sitemap.xml`、ツール詳細 1 件、`/learn/svg-motion/` | すべて 200、SVG のページは noindex のまま、Labs の CSP が SVG のページに出ない |

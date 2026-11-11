@@ -1,6 +1,6 @@
 {
   "release": "Industry Hub Phase 2",
-  "note": "Theme 1.29.0 ships on production 1.28.0 (Labs, released 2026-11-11 from 599efe9 on top of 1.27.2 SVG Motion Studio). The theme baseline is the 1.28.0 release manifest (sha256 38dd3dd5..., 161 files) recorded in the operator release record; on the server only 60 of those files were hashed, so the preflight must hash every replaced file before writing. SVG Motion Studio and Labs files and loaders must stay.",
+  "note": "Theme 1.29.0 ships on production 1.28.1 (released 2026-11-12 from release/theme-1.28.1 422399a: 1.28.0 Labs + SVG Motion Studio + the BUILD Learn card). Theme baseline: the 1.28.0 release manifest (161 files, sha256 38dd3dd5...) with the three 1.28.1 files, which were checked on the server after the deploy (3/3). Only part of the PHP files were ever hashed on the server, so the preflight must hash every replaced file before writing. SVG Motion Studio, Labs and the Learn card must stay.",
   "packages": {
     "core": {
       "name": "omochix-core",
@@ -13,9 +13,9 @@
       "name": "omochix-theme",
       "dir": "wp-theme/omochix-theme",
       "target": "themes/omochix-theme",
-      "baseline": "tools/release/baseline/omochix-theme-1.28.0-on-1.27.2.sha256",
-      "baseline_version": "1.28.0",
-      "baseline_commit": "599efe96503292065b4c92b5ca27d55b23e938f3"
+      "baseline": "tools/release/baseline/omochix-theme-1.28.1.sha256",
+      "baseline_version": "1.28.1",
+      "baseline_commit": "422399a732af8a0ab2851a91f4bb5923b30b3c64"
     }
   },
   "order": [
