@@ -17,7 +17,7 @@ function omochix_shell_page_enabled() {
     $template = isset($GLOBALS['omochix_shell_template']) ? $GLOBALS['omochix_shell_template'] : '';
     return in_array($template, [
         'page-about.php', 'page-contact.php', 'page-company.php', 'page-privacy-policy.php', 'page-terms.php',
-        'page-learn.php', 'page-learn-article.php', 'page-learn-gallery.php', 'page-learn-composer.php',
+        'page-learn.php', 'page-learn-article.php', 'page-learn-gallery.php', 'page-learn-composer.php', 'page-learn-svg-motion.php',
     ], true);
 }
 
@@ -29,7 +29,8 @@ function omochix_shell_enabled() {
     return is_404() || is_search() || is_home() || is_category() || is_tag()
         || is_post_type_archive(['ai_tool', 'prompt', 'learn_practice']) || is_tax(['ai_tool_category', 'prompt_category', 'prompt_model', 'learn_field', 'learn_format', 'learn_usecase', 'learn_ai', 'learn_tech'])
         || is_singular(['prompt', 'ai_tool', 'post', 'learn_practice'])
-        || (is_page() && omochix_shell_page_enabled());
+        || (is_page() && omochix_shell_page_enabled())
+        || (function_exists('omochix_labs_is_request') && omochix_labs_is_request());
 }
 
 add_filter('body_class', static function ($classes) {

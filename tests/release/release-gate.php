@@ -8,7 +8,7 @@
  *   release version (no "-dev").
  * - Theme: style.css carries a release version (no "-dev").
  * - Scope: against the production baseline (tools/release/baseline/*.sha256,
- *   Core 1.9.3 / theme 1.27.1), the files that differ are exactly the approved
+ *   Core 1.9.3 / theme 1.28.0 = Labs), the files that differ are exactly the approved
  *   steps in tools/release/release.json: nothing deleted, nothing else changed
  *   (so no Labs or SVG Motion file can ride along), switch files last.
  *
@@ -38,7 +38,7 @@ gate('core: all 11 Industry Hub module files carry the release version marker', 
 
 preg_match('/^Version:\s*(\S+)/m', (string) file_get_contents("$root/wp-theme/omochix-theme/style.css"), $m); $theme = $m[1] ?? '';
 gate('theme: a release version (x.y.z, no -dev)', (bool) preg_match('/^\d+\.\d+\.\d+$/', $theme), $theme);
-gate('theme: not 1.28.0 (kept for Labs)', '1.28.0' !== $theme, $theme);
+gate('theme: newer than the production baseline (no downgrade)', version_compare($theme, $cfg['packages']['theme']['baseline_version'], '>'), $theme . ' vs ' . $cfg['packages']['theme']['baseline_version']);
 
 // Scope against the production baseline.
 $order = array_map(static fn($s) => $s[0] . ':' . $s[1], $cfg['order']);

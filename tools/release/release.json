@@ -1,6 +1,6 @@
 {
   "release": "Industry Hub Phase 2",
-  "note": "Theme 1.29.0 is provisional (1.28.0 is kept for Labs). Re-evaluate both numbers if the Labs release order changes; do not ship before the number is confirmed.",
+  "note": "Theme 1.29.0 ships on production 1.28.0 (Labs, released 2026-11-11 from 599efe9 on top of 1.27.2 SVG Motion Studio). The theme baseline is the 1.28.0 release manifest (sha256 38dd3dd5..., 161 files) recorded in the operator release record; on the server only 60 of those files were hashed, so the preflight must hash every replaced file before writing. SVG Motion Studio and Labs files and loaders must stay.",
   "packages": {
     "core": {
       "name": "omochix-core",
@@ -13,8 +13,9 @@
       "name": "omochix-theme",
       "dir": "wp-theme/omochix-theme",
       "target": "themes/omochix-theme",
-      "baseline": "tools/release/baseline/omochix-theme-1.27.1.sha256",
-      "baseline_version": "1.27.1"
+      "baseline": "tools/release/baseline/omochix-theme-1.28.0-on-1.27.2.sha256",
+      "baseline_version": "1.28.0",
+      "baseline_commit": "599efe96503292065b4c92b5ca27d55b23e938f3"
     }
   },
   "order": [

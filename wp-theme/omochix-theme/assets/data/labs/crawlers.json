@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "max_age_days": 180,
+  "purposes": {
+    "training": "AIモデルの学習",
+    "search": "AI検索・回答での表示",
+    "user": "ユーザーの操作による取得"
+  },
+  "crawlers": [
+    { "token": "GPTBot", "operator": "OpenAI", "purpose": "training", "note": "生成AIの基盤モデルの学習に使われる可能性があるコンテンツを収集します。", "robots_note": "", "source_url": "https://developers.openai.com/api/docs/bots", "verified_at": "2026-11-04" },
+    { "token": "OAI-SearchBot", "operator": "OpenAI", "purpose": "search", "note": "ChatGPT の検索機能で、サイトを検索結果に表示するために使われます。", "robots_note": "", "source_url": "https://developers.openai.com/api/docs/bots", "verified_at": "2026-11-04" },
+    { "token": "ChatGPT-User", "operator": "OpenAI", "purpose": "user", "note": "ChatGPT や GPTs でのユーザーの操作に応じてページを取得します。", "robots_note": "ユーザーの操作によるため robots.txt が適用されない場合がある、と公式に記載されています。", "source_url": "https://developers.openai.com/api/docs/bots", "verified_at": "2026-11-04" },
+    { "token": "ClaudeBot", "operator": "Anthropic", "purpose": "training", "note": "学習に役立つ可能性があるWebコンテンツを収集します。", "robots_note": "", "source_url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler", "verified_at": "2026-11-04" },
+    { "token": "Claude-SearchBot", "operator": "Anthropic", "purpose": "search", "note": "ユーザー向けの検索結果の質を高めるためにWebを巡回します。", "robots_note": "", "source_url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler", "verified_at": "2026-11-04" },
+    { "token": "Claude-User", "operator": "Anthropic", "purpose": "user", "note": "ユーザーの質問に答えるためにページへアクセスします。", "robots_note": "", "source_url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler", "verified_at": "2026-11-04" },
+    { "token": "Google-Extended", "operator": "Google", "purpose": "training", "note": "Google がクロールしたコンテンツを Gemini の学習や回答の根拠に使うかを制御するトークンです。Google 検索への掲載や順位には影響しません。", "robots_note": "独立したクローラーではなく、既存の Google のクローラーに対する指示として使われます。", "source_url": "https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers", "verified_at": "2026-11-04" },
+    { "token": "Applebot-Extended", "operator": "Apple", "purpose": "training", "note": "Apple の基盤モデルの学習に使うかを制御するトークンです。Applebot-Extended 自体はページを巡回しません。", "robots_note": "", "source_url": "https://support.apple.com/en-us/119829", "verified_at": "2026-11-04" },
+    { "token": "PerplexityBot", "operator": "Perplexity", "purpose": "search", "note": "Perplexity の検索結果でサイトを表示・リンクするために使われます。基盤モデルの学習には使わないと記載されています。", "robots_note": "", "source_url": "https://docs.perplexity.ai/guides/bots", "verified_at": "2026-11-04" },
+    { "token": "Perplexity-User", "operator": "Perplexity", "purpose": "user", "note": "ユーザーの依頼に応じてページを取得します。", "robots_note": "ユーザーの依頼による取得のため、通常 robots.txt を無視すると公式に記載されています。", "source_url": "https://docs.perplexity.ai/guides/bots", "verified_at": "2026-11-04" },
+    { "token": "CCBot", "operator": "Common Crawl", "purpose": "training", "note": "公開Webのアーカイブ（Common Crawl）を作るクローラーです。このデータは多くのAIモデルの学習に使われています。", "robots_note": "", "source_url": "https://commoncrawl.org/ccbot", "verified_at": "2026-11-04" },
+    { "token": "meta-externalagent", "operator": "Meta", "purpose": "training", "note": "AIモデルの学習や、コンテンツの索引による製品改善などに使われます。", "robots_note": "", "source_url": "https://developers.facebook.com/docs/sharing/webmasters/web-crawlers", "verified_at": "2026-11-04" },
+    { "token": "meta-webindexer", "operator": "Meta", "purpose": "search", "note": "Meta AI の検索結果を改善し、回答でコンテンツを引用・リンクするために使われます。", "robots_note": "", "source_url": "https://developers.facebook.com/docs/sharing/webmasters/web-crawlers", "verified_at": "2026-11-04" }
+  ]
+}

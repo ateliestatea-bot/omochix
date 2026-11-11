@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset=utf-8><title>bplus</title><script src="/theme/assets/js/svg-motion/lib/purify.min.js"></script><script src="/theme/assets/js/svg-motion/safety.js"></script><script src="/theme/assets/js/svg-motion/compile.js"></script><script src="/theme/assets/js/svg-motion/frame.js"></script><script src="/theme/assets/js/svg-motion/preview-image.js"></script><script src="head.js"></script><style>body{margin:0;background:#fff}#s{width:200px;height:200px;position:relative}#s img{position:absolute;inset:0;width:200px;height:200px}</style></head><body><div id=s></div><script>
+// Measures the shipped image preview: how far the picture's real time is from the time the preview believes,
+// read from the drawing itself, and what a slider costs. Self-running, so it works in real Safari.
+const LOGO = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="40" y="40" width="20" height="20" fill="#000"/></svg>';
+const median = a => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[s.length >> 1] : null; };
+const stats = a => { const abs = a.map(Math.abs).sort((x, y) => x - y); return { n: a.length, medianMs: +median(abs).toFixed(1), p95Ms: +abs[Math.floor(abs.length * .95)].toFixed(1), worstMs: +abs[abs.length - 1].toFixed(1), bias: +median(a).toFixed(1) }; };
+(async () => {
+  const data = await loadData(); const R = { engine, ua: navigator.userAgent };
+  const stage = OmxSvgFrame.prepare(OmxSvgSafety.normalize(LOGO).svg, { maxParts: 200 });
+  const P = data.presets.find(p => p.id === 'logo-float'); const com = OmxSvgCompile.sanitizeCommon(data.common, { easing: 'linear' });
+  const plan = OmxSvgCompile.buildPlan(P, { duration: 1000, amount: 0.2, tilt: 0 }, stage.layout, com);
+  const host = document.getElementById('s'); const preview = OmxSvgPreview.create(host);
+  const c = document.createElement('canvas'); c.width = c.height = 200; const x = c.getContext('2d', { willReadFrequently: true });
+  // y of the square's centre in px at rest is 100. Up 40px over 1000ms, down over the next 1000ms.
+  function pictureTime(believed) { const img = preview.element(); x.fillStyle = '#fff'; x.fillRect(0, 0, 200, 200); x.drawImage(img, 0, 0, 200, 200); const d = x.getImageData(0, 0, 200, 200).data; let sum = 0, w = 0; for (let py = 0; py < 200; py++) for (let px = 90; px < 110; px++) { const v = 255 - d[(py * 200 + px) * 4]; sum += v * py; w += v; } const up = 100 - sum / w; const t = Math.max(0, Math.min(1000, up / 40 * 1000)); const period = 2000; const m = ((believed % period) + period) % period; const cands = [t, period - t, t + period, -t]; let best = 1e9; for (const k of cands) { const dd = k - m; if (Math.abs(dd) < Math.abs(best)) best = dd; } return best; }
+  const frame = () => new Promise(requestAnimationFrame);
+  await preview.show(stage.svg, plan, { play: true }); await wait(300);
+  const live = []; for (let i = 0; i < 90; i++) { await frame(); live.push(pictureTime(preview.state().time)); } R.live = stats(live);
+  const afterUpdate = []; for (let i = 0; i < 40; i++) { await preview.update(plan); await frame(); afterUpdate.push(pictureTime(preview.state().time)); await wait(30); } R.afterUpdate = stats(afterUpdate);
+  const paused = []; for (let i = 0; i < 25; i++) { await wait(80 + i * 3); await preview.pause(); await frame(); paused.push(pictureTime(preview.state().time)); await preview.play(); } R.afterPause = stats(paused);
+  const resumed = []; for (let i = 0; i < 25; i++) { await preview.pause(); await wait(30); await preview.play(); await frame(); await frame(); resumed.push(pictureTime(preview.state().time)); } R.afterResume = stats(resumed);
+  const seek = []; for (let i = 0; i < 40; i++) { const t = 50 + i * 45; await preview.seek(t); await frame(); seek.push(pictureTime(t)); } R.seekFrozen = stats(seek);
+  // A slider drag: one update per frame for two seconds, on three sizes of logo.
+  R.drag = {};
+  for (const n of [0, 200, 2000]) { let src = LOGO; if (n) { src = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">'; for (let i = 0; i < n; i++) src += '<path d="M' + (i * 7 % 310) + ' ' + (i * 13 % 170) + 'c3 0 6 3 6 6s-3 6-6 6-6-3-6-6 3-6 6-6z" fill="hsl(' + (i % 360) + ' 70% 50%)"/>'; src += '</svg>'; } const st = OmxSvgFrame.prepare(OmxSvgSafety.normalize(src).svg, { maxParts: 200 }); const Q = data.presets.find(p => p.id === 'logo-breathe'); await preview.show(st.svg, OmxSvgCompile.buildPlan(Q, {}, st.layout), { play: true }); const t0 = performance.now(), ticks = []; let frames = 0; while (performance.now() - t0 < 2000) { const pl = OmxSvgCompile.buildPlan(Q, { amount: .01 + (frames % 19) * .01 }, st.layout); const s = performance.now(); await preview.update(pl); ticks.push(performance.now() - s); frames++; await frame(); } ticks.sort((a, b) => a - b); R.drag[n || 'logo'] = { perSecond: +(frames / 2).toFixed(1), medianMs: +median(ticks).toFixed(1), p95Ms: +ticks[Math.floor(ticks.length * .95)].toFixed(1), worstMs: +ticks[ticks.length - 1].toFixed(1) }; }
+  // Pictures per second, as a reference only.
+  const st2 = stage; await preview.show(st2.svg, plan, { play: true }); await wait(200); const seen = {}; const t1 = performance.now(); let dr = 0; while (performance.now() - t1 < 2000) { await frame(); x.fillStyle = '#fff'; x.fillRect(0, 0, 200, 200); x.drawImage(preview.element(), 0, 0, 200, 200); const d = x.getImageData(95, 0, 2, 200).data; let h = 0; for (let i = 0; i < d.length; i += 4) h = (h * 31 + d[i]) | 0; seen[h] = 1; dr++; } R.pictures = { distinctPerSecond: Object.keys(seen).length / 2, drawsPerSecond: dr / 2 };
+  await post('bplus-' + engine, R); document.title = 'DONE';
+})().catch(e => { document.title = 'ERR'; post('bplus-' + engine + '-error', { e: String(e), s: e.stack }); });
+</script></body></html>

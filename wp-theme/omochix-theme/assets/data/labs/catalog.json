@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "updated": "2026-11-04",
+  "categories": [
+    { "slug": "ai", "name": "AI", "description": "AI API の料金やトークンを見積もるツール", "order": 1 },
+    { "slug": "dev", "name": "開発", "description": "データ整形や差分確認など、開発作業を助けるツール", "order": 2 },
+    { "slug": "web", "name": "Web運用・SEO", "description": "サイト運営と検索エンジン対策のツール", "order": 3 }
+  ],
+  "tools": [
+    {
+      "slug": "json-formatter",
+      "status": "published",
+      "order": 1,
+      "category": "dev",
+      "icon": "code",
+      "name": "JSON整形・検証",
+      "title": "JSON整形・検証ツール｜エラー位置を表示・無料・ブラウザ完結",
+      "lead": "1行のJSONを読みやすく整形し、構文エラーがあれば行と列を示します。",
+      "description": "JSONを整形・圧縮・キー順に並べ替え、構文エラーの位置（行・列）を日本語で表示する無料ツール。大きな整数の精度落ちも警告します。入力はブラウザの外に送信されません。",
+      "keywords": ["json", "整形", "フォーマット", "フォーマッター", "バリデーション", "検証", "構文チェック", "minify", "圧縮", "pretty print", "ソート"],
+      "features": ["JSONの整形（インデント2・4・タブ）", "圧縮（minify）", "キーの並べ替え", "構文エラーの行・列表示", "大きな整数・重複キーの警告"],
+      "application_category": "DeveloperApplication",
+      "related": ["text-diff", "token-cost-calculator"],
+      "links": {
+        "learn": ["learn/tutorials/add-ai-api", "learn/development/web-basics"],
+        "ai_tools": ["claude-code", "cursor"],
+        "prompts": ["development-error-log-root-cause", "productivity-csv-data-quick-analysis"]
+      },
+      "faq": [
+        { "q": "入力したJSONはどこかに送信されますか？", "a": "送信されません。整形と検証はすべてお使いのブラウザの中で行います。ページを閉じると入力内容は残りません。" },
+        { "q": "どのくらいの大きさまで扱えますか？", "a": "5MBまでです。256KBを超える入力は画面が固まらないよう、別スレッド（Web Worker）で処理します。" },
+        { "q": "JavaScriptのJSON.parseと結果が違うことはありますか？", "a": "構文の判定はJSONの仕様（RFC 8259）に沿っています。違いは、9007199254740991を超える整数を書かれたまま残すことです。JSON.parseでは丸められるため、その場合は警告を出します。" },
+        { "q": "コメントや末尾のカンマは使えますか？", "a": "JSONの仕様では使えないため、エラーとして位置を示します。JSONC や JSON5 として扱いたい場合は、該当部分を取り除いてから整形してください。" }
+      ],
+      "updated": "2026-11-04"
+    },
+    {
+      "slug": "text-diff",
+      "status": "published",
+      "order": 2,
+      "category": "dev",
+      "icon": "compare",
+      "name": "テキスト差分比較",
+      "title": "テキスト差分比較ツール｜文字単位でハイライト・無料・ブラウザ完結",
+      "lead": "2つの文章やコードを比べて、追加・削除・変更された行と文字を示します。",
+      "description": "2つのテキストの違いを行単位・文字単位で表示する無料の差分比較ツール。空白・大文字小文字・改行コードの違いを無視でき、unified diff 形式でコピーできます。入力はブラウザの外に送信されません。",
+      "keywords": ["diff", "差分", "比較", "テキスト比較", "文章比較", "コード比較", "変更点", "unified diff", "ディフ", "差分チェック"],
+      "features": ["行単位の差分（Myers法）", "変更行の中の文字・単語単位ハイライト", "空白・大文字小文字・改行コードを無視", "並べて表示と統合表示", "unified diff 形式でコピー"],
+      "application_category": "DeveloperApplication",
+      "related": ["json-formatter", "robots-txt-generator"],
+      "links": {
+        "learn": ["learn/tools/github", "learn/development/web-basics"],
+        "ai_tools": ["github-copilot", "claude-code"],
+        "prompts": ["development-pull-request-description", "writing-japanese-proofreading"]
+      },
+      "faq": [
+        { "q": "比較した文章はどこかに送信されますか？", "a": "送信されません。差分の計算はお使いのブラウザの中（Web Worker）で行います。" },
+        { "q": "どのくらいの長さまで比較できますか？", "a": "片側1MBまたは2万行までです。計算が10秒を超えた場合は中断し、範囲を絞るよう案内します。" },
+        { "q": "日本語の文章でも文字単位で比べられますか？", "a": "はい。変更された行の中は、日本語なら1文字ずつ、英数字なら単語ごとに比べてハイライトします。" },
+        { "q": "WindowsとMacで作ったファイルを比べると全行が違うと表示されます。", "a": "改行コード（CRLFとLF）の違いが原因です。このツールでは比較の前に改行をそろえるので、改行コードだけの違いは差分になりません。" }
+      ],
+      "updated": "2026-11-04"
+    },
+    {
+      "slug": "robots-txt-generator",
+      "status": "published",
+      "order": 3,
+      "category": "web",
+      "icon": "robot",
+      "name": "robots.txt生成",
+      "title": "robots.txt生成ツール｜AIクローラー対応・テスター付き・無料",
+      "lead": "クロールの許可・拒否とサイトマップを選ぶだけで robots.txt を作れます。AIクローラーにも対応。",
+      "description": "robots.txt をフォームで作成し、指定したURLがクロール許可か拒否かを判定できる無料ツール。GPTBot・ClaudeBot・Google-Extended など、主なAIクローラーの設定にも対応しています。",
+      "keywords": ["robots.txt", "robots", "ロボッツ", "クローラー", "クロール", "disallow", "allow", "sitemap", "サイトマップ", "aiクローラー", "gptbot", "claudebot", "google-extended", "seo"],
+      "features": ["User-agentごとの Allow / Disallow 設定", "AIクローラーの許可・拒否", "Sitemap の追加", "URLの許可・拒否テスター（RFC 9309 準拠）", "危険な設定の警告"],
+      "application_category": "UtilitiesApplication",
+      "related": ["text-diff", "json-formatter"],
+      "links": {
+        "learn": ["learn/development/web-basics", "learn/web"],
+        "ai_tools": ["perplexity", "chatgpt"],
+        "prompts": ["marketing-seo-keyword-intent-clustering"]
+      },
+      "faq": [
+        { "q": "robots.txt で拒否すれば、ページは検索結果に出なくなりますか？", "a": "いいえ。robots.txt はクロール（巡回）を断るお願いで、検索結果からの削除や非公開化の仕組みではありません。検索結果に出したくないページは、noindex やログインで保護してください。" },
+        { "q": "AIクローラーを拒否すると、何が変わりますか？", "a": "各社が定めるトークンごとに意味が違います。たとえば GPTBot は学習用、OAI-SearchBot は ChatGPT の検索用です。一覧の説明と公式ページを確認して選んでください。ユーザーの操作で取得するエージェントは robots.txt に従わない場合があると、各社が明記しています。" },
+        { "q": "作った robots.txt はどこに置けばよいですか？", "a": "サイトのルート（例：https://example.com/robots.txt）に置きます。サブディレクトリに置いても効果はありません。WordPress ではプラグインが自動生成している場合があるので、先に現在の内容を確認してください。" },
+        { "q": "テスターの判定は Google と同じですか？", "a": "標準仕様の RFC 9309（最長一致、同じ長さなら Allow を優先、* と $ の扱い）に沿って判定します。検索エンジンごとの独自拡張（crawl-delay など）は判定に使いません。" }
+      ],
+      "updated": "2026-11-04"
+    },
+    {
+      "slug": "token-cost-calculator",
+      "status": "draft",
+      "order": 4,
+      "category": "ai",
+      "icon": "coin",
+      "name": "AIトークン・API料金計算",
+      "title": "AI API料金計算ツール｜トークン数と月額の目安・無料",
+      "lead": "文章のトークン数を推定し、主なAIモデルのAPI料金の目安を計算します。",
+      "description": "文章からトークン数を推定し、主要なAIモデル（Claude・GPT・Gemini）のAPI料金を1回・1日・1か月の目安で計算する無料ツール。価格は公式ページの確認日つきで表示します。",
+      "keywords": ["トークン", "token", "トークン数", "api料金", "料金計算", "コスト", "見積もり", "claude", "gpt", "gemini", "openai", "anthropic", "llm", "生成ai 料金"],
+      "features": ["文章からのトークン数の推定", "入力・出力・キャッシュ単価を分けた料金計算", "1回・1日・期間の合計", "公式出典と確認日の表示", "円換算（為替レートは手入力）"],
+      "application_category": "UtilitiesApplication",
+      "related": ["json-formatter", "text-diff"],
+      "links": {
+        "learn": ["learn/tutorials/add-ai-api", "learn/basics/prompt"],
+        "ai_tools": ["claude", "chatgpt", "gemini"],
+        "prompts": ["productivity-ai-agent-task-instructions"]
+      },
+      "faq": [
+        { "q": "表示される料金は実際の請求額と同じですか？", "a": "いいえ。トークン数は文字の種類から推定した目安で、実際のトークン数はモデルごとのトークナイザーで決まります。請求額は、各社の管理画面や請求書で確認してください。" },
+        { "q": "価格はいつの情報ですか？", "a": "モデルごとに、公式の価格ページと確認日を表示しています。確認日から90日を過ぎた価格や、確認できていない価格は表示しません。" },
+        { "q": "入力した文章は送信されますか？", "a": "送信されません。トークン数の推定はブラウザの中で行います。" },
+        { "q": "日本語と英語でトークン数が違うのはなぜですか？", "a": "多くのモデルは英語の単語を少ないトークンで表せる一方、日本語は1文字が1トークン前後になりやすいためです。このツールでは文字の種類ごとに係数を分けて推定します。" }
+      ],
+      "updated": "2026-11-04"
+    }
+  ]
+}

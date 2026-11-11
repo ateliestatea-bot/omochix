@@ -161,15 +161,28 @@
 
 ### 17. Sitemap
 
-1. 公開中のSitemap URLが1系統だけであることを確認する。
-2. Home、post、ai_tool、必要なpage、category、ai_tool_categoryを確認する。
-3. 検索、404、下書き、filter URLが含まれないことを確認する。
+1. サイトマップの正規の生成元はSlim SEO（`/sitemap.xml`とその子サイトマップ）とする。WordPress標準（`/wp-sitemap.xml`）など、同じ投稿・タームを出す別の生成元は無効にし、404であることを確認する。
+2. 例外として、WordPressの投稿・固定ページ・タームとして管理しない仮想URLに限り、テーマが補助サイトマップを出してよい。現在の補助サイトマップは次の1本だけ。
+
+   | URL | 出力元 | 掲載するURL | 掲載しないURL |
+   |---|---|---|---|
+   | `/labs-sitemap.xml` | Theme（`inc/labs.php`） | 公開中のLabsツール詳細`/labs/{slug}/` | `/labs/`（固定ページなのでSlim SEOの固定ページサイトマップに載る）、下書きのツール、未知のslug、`?cat=`などのfilter URL、同じパスの実在する固定ページ |
+
+3. 補助サイトマップの条件：
+   - Slim SEOのサイトマップとURLが1件も重複しない。
+   - canonical URLだけを載せ、noindex・下書き・404・filter URLを含めない。
+   - `application/xml`で応答し、`X-Robots-Tag: noindex`を付ける。
+   - 入口の固定ページ（Labsなら`labs`）が非公開のときは404を返す。
+4. Home、post、ai_tool、必要なpage、category、ai_tool_categoryがSlim SEOのサイトマップにあることを確認する。
+5. 検索・404・下書き・filter URLが、どのサイトマップにも含まれないことを確認する。
+6. 補助サイトマップを追加・削除するときは、本節2の表と§18、公開チェックリストを同時に更新する。
 
 ### 18. robots
 
 1. 本番`robots.txt`のSitemap URLが本番HTTPSを指すことを確認する。
-2. noindex対象をDisallowしていないことを確認する。
-3. AI学習crawler方針は運営判断を記録してから変更する。
+2. `robots.txt`には、Slim SEOの`Sitemap: https://omochix.com/sitemap.xml`と、§17の補助サイトマップ（`Sitemap: https://omochix.com/labs-sitemap.xml`）がそれぞれ1行ずつあることを確認する。補助サイトマップの行はThemeが`robots_txt`フィルタ（Slim SEOの後）で追加する。Slim SEOでrobots.txtを編集している場合も残ることを確認する。
+3. noindex対象をDisallowしていないことを確認する。
+4. AI学習crawler方針は運営判断を記録してから変更する。
 
 ### 19. HTTP確認
 

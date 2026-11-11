@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset=utf-8><title>budget</title><script src="/theme/assets/js/svg-motion/lib/purify.min.js"></script><script src="/theme/assets/js/svg-motion/safety.js"></script><script src="/theme/assets/js/svg-motion/compile.js"></script><script src="/theme/assets/js/svg-motion/frame.js"></script><script src="/fixtures/corpus.js"></script><script src="head.js"></script><style>iframe{width:640px;height:360px;border:0}</style></head><body><div id=h></div><script>
+// Animates N parts with the product runtime in the real frame, and reports rAF cadence measured inside the frame.
+function logo(n) { let s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">'; for (let i = 0; i < n; i++) s += '<path d="M' + (i * 7 % 310) + ' ' + (i * 13 % 170) + 'c3 0 6 3 6 6s-3 6-6 6-6-3-6-6 3-6 6-6z" fill="hsl(' + (i % 360) + ' 70% 50%)"/>'; return s + '</svg>'; }
+window.measure = (n, presetId, maxParts) => new Promise(async (done) => {
+  const t0 = performance.now(); const norm = OmxSvgSafety.normalize(logo(n)); const t1 = performance.now(); const stage = OmxSvgFrame.prepare(norm.svg, { maxParts }); const t2 = performance.now();
+  const preset = (await loadData()).presets.find(p => p.id === presetId); const plan = OmxSvgCompile.buildPlan(preset, {}, stage.layout); const t3 = performance.now();
+  let doc = OmxSvgFrame.buildDocument(stage.svg, {}); const nonce = doc.match(/nonce="([^"]+)"/)[1];
+  doc = doc.replace('</body>', SC + ' nonce="' + nonce + '">var c=[],l=0,s=0;function t(x){if(!s){s=x;l=x}c.push(x-l);l=x;if(x-s<4000)requestAnimationFrame(t);else{c.sort(function(a,b){return a-b});parent.postMessage({frames:c.length,fps:+(c.length/((x-s)/1000)).toFixed(1),p95:Math.round(c[Math.floor(c.length*.95)]),worst:Math.round(c[c.length-1])},"*")}}setTimeout(function(){requestAnimationFrame(t)},300);' + SE + '</body>');
+  h.textContent = ''; const f = document.createElement('iframe'); f.setAttribute('sandbox', 'allow-scripts'); f.srcdoc = doc;
+  const L = e => { if (e.source !== f.contentWindow) return; if (e.data.type === 'omx:ready') f.contentWindow.postMessage({ type: 'omx:plan', plan, autoplay: true }, '*'); if (e.data.fps) { removeEventListener('message', L); done({ n, parts: stage.layout.parts, geometry: stage.layout.geometry, tracks: plan.tracks.length, normalizeMs: Math.round(t1 - t0), prepareMs: Math.round(t2 - t1), planMs: Math.round(t3 - t2), ...e.data }); } };
+  addEventListener('message', L); h.append(f);
+});
+document.title = 'READY';
+</script></body></html>
