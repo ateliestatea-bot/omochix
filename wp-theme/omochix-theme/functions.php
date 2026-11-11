@@ -14,6 +14,8 @@ require_once get_theme_file_path('/inc/contact-form.php');
 require_once get_theme_file_path('/inc/learn.php');
 require_once get_theme_file_path('/inc/learn-gallery.php');
 require_once get_theme_file_path('/inc/learn-composer.php');
+require_once get_theme_file_path('/inc/learn-svg-motion.php');
+require_once get_theme_file_path('/inc/logo-motion.php');
 require_once get_theme_file_path('/inc/learn-practice.php');
 require_once get_theme_file_path('/inc/ai-tool-detail.php');
 require_once get_theme_file_path('/inc/editorial-home.php');
@@ -67,7 +69,7 @@ function omochix_enqueue_assets() {
 
     wp_enqueue_script(
         'omochix-header',
-        get_template_directory_uri() . '/assets/js/header.js',
+        omochix_theme_header_script_url(),
         [],
         $theme->get('Version'),
         true
@@ -541,6 +543,36 @@ function omochix_get_page_or_search_url($path, $search_term) {
     }
 
     return add_query_arg('s', $search_term, home_url('/'));
+}
+
+/**
+ * The theme's one inline script: applies the saved light or dark theme before the first paint (header.php).
+ * Kept here as one string so the studio page's Content Security Policy can allow it by its exact hash
+ * (inc/learn-svg-motion.php). Changing it changes the hash automatically.
+ *
+ * @return string
+ */
+function omochix_theme_boot_script() {
+    return '
+        /* Apply the saved theme before paint to avoid a flash. */
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem(\'omochix-theme\');
+                var prefersDark = window.matchMedia(\'(prefers-color-scheme: dark)\').matches;
+                document.documentElement.dataset.theme = savedTheme || (prefersDark ? \'dark\' : \'light\');
+            } catch (error) {}
+        }());
+    ';
+}
+
+/**
+ * URL of the theme's header script, loaded on every page. One place, so the studio page's CSP (which names each
+ * script it allows, inc/learn-svg-motion.php) always matches what is loaded.
+ *
+ * @return string
+ */
+function omochix_theme_header_script_url() {
+    return get_template_directory_uri() . '/assets/js/header.js';
 }
 
 // Industry Hub (docs/Industry-Hub-Phase2-Design.md). Loaded last and guarded,

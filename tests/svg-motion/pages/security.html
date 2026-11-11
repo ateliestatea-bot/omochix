@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset=utf-8><title>security</title><script src="/theme/assets/js/svg-motion/lib/purify.min.js"></script><script src="/theme/assets/js/svg-motion/safety.js"></script><script src="/theme/assets/js/svg-motion/compile.js"></script><script src="/theme/assets/js/svg-motion/frame.js"></script><script src="/fixtures/corpus.js"></script><script src="head.js"></script></head><body><div id=h style="height:130px;overflow:hidden"></div><script>
+(async () => {
+  const run = new URLSearchParams(location.search).get('run') || 'r' + Date.now(), C = 'http://127.0.0.1:8771';
+  const res = { engine, ua: navigator.userAgent, run, configs: {}, norm: {}, bombs: {} };
+  // Injected only by the test: fires hover and click on everything, and reports whether the harmless marker was actually painted.
+  const activate = "setTimeout(function(){document.querySelectorAll('*').forEach(function(e){try{e.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}))}catch(_){}});var m=document.querySelector('[id$=omxkeep]');var b=m?m.getBoundingClientRect():null;parent.postMessage({done:1,marker:!!(b&&b.width>0&&b.height>0)},'*');setTimeout(function(){document.querySelectorAll('a').forEach(function(a){try{a.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))}catch(_){}})},300)},500);";
+  const nonce = () => 'n' + Math.random().toString(36).slice(2);
+  function rawDoc(body, csp) { const n = nonce(); return '<!doctype html><html><head><meta charset="utf-8">' + (csp ? '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-' + n + '\'; style-src \'unsafe-inline\'; img-src data:; base-uri \'none\'; form-action \'none\'">' : '') + '</head><body>' + body + SC + ' nonce="' + n + '">' + activate + SE + '</body></html>'; }
+  function productDoc(svg, csp) {
+    const stage = OmxSvgFrame.prepare(svg, { maxParts: 200 });
+    let doc = OmxSvgFrame.buildDocument(stage.svg, {});
+    const n = doc.match(/nonce="([^"]+)"/)[1];
+    doc = doc.replace('</body>', SC + ' nonce="' + n + '">' + activate + SE + '</body>');
+    return csp ? doc : doc.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, '');
+  }
+  const frames = new Map();
+  addEventListener('message', e => { const m = frames.get(e.source); if (!m || !e.data) return; if (e.data.hit) m.hits.push(e.data.hit); if (e.data.done) { m.ready = true; m.marker = e.data.marker; } if (e.data.iso) m.iso = e.data.iso; });
+  function mount(html) { const f = document.createElement('iframe'); f.setAttribute('sandbox', 'allow-scripts'); f.width = 120; f.height = 120; f.srcdoc = html; h.append(f); const m = { hits: [], ready: false, marker: null }; frames.set(f.contentWindow, m); return m; }
+  const norm = {};
+  for (const k in ATTACKS) {
+    const raw = ATTACKS[k].split('{C}').join(C + '/c/' + run + '/NORM/' + k + '/');
+    try { const r = OmxSvgSafety.normalize(raw, { prefix: 'omx-' }); norm[k] = r.svg; res.norm[k] = { status: 'sanitized', removed: [...new Set(r.report.removed)], hadMarker: ATTACKS[k].includes('omxkeep'), markerInOutput: /id="omx-omxkeep"/.test(r.svg) && /height="16"/.test(r.svg) && /fill="#123456"/.test(r.svg) }; }
+    catch (e) { norm[k] = null; res.norm[k] = { status: 'rejected', code: e.code || e.message }; }
+  }
+  for (const k in BOMBS) { const t = performance.now(); try { const r = OmxSvgSafety.normalize(BOMBS[k]); res.bombs[k] = { status: 'sanitized', elements: r.elements, ms: Math.round(performance.now() - t) }; } catch (e) { res.bombs[k] = { status: 'rejected', code: e.code || e.message, ms: Math.round(performance.now() - t) }; } }
+  const CFG = { A_raw_sandbox: [1, 0], B_raw_sandbox_csp: [1, 1], C_product_no_csp: [0, 0], D_product: [0, 1] };
+  for (const c in CFG) {
+    const [raw, csp] = CFG[c], per = {}; h.textContent = ''; frames.clear();
+    for (const k in ATTACKS) {
+      let html = '';
+      if (raw) html = rawDoc(ATTACKS[k].split('{C}').join(C + '/c/' + run + '/' + c + '/' + k + '/').replace(/^<\?xml-stylesheet[^>]*\?>/, '').replace(/^<!DOCTYPE[\s\S]*?>(?=<svg)/, ''), !!csp);
+      else if (norm[k] !== null) html = productDoc(norm[k].split('/c/' + run + '/NORM/').join('/c/' + run + '/' + c + '/'), !!csp);
+      else continue;
+      per[k] = mount(html);
+    }
+    await wait(3500); res.configs[c] = {}; for (const k in per) res.configs[c][k] = { hits: per[k].hits, ready: per[k].ready, marker: per[k].marker };
+  }
+  h.textContent = ''; frames.clear();
+  const iso = (csp) => { const n = nonce(), B = C + '/c/' + run + '/iso-' + (csp ? 'csp' : 'nocsp') + '/'; return '<!doctype html><html><head>' + (csp ? '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'nonce-' + n + '\'; style-src \'unsafe-inline\'; img-src data:; base-uri \'none\'; form-action \'none\'">' : '') + '</head><body><form id=fm action="' + B + 'form" method=get></form>' + SC + ' nonce="' + n + '">(async function(){var o={origin:self.origin};function T(k,f){try{o[k]=f()}catch(e){o[k]="blocked"}}var B=' + JSON.stringify(B) + ';T("parentDoc",function(){parent.document.title;return "READABLE"});T("topLoc",function(){top.location.href;return "READABLE"});T("localStorage",function(){localStorage.setItem("x",1);return "WRITABLE"});T("cookie",function(){document.cookie="a=1";return document.cookie?"WRITABLE":"empty"});T("popup",function(){return window.open("about:blank")?"OPENED":"null"});T("topNav",function(){top.location=B+"topnav";return "attempted"});await fetch(B+"fetch").catch(function(){});try{navigator.sendBeacon(B+"beacon")}catch(e){}await new Promise(function(r){var i=new Image();i.onload=i.onerror=r;i.src=B+"img"});try{new WebSocket("ws://127.0.0.1:8771/c/' + run + '/iso-' + (csp ? 'csp' : 'nocsp') + '/ws")}catch(e){}var s=document.createElement("style");s.textContent="body{background:url("+B+"cssbg)}";document.head.append(s);parent.postMessage({iso:o},"*");setTimeout(function(){fm.submit()},100)})();' + SE + '</body></html>'; };
+  const a = mount(iso(false)), b = mount(iso(true)); await wait(3000); res.isolation = { noCSP: a.iso || null, withCSP: b.iso || null };
+  await wait(1000);
+  const dump = await (await fetch(C + '/__dump?run=' + run)).json(); res.canary = {};
+  for (const u of dump) { const p = u.split('/'); (res.canary[p[3]] = res.canary[p[3]] || []).push(p.slice(4).join('/')); }
+  await post('security-' + engine, res); document.title = 'DONE';
+})().catch(e => { document.title = 'ERR'; post('security-' + engine + '-error', { error: String(e), stack: e.stack }); });
+</script></body></html>
