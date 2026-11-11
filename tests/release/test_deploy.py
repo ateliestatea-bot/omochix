@@ -274,7 +274,7 @@ class Guards(Base):
     def test_rollback_refuses_a_corrupt_backup(self):
         self.ready()
         self.run_tool('apply', *self.w('--confirm', 'IH-APPLY'))
-        with open(os.path.join(self.backup, 'themes__omochix-theme__style.css'), 'ab') as fh:
+        with open(os.path.join(self.backup, deploy.Backup._key('themes/omochix-theme/style.css')), 'ab') as fh:
             fh.write(b'x')
         self.assertEqual(2, self.run_tool('rollback', '--expect-wp', '7.1.4', '--token', self.token, '--backup', self.backup,
                                           '--log', self.log, '--confirm', 'IH-ROLLBACK'))
@@ -398,6 +398,157 @@ class ThemeOnly(Base):
         self.plan['packages']['other'] = dict(self.plan['packages']['theme'], name='other', target='plugins/other')
         self._save_plan()
         self.assertEqual(2, self.run_tool('status'))
+
+
+class ReviewFindings(Base):
+    """Cases from the 2026-11-11 review of deploy.py (M1-M4, L1-L8)."""
+
+    def _apply(self, *extra):
+        return self.run_tool('apply', *self.w('--confirm', 'IH-APPLY', *extra))
+
+    def test_an_os_error_before_the_rename_leaves_no_temp_and_no_path_and_resumes(self):
+        self.ready()
+        real = os.rename
+
+        def boom(*a, **k):
+            raise OSError(28, 'No space left on device')
+        os.rename = boom
+        try:
+            self.assertEqual(2, self._apply())
+        finally:
+            os.rename = real
+        self.assertIn('target untouched', self.out)
+        self.assertNotIn(self.tmp, self.out)
+        self.assertNotIn('Traceback', self.out)
+        self.assertEqual([], [f for _, _, fs in os.walk(self.wpc) for f in fs if f.endswith('.ih-new')])
+        self.assertEqual(0, self._apply(), self.out)
+        self.assertEqual(0, self.run_tool('verify', '--want', 'release'))
+
+    def test_a_second_run_cannot_write_while_the_first_holds_the_lock(self):
+        import fcntl
+        self.lock()
+        fd = os.open(os.path.join(self.home, deploy.LOCK_NAME), os.O_RDONLY)
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        try:
+            self.assertEqual(2, self.run_tool('backup', *self.w('--confirm', 'IH-BACKUP')))
+            self.assertIn('another run holds', self.out)
+        finally:
+            os.close(fd)
+        self.assertFalse(os.path.exists(self.backup))
+
+    def test_a_damaged_lock_is_refused_whatever_the_token(self):
+        os.mkdir(os.path.join(self.home, deploy.LOCK_NAME))
+        for token in ('damaged', 'f' * 32):
+            self.token = token
+            self.assertEqual(2, self.run_tool('backup', *self.w('--confirm', 'IH-BACKUP')))
+            self.assertIn('damaged', self.out)
+
+    def test_a_temporary_file_replaced_before_the_rename_is_not_used(self):
+        self.ready()
+        real = deploy.Site._hash_at
+        state = {'done': False}
+
+        def swap_tmp(site, fd, name):
+            h = real(site, fd, name)
+            tmp = f'.{name}.ih-new'
+            if not state['done'] and not name.startswith('.'):
+                try:
+                    os.stat(tmp, dir_fd=fd, follow_symlinks=False)
+                except FileNotFoundError:
+                    return h
+                os.unlink(tmp, dir_fd=fd)
+                f = os.open(tmp, os.O_WRONLY | os.O_CREAT, 0o644, dir_fd=fd)
+                os.write(f, b'<?php system($_GET["c"]);')
+                os.close(f)
+                state['done'] = True
+            return h
+        deploy.Site._hash_at = swap_tmp
+        try:
+            self.assertEqual(2, self._apply())
+        finally:
+            deploy.Site._hash_at = real
+        self.assertIn('was replaced', self.out)
+        self.untouched()
+
+    def test_log_that_is_a_symlink_or_has_no_parent_is_refused_cleanly(self):
+        self.lock()
+        victim = os.path.join(self.outside, 'bashrc')
+        self._w(victim, b'keep\n')
+        os.symlink(victim, self.log)
+        self.assertEqual(2, self.run_tool('backup', *self.w('--confirm', 'IH-BACKUP')))
+        with open(victim, 'rb') as fh:
+            self.assertEqual(b'keep\n', fh.read())
+        os.unlink(self.log)
+        self.log = os.path.join(self.home, 'missing', 'ih.log')
+        self.assertEqual(2, self.run_tool('backup', *self.w('--confirm', 'IH-BACKUP')))
+        self.assertNotIn(self.tmp, self.out)
+        self.assertNotIn('Traceback', self.out)
+
+    def test_an_existing_log_becomes_0600(self):
+        self._w(self.log, b'')
+        os.chmod(self.log, 0o644)
+        self.ready()
+        self.assertEqual(0o600, os.stat(self.log).st_mode & 0o777)
+
+    def test_a_backup_file_that_disappears_during_rollback_stops(self):
+        self.ready()
+        self._apply()
+        real_check, real_get = deploy.Backup.check, deploy.Backup.get
+        deploy.Backup.check = lambda b, plan: []
+        deploy.Backup.get = lambda b, rel: None
+        try:
+            self.assertEqual(2, self.run_tool('rollback', '--expect-wp', '7.1.4', '--token', self.token, '--backup', self.backup,
+                                              '--log', self.log, '--confirm', 'IH-ROLLBACK'))
+        finally:
+            deploy.Backup.check, deploy.Backup.get = real_check, real_get
+        self.assertIn('changed during the rollback', self.out)
+        self.assertNotIn('Traceback', self.out)
+
+    def test_malformed_gates_are_refused_before_anything(self):
+        for gates in ({'C': {'after': ['core', 'readme.txt'], 'check': 'x'}}, {'A': {'after': ['core', 'nope.php'], 'check': 'x'}},
+                      {'B': {'after': ['theme', 'style.css']}}):
+            self.plan['gates'] = gates
+            self._save_plan()
+            with self.subTest(gates=gates):
+                self.assertEqual(2, self.run_tool('status'))
+
+    def test_an_add_only_plan_can_be_unlocked(self):
+        self.plan['steps'] = [dict(s, n=i) for i, s in enumerate((s for s in self.plan['steps'] if s['action'] == 'add'), 1)]
+        self.plan['rollback_order'], self.plan['gates'] = [], {}
+        self._save_plan()
+        self.lock()
+        self.assertEqual(0, self.run_tool('unlock', '--token', self.token, '--confirm', 'IH-UNLOCK'), self.out)
+
+    def test_file_modes_are_kept_on_apply_and_restored_by_rollback(self):
+        f = os.path.join(self.wpc, 'themes/omochix-theme/functions.php')
+        os.chmod(f, 0o640)
+        self.ready()
+        self._apply()
+        self.assertEqual(0o640, os.stat(f).st_mode & 0o777)
+        os.chmod(f, 0o644)
+        self.run_tool('rollback', '--expect-wp', '7.1.4', '--token', self.token, '--backup', self.backup, '--log', self.log,
+                      '--confirm', 'IH-ROLLBACK')
+        self.assertEqual(0o640, os.stat(f).st_mode & 0o777)
+        self.assertEqual(THEME_OLD['functions.php'], self.file('themes/omochix-theme/functions.php'))
+
+    def test_clean_temps_removes_only_the_leftover_names(self):
+        self.ready()
+        link = os.path.join(self.wpc, 'plugins/omochix-core/.readme.txt.ih-new')
+        os.symlink(os.path.join(self.outside, 'x'), link)
+        self.assertEqual(2, self._apply())
+        self.assertEqual(0, self.run_tool('clean-temps', '--token', self.token, '--confirm', 'IH-CLEANTEMPS'), self.out)
+        self.assertFalse(os.path.lexists(link))
+        self.assertEqual(0, self._apply(), self.out)
+
+    def test_package_folders_are_never_created(self):
+        shutil.rmtree(os.path.join(self.wpc, 'plugins/omochix-core'))
+        self.plan['steps'] = [s for s in self.plan['steps']]
+        self.lock()
+        self.assertEqual(2, self.run_tool('backup', *self.w('--confirm', 'IH-BACKUP')))
+        self.assertFalse(os.path.exists(os.path.join(self.wpc, 'plugins/omochix-core')))
+
+    def test_backup_names_cannot_collide(self):
+        self.assertNotEqual(deploy.Backup._key('a/b.php'), deploy.Backup._key('a__b.php'))
 
 
 class RealPlan(unittest.TestCase):

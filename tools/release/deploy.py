@@ -14,6 +14,7 @@ the OmochiX theme, one file at a time, and put them back.
   deploy.py verify    --plan P --plan-sha256 X --want release|production [--qa ROOT]
   deploy.py rollback  ... --expect-wp V --token T --backup B --log L --confirm IH-ROLLBACK [--remove-added]
   deploy.py unlock    --plan P --plan-sha256 X --token T --confirm IH-UNLOCK [--qa ROOT]
+  deploy.py clean-temps --plan P --plan-sha256 X --token T --confirm IH-CLEANTEMPS [--qa ROOT]
 
 Write targets are fixed: <web>/wp-content/plugins/omochix-core and
 <web>/wp-content/themes/omochix-theme, where <web> is ~/web. Nothing else can be
@@ -43,6 +44,7 @@ plan's after_apply / after_rollback steps are printed for the operator.
 import argparse
 import datetime
 import errno
+import fcntl
 import hashlib
 import io
 import json
@@ -54,11 +56,13 @@ import subprocess
 import sys
 import zipfile
 
-TOOL = 'omochix-ih-deploy 1'
+TOOL = 'omochix-deploy 2'
 PACKAGES = {'core': ('omochix-core', 'plugins/omochix-core'), 'theme': ('omochix-theme', 'themes/omochix-theme')}
 MARKER = '.omochix-rehearsal'
 LOCK_NAME = '.omochix-ih-release.lock'
-CONFIRM = {'lock': 'IH-LOCK', 'backup': 'IH-BACKUP', 'apply': 'IH-APPLY', 'rollback': 'IH-ROLLBACK', 'unlock': 'IH-UNLOCK'}
+CONFIRM = {'lock': 'IH-LOCK', 'backup': 'IH-BACKUP', 'apply': 'IH-APPLY', 'rollback': 'IH-ROLLBACK', 'unlock': 'IH-UNLOCK',
+           'clean-temps': 'IH-CLEANTEMPS'}
+PACKAGE_DEPTH = 2  # plugins/omochix-core, themes/omochix-theme: must already exist, never created
 HEX64 = re.compile(r'^[0-9a-f]{64}$')
 O_DIR = os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0) | os.O_NOFOLLOW
 
@@ -140,7 +144,12 @@ def load_plan(path, want_sha):
     data = read_regular(path, 'plan')
     if sha(data) != want_sha:
         raise Stop('the plan does not match --plan-sha256')
-    plan = json.loads(data.decode('utf-8'))
+    try:
+        plan = json.loads(data.decode('utf-8'))
+    except ValueError:
+        raise Stop('the plan is not valid JSON')
+    if not isinstance(plan, dict):
+        raise Stop('the plan is not a JSON object')
     if not plan.get('packages') or not set(plan['packages']) <= set(PACKAGES):
         raise Stop('the plan may name only the core and theme packages')
     for k in plan['packages']:
@@ -170,6 +179,13 @@ def load_plan(path, want_sha):
     order = plan.get('rollback_order', [])
     if sorted(map(tuple, order)) != sorted(k for k, s in by.items() if s['action'] == 'replace'):
         raise Stop('rollback_order must list exactly the replaced files')
+    gates = plan.get('gates', {})
+    if not isinstance(gates, dict) or not set(gates) <= {'A', 'B'}:
+        raise Stop('gates must be A and/or B')
+    for g, spec in gates.items():
+        if not isinstance(spec, dict) or not isinstance(spec.get('check'), str) or not isinstance(spec.get('after'), list) \
+                or tuple(spec['after']) not in by:
+            raise Stop(f'gate {g} is malformed or names no step')
     return plan
 
 
@@ -249,7 +265,7 @@ class Site:
         fd = os.dup(self.wpc)
         walked = []
         try:
-            for part in parts[:-1]:
+            for depth, part in enumerate(parts[:-1]):
                 walked.append(part)
                 try:
                     nfd = os.open(part, O_DIR, dir_fd=fd)
@@ -257,10 +273,9 @@ class Site:
                     if not create:
                         os.close(fd)
                         return None, parts[-1]
-                    os.mkdir(part, 0o755, dir_fd=fd)
-                    nfd = os.open(part, O_DIR, dir_fd=fd)
-                    os.fchmod(nfd, 0o755)
-                    os.fsync(fd)
+                    if depth < PACKAGE_DEPTH:
+                        raise Stop(f'{"/".join(walked)} is missing (the package folder must already exist)')
+                    nfd = self._mkdir(fd, part, '/'.join(walked))
                     if log:
                         log.write(action='mkdir', step=step, path='/'.join(walked))
                 except OSError:
@@ -271,6 +286,17 @@ class Site:
         except BaseException:
             os.close(fd)
             raise
+
+    @staticmethod
+    def _mkdir(fd, part, label):
+        try:
+            os.mkdir(part, 0o755, dir_fd=fd)
+            nfd = os.open(part, O_DIR, dir_fd=fd)
+            os.fchmod(nfd, 0o755)
+            os.fsync(fd)
+            return nfd
+        except OSError:
+            raise Stop(f'{label}: the folder cannot be created safely')
 
     def exists(self, rel):
         fd, name = self.parent(rel)
@@ -309,51 +335,83 @@ class Site:
         data, _ = self.read(rel)
         return None if data is None else sha(data)
 
-    def swap(self, rel, data, expect_new, expect_before, log, step):
-        """Temporary name -> fsync -> re-hash -> target re-checked -> rename -> verify."""
-        if sha(data) != expect_new:
+    def swap(self, rel, data, expect_new, expect_before, log, step, mode=None):
+        """New temporary name (O_EXCL) -> write, fsync -> re-hash through the same descriptor -> target
+        re-checked -> the temporary name still is our file -> rename -> folder fsync -> verify.
+        Any failure before the rename removes our temporary file and leaves the target untouched."""
+        if data is None or sha(data) != expect_new:
             raise Stop(f'step {step}: the data for {rel} is not the planned file')
         fd, name = self.parent(rel, create=True, log=log, step=step)
         tmp = f'.{name}.ih-new'
+        ours = None
+        renamed = False
         try:
             try:
                 os.stat(tmp, dir_fd=fd, follow_symlinks=False)
-                raise Stop(f'{rel}: a temporary file is left over; nothing changed for this file')
+                raise Stop(f'{rel}: a temporary file is left over; nothing changed for this file (run clean-temps)')
             except FileNotFoundError:
                 pass
-            mode = 0o644
+            keep = 0o644
             try:
                 st = os.stat(name, dir_fd=fd, follow_symlinks=False)
                 if not stat.S_ISREG(st.st_mode):
                     raise Stop(f'{rel}: exists and is not a regular file')
-                mode = stat.S_IMODE(st.st_mode) & 0o755
+                keep = stat.S_IMODE(st.st_mode)
             except FileNotFoundError:
                 pass
-            f = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=fd)
+            mode = (keep if mode is None else mode) & 0o755
             try:
+                f = os.open(tmp, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=fd)
+            except FileExistsError:
+                raise Stop(f'{rel}: a temporary file appeared meanwhile; nothing changed for this file')
+            try:
+                ours = os.fstat(f)
                 view = memoryview(data)
                 while view:
                     view = view[os.write(f, view):]
                 os.fchmod(f, mode)
                 os.fsync(f)
+                os.lseek(f, 0, os.SEEK_SET)
+                if sha(b''.join(iter(lambda: os.read(f, 1 << 16), b''))) != expect_new:
+                    raise Stop(f'step {step}: the temporary copy of {rel} does not verify; target untouched')
+                if self._hash_at(fd, name) != expect_before:
+                    raise Stop(f'step {step}: {rel} changed since the checks; target untouched')
+                now = os.stat(tmp, dir_fd=fd, follow_symlinks=False)
+                if (now.st_dev, now.st_ino) != (ours.st_dev, ours.st_ino) or not stat.S_ISREG(now.st_mode):
+                    raise Stop(f'step {step}: the temporary file of {rel} was replaced; target untouched')
+                os.rename(tmp, name, src_dir_fd=fd, dst_dir_fd=fd)
+                renamed = True
             finally:
                 os.close(f)
-            f = os.open(tmp, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=fd)
-            try:
-                ok = sha(b''.join(iter(lambda: os.read(f, 1 << 16), b''))) == expect_new
-            finally:
-                os.close(f)
-            if not ok:
-                os.unlink(tmp, dir_fd=fd)
-                raise Stop(f'step {step}: the temporary copy of {rel} does not verify; target untouched')
-            now = self._hash_at(fd, name)
-            if now != expect_before:
-                os.unlink(tmp, dir_fd=fd)
-                raise Stop(f'step {step}: {rel} changed since the checks; target untouched')
-            os.rename(tmp, name, src_dir_fd=fd, dst_dir_fd=fd)
             os.fsync(fd)
             if self._hash_at(fd, name) != expect_new:
                 raise Stop(f'step {step}: {rel} does not verify after the rename; investigate, then roll back')
+        except BaseException as e:
+            if ours is not None and not renamed:
+                try:
+                    now = os.stat(tmp, dir_fd=fd, follow_symlinks=False)
+                    if (now.st_dev, now.st_ino) == (ours.st_dev, ours.st_ino):
+                        os.unlink(tmp, dir_fd=fd)
+                except OSError:
+                    pass
+            if isinstance(e, OSError):
+                raise Stop(f'step {step}: {rel}: {e.strerror or type(e).__name__}; '
+                           + ('check the file, then roll back' if renamed else 'target untouched'))
+            raise
+        finally:
+            os.close(fd)
+
+    def clean_temp(self, rel):
+        """Remove a temporary name left by an interrupted run (the name itself, never what it points to)."""
+        fd, name = self.parent(rel)
+        if fd is None:
+            return False
+        try:
+            os.unlink(f'.{name}.ih-new', dir_fd=fd)
+            os.fsync(fd)
+            return True
+        except FileNotFoundError:
+            return False
         finally:
             os.close(fd)
 
@@ -385,31 +443,53 @@ class Site:
 
 # ------------------------------------------------------------------ backup folder
 
+def open_outside(site, path, label):
+    """(descriptor of the parent folder, name) for a path that must be outside the web root."""
+    if not path:
+        raise Stop(f'--{label} is required')
+    path = os.path.abspath(os.path.expanduser(path))
+    parent, name = os.path.dirname(path), os.path.basename(path)
+    if not name or name in ('.', '..') or site.inside_web(path) or site.inside_web(parent):
+        raise Stop(f'the {label} must be outside the web root')
+    try:
+        pfd = os.open(parent, O_DIR)
+    except OSError:
+        raise Stop(f'the {label} folder\'s parent is missing or a symlink')
+    real = os.path.realpath(parent)
+    st, rs = os.fstat(pfd), os.stat(real)
+    if (st.st_dev, st.st_ino) != (rs.st_dev, rs.st_ino) or site.inside_web(real):
+        os.close(pfd)
+        raise Stop(f'the {label} folder\'s parent changed or is inside the web root')
+    return pfd, name
+
+
 class Backup:
     def __init__(self, site, path, create=False):
-        if not path:
-            raise Stop('--backup is required')
-        path = os.path.abspath(os.path.expanduser(path))
-        if site.inside_web(path) or site.inside_web(os.path.dirname(path)):
-            raise Stop('the backup must be outside the web root')
-        if create:
-            try:
-                os.mkdir(path, 0o700)
-            except FileExistsError:
-                raise Stop('the backup folder already exists; use a new name')
+        pfd, name = open_outside(site, path, 'backup')
         try:
-            self.fd = os.open(path, O_DIR)
-        except OSError:
-            raise Stop('the backup folder is missing or a symlink')
+            if create:
+                try:
+                    os.mkdir(name, 0o700, dir_fd=pfd)
+                    os.fsync(pfd)
+                except FileExistsError:
+                    raise Stop('the backup folder already exists; use a new name')
+                except OSError:
+                    raise Stop('the backup folder cannot be created')
+            try:
+                self.fd = os.open(name, O_DIR, dir_fd=pfd)
+            except OSError:
+                raise Stop('the backup folder is missing or a symlink')
+        finally:
+            os.close(pfd)
 
     def close(self):
         os.close(self.fd)
 
-    def _key(self, rel):
-        return safe_rel(rel).replace('/', '__')
+    @staticmethod
+    def _key(rel):
+        return sha(safe_rel(rel).encode('utf-8'))[:32] + '-' + os.path.basename(rel)
 
-    def put(self, rel, data, mode):
-        name = self._key(rel)
+    def _write(self, name, data):
         f = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=self.fd)
         try:
             view = memoryview(data)
@@ -418,11 +498,10 @@ class Backup:
             os.fsync(f)
         finally:
             os.close(f)
-        return f'{sha(data)}  {oct(mode)}  {rel}\n'
 
-    def get(self, rel):
+    def _read(self, name):
         try:
-            f = os.open(self._key(rel), os.O_RDONLY | os.O_NOFOLLOW, dir_fd=self.fd)
+            f = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=self.fd)
         except OSError:
             return None
         try:
@@ -432,12 +511,37 @@ class Backup:
         finally:
             os.close(f)
 
+    def put(self, rel, data, mode):
+        self._write(self._key(rel), data)
+        return f'{sha(data)}  {mode:o}  {rel}\n'
+
+    def finish(self, lines):
+        self._write('MANIFEST.sha256', ''.join(lines).encode('utf-8'))
+        os.fsync(self.fd)
+
+    def get(self, rel):
+        return self._read(self._key(rel))
+
+    def modes(self):
+        """{target: mode} from MANIFEST.sha256 (None when it is missing or malformed)."""
+        data = self._read('MANIFEST.sha256')
+        if data is None:
+            return None
+        out = {}
+        for line in data.decode('utf-8', 'replace').splitlines():
+            parts = line.split('  ')
+            if len(parts) != 3 or not HEX64.match(parts[0]) or not re.match(r'^[0-7]{3,4}$', parts[1]):
+                return None
+            out[parts[2]] = (parts[0], int(parts[1], 8))
+        return out
+
     def check(self, plan):
         bad = []
+        listed = self.modes()
         for s in plan['steps']:
             if s['action'] == 'replace':
                 data = self.get(s['target'])
-                if data is None or sha(data) != s['old_sha256']:
+                if data is None or sha(data) != s['old_sha256'] or not listed or listed.get(s['target'], ('',))[0] != s['old_sha256']:
                     bad.append(s['target'])
         return bad
 
@@ -449,18 +553,35 @@ def lock_path(site):
 
 
 def read_lock(site):
+    """The token, None when there is no lock, 'damaged' when the lock is not a readable regular file."""
     try:
         return read_regular(lock_path(site), 'lock').decode('ascii').strip()
-    except Stop:
+    except (Stop, UnicodeDecodeError):
         return None if not os.path.lexists(lock_path(site)) else 'damaged'
 
 
 def need_lock(site, token):
-    have = read_lock(site)
-    if have is None:
+    """Hold an exclusive flock on the lock file for the whole run, then compare the token."""
+    try:
+        fd = os.open(lock_path(site), os.O_RDWR | os.O_NOFOLLOW)
+    except FileNotFoundError:
         raise Stop('no release lock: run "lock" first')
-    if not token or have != token:
-        raise Stop('the lock belongs to another run (token differs); nothing written')
+    except OSError:
+        raise Stop('the release lock is damaged (not a regular file); nothing written')
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise Stop('the release lock is damaged (not a regular file); nothing written')
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            raise Stop('another run holds the release lock right now; nothing written')
+        have = b''.join(iter(lambda: os.read(fd, 256), b'')).decode('ascii', 'replace').strip()
+        if not re.match(r'^[0-9a-f]{32}$', have) or not token or not secrets.compare_digest(have, token):
+            raise Stop('the lock belongs to another run (token differs) or is damaged; nothing written')
+    except BaseException:
+        os.close(fd)
+        raise
+    site.lock_fd = fd
 
 
 class Log:
@@ -468,10 +589,19 @@ class Log:
         self.quiet = quiet
         self.fd = None
         if path:
-            path = os.path.abspath(os.path.expanduser(path))
-            if site.inside_web(path) or site.inside_web(os.path.dirname(path)):
-                raise Stop('the log must be outside the web root')
-            self.fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+            pfd, name = open_outside(site, path, 'log')
+            try:
+                try:
+                    self.fd = os.open(name, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600, dir_fd=pfd)
+                except OSError:
+                    raise Stop('the log cannot be opened (a symlink or not writable)')
+                if not stat.S_ISREG(os.fstat(self.fd).st_mode):
+                    os.close(self.fd)
+                    self.fd = None
+                    raise Stop('the log is not a regular file')
+                os.fchmod(self.fd, 0o600)
+            finally:
+                os.close(pfd)
 
     def write(self, **entry):
         line = json.dumps({'at': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'), 'tool': TOOL, **entry},
@@ -483,7 +613,9 @@ class Log:
 
     def close(self):
         if self.fd is not None:
+            os.fsync(self.fd)
             os.close(self.fd)
+            self.fd = None
 
 
 # ------------------------------------------------------------------ commands
@@ -549,10 +681,7 @@ def cmd_backup(site, plan, files, a, log):
                 raise Stop(f'{s["target"]} is not the production file; take the backup before any change')
             lines.append(b.put(s['target'], data, mode))
             log.write(action='backup', step=s['n'], path=s['target'], sha256=s['old_sha256'])
-        f = os.open('MANIFEST.sha256', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=b.fd)
-        os.write(f, ''.join(lines).encode('utf-8'))
-        os.fsync(f)
-        os.close(f)
+        b.finish(lines)
         bad = b.check(plan)
         if bad:
             raise Stop('backup does not verify: ' + ', '.join(bad))
@@ -608,6 +737,7 @@ def cmd_rollback(site, plan, a, log):
         bad = b.check(plan)
         if bad:
             raise Stop('backup missing or wrong for: ' + ', '.join(bad) + '; nothing was restored')
+        modes = b.modes()
         for s in plan['steps']:
             h = site.hash(s['target'])
             if h not in (s['old_sha256'], s['new_sha256']):
@@ -616,7 +746,10 @@ def cmd_rollback(site, plan, a, log):
             if site.hash(s['target']) == s['old_sha256']:
                 log.write(action='skip', path=s['target'], reason='already the production file')
                 continue
-            site.swap(s['target'], b.get(s['target']), s['old_sha256'], s['new_sha256'], log, s['n'])
+            data = b.get(s['target'])
+            if data is None or sha(data) != s['old_sha256']:
+                raise Stop(f'the backup of {s["target"]} changed during the rollback; stopped')
+            site.swap(s['target'], data, s['old_sha256'], s['new_sha256'], log, s['n'], mode=modes[s['target']][1])
             log.write(action='restore', step=s['n'], path=s['target'], sha256=s['old_sha256'])
             if a.probe:
                 run_probe(a.probe, log, f'restore {s["path"]}')
@@ -633,7 +766,7 @@ def cmd_rollback(site, plan, a, log):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('command', choices=['status', 'preflight', 'lock', 'backup', 'apply', 'verify', 'rollback', 'unlock'])
+    ap.add_argument('command', choices=['status', 'preflight', 'lock', 'backup', 'apply', 'verify', 'rollback', 'unlock', 'clean-temps'])
     ap.add_argument('--plan', required=True)
     ap.add_argument('--plan-sha256', required=True)
     ap.add_argument('--dist')
@@ -682,18 +815,30 @@ def main(argv=None):
                 f = os.open(lock_path(site), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
             except FileExistsError:
                 raise Stop('a release lock already exists')
-            os.write(f, token.encode('ascii'))
-            os.close(f)
+            try:
+                os.write(f, token.encode('ascii'))
+                os.fsync(f)
+            finally:
+                os.close(f)
             print(f'lock: created; token {token}')
             return 0
         if a.command == 'unlock':
             need_lock(site, a.token)
             st = states(site, plan)
-            replaced = {st[s['n']] for s in plan['steps'] if s['action'] == 'replace'}
-            if replaced not in ({'release'}, {'production'}) or (replaced == {'release'} and set(st.values()) != {'release'}):
+            full_release = all(v == 'release' for v in st.values())
+            production = all(st[s['n']] == 'production' for s in plan['steps'] if s['action'] == 'replace') \
+                and 'other' not in st.values()
+            if not (full_release or production):
                 raise Stop('the files are in a mixed state; finish apply or rollback first')
             os.unlink(lock_path(site))
             print('lock: removed')
+            return 0
+        if a.command == 'clean-temps':
+            need_lock(site, a.token)
+            for s in plan['steps']:
+                if site.clean_temp(s['target']):
+                    print(f'removed the temporary name of {s["target"]}')
+            print('clean-temps: done')
             return 0
         if not a.dist and a.command in ('preflight', 'backup', 'apply'):
             raise Stop('--dist is required')
@@ -724,10 +869,18 @@ def main(argv=None):
             log.write(action=a.command, result='stopped', detail=msg)
         print('STOP: ' + msg)
         return 2
+    except (OSError, ValueError, KeyError, TypeError, StopIteration, zipfile.BadZipFile) as e:
+        msg = f'unexpected {type(e).__name__}' + (f': {e.strerror}' if isinstance(e, OSError) and e.strerror else '')
+        if log is not None:
+            log.write(action=a.command, result='stopped', detail=msg)
+        print('STOP: ' + msg + ' (no file was changed by this step; run status)')
+        return 2
     finally:
         if log is not None:
             log.close()
         if site is not None:
+            if getattr(site, 'lock_fd', None) is not None:
+                os.close(site.lock_fd)
             site.close()
 
 
