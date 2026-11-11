@@ -373,6 +373,33 @@ class AuditLog(Base):
         self.assertNotIn(os.path.realpath(self.tmp), self.out)
 
 
+class ThemeOnly(Base):
+    """A theme-only plan (e.g. 1.28.1): Core is never touched."""
+
+    def _make_plan(self):
+        plan = super()._make_plan()
+        plan['packages'] = {'theme': plan['packages']['theme']}
+        plan['steps'] = [dict(s, n=i) for i, s in enumerate((s for s in plan['steps'] if s['package'] == 'theme'), 1)]
+        plan['gates'] = {'B': plan['gates']['B']}
+        plan['rollback_order'] = [x for x in plan['rollback_order'] if x[0] == 'theme']
+        return plan
+
+    def test_theme_only_flow_leaves_core_alone(self):
+        self.ready()
+        self.assertEqual(2, self.run_tool('apply', *self.w('--confirm', 'IH-APPLY', '--until', 'A')), 'no gate A in this plan')
+        self.assertEqual(0, self.run_tool('apply', *self.w('--confirm', 'IH-APPLY')), self.out)
+        self.assertEqual(THEME_NEW['style.css'], self.file('themes/omochix-theme/style.css'))
+        self.assertEqual(CORE_OLD['omochix-core.php'], self.file('plugins/omochix-core/omochix-core.php'))
+        self.assertEqual(0, self.run_tool('rollback', '--expect-wp', '7.1.4', '--token', self.token, '--backup', self.backup,
+                                          '--log', self.log, '--confirm', 'IH-ROLLBACK'), self.out)
+        self.assertEqual(0, self.run_tool('verify', '--want', 'production'), self.out)
+
+    def test_a_plan_naming_an_unknown_package_is_refused(self):
+        self.plan['packages']['other'] = dict(self.plan['packages']['theme'], name='other', target='plugins/other')
+        self._save_plan()
+        self.assertEqual(2, self.run_tool('status'))
+
+
 class RealPlan(unittest.TestCase):
     def test_the_real_release_plan_is_accepted_by_the_helper(self):
         sys.path.insert(0, os.path.join(ROOT, 'tools', 'release'))

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Industry Hub production deploy helper (OmochiX Core 1.10.0 / theme 1.29.0).
+"""OmochiX production deploy helper for plans made by plan.py (Core and/or theme; first used for theme 1.28.1 and Industry Hub Core 1.10.0 / theme 1.29.0).
 
 Self-contained (Python 3.8+ standard library only), so it can be copied to the
 server on its own and checked with its SHA-256. It does exactly one thing: put
@@ -141,9 +141,10 @@ def load_plan(path, want_sha):
     if sha(data) != want_sha:
         raise Stop('the plan does not match --plan-sha256')
     plan = json.loads(data.decode('utf-8'))
-    if set(plan.get('packages', {})) != set(PACKAGES):
-        raise Stop('the plan must name exactly the core and theme packages')
-    for k, (name, target) in PACKAGES.items():
+    if not plan.get('packages') or not set(plan['packages']) <= set(PACKAGES):
+        raise Stop('the plan may name only the core and theme packages')
+    for k in plan['packages']:
+        name, target = PACKAGES[k]
         p = plan['packages'][k]
         if p.get('name') != name or p.get('target') != target:
             raise Stop(f'package {k} is not {name} -> {target}')
@@ -155,7 +156,7 @@ def load_plan(path, want_sha):
                 raise Stop(f'package {k}: bad {f}')
     seen = set()
     for i, s in enumerate(plan.get('steps', []), 1):
-        if s.get('n') != i or s.get('package') not in PACKAGES or s.get('action') not in ('add', 'replace'):
+        if s.get('n') != i or s.get('package') not in plan['packages'] or s.get('action') not in ('add', 'replace'):
             raise Stop(f'step {i} is malformed')
         safe_rel(s['path'])
         if s['target'] != f'{PACKAGES[s["package"]][1]}/{s["path"]}' or s['target'] in seen:
@@ -517,6 +518,8 @@ def gate_index(plan, until):
     if until in (None, 'B'):
         return len(plan['steps'])
     if until == 'A':
+        if 'A' not in plan.get('gates', {}):
+            raise Stop('this plan has no gate A')
         pkg, path = plan['gates']['A']['after']
         return next(s['n'] for s in plan['steps'] if s['package'] == pkg and s['path'] == path)
     if until.isdigit() and 1 <= int(until) <= len(plan['steps']):

@@ -1,0 +1,42 @@
+{
+  "release": "Theme 1.28.1 (Learn card)",
+  "note": "Theme only, on production 1.28.0 (599efe9: Labs + SVG Motion Studio). Baseline: the 1.28.0 release manifest (161 files, sha256 38dd3dd5...). Three files; no Core, Labs, SVG Motion or Industry Hub change.",
+  "packages": {
+    "theme": {
+      "name": "omochix-theme",
+      "dir": "wp-theme/omochix-theme",
+      "target": "themes/omochix-theme",
+      "baseline": "tools/release/baseline/omochix-theme-1.28.0-on-1.27.2.sha256",
+      "baseline_version": "1.28.0"
+    }
+  },
+  "order": [
+    ["theme", "assets/css/learn-v2.css"],
+    ["theme", "page-learn.php"],
+    ["theme", "style.css"]
+  ],
+  "switches": [
+    ["theme", "page-learn.php"],
+    ["theme", "style.css"]
+  ],
+  "gates": {
+    "B": {
+      "after": ["theme", "style.css"],
+      "check": "/learn/ shows the SVG Motion Studio card first in BUILD (linked only while the Studio page is published), readable in dark mode; Labs, SVG Motion, AI Tools and the existing 31 URLs unchanged; all 3 files match the manifest."
+    }
+  },
+  "rollback_order": [
+    ["theme", "style.css"],
+    ["theme", "page-learn.php"],
+    ["theme", "assets/css/learn-v2.css"]
+  ],
+  "after_apply": [
+    "Reset PHP opcache (LiteSpeed Cache: Toolbox > Purge All - Opcode Cache).",
+    "Purge all LiteSpeed caches.",
+    "Run gate B checks."
+  ],
+  "after_rollback": [
+    "Reset PHP opcache and purge all LiteSpeed caches.",
+    "Check /learn/ shows the 1.28.0 BUILD section and the 31 existing URLs match the pre-release state."
+  ]
+}
