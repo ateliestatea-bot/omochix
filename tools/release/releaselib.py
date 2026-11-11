@@ -36,7 +36,15 @@ def safe_rel(path):
 
 
 def load_config():
-    with open(os.path.join(ROOT, 'tools', 'release', 'release.json'), encoding='utf-8') as fh:
+    """tools/release/release.json, or the release config named by OMOCHIX_RELEASE_CONFIG (a file in tools/release/configs/)."""
+    name = os.environ.get('OMOCHIX_RELEASE_CONFIG')
+    if name:
+        if '/' in name or not name.endswith('.json'):
+            raise UnsafeInput('OMOCHIX_RELEASE_CONFIG must be a file name in tools/release/configs/')
+        path = os.path.join(ROOT, 'tools', 'release', 'configs', name)
+    else:
+        path = os.path.join(ROOT, 'tools', 'release', 'release.json')
+    with open(path, encoding='utf-8') as fh:
         return json.load(fh)
 
 
