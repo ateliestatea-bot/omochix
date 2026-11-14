@@ -135,3 +135,43 @@ Industry Hub の完了は推測しない。**下の「0. 統合の基準を決�
 - すべて PASS か、未検証の理由と本番後の確認方法を書けたら、Version（候補 1.30.0）を決める。
 - 本番の 0-2 の版を基準にマニフェストを作り、承認を依頼する。
 - 本番への反映、キャッシュの削除、本番での読み取り確認は、それぞれ別に承認を受けてから行う。
+
+## 5. ローカル統合と QA の結果（2026-11-15）
+
+ブランチ `feature/nav-ux-update-v1`。基準の main は `3ef4a14`（本番 1.29.0 / Core 1.10.0 とマニフェストが全件一致）。push・PR はしていない。
+
+| commit | 内容 |
+|---|---|
+| `4e145ac` | `COMMIT-SCOPE.md` の 66 ファイル（明示指定で stage） |
+| `536ad24` | `3ef4a14` を通常の merge で取り込み（競合 0） |
+| `e57b776` | テーマ Version 1.30.0（候補）と、1.29.0 を基準にしたテーマだけのリリース設定（66 ファイルとは別の 4 ファイル：`style.css` の Version、`tools/release/baseline/omochix-theme-1.29.0.sha256`、`tools/release/configs/theme-1.30.0.json`、`tools/release/README.md`） |
+
+リリース設定：`OMOCHIX_RELEASE_CONFIG=theme-1.30.0.json` で `plan.py --check` は 43 ステップ（追加 22・置換 21）で PASS。ビルドは 2 回とも同じ zip になり、`verify.py` も PASS（194 ファイル）。順序は「新規ファイル → `functions.php`（新しい inc を読み込む）→ それを呼ぶテンプレートと inc → `style.css`」。テンプレートが `functions.php` より先に置き換わると、未定義の関数で止まるため。既存の関数と名前がぶつかる新規の関数はない。
+
+### QA（開発環境 8940 = 本ブランチ、比較用 8941 = `a617fd3`。2 つは同じ DB を共有）
+
+| 項目 | 結果 |
+|---|---|
+| PHP の構文（全 PHP ファイル） | 0 エラー |
+| Tests 相当（ai-tools 3、learn-practice 96、learn-gallery 134、learn-composer 46、nav 16、article-v2 197、editorial-home 26、svg-motion shortcode 34、Node 4 本） | すべて PASS |
+| Labs（PHP 285、core.js 121、data.js 41、JS 構文） | PASS。最初の実行は OS の一時フォルダに 11-11 の古いキャッシュが残っていて失敗。`TMPDIR` を分けて再実行すると 285/285。古いキャッシュは削除していない |
+| Industry Hub（10 本、合計 562 項目） | すべて PASS |
+| Release（`release-gate.php`、unittest 74 件、既定の `release.json` での `plan.py --check`） | **FAIL**（下の「判断が必要」） |
+| D1〜D6・F1・R2・R3（`suggest-leak`・`suggest-flush`・`suggest-r2r3`・`article-tools`・`icons-f1`・`ime.cjs`・`suggest-warming.cjs`・`firefox-suggest.cjs`） | すべて PASS（IME は合成イベント。実機は未検証） |
+| `qa.cjs`・`suggest.cjs` | Chromium・WebKit とも 16/16、候補の操作もすべて期待どおり |
+| D2・Industry Hub の URL | `/page/2/`・`/?paged=3`・`/learn/page/2/`・`/about/page/7/`・`/labs/page/3/` は 301 が 1 回。`/learn/industries/`・`/page/2/`・業種・業種の `/page/2/`・大文字の業種は 404（GET と HEAD が同じ、no-store・`X-Robots-Tag: noindex`）。`?s=` は 400。D2 は割り込まない |
+| 検索候補の索引 | 200、`public, max-age=300`、ETag。42 件。URL 41 件をすべて取得して 200（404・401・403 なし）。業種の項目なし |
+| Learn の導線 | SVG Motion のページを公開扱いにして（メモリ上だけ、DB は書き換えない）描画すると、SVG Motion のカードと `omochix_next_steps('learn')` の両方が出る。公開していないときはカードなし（仕様どおり） |
+| SEO の前後比較（10 ページ） | title・description・canonical・robots・JSON-LD・OG・リンクはすべて同じ。差分は 4 ページの h2「次にできること」だけ |
+
+開発環境の業種は 6 件すべて非公開で、一覧ページ `/learn/industries/` はない（本番の「業種別ページは非公開」に近い状態）。**一覧ページを公開した場合はローカルで確認していない**。コード上、公開業種が 0 の一覧ページは 200・noindex になり、そのとき検索候補に「Learn」として載る（404 や権限拒否ではない）。本番の一覧ページの状態は未受領。
+
+`/ai-news/` は 8940・8941 とも 404（共有 DB に該当カテゴリーがない）。本ブランチによる差ではない。
+
+### 判断が必要
+
+- **リリースの CI**：`tools/release/release.json`・`tests/release/release-gate.php`・unittest の 2 件は Industry Hub のリリース専用（29 ステップ、Core 14、Labs のファイルを含まないこと）。1.30.0 は Labs の 3 ファイル（`inc/labs.php`・`template-parts/labs/index.php`・`assets/icons/labs.svg`）を含むので、このままでは PR の Release ワークフローが失敗する。現在のリリースを 1.30.0 に切り替えるか（Industry Hub の設定は `configs/` に記録として残す）、ゲートの条件をどう変えるかは安全確認の内容に関わるので、今回は変更していない。
+
+### 未検証（PASS にしない）
+
+ステージング（Slim SEO の実出力・canonical・サイトマップ、LiteSpeed・CDN のキャッシュと 503 の扱い、`STAGING-CHECKLIST.md` の B+・B++）、実機（日本語 IME、Safe Area、Learn の固定バー、スクリーンリーダー）、FCP・LCP・CLS、本番の一覧ページの公開状態、本番 31 URL の 1.30.0 での回帰。
