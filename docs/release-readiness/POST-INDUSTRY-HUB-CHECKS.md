@@ -144,11 +144,34 @@ Industry Hub の完了は推測しない。**下の「0. 統合の基準を決�
 |---|---|
 | `4e145ac` | `COMMIT-SCOPE.md` の 66 ファイル（明示指定で stage） |
 | `536ad24` | `3ef4a14` を通常の merge で取り込み（競合 0） |
-| `e57b776` | テーマ Version 1.30.0（候補）と、1.29.0 を基準にしたテーマだけのリリース設定（66 ファイルとは別の 4 ファイル：`style.css` の Version、`tools/release/baseline/omochix-theme-1.29.0.sha256`、`tools/release/configs/theme-1.30.0.json`、`tools/release/README.md`） |
+| `e57b776` | テーマ Version 1.30.0（候補）と、1.29.0 を基準にしたテーマだけのリリース設定 |
+| `237c083` | この節の最初の記録 |
+| `30ef37d` | Release CI の 1.30.0 対応（下の 5.1） |
+| （この commit） | QA 記録の訂正（この節） |
 
-リリース設定：`OMOCHIX_RELEASE_CONFIG=theme-1.30.0.json` で `plan.py --check` は 43 ステップ（追加 22・置換 21）で PASS。ビルドは 2 回とも同じ zip になり、`verify.py` も PASS（194 ファイル）。順序は「新規ファイル → `functions.php`（新しい inc を読み込む）→ それを呼ぶテンプレートと inc → `style.css`」。テンプレートが `functions.php` より先に置き換わると、未定義の関数で止まるため。既存の関数と名前がぶつかる新規の関数はない。
+66 ファイル以外の差分：`style.css` の Version（66 ファイルの 1 つの中の 1 行）と、リリース関係のファイル（`tools/release/`・`tests/release/`・`.github/workflows/release.yml`）。
 
-### QA（開発環境 8940 = 本ブランチ、比較用 8941 = `a617fd3`。2 つは同じ DB を共有）
+### 5.1 リリース設定と Release CI
+
+- `tools/release/release.json` が現在のリリース（テーマ 1.30.0、テーマだけ）。Industry Hub の設定は内容を変えずに `configs/industry-hub-core-1.10.0-theme-1.29.0.json` に移した。
+- リリースごとの期待値を `tests/release/expected/` に、設定とは別に記録した（commit、Version、基準ファイルの SHA-256、追加・置換・パッケージのファイル数、ステップ数、変わるファイルの一覧の SHA-256、個別に許可した Labs の 3 ファイル、切り替えファイル、`functions.php` の順序、ロールバック）。ゲートとテストは、ツリーと設定をこの期待値と照合する。
+- 実データ（git のツリーと本番のマニフェスト）からの再確認：1.30.0 は 43 ステップ（追加 22・置換 21）、パッケージ 194 ファイル、Core は 1.10.0 と完全に同じ。Industry Hub は 29 ステップ（Core 14 = 追加 12・置換 2、テーマ 15 = 追加 11・置換 4）。
+- 順序：新規ファイル 22 → `functions.php` → 変更したテンプレートと inc 20 → `style.css`。
+
+| 確認（クリーンな clone の `30ef37d` で CI と同じ手順を実行） | 結果 |
+|---|---|
+| ゲート：現在のリリース（1.30.0、HEAD のツリー） | 30/30 PASS |
+| ゲート：Industry Hub（`2f800b2` のツリー） | 33/33 PASS |
+| unittest（`tests/release`、97 件。ゲートの異常系 17 件を含む） | すべて PASS |
+| 2 回ビルド・`verify.py`・`plan.py --check` | zip が一致、194 ファイルで zip・マニフェスト・git が一致。1.30.0 は 43 ステップ、Industry Hub（`2f800b2`）は 29 ステップ |
+
+異常系（一時コピーで意図的に起こし、すべて失敗することを確認）：Core の変更、必要なファイルの欠落、対象外のファイルの追加、リリース外の本番ファイルの変更・削除、許可していない Labs のファイル（設定で承認しても失敗）、symlink、設定とツリーを一緒に変えた追加、`functions.php` が新規ファイルより前・テンプレートより後、切り替えファイルが最後でない、ロールバックの欠け、Core パッケージの混入、基準ファイルのハッシュ改ざん（テーマ・Core）、パスを含む設定名、期待値のない設定、別のリリースのツリーでの実行。
+
+ゲートは作業ツリーのファイルを数えるので、未追跡のファイル（除外した 7 点のファビコンなど）がある作業ツリーでは失敗する。CI のようにクリーンな checkout で実行する。
+
+### 5.2 QA（開発環境）
+
+8940 = 本ブランチ。8941 = `a617fd3`（**旧ローカル版。本番 1.29.0 ではない**）。2 つは同じ DB を共有する。`a617fd3` と本番 1.29.0 の差はテーマ 3 ファイル（`learn-v2.css`・`page-learn.php` の SVG Motion の導線・`style.css` の Version）と Core の 13 ファイル。
 
 | 項目 | 結果 |
 |---|---|
@@ -156,22 +179,29 @@ Industry Hub の完了は推測しない。**下の「0. 統合の基準を決�
 | Tests 相当（ai-tools 3、learn-practice 96、learn-gallery 134、learn-composer 46、nav 16、article-v2 197、editorial-home 26、svg-motion shortcode 34、Node 4 本） | すべて PASS |
 | Labs（PHP 285、core.js 121、data.js 41、JS 構文） | PASS。最初の実行は OS の一時フォルダに 11-11 の古いキャッシュが残っていて失敗。`TMPDIR` を分けて再実行すると 285/285。古いキャッシュは削除していない |
 | Industry Hub（10 本、合計 562 項目） | すべて PASS |
-| Release（`release-gate.php`、unittest 74 件、既定の `release.json` での `plan.py --check`） | **FAIL**（下の「判断が必要」） |
+| Release | 5.1 のとおり PASS（`237c083` の時点では FAIL だった） |
 | D1〜D6・F1・R2・R3（`suggest-leak`・`suggest-flush`・`suggest-r2r3`・`article-tools`・`icons-f1`・`ime.cjs`・`suggest-warming.cjs`・`firefox-suggest.cjs`） | すべて PASS（IME は合成イベント。実機は未検証） |
 | `qa.cjs`・`suggest.cjs` | Chromium・WebKit とも 16/16、候補の操作もすべて期待どおり |
-| D2・Industry Hub の URL | `/page/2/`・`/?paged=3`・`/learn/page/2/`・`/about/page/7/`・`/labs/page/3/` は 301 が 1 回。`/learn/industries/`・`/page/2/`・業種・業種の `/page/2/`・大文字の業種は 404（GET と HEAD が同じ、no-store・`X-Robots-Tag: noindex`）。`?s=` は 400。D2 は割り込まない |
+| D2・Industry Hub の URL（業種がすべて非公開の状態） | `/page/2/`・`/?paged=3`・`/learn/page/2/`・`/about/page/7/`・`/labs/page/3/` は 301 が 1 回。`/learn/industries/`・`/page/2/`・業種・業種の `/page/2/`・大文字の業種は 404（GET と HEAD が同じ、no-store・`X-Robots-Tag: noindex`）。`?s=` は 400。D2 は割り込まない |
 | 検索候補の索引 | 200、`public, max-age=300`、ETag。42 件。URL 41 件をすべて取得して 200（404・401・403 なし）。業種の項目なし |
 | Learn の導線 | SVG Motion のページを公開扱いにして（メモリ上だけ、DB は書き換えない）描画すると、SVG Motion のカードと `omochix_next_steps('learn')` の両方が出る。公開していないときはカードなし（仕様どおり） |
-| SEO の前後比較（10 ページ） | title・description・canonical・robots・JSON-LD・OG・リンクはすべて同じ。差分は 4 ページの h2「次にできること」だけ |
+| SEO の比較（10 ページ）：**旧ローカル版（8941、`a617fd3`）との比較** | title・description・canonical・robots・JSON-LD・OG・リンクはすべて同じ。差分は 4 ページの h2「次にできること」だけ。本番 1.29.0 相当との比較ではない |
 
-開発環境の業種は 6 件すべて非公開で、一覧ページ `/learn/industries/` はない（本番の「業種別ページは非公開」に近い状態）。**一覧ページを公開した場合はローカルで確認していない**。コード上、公開業種が 0 の一覧ページは 200・noindex になり、そのとき検索候補に「Learn」として載る（404 や権限拒否ではない）。本番の一覧ページの状態は未受領。
+### 5.3 業種の一覧ページを公開した場合（区別して記録）
 
-`/ai-news/` は 8940・8941 とも 404（共有 DB に該当カテゴリーがない）。本ブランチによる差ではない。
+| 状態 | 確認の方法 | 結果 |
+|---|---|---|
+| 業種 6 件すべて非公開・一覧ページなし（本番の「業種別ページは非公開」に近い） | **実測**（8940 への HTTP） | 上の表のとおり。一覧も業種も 404、索引に業種も一覧も入らない |
+| 一覧ページを公開し、公開業種が 0 件 | **コードからの推定**（実測もメモリ内の再現もしていない） | `omochix_industry_hub_decide()` は一覧を 200・noindex にする。検索候補の索引は Learn の子ページとして一覧を載せる（404 や権限拒否の URL ではない） |
+| 一覧ページを公開し、公開業種がある | 未確認 | ステージングで確認する |
 
-### 判断が必要
+本番の一覧ページの公開状態は未受領。
 
-- **リリースの CI**：`tools/release/release.json`・`tests/release/release-gate.php`・unittest の 2 件は Industry Hub のリリース専用（29 ステップ、Core 14、Labs のファイルを含まないこと）。1.30.0 は Labs の 3 ファイル（`inc/labs.php`・`template-parts/labs/index.php`・`assets/icons/labs.svg`）を含むので、このままでは PR の Release ワークフローが失敗する。現在のリリースを 1.30.0 に切り替えるか（Industry Hub の設定は `configs/` に記録として残す）、ゲートの条件をどう変えるかは安全確認の内容に関わるので、今回は変更していない。
+### 5.4 ステージングに残す確認
 
-### 未検証（PASS にしない）
-
-ステージング（Slim SEO の実出力・canonical・サイトマップ、LiteSpeed・CDN のキャッシュと 503 の扱い、`STAGING-CHECKLIST.md` の B+・B++）、実機（日本語 IME、Safe Area、Learn の固定バー、スクリーンリーダー）、FCP・LCP・CLS、本番の一覧ページの公開状態、本番 31 URL の 1.30.0 での回帰。
+- 本番 1.29.0 相当（`3ef4a14`）との比較：主要 URL・SEO の出力・FCP・LCP・CLS。ローカルの比較対象（8941）は旧版なので、この比較にはならない。
+- `/ai-news/` の正常系：開発環境は 8940・8941 とも 404（共有 DB に該当カテゴリーがない）。本ブランチによる差ではないが、ページ送りを含めてステージングで確認する。
+- 一覧ページの公開状態（5.3）。
+- Slim SEO の実出力・canonical・サイトマップ、LiteSpeed・CDN のキャッシュと 503 の扱い（`STAGING-CHECKLIST.md` の B+・B++）。
+- 実機：日本語 IME、Safe Area、Learn の固定バー、スクリーンリーダー。
+- 本番 31 URL の 1.30.0 での回帰。
