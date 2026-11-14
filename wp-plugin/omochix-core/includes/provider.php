@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-version: 1.10.0-dev
+// omochix-industry-hub-version: 1.10.0
 /**
  * Provider type (提供元) rules (Industry Hub Phase 1).
  *
@@ -226,4 +226,4 @@ function omochix_core_provider_meta_box( $post ) {
 	}
 	echo '<p class="description">' . esc_html__( '未分類のままでは「公式」として扱われません。パートナー提供は PR と表示されます。', 'omochix-core' ) . '</p></fieldset>';
 }
-// omochix-industry-hub-version: 1.10.0-dev (end)
+// omochix-industry-hub-version: 1.10.0 (end)
