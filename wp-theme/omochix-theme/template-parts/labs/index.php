@@ -17,11 +17,17 @@ $omochix_matching   = omochix_labs_filter_tools($omochix_filters);
 $omochix_categories = omochix_labs_get_categories();
 $omochix_list_url   = omochix_labs_url();
 $omochix_lead       = has_excerpt() ? trim(wp_strip_all_tags(get_the_excerpt())) : __('AI・開発・Web運用で「ちょっと確かめたい」を、その場で片づける無料ツール集です。どのツールもブラウザの中だけで動き、入力した内容は外部に送信されません。', 'omochix');
-$omochix_sections   = [
-    ['label' => 'AIツール', 'url' => get_post_type_archive_link('ai_tool') ?: '', 'type' => 'section', 'slug' => 'ai-tools', 'text' => __('目的別にAIサービスを比べる', 'omochix')],
-    ['label' => 'Learn', 'url' => omochix_get_published_page_url('learn'), 'type' => 'section', 'slug' => 'learn', 'text' => __('AIの使い方から開発まで学ぶ', 'omochix')],
-    ['label' => 'Prompts', 'url' => get_post_type_archive_link('prompt') ?: '', 'type' => 'section', 'slug' => 'prompts', 'text' => __('そのまま使えるプロンプト集', 'omochix')],
-];
+$omochix_sections   = [];
+foreach ([['tools', 'ai-tools', __('目的別にAIサービスを比べる', 'omochix')], ['learn', 'learn', __('AIの使い方から開発まで学ぶ', 'omochix')], ['prompts', 'prompts', __('そのまま使えるプロンプト集', 'omochix')], ['dev', 'ai-development', __('作る人のための記事とヒント', 'omochix')]] as $omochix_section_def) {
+    // Registry (inc/nav.php) when available; the Labs templates must also render without it (isolated tests / partial rollbacks).
+    $omochix_section_item = function_exists('omochix_nav_item') ? omochix_nav_item($omochix_section_def[0]) : null;
+    if (!$omochix_section_item) {
+        $omochix_fallback_urls = ['tools' => get_post_type_archive_link('ai_tool') ?: '', 'learn' => omochix_get_published_page_url('learn'), 'prompts' => get_post_type_archive_link('prompt') ?: '', 'dev' => ''];
+        $omochix_fallback_labels = ['tools' => 'AIツール', 'learn' => 'Learn', 'prompts' => 'Prompts', 'dev' => 'AI開発'];
+        $omochix_section_item = ['label' => $omochix_fallback_labels[$omochix_section_def[0]], 'url' => $omochix_fallback_urls[$omochix_section_def[0]]];
+    }
+    $omochix_sections[]   = ['label' => $omochix_section_item['label'], 'url' => $omochix_section_item['url'], 'type' => 'section', 'slug' => $omochix_section_def[1], 'text' => $omochix_section_def[2]];
+}
 ?>
 <main class="labs labs-index" id="main-content" data-labs-index>
     <header class="labs-hero">

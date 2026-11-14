@@ -335,7 +335,8 @@ if (have_posts()) :
                                             <?php if (is_wp_error($omochix_term_url)) : ?><span><?php echo esc_html($omochix_term->name); ?></span><?php else : ?><a href="<?php echo esc_url($omochix_term_url); ?>"><?php echo esc_html($omochix_term->name); ?></a><?php endif; ?>
                                         <?php endforeach; ?>
                                         <?php // ai_tool_feature has no public term archive; shown as a plain chip, same as platform below. ?>
-                                        <?php foreach (array_slice($omochix_features, 0, 3) as $omochix_term) : ?><span class="tool-detail__taxonomy-feature"><?php echo esc_html($omochix_term->name); ?></span><?php endforeach; ?>
+                                        <?php $omochix_shown_names = wp_list_pluck(array_slice((array) $omochix_categories, 0, 2), 'name'); // a feature with the same name as a shown category would be a duplicate chip ?>
+                                        <?php foreach (array_slice($omochix_features, 0, 3) as $omochix_term) : if (in_array($omochix_term->name, $omochix_shown_names, true)) { continue; } ?><span class="tool-detail__taxonomy-feature"><?php echo esc_html($omochix_term->name); ?></span><?php endforeach; ?>
                                         <?php // ai_tool_platform has no public term archive; link to the archive's existing platform filter instead. ?>
                                         <?php foreach (array_slice($omochix_platforms, 0, 3) as $omochix_term) : ?><a href="<?php echo esc_url(add_query_arg('platform', $omochix_term->slug, $omochix_archive_url)); ?>"><?php echo esc_html($omochix_term->name); ?></a><?php endforeach; ?>
                                     </div>

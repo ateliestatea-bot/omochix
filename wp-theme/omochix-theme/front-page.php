@@ -4,10 +4,12 @@ if (!defined('ABSPATH')) { exit; }
 get_header();
 $ed = omochix_editorial_selection();
 $destinations = omochix_editorial_destinations();
-$news_url = $destinations[0]['url'];
-$tools_url = $destinations[1]['url'];
-$learn_url = $destinations[3]['url'];
-$prompts_url = $destinations[4]['url'];
+$news_url = omochix_editorial_destination_url('news');
+$tools_url = omochix_editorial_destination_url('tools');
+$learn_url = omochix_editorial_destination_url('learn');
+$prompts_url = omochix_editorial_destination_url('prompts');
+$dev_url = omochix_editorial_destination_url('dev');
+$labs_url = omochix_editorial_destination_url('labs');
 $about_url = omochix_get_published_page_url('about');
 ?>
 <main class="ed-main" id="main-content">
@@ -24,10 +26,10 @@ $about_url = omochix_get_published_page_url('about');
             <input type="search" name="s" id="ed-search-input" placeholder="<?php esc_attr_e('気になるAIを検索', 'omochix'); ?>" enterkeyhint="search" value="<?php echo esc_attr(get_search_query()); ?>">
             <button type="submit" aria-label="<?php esc_attr_e('検索する', 'omochix'); ?>"><?php echo omochix_editorial_icon('arrow'); ?></button>
         </form>
-        <nav class="ed-categories" aria-label="<?php esc_attr_e('カテゴリーから探す', 'omochix'); ?>">
+        <nav class="ed-categories" data-count="<?php echo esc_attr(count($destinations)); ?>" aria-label="<?php esc_attr_e('カテゴリーから探す', 'omochix'); ?>">
             <?php foreach ($destinations as $destination) : ?>
                 <?php if ($destination['url'] && !is_wp_error($destination['url'])) : ?>
-                    <a href="<?php echo esc_url($destination['url']); ?>"><?php echo omochix_editorial_icon($destination['icon']); ?><span><?php echo esc_html($destination['label']); ?></span></a>
+                    <a href="<?php echo esc_url($destination['url']); ?>" data-nav="<?php echo esc_attr($destination['id']); ?>"><?php echo omochix_editorial_icon($destination['icon']); ?><span><?php echo esc_html($destination['label']); ?></span><?php if (!empty($destination['desc'])) : ?><small class="ed-cat-desc"><?php echo esc_html($destination['desc']); ?></small><?php endif; ?></a>
                 <?php else : ?>
                     <span class="ed-unavailable"><?php echo omochix_editorial_icon($destination['icon']); ?><span><?php echo esc_html($destination['label']); ?></span><small><?php esc_html_e('準備中', 'omochix'); ?></small></span>
                 <?php endif; ?>
@@ -61,6 +63,9 @@ $about_url = omochix_get_published_page_url('about');
                 <?php endforeach; ?>
             </div>
         <?php else : ?><p class="ed-empty"><?php esc_html_e('新しいニュースを準備しています。', 'omochix'); ?></p><?php endif; ?>
+        <?php if ($ed['latest'] && ($tools_url || $learn_url)) : ?>
+            <p class="ed-flow"><?php esc_html_e('気になったニュースは、', 'omochix'); ?><?php if ($tools_url) : ?><a href="<?php echo esc_url($tools_url); ?>"><?php esc_html_e('AIツールで比べる', 'omochix'); ?></a><?php endif; ?><?php if ($tools_url && $learn_url) : ?><span aria-hidden="true"> · </span><?php endif; ?><?php if ($learn_url) : ?><a href="<?php echo esc_url($learn_url); ?>"><?php esc_html_e('Learnで基礎から学ぶ', 'omochix'); ?></a><?php endif; ?></p>
+        <?php endif; ?>
     </section>
 
     <section class="ed-section" aria-labelledby="ed-try-title">
@@ -85,6 +90,12 @@ $about_url = omochix_get_published_page_url('about');
                 <?php if ($learn_url) : ?><a class="ed-text-link" href="<?php echo esc_url($learn_url); ?>"><?php esc_html_e('Learnを見る', 'omochix'); ?> ↗</a><?php else : ?><p class="ed-meta"><?php esc_html_e('準備中', 'omochix'); ?></p><?php endif; ?>
             </article>
         </div>
+        <?php if ($dev_url || $labs_url) : ?>
+            <ul class="ed-practice-more">
+                <?php if ($dev_url) : ?><li><a href="<?php echo esc_url($dev_url); ?>"><strong><?php esc_html_e('AI開発', 'omochix'); ?></strong><span><?php esc_html_e('作る人のための記事とヒント', 'omochix'); ?></span><?php echo omochix_editorial_icon('arrow'); ?></a></li><?php endif; ?>
+                <?php if ($labs_url) : ?><li><a href="<?php echo esc_url($labs_url); ?>"><strong>Labs</strong><span><?php esc_html_e('Promptsで試したことを、無料ツールで確かめる', 'omochix'); ?></span><?php echo omochix_editorial_icon('arrow'); ?></a></li><?php endif; ?>
+            </ul>
+        <?php endif; ?>
     </section>
 
     <section class="ed-section" aria-labelledby="ed-tools-title">

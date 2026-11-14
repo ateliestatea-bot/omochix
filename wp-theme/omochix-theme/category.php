@@ -314,6 +314,7 @@ $omochix_popular_query = new WP_Query([
             </section>
         </aside>
     </div>
+    <?php if ($omochix_category_term instanceof WP_Term && 'ai-development' === $omochix_category_term->slug) { omochix_next_steps('dev'); } ?>
 </main>
 
 <?php get_footer(); ?>

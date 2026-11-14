@@ -25,7 +25,8 @@ $omochix_news_url = get_option('page_for_posts')
     : home_url('/');
 $omochix_tools_url = get_post_type_archive_link('ai_tool') ?: home_url('/ai-tools/');
 $omochix_prompts_url = post_type_exists('prompt') ? get_post_type_archive_link('prompt') : '';
-$omochix_popular_searches = ['ChatGPT', 'Claude', 'Midjourney', 'Gemini', 'Copilot', 'AIエージェント'];
+$omochix_popular_searches = function_exists('omochix_suggest_popular_terms') ? omochix_suggest_popular_terms() : ['ChatGPT', 'Claude', 'Midjourney', 'Gemini', 'Copilot', 'AIエージェント'];
+$omochix_related = ('all' === $omochix_type && 1 === $omochix_paged && function_exists('omochix_search_related')) ? omochix_search_related($omochix_keyword, 3) : ['labs' => [], 'learn' => []];
 
 $omochix_type_links = [
     'all'     => __('すべて', 'omochix'),
@@ -82,6 +83,18 @@ if (post_type_exists('learn_practice')) {
             </nav>
         </div>
     </section>
+
+    <?php if ($omochix_related['labs'] || $omochix_related['learn']) : ?>
+        <section class="search-related" aria-labelledby="search-related-title">
+            <div class="search-page__container">
+                <h2 id="search-related-title"><?php esc_html_e('こちらも見つかりました', 'omochix'); ?></h2>
+                <ul class="search-related__list">
+                    <?php foreach ($omochix_related['labs'] as $omochix_rel) : ?><li><a href="<?php echo esc_url($omochix_rel['url']); ?>"><span class="search-related__type">Labs</span><?php echo esc_html($omochix_rel['title']); ?></a></li><?php endforeach; ?>
+                    <?php foreach ($omochix_related['learn'] as $omochix_rel) : ?><li><a href="<?php echo esc_url($omochix_rel['url']); ?>"><span class="search-related__type">Learn</span><?php echo esc_html($omochix_rel['title']); ?></a></li><?php endforeach; ?>
+                </ul>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <section class="search-results" aria-labelledby="search-results-title">
         <div class="search-page__container">
@@ -198,7 +211,7 @@ if (post_type_exists('learn_practice')) {
                     <span aria-hidden="true">O</span>
                     <h2><?php esc_html_e('該当する情報が見つかりませんでした。', 'omochix'); ?></h2>
                     <p><?php esc_html_e('キーワードを短くするか、別の表記でもう一度お試しください。', 'omochix'); ?></p>
-                    <div class="search-empty__links"><a href="<?php echo esc_url($omochix_news_url); ?>"><?php esc_html_e('AIニュース一覧', 'omochix'); ?></a><a href="<?php echo esc_url($omochix_tools_url); ?>"><?php esc_html_e('AIツール一覧', 'omochix'); ?></a><?php if ($omochix_prompts_url) : ?><a href="<?php echo esc_url($omochix_prompts_url); ?>"><?php esc_html_e('プロンプトライブラリ', 'omochix'); ?></a><?php endif; ?></div>
+                    <div class="search-empty__links"><?php foreach (function_exists('omochix_nav_items') ? omochix_nav_items('home') : [] as $omochix_empty_item) : if (!$omochix_empty_item['url']) { continue; } ?><a href="<?php echo esc_url($omochix_empty_item['url']); ?>"><?php echo esc_html($omochix_empty_item['label']); ?></a><?php endforeach; ?></div>
                     <div class="search-empty__popular"><p><?php esc_html_e('人気の検索ワード', 'omochix'); ?></p><ul><?php foreach ($omochix_popular_searches as $omochix_term) : ?><li><a href="<?php echo esc_url(add_query_arg('s', $omochix_term, home_url('/'))); ?>"><?php echo esc_html($omochix_term); ?></a></li><?php endforeach; ?></ul></div>
                 </div>
             <?php endif; ?>

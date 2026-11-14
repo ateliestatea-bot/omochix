@@ -301,6 +301,7 @@ while (have_posts()) :
                 </div>
             </section>
         <?php endif; ?>
+        <?php omochix_next_steps('learn'); ?>
     </main>
     <?php
 endwhile;

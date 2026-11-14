@@ -504,7 +504,7 @@ add_filter('slim_seo_sitemap_taxonomies', 'omochix_filter_slim_seo_sitemap_taxon
  * @return WP_Term[]|int[]
  */
 function omochix_filter_thin_sitemap_terms($terms, $taxonomies) {
-    if (!get_query_var('ss_sitemap') || !array_intersect(['category', 'ai_tool_category'], (array) $taxonomies)) {
+    if (!get_query_var('ss_sitemap') || !array_intersect(['category', 'ai_tool_category', 'post_tag'], (array) $taxonomies)) {
         return $terms;
     }
 
@@ -517,10 +517,64 @@ function omochix_filter_thin_sitemap_terms($terms, $taxonomies) {
             return false;
         }
 
+        // Same rule as omochix_is_noindex_archive_request(): a term archive with fewer than 2 posts is noindex, so it must not be in the sitemap
+        // (post_tag was missing here: the production sitemap listed hundreds of noindex tag URLs).
         return (int) $term->count >= 2;
     }));
 }
 add_filter('get_terms', 'omochix_filter_thin_sitemap_terms', 10, 2);
+
+/**
+ * Single pages without <!--nextpage--> have no /page/N/.
+ *
+ * WordPress answers /page/N/ on any singular page (static front page included: WP_Query maps "paged" to the
+ * <!--nextpage--> counter "page", but WP::handle_404() only inspects the request's own "page" variable) with 200 and the
+ * page content -- infinite duplicate URLs, which Slim SEO then canonicalises to themselves. Send them to the canonical URL.
+ *
+ * Left alone: real multi-page content (<!--nextpage-->), pages that paginate their own listing with "paged"
+ * (Industry Hub; extend with the omochix_paged_singular_paths filter), Labs tool routes, previews, the posts page
+ * (/ai-news/page/N/ is WordPress archive pagination) and every non-singular archive.
+ */
+function omochix_singular_pagination_target() {
+    if (!is_singular() || is_home() || is_feed() || is_preview() || is_customize_preview() || is_robots()) {
+        return '';
+    }
+    $n = max((int) get_query_var('page'), (int) get_query_var('paged'));
+    if ($n < 2) {
+        return '';
+    }
+    $post = get_queried_object();
+    if (!$post instanceof WP_Post || false !== strpos((string) $post->post_content, '<!--nextpage-->')) {
+        return '';
+    }
+    if ('' !== (string) get_query_var('omx_lab')) {
+        return ''; // Labs tool pages are routed by inc/labs.php
+    }
+    if ('page' === $post->post_type) {
+        $own = (array) apply_filters('omochix_paged_singular_paths', ['learn/industries']);
+        if (in_array(get_page_uri($post), $own, true)) {
+            return '';
+        }
+    }
+    $url = get_permalink($post);
+    if (!$url) {
+        return '';
+    }
+    // Keep harmless query arguments (utm_*, etc.); drop the pagination ones. Values are re-encoded.
+    $query = array_diff_key(wp_unslash($_GET), ['page' => 1, 'paged' => 1]); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect target
+    $query = array_filter($query, static fn($v) => is_scalar($v));
+    return $query ? $url . (false === strpos($url, '?') ? '?' : '&') . http_build_query(array_map('strval', $query), '', '&', PHP_QUERY_RFC3986) : $url;
+}
+
+function omochix_singular_no_pagination() {
+    $target = omochix_singular_pagination_target();
+    if ('' === $target) {
+        return;
+    }
+    wp_safe_redirect($target, 301, 'OmochiX');
+    exit;
+}
+add_action('template_redirect', 'omochix_singular_no_pagination', 1);
 
 /**
  * Keep noindex search pages crawlable so robots meta can be observed.

@@ -1,0 +1,202 @@
+/*
+ * OmochiX Logo Assembly Loader - v1.1.0 (provisional brand art: nw3 / nw2)
+ * Pure CSS + SVG. Animated properties: opacity, transform, stroke-dashoffset only.
+ *
+ * BASE STATE = the COMPLETED logo. Animations only describe the assembly, so
+ * reduced-motion, motion:off and no-animation environments all show the finished logo.
+ *
+ * Customise with CSS variables on .omx:
+ *   --omx-size   overall width of the artwork (default per variant)
+ *   --omx-dur    loop length (default 2.5s)
+ *   --omx-ink    wordmark / loop colour (light #010100, dark #f5f5f1 - from the brand SVGs)
+ */
+
+.omx {
+  --omx-ink: #010100;
+  --omx-ghost: 0.2;
+  --omx-glow-a: rgba(110, 75, 255, 0.32);
+  --omx-glow-b: rgba(110, 75, 255, 0);
+  --omx-dur: 2.5s;
+  --omx-play: running;
+  --omx-size: 200px;
+  --omx-sw: 1.4;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  width: var(--omx-size);
+  max-width: 100%;
+  line-height: 0;
+  contain: layout paint style;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* theme: explicit dark, or "auto" following OS / the OmochiX theme toggle */
+.omx[data-theme="dark"] {
+  --omx-ink: #f5f5f1;
+  --omx-ghost: 0.28;
+  --omx-glow-a: rgba(167, 139, 255, 0.4);
+  --omx-glow-b: rgba(167, 139, 255, 0);
+}
+@media (prefers-color-scheme: dark) {
+  .omx:not([data-theme="light"]):not([data-theme="dark"]) {
+    --omx-ink: #f5f5f1;
+    --omx-ghost: 0.28;
+    --omx-glow-a: rgba(167, 139, 255, 0.4);
+    --omx-glow-b: rgba(167, 139, 255, 0);
+  }
+}
+:root[data-theme="dark"] .omx:not([data-theme="light"]):not([data-theme="dark"]) {
+  --omx-ink: #f5f5f1;
+  --omx-ghost: 0.28;
+  --omx-glow-a: rgba(167, 139, 255, 0.4);
+  --omx-glow-b: rgba(167, 139, 255, 0);
+}
+:root[data-theme="light"] .omx:not([data-theme="dark"]) {
+  --omx-ink: #010100;
+}
+
+/* variants */
+.omx--full  { --omx-size: 240px; --omx-sw: 1.4; }
+.omx--chat  { --omx-size: 56px;  --omx-sw: 3.2; }
+.omx--micro { --omx-size: 28px;  --omx-sw: 5.5; --omx-ghost: 0.28; }
+.omx--full:has(.omx-art-lockup) { --omx-sw: 2.4; }
+.omx--micro .omx-glow, .omx--micro .omx-trail { display: none; }
+
+.omx-stage { display: block; width: 100%; }
+.omx-art { display: block; width: 100%; height: auto; overflow: visible; }
+.omx-label { font: 500 13px/1.4 system-ui, sans-serif; color: var(--omx-ink); opacity: 0.7; }
+
+.omx-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* ---- artwork base = completed logo ---------------------------------------- */
+.omx-fill   { fill: var(--omx-ink); }
+.omx-ghost  { fill: none; stroke: var(--omx-ink); stroke-opacity: var(--omx-ghost); stroke-width: var(--omx-sw); stroke-linejoin: round; opacity: 0; }
+.omx-draw   { fill: none; stroke: var(--omx-ink); stroke-width: var(--omx-sw); stroke-linejoin: round;
+              stroke-dasharray: 1 1; stroke-dashoffset: 0; opacity: 0; }
+.omx-wm     { fill: var(--omx-ink); }
+.omx-glow   { opacity: 0; }
+.omx-glow-a { stop-color: var(--omx-glow-a); }
+.omx-glow-b { stop-color: var(--omx-glow-b); }
+.omx-trail  { stroke: #8a5cff; stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0; }
+.omx-art-lockup .omx-trail { stroke-width: 0.9; }
+
+/* ---- assembly timeline (one loop = --omx-dur) ------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  .omx:not([data-motion="off"]) .omx-ghost,
+  .omx:not([data-motion="off"]) .omx-draw,
+  .omx:not([data-motion="off"]) .omx-fill,
+  .omx:not([data-motion="off"]) .omx-slash,
+  .omx:not([data-motion="off"]) .omx-trail,
+  .omx:not([data-motion="off"]) .omx-glow,
+  .omx:not([data-motion="off"]) .omx-wm {
+    animation-duration: var(--omx-dur);
+    animation-iteration-count: infinite;
+    animation-timing-function: cubic-bezier(0.45, 0.05, 0.25, 1);
+    animation-play-state: var(--omx-play);
+  }
+  .omx:not([data-motion="off"]) .omx-l .omx-ghost { animation-name: omx-ghost-l; }
+  .omx:not([data-motion="off"]) .omx-r .omx-ghost { animation-name: omx-ghost-r; }
+  .omx:not([data-motion="off"]) .omx-l .omx-draw  { animation-name: omx-draw-l; }
+  .omx:not([data-motion="off"]) .omx-r .omx-draw  { animation-name: omx-draw-r; }
+  .omx:not([data-motion="off"]) .omx-l .omx-fill  { animation-name: omx-fill-l; }
+  .omx:not([data-motion="off"]) .omx-r .omx-fill  { animation-name: omx-fill-r; }
+  .omx:not([data-motion="off"]) .omx-art-mark .omx-slash   { animation-name: omx-slash-m; }
+  .omx:not([data-motion="off"]) .omx-art-lockup .omx-slash { animation-name: omx-slash-l; }
+  .omx:not([data-motion="off"]) .omx-trail        { animation-name: omx-trail; }
+  .omx:not([data-motion="off"]) .omx-glow         { animation-name: omx-glow; }
+  .omx:not([data-motion="off"]) .omx-wm           { animation-name: omx-wm; }
+  .omx.omx-restart .omx-ghost, .omx.omx-restart .omx-draw, .omx.omx-restart .omx-fill,
+  .omx.omx-restart .omx-slash, .omx.omx-restart .omx-trail, .omx.omx-restart .omx-glow,
+  .omx.omx-restart .omx-wm { animation: none !important; }
+}
+
+/* No frame is ever empty: a faint outline "ghost" of both loops stays on across the loop seam. */
+@keyframes omx-ghost-l { 0%,30%{opacity:1} 40%,88%{opacity:0} 100%{opacity:1} }
+@keyframes omx-ghost-r { 0%,38%{opacity:1} 48%,88%{opacity:0} 100%{opacity:1} }
+
+/* 1. outlines draw, left then right */
+@keyframes omx-draw-l {
+  0%   { stroke-dashoffset: 1; opacity: 1; }
+  22%  { stroke-dashoffset: 0; opacity: 1; }
+  36%  { stroke-dashoffset: 0; opacity: 1; }
+  44%,88% { stroke-dashoffset: 0; opacity: 0; }
+  100% { stroke-dashoffset: 1; opacity: 0; }
+}
+@keyframes omx-draw-r {
+  0%,8% { stroke-dashoffset: 1; opacity: 1; }
+  30%  { stroke-dashoffset: 0; opacity: 1; }
+  44%  { stroke-dashoffset: 0; opacity: 1; }
+  52%,88% { stroke-dashoffset: 0; opacity: 0; }
+  100% { stroke-dashoffset: 1; opacity: 0; }
+}
+/* 2. loops complete (fill) in order; fill = exact brand path, so the final shape is never altered */
+@keyframes omx-fill-l { 0%,18%{opacity:0} 36%,86%{opacity:1} 100%{opacity:0} }
+@keyframes omx-fill-r { 0%,26%{opacity:0} 44%,86%{opacity:1} 100%{opacity:0} }
+
+/* 3. violet slash cuts in along its own axis (expo-out, no bounce) */
+/* Literal values on purpose: var() inside keyframes forces a style recalc every frame. */
+@keyframes omx-slash-m {
+  0%,46%  { opacity: 0; transform: translate(-26px, 29px); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  50%     { opacity: 1; }
+  58%,86% { opacity: 1; transform: translate(0, 0); animation-timing-function: cubic-bezier(0.45, 0.05, 0.25, 1); }
+  100%    { opacity: 0; transform: translate(-9.1px, 10.1px); }
+}
+@keyframes omx-slash-l {
+  0%,46%  { opacity: 0; transform: translate(-19px, 21px); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  50%     { opacity: 1; }
+  58%,86% { opacity: 1; transform: translate(0, 0); animation-timing-function: cubic-bezier(0.45, 0.05, 0.25, 1); }
+  100%    { opacity: 0; transform: translate(-6.6px, 7.3px); }
+}
+
+@keyframes omx-trail {
+  0%,44% { stroke-dashoffset: 1; opacity: 0; }
+  47%    { stroke-dashoffset: 1; opacity: 0.85; }
+  57%    { stroke-dashoffset: 0; opacity: 0.85; }
+  68%,100% { stroke-dashoffset: 0; opacity: 0; }
+}
+/* subtle glow at the moment the slash lands */
+@keyframes omx-glow { 0%,50%{opacity:0} 58%{opacity:1} 72%,86%{opacity:0.55} 100%{opacity:0} }
+/* 5. wordmark (lockup only) */
+@keyframes omx-wm {
+  0%,52% { opacity: 0; transform: translateX(-5px); }
+  68%,86% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-2px); }
+}
+
+/* ---- release (AI chat): leaves layout immediately, fades in place ---- */
+.omx[data-state="releasing"] { position: absolute; z-index: 1; }
+.omx[data-state="releasing"] .omx-art { opacity: 0; transition-duration: 0.18s; }
+.omx-inline { display: inline-flex; line-height: 0; margin-inline-end: 8px; vertical-align: middle; }
+
+/* ---- finishing: fast-forward to the completed hold frame, then fade (JS) ---- */
+.omx .omx-art { transition: opacity 0.32s ease-in-out, transform 0.32s ease-in-out; }
+.omx[data-state="exiting"] .omx-art, .omx[data-state="done"] .omx-art { opacity: 0; transform: scale(0.97); }
+.omx[data-state="done"] { visibility: hidden; }
+.omx[data-state="exiting"] * { animation-play-state: paused !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .omx .omx-art { transition: none; }
+}
+
+/* ---- full-page overlay (WordPress) ----------------------------------------
+ * Timers live in an inline <head> script, not in CSS: the OmochiX theme's reduced-motion reset forces
+ * animation-delay:0 !important, which would otherwise defeat any CSS-only delay or failsafe.
+ *  html.omx-js    overlay exists (JS available, first visit of the session)
+ *  html.omx-show  250ms passed: fast loads never flash a loader; slow ones fade it in */
+.omx-overlay {
+  position: fixed; inset: 0; z-index: 99999; display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px; background: var(--color-bg, #f7f7f5);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+}
+html.omx-js .omx-overlay { display: flex; }
+html.omx-js.omx-show .omx-overlay { opacity: 1; pointer-events: auto; }
+html.omx-js.omx-show .omx-overlay.is-leaving { opacity: 0; transition-duration: 0.25s; pointer-events: none; }
+.omx-overlay.is-gone { display: none !important; }
+.omx-overlay .omx-status { font: 500 13px/1.4 system-ui, sans-serif; color: var(--color-muted, #666663); }
