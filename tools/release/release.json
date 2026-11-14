@@ -1,75 +1,289 @@
 {
-  "release": "Industry Hub Phase 2",
-  "note": "Theme 1.29.0 ships on production 1.28.1 (released 2026-11-12 from release/theme-1.28.1 422399a: 1.28.0 Labs + SVG Motion Studio + the BUILD Learn card). Theme baseline: the 1.28.0 release manifest (161 files, sha256 38dd3dd5...) with the three 1.28.1 files, which were checked on the server after the deploy (3/3). Only part of the PHP files were ever hashed on the server, so the preflight must hash every replaced file before writing. SVG Motion Studio, Labs and the Learn card must stay.",
+  "release": "Theme 1.30.0 (navigation, search suggest, technical SEO)",
+  "note": "Theme only, on production 1.29.0 (Industry Hub release 2f800b2, main 3ef4a14). Baseline: the 1.29.0 release manifest (172 files, sha256 f802dc06...). Core stays 1.10.0. 43 files: 22 new, then functions.php (it loads the new inc files), then the 20 changed templates and inc files that call them, style.css last. Industry Hub, Labs, SVG Motion Studio and the Learn card must stay.",
   "packages": {
-    "core": {
-      "name": "omochix-core",
-      "dir": "wp-plugin/omochix-core",
-      "target": "plugins/omochix-core",
-      "baseline": "tools/release/baseline/omochix-core-1.9.3.sha256",
-      "baseline_version": "1.9.3"
-    },
     "theme": {
       "name": "omochix-theme",
       "dir": "wp-theme/omochix-theme",
       "target": "themes/omochix-theme",
-      "baseline": "tools/release/baseline/omochix-theme-1.28.1.sha256",
-      "baseline_version": "1.28.1",
-      "baseline_commit": "422399a732af8a0ab2851a91f4bb5923b30b3c64"
+      "baseline": "tools/release/baseline/omochix-theme-1.29.0.sha256",
+      "baseline_version": "1.29.0"
     }
   },
   "order": [
-    ["core", "includes/industry-taxonomies.php"],
-    ["core", "includes/provider.php"],
-    ["core", "includes/industry-term-meta.php"],
-    ["core", "admin/industry-term-fields.php"],
-    ["core", "includes/resource-post-type.php"],
-    ["core", "includes/resource-meta-schema.php"],
-    ["core", "admin/resource-meta-boxes.php"],
-    ["core", "includes/workflow-meta-schema.php"],
-    ["core", "admin/workflow-meta-panel.php"],
-    ["core", "includes/industry-relations.php"],
-    ["core", "includes/industry-visibility.php"],
-    ["core", "includes/industry-hub.php"],
-    ["core", "readme.txt"],
-    ["core", "omochix-core.php"],
-    ["theme", "assets/css/learn-industries.css"],
-    ["theme", "template-parts/learn-industries/bad-request.php"],
-    ["theme", "template-parts/learn-industries/content-card.php"],
-    ["theme", "template-parts/learn-industries/filter-bar.php"],
-    ["theme", "template-parts/learn-industries/jump-nav.php"],
-    ["theme", "template-parts/learn-industries/provider-badge.php"],
-    ["theme", "template-parts/learn-industries/resource-card.php"],
-    ["theme", "template-parts/learn-industries/workflow-card.php"],
-    ["theme", "page-learn-industries.php"],
-    ["theme", "taxonomy-omx_industry.php"],
-    ["theme", "inc/learn-industries.php"],
-    ["theme", "inc/learn.php"],
-    ["theme", "inc/shell.php"],
-    ["theme", "functions.php"],
-    ["theme", "style.css"]
+    [
+      "theme",
+      "assets/css/footer-editorial.css"
+    ],
+    [
+      "theme",
+      "assets/css/search-suggest.css"
+    ],
+    [
+      "theme",
+      "assets/icons/chat.svg"
+    ],
+    [
+      "theme",
+      "assets/icons/labs.svg"
+    ],
+    [
+      "theme",
+      "assets/img/icons/apple-touch-icon-180.png"
+    ],
+    [
+      "theme",
+      "assets/img/icons/favicon-16.png"
+    ],
+    [
+      "theme",
+      "assets/img/icons/favicon-32.png"
+    ],
+    [
+      "theme",
+      "assets/img/icons/favicon.ico"
+    ],
+    [
+      "theme",
+      "assets/img/icons/favicon.svg"
+    ],
+    [
+      "theme",
+      "assets/img/icons/icon-192.png"
+    ],
+    [
+      "theme",
+      "assets/img/icons/icon-512.png"
+    ],
+    [
+      "theme",
+      "assets/img/icons/icon-maskable-192.png"
+    ],
+    [
+      "theme",
+      "assets/img/icons/icon-maskable-512.png"
+    ],
+    [
+      "theme",
+      "assets/js/search-suggest.js"
+    ],
+    [
+      "theme",
+      "assets/loader/omochix-loader-page.js"
+    ],
+    [
+      "theme",
+      "assets/loader/omochix-loader.css"
+    ],
+    [
+      "theme",
+      "assets/loader/omochix-loader.js"
+    ],
+    [
+      "theme",
+      "inc/icons.php"
+    ],
+    [
+      "theme",
+      "inc/nav.php"
+    ],
+    [
+      "theme",
+      "inc/omochix-loader-markup.php"
+    ],
+    [
+      "theme",
+      "inc/omochix-loader.php"
+    ],
+    [
+      "theme",
+      "inc/search-suggest.php"
+    ],
+    [
+      "theme",
+      "functions.php"
+    ],
+    [
+      "theme",
+      "archive-ai_tool.php"
+    ],
+    [
+      "theme",
+      "archive-prompt.php"
+    ],
+    [
+      "theme",
+      "assets/css/editorial-home.css"
+    ],
+    [
+      "theme",
+      "assets/css/shell.css"
+    ],
+    [
+      "theme",
+      "category.php"
+    ],
+    [
+      "theme",
+      "footer-editorial.php"
+    ],
+    [
+      "theme",
+      "footer.php"
+    ],
+    [
+      "theme",
+      "front-page.php"
+    ],
+    [
+      "theme",
+      "header.php"
+    ],
+    [
+      "theme",
+      "inc/editorial-home.php"
+    ],
+    [
+      "theme",
+      "inc/labs.php"
+    ],
+    [
+      "theme",
+      "inc/seo.php"
+    ],
+    [
+      "theme",
+      "inc/shell.php"
+    ],
+    [
+      "theme",
+      "manifest.webmanifest"
+    ],
+    [
+      "theme",
+      "page-learn.php"
+    ],
+    [
+      "theme",
+      "search.php"
+    ],
+    [
+      "theme",
+      "single-ai_tool.php"
+    ],
+    [
+      "theme",
+      "single.php"
+    ],
+    [
+      "theme",
+      "template-parts/labs/index.php"
+    ],
+    [
+      "theme",
+      "style.css"
+    ]
   ],
   "switches": [
-    ["core", "omochix-core.php"],
-    ["theme", "functions.php"]
+    [
+      "theme",
+      "style.css"
+    ]
   ],
   "gates": {
-    "A": {
-      "after": ["core", "omochix-core.php"],
-      "check": "Existing pages, admin, AI Tools and Motion work; no Industry Hub stop notice; hubs still private."
-    },
     "B": {
-      "after": ["theme", "style.css"],
-      "check": "Existing 31 URLs, sitemaps, every hub 404 until content passes the gates, all 29 files match the manifest."
+      "after": [
+        "theme",
+        "style.css"
+      ],
+      "check": "Existing 31 URLs, header/footer navigation, search with suggestions (index answers 200 with Cache-Control public, max-age=300), favicons, /page/N/ on singular pages answers one 301, sitemaps; Industry Hub hubs still 404 while private; Labs, SVG Motion Studio and the Learn card unchanged; all 43 files match the manifest."
     }
   },
   "rollback_order": [
-    ["theme", "functions.php"],
-    ["theme", "style.css"],
-    ["theme", "inc/shell.php"],
-    ["theme", "inc/learn.php"],
-    ["core", "omochix-core.php"],
-    ["core", "readme.txt"]
+    [
+      "theme",
+      "style.css"
+    ],
+    [
+      "theme",
+      "template-parts/labs/index.php"
+    ],
+    [
+      "theme",
+      "single.php"
+    ],
+    [
+      "theme",
+      "single-ai_tool.php"
+    ],
+    [
+      "theme",
+      "search.php"
+    ],
+    [
+      "theme",
+      "page-learn.php"
+    ],
+    [
+      "theme",
+      "manifest.webmanifest"
+    ],
+    [
+      "theme",
+      "inc/shell.php"
+    ],
+    [
+      "theme",
+      "inc/seo.php"
+    ],
+    [
+      "theme",
+      "inc/labs.php"
+    ],
+    [
+      "theme",
+      "inc/editorial-home.php"
+    ],
+    [
+      "theme",
+      "header.php"
+    ],
+    [
+      "theme",
+      "front-page.php"
+    ],
+    [
+      "theme",
+      "footer.php"
+    ],
+    [
+      "theme",
+      "footer-editorial.php"
+    ],
+    [
+      "theme",
+      "category.php"
+    ],
+    [
+      "theme",
+      "assets/css/shell.css"
+    ],
+    [
+      "theme",
+      "assets/css/editorial-home.css"
+    ],
+    [
+      "theme",
+      "archive-prompt.php"
+    ],
+    [
+      "theme",
+      "archive-ai_tool.php"
+    ],
+    [
+      "theme",
+      "functions.php"
+    ]
   ],
   "after_apply": [
     "Reset PHP opcache (LiteSpeed Cache: Toolbox > Purge All - Opcode Cache).",
@@ -77,8 +291,8 @@
     "Run gate B checks."
   ],
   "after_rollback": [
-    "Save Settings > Permalinks once (required): the rewrite rules written by Core 1.10.0 stay in the database, and without regenerating them every /learn/industries/{anything}/ answers 200 with indexable front-page content.",
     "Reset PHP opcache and purge all LiteSpeed caches.",
-    "Check /learn/industries/real-estate/ and /learn/industries/anything/ answer 404, and the 31 existing URLs match the pre-release state."
+    "The 22 added files stay on the server but nothing loads them once functions.php is restored.",
+    "Check the 31 existing URLs match the 1.29.0 state."
   ]
 }

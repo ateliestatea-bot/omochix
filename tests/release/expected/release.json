@@ -1,0 +1,25 @@
+{
+  "release": "Theme 1.30.0 (navigation, search suggest, technical SEO)",
+  "commit": "HEAD",
+  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the git tree of the 1.30.0 release candidate against the production 1.29.0 manifest; the gate and the tests compare the real tree and the config against these values, never the config against itself.",
+  "versions": { "core": "1.10.0", "theme": "1.30.0" },
+  "packages": {
+    "theme": { "baseline_sha256": "f802dc063147a38946a441aea6d2229cd13972d5bb3a5a476e48a404681350a4", "files": 194, "add": 22, "replace": 21 }
+  },
+  "unchanged": {
+    "core": { "dir": "wp-plugin/omochix-core", "baseline": "tools/release/baseline/omochix-core-1.10.0.sha256", "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9" }
+  },
+  "steps": 43,
+  "changed_paths_sha256": "fea39a1844cf0657dcde79d606cbb7978cd413df84da544c9d3c381caa30a6da",
+  "forbidden": {
+    "pattern": "#labs|svg-motion|logo-motion#i",
+    "allowed": ["theme:assets/icons/labs.svg", "theme:inc/labs.php", "theme:template-parts/labs/index.php"]
+  },
+  "order_rules": [
+    { "path": "theme:functions.php", "after_every": "add", "before_every": "replace", "except": ["theme:style.css"], "why": "functions.php loads the new inc files; the changed templates call them" }
+  ],
+  "switches": ["theme:style.css"],
+  "gates": ["B"],
+  "rollback": { "first": "theme:style.css", "last": "theme:functions.php", "count": 21 },
+  "core_version_markers": 11
+}
