@@ -3,23 +3,26 @@
 if (!defined('ABSPATH')) { exit; }
 
 function omochix_editorial_icon($name) {
-    $allowed = ['news', 'tools', 'code', 'learn', 'prompt', 'video', 'community', 'about', 'arrow'];
+    $allowed = ['news', 'tools', 'code', 'learn', 'prompt', 'labs', 'chat', 'video', 'community', 'about', 'arrow'];
     if (!in_array($name, $allowed, true)) { return ''; }
     // Only fixed, theme-owned SVG files may be inlined. No post/user input.
     return file_get_contents(get_theme_file_path('/assets/icons/' . $name . '.svg'));
 }
 
+/** Home shortcut destinations (registry surface "home"). Same shape as before; `id` and `status` are new. */
 function omochix_editorial_destinations() {
-    $posts_id = (int) get_option('page_for_posts');
-    $posts = $posts_id ? get_post($posts_id) : null;
-    $dev = get_category_by_slug('ai-development');
-    return [
-        ['label' => __('AIニュース', 'omochix'), 'icon' => 'news', 'url' => $posts instanceof WP_Post && $posts->post_status === 'publish' ? get_permalink($posts) : ''],
-        ['label' => __('AIツール', 'omochix'), 'icon' => 'tools', 'url' => get_post_type_archive_link('ai_tool') ?: ''],
-        ['label' => __('AI開発', 'omochix'), 'icon' => 'code', 'url' => $dev instanceof WP_Term ? omochix_get_category_url($dev) : ''],
-        ['label' => 'Learn', 'icon' => 'learn', 'url' => omochix_get_published_page_url('learn')],
-        ['label' => 'Prompts', 'icon' => 'prompt', 'url' => get_post_type_archive_link('prompt') ?: ''],
-    ];
+    $out = [];
+    foreach (omochix_nav_items('home') as $it) {
+        $out[] = ['id' => $it['id'], 'desc' => $it['desc'], 'label' => $it['label'], 'icon' => $it['icon'], 'url' => $it['url'], 'status' => $it['status']];
+    }
+    return $out;
+}
+
+/** URL of a destination by registry id ('' when not published). */
+function omochix_editorial_destination_url($id) {
+    foreach (omochix_editorial_destinations() as $d) { if ($d['id'] === $id) { return $d['url']; } }
+    $it = omochix_nav_item($id);
+    return $it ? $it['url'] : '';
 }
 
 /** Public, non-password-protected entries only, also when a user is logged in. */

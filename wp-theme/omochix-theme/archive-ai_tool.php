@@ -498,6 +498,7 @@ $omochix_compare_hub_post = $omochix_compare_hub_posts ? $omochix_compare_hub_po
             </section>
         </aside>
     </div>
+    <?php omochix_next_steps('tools'); ?>
 </main>
 
 <?php get_footer(); ?>

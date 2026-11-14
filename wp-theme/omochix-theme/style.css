@@ -6800,3 +6800,14 @@ a.learn-path__step:hover {
 :root[data-theme="dark"] .tool-updates__status--improved { background: rgba(14, 116, 144, 0.18); }
 :root[data-theme="dark"] .tool-updates__status--fixed { background: rgba(21, 128, 61, 0.18); }
 :root[data-theme="dark"] .tool-updates__status--beta { background: rgba(180, 83, 9, 0.18); }
+
+/* Navigation registry (inc/nav.php): current section + group dividers in the stacked mobile panel. */
+@media (max-width: 1080px) {
+    .primary-nav a[aria-current] { background: rgba(255, 255, 255, 0.1); }
+    .primary-nav__list > li[data-group-start] { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+}
+
+/* 320px phones: the logo ran under the theme-toggle button (logo 118px + two 44px buttons + menu button > 276px). */
+@media (max-width: 340px) {
+    .site-logo__image { width: 96px !important; height: auto; }
+}

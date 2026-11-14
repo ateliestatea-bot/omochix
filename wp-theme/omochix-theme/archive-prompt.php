@@ -353,6 +353,7 @@ $omochix_popular_categories = is_array($omochix_popular_categories) ? $omochix_p
             </section>
         </aside>
     </div>
+    <?php omochix_next_steps('prompts'); ?>
 </main>
 
 <?php get_footer(); ?>
