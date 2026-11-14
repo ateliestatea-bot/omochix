@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-version: 1.10.0-dev
+// omochix-industry-hub-version: 1.10.0
 /**
  * Industry Hub taxonomies (Industry Hub Phase 1).
  *
@@ -319,18 +319,18 @@ function omochix_core_industry_pre_insert_term( $term, $taxonomy, $args = array(
 	if ( OMOCHIX_CORE_INDUSTRY_TAXONOMY === $taxonomy ) {
 		$slug = omochix_core_industry_candidate_slug( $term, $args );
 		if ( in_array( $slug, omochix_core_get_industry_reserved_slugs(), true ) ) {
-			return new WP_Error( 'omochix_industry_reserved_slug', sprintf( __( '業種のスラッグ "%s" は予約語のため使えません。', 'omochix-core' ), $slug ) );
+			return new WP_Error( 'omochix_industry_reserved_slug', sprintf( __( '業種のスラッグ "%s" は予約語のため使えません。', 'omochix-core' ), $slug ), array( 'status' => 400 ) );
 		}
 		$parent = isset( $args['parent'] ) ? (int) $args['parent'] : 0;
 		if ( $parent && omochix_core_industry_term_depth( $parent ) >= OMOCHIX_CORE_INDUSTRY_MAX_DEPTH ) {
-			return new WP_Error( 'omochix_industry_depth', __( '業種は「業種 → サブ業種」の2階層までです。', 'omochix-core' ) );
+			return new WP_Error( 'omochix_industry_depth', __( '業種は「業種 → サブ業種」の2階層までです。', 'omochix-core' ), array( 'status' => 400 ) );
 		}
 	}
 	// Core lets anyone who may assign terms create new ones in a flat
 	// taxonomy (tag box, REST). Business purposes are a curated vocabulary:
 	// creating one needs manage_categories (seeding on init is exempt).
 	if ( OMOCHIX_CORE_PURPOSE_TAXONOMY === $taxonomy && ! doing_action( 'init' ) && is_user_logged_in() && ! current_user_can( 'manage_categories' ) ) {
-		return new WP_Error( 'omochix_purpose_curated', __( '業務目的の追加は編集者（カテゴリー管理の権限）だけができます。', 'omochix-core' ) );
+		return new WP_Error( 'omochix_purpose_curated', __( '業務目的の追加は編集者（カテゴリー管理の権限）だけができます。', 'omochix-core' ), array( 'status' => 403 ) );
 	}
 	// The workflow format switches on the workflow rules (Phase 3). learn_format
 	// is a flat taxonomy, so any author could otherwise create it from the tag
@@ -340,14 +340,14 @@ function omochix_core_industry_pre_insert_term( $term, $taxonomy, $args = array(
 	if ( 'learn_format' === $taxonomy && ! doing_action( 'init' ) && is_user_logged_in() && ! current_user_can( 'manage_categories' ) ) {
 		$slug = omochix_core_industry_candidate_slug( $term, $args );
 		if ( 'workflow' === $slug || '導入する' === trim( (string) $term ) ) {
-			return new WP_Error( 'omochix_workflow_format_curated', __( '形式「導入する（workflow）」の作成は編集者だけができます。', 'omochix-core' ) );
+			return new WP_Error( 'omochix_workflow_format_curated', __( '形式「導入する（workflow）」の作成は編集者だけができます。', 'omochix-core' ), array( 'status' => 403 ) );
 		}
 	}
 	if ( OMOCHIX_CORE_PROVIDER_TAXONOMY === $taxonomy ) {
 		$vocabulary = omochix_core_get_provider_vocabulary();
 		$slug       = omochix_core_industry_candidate_slug( $term, $args );
 		if ( ! isset( $vocabulary[ $slug ] ) || ! empty( $args['parent'] ) ) {
-			return new WP_Error( 'omochix_provider_fixed', __( '提供元の区分は固定です（OmochiX公式・外部サービス・クリエイター・パートナー）。', 'omochix-core' ) );
+			return new WP_Error( 'omochix_provider_fixed', __( '提供元の区分は固定です（OmochiX公式・外部サービス・クリエイター・パートナー）。', 'omochix-core' ), array( 'status' => 403 ) );
 		}
 	}
 	return $term;
@@ -585,4 +585,4 @@ foreach ( array( 'post', 'page', 'ai_tool', 'prompt', 'learn_practice' ) as $omo
 	add_filter( 'rest_' . $omochix_core_rest_type . '_query', 'omochix_core_industry_rest_strip_query', 20 );
 }
 unset( $omochix_core_rest_type );
-// omochix-industry-hub-version: 1.10.0-dev (end)
+// omochix-industry-hub-version: 1.10.0 (end)
