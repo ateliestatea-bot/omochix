@@ -1,5 +1,5 @@
 <?php
-// omochix-industry-hub-version: 1.10.0-dev
+// omochix-industry-hub-version: 1.10.0
 /**
  * Industry term edit screen fields (Industry Hub Phase 1).
  *
@@ -199,4 +199,4 @@ function omochix_core_industry_notice() {
 	echo '</ul></div>';
 }
 add_action( 'admin_notices', 'omochix_core_industry_notice' );
-// omochix-industry-hub-version: 1.10.0-dev (end)
+// omochix-industry-hub-version: 1.10.0 (end)
