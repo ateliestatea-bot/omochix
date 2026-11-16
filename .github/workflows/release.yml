@@ -34,6 +34,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0   # the previous release is checked on its own commit (tests/release/expected/*.json)
 
       - name: Set up PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
@@ -45,6 +46,13 @@ jobs:
 
       - name: Release gate (versions, markers, scope against production)
         run: php tests/release/release-gate.php
+
+      - name: Release gate for the previous release on its own commit (Industry Hub, 2f800b2)
+        run: |
+          set -e
+          tree="$RUNNER_TEMP/industry-hub-tree"; mkdir -p "$tree"
+          git archive 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 wp-plugin wp-theme | tar -x -C "$tree"
+          OMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php
 
       - name: Release tools (reproducible build, verify, plan, staged replace rehearsal)
         run: python3 -W error::ResourceWarning -m unittest discover -s tests/release -v
@@ -58,3 +66,4 @@ jobs:
           for z in "$out1"/*.zip; do cmp "$z" "$out2/$(basename "$z")"; done
           python3 tools/release/verify.py --commit HEAD --dir "$out1"
           python3 tools/release/plan.py --commit HEAD --check
+          OMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json python3 tools/release/plan.py --commit 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 --check

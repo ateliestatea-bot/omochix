@@ -1,0 +1,84 @@
+{
+  "release": "Industry Hub Phase 2",
+  "note": "Theme 1.29.0 ships on production 1.28.1 (released 2026-11-12 from release/theme-1.28.1 422399a: 1.28.0 Labs + SVG Motion Studio + the BUILD Learn card). Theme baseline: the 1.28.0 release manifest (161 files, sha256 38dd3dd5...) with the three 1.28.1 files, which were checked on the server after the deploy (3/3). Only part of the PHP files were ever hashed on the server, so the preflight must hash every replaced file before writing. SVG Motion Studio, Labs and the Learn card must stay.",
+  "packages": {
+    "core": {
+      "name": "omochix-core",
+      "dir": "wp-plugin/omochix-core",
+      "target": "plugins/omochix-core",
+      "baseline": "tools/release/baseline/omochix-core-1.9.3.sha256",
+      "baseline_version": "1.9.3"
+    },
+    "theme": {
+      "name": "omochix-theme",
+      "dir": "wp-theme/omochix-theme",
+      "target": "themes/omochix-theme",
+      "baseline": "tools/release/baseline/omochix-theme-1.28.1.sha256",
+      "baseline_version": "1.28.1",
+      "baseline_commit": "422399a732af8a0ab2851a91f4bb5923b30b3c64"
+    }
+  },
+  "order": [
+    ["core", "includes/industry-taxonomies.php"],
+    ["core", "includes/provider.php"],
+    ["core", "includes/industry-term-meta.php"],
+    ["core", "admin/industry-term-fields.php"],
+    ["core", "includes/resource-post-type.php"],
+    ["core", "includes/resource-meta-schema.php"],
+    ["core", "admin/resource-meta-boxes.php"],
+    ["core", "includes/workflow-meta-schema.php"],
+    ["core", "admin/workflow-meta-panel.php"],
+    ["core", "includes/industry-relations.php"],
+    ["core", "includes/industry-visibility.php"],
+    ["core", "includes/industry-hub.php"],
+    ["core", "readme.txt"],
+    ["core", "omochix-core.php"],
+    ["theme", "assets/css/learn-industries.css"],
+    ["theme", "template-parts/learn-industries/bad-request.php"],
+    ["theme", "template-parts/learn-industries/content-card.php"],
+    ["theme", "template-parts/learn-industries/filter-bar.php"],
+    ["theme", "template-parts/learn-industries/jump-nav.php"],
+    ["theme", "template-parts/learn-industries/provider-badge.php"],
+    ["theme", "template-parts/learn-industries/resource-card.php"],
+    ["theme", "template-parts/learn-industries/workflow-card.php"],
+    ["theme", "page-learn-industries.php"],
+    ["theme", "taxonomy-omx_industry.php"],
+    ["theme", "inc/learn-industries.php"],
+    ["theme", "inc/learn.php"],
+    ["theme", "inc/shell.php"],
+    ["theme", "functions.php"],
+    ["theme", "style.css"]
+  ],
+  "switches": [
+    ["core", "omochix-core.php"],
+    ["theme", "functions.php"]
+  ],
+  "gates": {
+    "A": {
+      "after": ["core", "omochix-core.php"],
+      "check": "Existing pages, admin, AI Tools and Motion work; no Industry Hub stop notice; hubs still private."
+    },
+    "B": {
+      "after": ["theme", "style.css"],
+      "check": "Existing 31 URLs, sitemaps, every hub 404 until content passes the gates, all 29 files match the manifest."
+    }
+  },
+  "rollback_order": [
+    ["theme", "functions.php"],
+    ["theme", "style.css"],
+    ["theme", "inc/shell.php"],
+    ["theme", "inc/learn.php"],
+    ["core", "omochix-core.php"],
+    ["core", "readme.txt"]
+  ],
+  "after_apply": [
+    "Reset PHP opcache (LiteSpeed Cache: Toolbox > Purge All - Opcode Cache).",
+    "Purge all LiteSpeed caches.",
+    "Run gate B checks."
+  ],
+  "after_rollback": [
+    "Save Settings > Permalinks once (required): the rewrite rules written by Core 1.10.0 stay in the database, and without regenerating them every /learn/industries/{anything}/ answers 200 with indexable front-page content.",
+    "Reset PHP opcache and purge all LiteSpeed caches.",
+    "Check /learn/industries/real-estate/ and /learn/industries/anything/ answer 404, and the 31 existing URLs match the pre-release state."
+  ]
+}

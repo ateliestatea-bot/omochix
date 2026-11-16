@@ -1,0 +1,14 @@
+/* Search suggestions: theme-aware (uses the page's colour variables with safe fallbacks). */
+.omx-suggest { position: fixed; z-index: 100000; margin: 0; padding: 6px; list-style: none; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--color-surface, #fff); color: var(--color-text, #101010); border: 1px solid var(--color-line, rgba(16,16,16,.14)); border-radius: 14px; box-shadow: 0 18px 44px rgba(20, 16, 36, .18); }
+.omx-suggest[hidden] { display: none; }
+.omx-suggest a { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 8px 12px; border-radius: 10px; color: inherit; text-decoration: none; font-size: 14px; line-height: 1.4; }
+.omx-suggest li:hover a, .omx-suggest li.is-active a { background: var(--color-hover, rgba(110, 75, 255, .1)); }
+.omx-suggest li.is-active a { outline: 2px solid var(--shell-accent, var(--color-primary, #6e4bff)); outline-offset: -2px; }
+.omx-suggest__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.omx-suggest mark { background: transparent; color: var(--shell-accent, var(--color-primary, #6e4bff)); font-weight: 700; }
+.omx-suggest__type { flex: none; font-size: 11px; color: var(--color-muted, #666663); border: 1px solid var(--color-line, rgba(16,16,16,.14)); border-radius: 999px; padding: 1px 8px; }
+.omx-suggest__all a { color: var(--shell-accent, var(--color-primary, #6e4bff)); font-weight: 600; }
+.omx-suggest__all { border-top: 1px solid var(--color-line, rgba(16,16,16,.1)); margin-top: 4px; padding-top: 4px; }
+@media (max-width: 600px) { .omx-suggest a { font-size: 15px; } }
+@media (prefers-reduced-motion: no-preference) { .omx-suggest:not([hidden]) { animation: omx-suggest-in .12s ease-out; } @keyframes omx-suggest-in { from { opacity: 0; transform: translateY(-4px); } } }

@@ -16,10 +16,7 @@ if (!defined('ABSPATH')) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f7f7f5">
     <link rel="manifest" href="<?php echo esc_url(get_theme_file_uri('/manifest.webmanifest')); ?>">
-    <?php if (!has_site_icon()) : ?>
-        <link rel="icon" href="<?php echo esc_url(get_theme_file_uri('/assets/img/favicon.png')); ?>" sizes="512x512" type="image/png">
-        <link rel="apple-touch-icon" href="<?php echo esc_url(get_theme_file_uri('/assets/img/apple-touch-icon.png')); ?>" sizes="180x180">
-    <?php endif; ?>
+    <?php omochix_icon_links(); // single icon source: inc/icons.php ?>
     <script><?php echo omochix_theme_boot_script(); // phpcs:ignore WordPress.Security.EscapeOutput -- a fixed string from functions.php ?></script>
     <?php wp_head(); ?>
 </head>
@@ -53,28 +50,7 @@ if (!defined('ABSPATH')) {
                 ?>
             <?php else : ?>
                 <ul class="primary-nav__list">
-                    <?php
-                    $omochix_posts_page_id = (int) get_option('page_for_posts');
-                    $omochix_posts_page    = $omochix_posts_page_id ? get_post($omochix_posts_page_id) : null;
-                    $omochix_ai_dev_category = get_category_by_slug('ai-development');
-                    $omochix_default_menu = [
-                        __('AIニュース', 'omochix') => $omochix_posts_page instanceof WP_Post && 'publish' === $omochix_posts_page->post_status ? get_permalink($omochix_posts_page) : '',
-                        __('AIツール', 'omochix')   => get_post_type_archive_link('ai_tool'),
-                        __('AI開発', 'omochix')     => $omochix_ai_dev_category instanceof WP_Term ? omochix_get_category_url($omochix_ai_dev_category) : '',
-                        __('Learn', 'omochix')     => omochix_get_published_page_url('learn'),
-                        __('Prompts', 'omochix')   => get_post_type_archive_link('prompt'),
-                        __('動画', 'omochix')      => omochix_get_published_page_url('videos'),
-                        __('コミュニティ', 'omochix') => omochix_get_published_page_url('community'),
-                        __('About', 'omochix')     => omochix_get_published_page_url('about'),
-                    ];
-                    foreach ($omochix_default_menu as $omochix_label => $omochix_url) :
-                        ?>
-                        <?php if ($omochix_url) : ?>
-                            <li><a href="<?php echo esc_url($omochix_url); ?>"><?php echo esc_html($omochix_label); ?></a></li>
-                        <?php else : ?>
-                            <li class="primary-nav__item--unavailable"><span aria-disabled="true"><?php echo esc_html($omochix_label); ?><small><?php esc_html_e('準備中', 'omochix'); ?></small></span></li>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
+                    <?php omochix_nav_render_list_items(omochix_nav_items('nav')); // single registry: inc/nav.php ?>
                 </ul>
             <?php endif; ?>
 

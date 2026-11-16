@@ -102,6 +102,8 @@ body.omx-shell .site-header__actions { display: flex; }
     body.omx-shell .primary-nav { position: static; flex: 1; overflow-y: auto; }
     body.omx-shell .primary-nav__list { display: flex; flex-direction: column; align-items: stretch; gap: 5px; padding: 0; }
     body.omx-shell .primary-nav a { display: block; font-size: 14px; padding: 13px 10px; font-weight: 450; border-radius: 6px; color: var(--color-text); letter-spacing: normal; }
+    body.omx-shell .primary-nav a[aria-current] { font-weight: 650; background: color-mix(in srgb, currentColor 8%, transparent); }
+    body.omx-shell .primary-nav__list > li[data-group-start] { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--color-line); }
     body.omx-shell .primary-nav__item--unavailable { display: list-item; color: var(--color-muted); font-size: 13px; padding: 13px 10px; }
     body.omx-shell .primary-nav__item--unavailable small { display: block; font-size: 10px; margin-top: 3px; }
     body.omx-shell .site-header__actions { justify-content: flex-start; margin: 0; }
@@ -152,35 +154,30 @@ body.omx-shell :is(.prompt-detail__layout, .tool-detail__layout, .article-layout
 body.omx-shell .prompt-detail__main { grid-template-columns: minmax(0, 1fr); }
 body.omx-shell .prompt-detail__panel { overflow-wrap: anywhere; }
 
-/*
- * Shared footer. editorial-home.css only loads on the front page, so the footer rules are mirrored here for shell pages.
- * Values match the approved front-page footer; the front page itself is untouched.
- */
-body.omx-shell .ed-footer { --color-bg: #19181d; --color-text: #f5f5f7; --color-muted: #b9b7c1; background: #19181d; color: #f5f5f7; padding: 38px clamp(22px, 4vw, 56px) 24px; margin-top: 0; }
-body.omx-shell .ed-footer a { text-decoration: none; }
-body.omx-shell .ed-footer a:hover { text-decoration: underline; text-underline-offset: .22em; }
-body.omx-shell .ed-footer :where(a, button):focus-visible { outline: 2px solid #d5baff; outline-offset: 4px; }
-body.omx-shell .ed-footer-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-body.omx-shell .ed-footer-top img { display: block; width: 120px; height: auto; }
-body.omx-shell .ed-footer .social-links { display: flex; gap: 16px; padding: 0; margin: 0; list-style: none; }
-body.omx-shell .ed-footer .social-links a { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: white; }
-body.omx-shell .ed-footer .social-links a:hover { color: #d5baff; text-decoration: none; }
-body.omx-shell .ed-footer .social-links a[aria-label*="YouTube"] svg { width: 26px; }
-body.omx-shell .ed-footer .social-links svg { width: 22px; height: 22px; fill: currentColor; }
-body.omx-shell .ed-footer .social-links span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-body.omx-shell .ed-footer-nav { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 22px; }
-body.omx-shell .ed-footer-nav a { min-height: 44px; display: flex; align-items: center; font-size: 13px; }
-body.omx-shell .ed-footer-future { display: flex; gap: 24px; font-size: 12px; color: #b9b7c1; margin-block: 16px 24px; }
-body.omx-shell .ed-footer-future small { margin-left: 6px; font-size: 10px; }
-body.omx-shell .ed-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-top: 22px; border-top: 1px solid #39363f; color: #b9b7c1; font-size: 11px; }
-body.omx-shell .ed-footer-bottom > div { display: flex; flex-wrap: wrap; gap: 18px; }
-/* Easier tap targets for the legal links (the front page keeps its approved sizing). */
-body.omx-shell .ed-footer-bottom a { display: inline-flex; align-items: center; min-height: 44px; }
-body.omx-shell .ed-footer-top > a { display: inline-flex; align-items: center; min-height: 44px; }
-@media (max-width: 600px) {
-    body.omx-shell .ed-footer { padding-top: 30px; }
-    body.omx-shell .ed-footer-top { flex-direction: column; align-items: flex-start; gap: 18px; }
-    body.omx-shell .ed-footer .social-links { margin-left: -12px; gap: 10px; }
-    body.omx-shell .ed-footer-nav { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; }
-    body.omx-shell .ed-footer-bottom { line-height: 1.8; }
+/* Footer (.ed-footer): see assets/css/footer-editorial.css (single shared definition). */
+
+/* "次にできること" (inc/nav.php: omochix_next_steps). Hub pages hand the reader on to the next published section. */
+body.omx-shell .next-steps { width: min(100% - 2 * var(--page-gutter, 20px), var(--container-width, 1200px)); margin: 56px auto 0; padding: 28px clamp(18px, 3vw, 32px); border: 1px solid var(--color-line); border-radius: var(--radius-md, 16px); background: var(--color-surface); }
+body.omx-shell .next-steps__title { margin: 0; font-size: 18px; }
+body.omx-shell .next-steps__lead { margin: 6px 0 18px; color: var(--color-muted); font-size: 14px; }
+body.omx-shell .next-steps__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+body.omx-shell .next-steps__list a { display: grid; gap: 4px; align-content: center; min-height: 64px; height: 100%; padding: 14px 16px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-bg); color: var(--color-text); text-decoration: none; transition: border-color 0.18s ease, background-color 0.18s ease; }
+body.omx-shell .next-steps__list a:hover { border-color: var(--shell-accent); }
+body.omx-shell .next-steps__list a:focus-visible { outline: 2px solid var(--shell-accent); outline-offset: 2px; }
+body.omx-shell .next-steps__list strong { color: var(--shell-accent); font-size: 15px; }
+body.omx-shell .next-steps__list span { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
+@media (max-width: 767px) {
+    body.omx-shell .next-steps { margin-top: 40px; padding: 22px 18px; }
+    body.omx-shell .next-steps__list { grid-template-columns: 1fr; }
 }
+
+/* Search results: Labs tools / Learn pages that match (inc/search-suggest.php). */
+body.omx-shell .search-related { padding: 20px 0 4px; }
+body.omx-shell .search-related h2 { margin: 0 0 12px; font-size: 16px; }
+body.omx-shell .search-related__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+body.omx-shell .search-related__list a { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 14px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-surface); color: var(--color-text); text-decoration: none; font-size: 14px; }
+body.omx-shell .search-related__list a:hover { border-color: var(--shell-accent); }
+body.omx-shell .search-related__type { flex: none; font-size: 11px; font-weight: 700; color: var(--shell-accent); border: 1px solid currentColor; border-radius: 999px; padding: 0 8px; }
+
+body.omx-shell .next-steps--article .next-steps__list + .next-steps__lead { margin-top: 22px; }
+body.omx-shell .next-steps--article .next-steps__list { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }

@@ -57,3 +57,9 @@ add_filter('omochix_editorial_footer_links', static function ($links) {
     $links[] = $item;
     return $links;
 });
+
+/** The shared editorial footer is used on the front page and on shell pages: one stylesheet for both. */
+add_action('wp_enqueue_scripts', static function () {
+    if (!is_front_page() && !omochix_shell_enabled()) { return; }
+    wp_enqueue_style('omochix-footer', get_theme_file_uri('/assets/css/footer-editorial.css'), ['omochix-style'], (string) filemtime(get_theme_file_path('/assets/css/footer-editorial.css')));
+}, 20);

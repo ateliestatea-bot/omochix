@@ -1,0 +1,19 @@
+{
+  "release": "Industry Hub Phase 2",
+  "commit": "2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008",
+  "note": "Independent expectations for configs/industry-hub-core-1.10.0-theme-1.29.0.json (released to production on 2026-11-15 from 2f800b2). Same values the release gate hard-coded before it read them from here.",
+  "versions": { "core": "1.10.0", "theme": "1.29.0" },
+  "packages": {
+    "core": { "baseline_sha256": "72ba8a53c60efc7c6d3b46ba1ca81d3153c6d41bf7d6f988ffe6fa2faba052cc", "files": 59, "add": 12, "replace": 2 },
+    "theme": { "baseline_sha256": "92bbc7b7c03a59d1299ddff35605a70dedbfb82699ff48b617379fc3c2d0b921", "files": 172, "add": 11, "replace": 4 }
+  },
+  "unchanged": {},
+  "steps": 29,
+  "changed_paths_sha256": "39b65ed1dc58f0aa0fa44b185377e7d178dd1da218633abfcadd6f06ef42f7c8",
+  "forbidden": { "pattern": "#labs|svg-motion|logo-motion#i", "allowed": [] },
+  "order_rules": [],
+  "switches": ["core:omochix-core.php", "theme:functions.php"],
+  "gates": ["A", "B"],
+  "rollback": { "first": "theme:functions.php", "count": 6 },
+  "core_version_markers": 11
+}

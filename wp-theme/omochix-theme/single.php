@@ -228,6 +228,8 @@ get_header();
                 </div>
             </article>
 
+                <?php if (function_exists('omochix_article_flow')) { omochix_article_flow($omochix_post_id); } ?>
+
                 <?php
                 $omochix_related_posts = [];
                 $omochix_related_ids   = [$omochix_post_id];

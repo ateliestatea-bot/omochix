@@ -1580,6 +1580,11 @@ add_filter('omochix_editorial_footer_links', static function ($links) {
     if (!$url || !is_array($links)) {
         return $links;
     }
+    foreach ($links as $link) {
+        if (isset($link['label']) && 'Labs' === $link['label']) {
+            return $links; // already provided by the navigation registry (inc/nav.php)
+        }
+    }
     $item = ['label' => 'Labs', 'icon' => '', 'url' => $url];
     foreach ($links as $i => $link) {
         if (isset($link['label']) && 'About' === $link['label']) {

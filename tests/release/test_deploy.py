@@ -552,22 +552,38 @@ class ReviewFindings(Base):
 
 
 class RealPlan(unittest.TestCase):
-    def test_the_real_release_plan_is_accepted_by_the_helper(self):
+    def test_the_real_release_plans_are_accepted_by_the_helper(self):
         sys.path.insert(0, os.path.join(ROOT, 'tools', 'release'))
         import plan as planmod
-        plan, _, problems = planmod.make_plan('HEAD')
-        self.assertEqual([], problems)
-        tmp = tempfile.mkdtemp()
-        try:
-            path = os.path.join(tmp, 'release-plan.json')
-            data = json.dumps(plan, ensure_ascii=False, indent=1).encode()
-            with open(path, 'wb') as fh:
-                fh.write(data)
-            got = deploy.load_plan(path, rl.sha256_bytes(data))
-            self.assertEqual(len(plan['steps']), len(got['steps']))
-            self.assertEqual('omochix-core.php', plan['steps'][deploy.gate_index(got, 'A') - 1]['path'])
-        finally:
-            shutil.rmtree(tmp)
+        expected = os.path.join(ROOT, 'tests', 'release', 'expected')
+        for name in sorted(f for f in os.listdir(expected) if f.endswith('.json')):
+            with open(os.path.join(expected, name), encoding='utf-8') as fh:
+                exp = json.load(fh)
+            old = os.environ.pop('OMOCHIX_RELEASE_CONFIG', None)
+            if name != 'release.json':
+                os.environ['OMOCHIX_RELEASE_CONFIG'] = name
+            tmp = tempfile.mkdtemp()
+            try:
+                with self.subTest(release=name):
+                    plan, _, problems = planmod.make_plan(exp['commit'])
+                    self.assertEqual([], problems)
+                    path = os.path.join(tmp, 'release-plan.json')
+                    data = json.dumps(plan, ensure_ascii=False, indent=1).encode()
+                    with open(path, 'wb') as fh:
+                        fh.write(data)
+                    got = deploy.load_plan(path, rl.sha256_bytes(data))
+                    self.assertEqual(exp['steps'], len(got['steps']))
+                    self.assertEqual(len(got['steps']), deploy.gate_index(got, 'B'))
+                    if 'A' in exp['gates']:
+                        self.assertEqual('omochix-core.php', plan['steps'][deploy.gate_index(got, 'A') - 1]['path'])
+                    else:
+                        with self.assertRaises(deploy.Stop):
+                            deploy.gate_index(got, 'A')
+            finally:
+                shutil.rmtree(tmp)
+                os.environ.pop('OMOCHIX_RELEASE_CONFIG', None)
+                if old is not None:
+                    os.environ['OMOCHIX_RELEASE_CONFIG'] = old
 
 
 if __name__ == '__main__':

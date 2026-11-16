@@ -1,4 +1,5 @@
 """Tests for tools/release (build, verify, plan, rehearse). Run: python3 -m unittest discover -s tests/release -v"""
+import contextlib
 import json
 import os
 import shutil
@@ -17,11 +18,36 @@ import releaselib as rl  # noqa: E402
 import verify  # noqa: E402
 
 
+EXPECTED = os.path.join(ROOT, 'tests', 'release', 'expected')
+# The Industry Hub release (Core and theme) is the config with both packages; the generic build/verify tests use it.
+BOTH_PACKAGES = 'industry-hub-core-1.10.0-theme-1.29.0.json'
+
+
+@contextlib.contextmanager
+def release_config(name):
+    """Use tools/release/release.json (name 'release.json') or a named config in tools/release/configs/."""
+    old = os.environ.get('OMOCHIX_RELEASE_CONFIG')
+    if name == 'release.json':
+        os.environ.pop('OMOCHIX_RELEASE_CONFIG', None)
+    else:
+        os.environ['OMOCHIX_RELEASE_CONFIG'] = name
+    try:
+        yield
+    finally:
+        if old is None:
+            os.environ.pop('OMOCHIX_RELEASE_CONFIG', None)
+        else:
+            os.environ['OMOCHIX_RELEASE_CONFIG'] = old
+
+
 class BuildAndVerify(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
+        self._cfg = release_config(BOTH_PACKAGES)
+        self._cfg.__enter__()
 
     def tearDown(self):
+        self._cfg.__exit__(None, None, None)
         shutil.rmtree(self.tmp)
 
     def test_same_commit_builds_byte_identical_zips(self):
@@ -63,13 +89,87 @@ class BuildAndVerify(unittest.TestCase):
             fh.writelines(lines)
         self.assertTrue(any('omochix-core.php is in the zip but not in the manifest' in p for p in verify.verify('HEAD', self.tmp)))
 
-    def test_plan_scope_matches_the_approved_order(self):
-        plan, _, problems = planmod.make_plan('HEAD')
-        self.assertEqual([], problems)
-        self.assertEqual(29, len(plan['steps']))
-        self.assertEqual(6, sum(1 for s in plan['steps'] if s['action'] == 'replace'))
-        self.assertEqual(['plugins/omochix-core/omochix-core.php'], [s['target'] for s in plan['steps'] if s['n'] == 14])
-        self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
+
+
+class ReleaseExpectations(unittest.TestCase):
+    """Every release config (the current one and the named ones that have expectations) against its own commit
+    and against the hand-recorded expectations in tests/release/expected/, never against itself."""
+
+    def releases(self):
+        names = sorted(f for f in os.listdir(EXPECTED) if f.endswith('.json'))
+        self.assertIn('release.json', names)
+        self.assertIn(BOTH_PACKAGES, names)
+        for name in names:
+            with open(os.path.join(EXPECTED, name), encoding='utf-8') as fh:
+                yield name, json.load(fh)
+
+    def test_each_release_plan_matches_its_expectations(self):
+        for name, exp in self.releases():
+            with self.subTest(release=name), release_config(name):
+                cfg = rl.load_config()
+                self.assertEqual(exp['release'], cfg['release'])
+                plan, packages, problems = planmod.make_plan(exp['commit'])
+                self.assertEqual([], problems)
+                self.assertEqual(exp['steps'], len(plan['steps']))
+                self.assertEqual(sorted(exp['packages']), sorted(plan['packages']))
+                changed = sorted(f"{s['package']}:{s['path']}" for s in plan['steps'])
+                self.assertEqual(exp['changed_paths_sha256'], rl.sha256_bytes(''.join(c + '\n' for c in changed).encode()))
+                for key, want in exp['packages'].items():
+                    mine = [s for s in plan['steps'] if s['package'] == key]
+                    self.assertEqual(want['add'], sum(1 for s in mine if s['action'] == 'add'), key)
+                    self.assertEqual(want['replace'], sum(1 for s in mine if s['action'] == 'replace'), key)
+                    self.assertEqual(want['files'], len(packages[key]['files']), key)
+                    self.assertEqual(exp['versions'][key], plan['packages'][key]['version'], key)
+                    self.assertEqual(want['baseline_sha256'], rl.sha256_file(os.path.join(ROOT, cfg['packages'][key]['baseline'])), key)
+                self.assertEqual(exp['gates'], list(plan['gates']))
+                self.assertEqual(exp['rollback']['count'], len(plan['rollback_order']))
+                if BOTH_PACKAGES == name:
+                    self.assertEqual(['plugins/omochix-core/omochix-core.php'], [s['target'] for s in plan['steps'] if s['n'] == 14])
+                    self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
+
+    def test_packages_the_release_must_not_touch_are_identical_to_production(self):
+        for name, exp in self.releases():
+            for key, u in exp['unchanged'].items():
+                with self.subTest(release=name, package=key):
+                    self.assertEqual(u['baseline_sha256'], rl.sha256_file(os.path.join(ROOT, u['baseline'])))
+                    base = rl.read_manifest(os.path.join(ROOT, u['baseline']))
+                    now = {p: rl.sha256_bytes(d) for p, d in rl.tree_files(rl.commit_info(exp['commit'])[0], u['dir']).items()}
+                    self.assertEqual(base, now)
+
+    def test_current_release_builds_reproducibly_and_matches_git(self):
+        with open(os.path.join(EXPECTED, 'release.json'), encoding='utf-8') as fh:
+            exp = json.load(fh)
+        a, b = tempfile.mkdtemp(), tempfile.mkdtemp()
+        try:
+            with release_config('release.json'):
+                ra, rb = build.build(exp['commit'], a), build.build(exp['commit'], b)
+                self.assertEqual(sorted(exp['packages']), sorted(ra['packages']))
+                for key, p in ra['packages'].items():
+                    with open(os.path.join(a, p['zip']), 'rb') as x, open(os.path.join(b, rb['packages'][key]['zip']), 'rb') as y:
+                        self.assertEqual(x.read(), y.read(), 'two builds of the same commit differ')
+                    with zipfile.ZipFile(os.path.join(a, p['zip'])) as zf:
+                        self.assertEqual(exp['packages'][key]['files'], sum(1 for i in zf.infolist() if not i.is_dir()))
+                self.assertEqual([], verify.verify(exp['commit'], a))
+        finally:
+            shutil.rmtree(a)
+            shutil.rmtree(b)
+
+    # The scope check refuses configs that do not match the tree (independent of the expectations above).
+    def test_plan_refuses_a_step_missing_from_the_order_and_a_step_that_does_not_change(self):
+        with release_config('release.json'):
+            cfg = rl.load_config()
+        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'inc/nav.php']])
+        extra = dict(cfg, order=[['theme', '404.php']] + cfg['order'])
+        for bad, needle in ((dropped, 'inc/nav.php differs from production but is not in the approved order'),
+                            (extra, '404.php is in the order but does not change')):
+            with self.subTest(needle=needle):
+                orig = rl.load_config
+                rl.load_config = lambda bad=bad: bad
+                try:
+                    _, _, problems = planmod.make_plan('HEAD')
+                finally:
+                    rl.load_config = orig
+                self.assertTrue(any(needle in p for p in problems), problems)
 
 
 class Fixture(unittest.TestCase):
@@ -337,8 +437,11 @@ class ArchiveAttacks(unittest.TestCase):
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
+        self._cfg = release_config(BOTH_PACKAGES)
+        self._cfg.__enter__()
 
     def tearDown(self):
+        self._cfg.__exit__(None, None, None)
         shutil.rmtree(self.tmp)
 
     def _zip(self, entries):

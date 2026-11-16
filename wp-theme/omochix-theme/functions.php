@@ -18,10 +18,14 @@ require_once get_theme_file_path('/inc/learn-svg-motion.php');
 require_once get_theme_file_path('/inc/logo-motion.php');
 require_once get_theme_file_path('/inc/learn-practice.php');
 require_once get_theme_file_path('/inc/ai-tool-detail.php');
+require_once get_theme_file_path('/inc/nav.php');
+require_once get_theme_file_path('/inc/icons.php');
+require_once get_theme_file_path('/inc/search-suggest.php');
 require_once get_theme_file_path('/inc/editorial-home.php');
 require_once get_theme_file_path('/inc/shell.php');
 require_once get_theme_file_path('/inc/article-v2.php');
 require_once get_theme_file_path('/inc/labs.php');
+require_once get_theme_file_path('/inc/omochix-loader.php'); // Logo Assembly loader; the page overlay is OFF unless the omochix_loader_page_overlay filter returns true
 
 function omochix_setup() {
     add_theme_support('title-tag');

@@ -1,0 +1,51 @@
+/*
+ * Shared editorial footer (.ed-footer) - the ONE definition used by the front page and every shell page.
+ * Before: the same rules lived in editorial-home.css AND (mirrored) in shell.css, and had drifted: the front page's
+ * legal links were 15-20px tall, "© year" and the legal links sat in one wrapping flex row, and nothing respected the
+ * iPhone safe area or the fixed bottom bars of Learn practice pages.
+ * PC (>= 601px) look is unchanged. Dark footer colours are fixed (approved design).
+ */
+.ed-footer {
+    --color-bg: #19181d; --color-text: #f5f5f7; --color-muted: #b9b7c1;
+    --ed-foot-pad-x: clamp(22px, 4vw, 56px);
+    background: #19181d; color: #f5f5f7; margin-top: 0;
+    padding: 38px max(var(--ed-foot-pad-x), env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(var(--ed-foot-pad-x), env(safe-area-inset-left));
+    overflow-wrap: anywhere;
+}
+.ed-footer a { text-decoration: none; }
+.ed-footer a:hover { text-decoration: underline; text-underline-offset: .22em; }
+.ed-footer :where(a, button):focus-visible { outline: 2px solid #d5baff; outline-offset: 4px; }
+.ed-footer-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.ed-footer-top img { display: block; width: 120px; height: auto; }
+.ed-footer-top > a { display: inline-flex; align-items: center; min-height: 44px; }
+.ed-footer .social-links { display: flex; flex-wrap: wrap; gap: 16px; padding: 0; margin: 0; list-style: none; }
+.ed-footer .social-links a { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: white; }
+.ed-footer .social-links a:hover { color: #d5baff; text-decoration: none; }
+.ed-footer .social-links a[aria-label*="YouTube"] svg { width: 26px; }
+.ed-footer .social-links svg { width: 22px; height: 22px; fill: currentColor; }
+.ed-footer .social-links span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.ed-footer-nav { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 22px; }
+.ed-footer-nav a { min-height: 44px; display: flex; align-items: center; font-size: 13px; }
+.ed-footer-future { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 12px; color: #b9b7c1; margin-block: 16px 24px; }
+.ed-footer-future small { margin-left: 6px; font-size: 10px; }
+
+/* Bottom line: copyright and legal links are separate blocks (copy = <p>, legal = <nav>). */
+.ed-footer-bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 24px; padding-top: 18px; border-top: 1px solid #39363f; color: #b9b7c1; font-size: 11px; }
+.ed-footer-copy { margin: 0; line-height: 1.8; }
+.ed-footer-legal { display: flex; flex-wrap: wrap; gap: 0 22px; min-width: 0; }
+.ed-footer-legal a { display: inline-flex; align-items: center; min-height: 44px; font-size: 12px; line-height: 1.4; }
+
+@media (max-width: 600px) {
+    .ed-footer { padding-top: 30px; }
+    .ed-footer-top { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .ed-footer .social-links { margin-left: -12px; gap: 10px; }
+    .ed-footer-nav { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; }
+    .ed-footer-bottom { flex-direction: column; align-items: flex-start; gap: 0; padding-top: 6px; }
+    .ed-footer-legal { order: -1; width: 100%; flex-direction: column; gap: 0; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #2c2a31; }
+    .ed-footer-legal a { min-height: 44px; width: 100%; font-size: 13px; }
+    .ed-footer-copy { padding-top: 4px; }
+}
+/* A fixed bottom bar (Learn practice pages, below 1024px) must never cover the legal links. */
+@media (max-width: 1023px) {
+    body:has(.practice__sticky) .ed-footer { padding-bottom: calc(24px + 72px + env(safe-area-inset-bottom)); }
+}

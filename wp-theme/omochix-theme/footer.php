@@ -15,18 +15,15 @@ if (function_exists('omochix_shell_enabled') && omochix_shell_enabled()) {
     return;
 }
 
-$omochix_footer_posts_page_id  = (int) get_option('page_for_posts');
-$omochix_footer_posts_page     = $omochix_footer_posts_page_id ? get_post($omochix_footer_posts_page_id) : null;
-$omochix_footer_ai_dev_category = get_category_by_slug('ai-development');
-// Public navigation must contain published destinations only, preventing links to drafts or missing pages.
+// Public navigation must contain published destinations only (registry: inc/nav.php).
+$omochix_footer_menu = [];
+foreach (omochix_nav_items('footer', ['group' => 'primary']) as $omochix_footer_item) {
+    $omochix_footer_menu[$omochix_footer_item['label']] = $omochix_footer_item['url'];
+}
+$omochix_footer_menu[__('カテゴリー', 'omochix')] = omochix_get_published_page_url('category');
+$omochix_footer_menu[__('About', 'omochix')]    = omochix_get_published_page_url('about');
 $omochix_footer_links = [
-    __('メニュー', 'omochix') => [
-        __('AIツール', 'omochix')  => get_post_type_archive_link('ai_tool'),
-        __('AIニュース', 'omochix') => $omochix_footer_posts_page instanceof WP_Post && 'publish' === $omochix_footer_posts_page->post_status ? get_permalink($omochix_footer_posts_page) : '',
-        __('AI開発', 'omochix')    => $omochix_footer_ai_dev_category instanceof WP_Term ? omochix_get_category_url($omochix_footer_ai_dev_category) : '',
-        __('カテゴリー', 'omochix')  => omochix_get_published_page_url('category'),
-        __('About', 'omochix')     => omochix_get_published_page_url('about'),
-    ],
+    __('メニュー', 'omochix') => $omochix_footer_menu,
     __('サポート', 'omochix') => [
         __('お問い合わせ', 'omochix')       => omochix_get_published_page_url('contact'),
         __('プライバシーポリシー', 'omochix') => get_privacy_policy_url() ?: omochix_get_published_page_url('privacy-policy'),
