@@ -14,6 +14,7 @@ run http      php tests/design-library/http-check.php
 run isolation node tests/design-library/browser/isolation.js
 run firefox   node tests/design-library/browser/firefox.js
 run ui        node tests/design-library/browser/ui.js
+run preview   node tests/design-library/browser/preview.js
 run perf      node tests/design-library/browser/perf.js
 run heal      php tests/design-library/rewrite-heal-check.php   # DL_ROLLBACK_THEME / DL_MYSQL optional
 if [ -n "${1:-}" ]; then run regression php tests/design-library/regression-snapshot.php --compare "$1"; fi

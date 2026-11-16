@@ -156,11 +156,14 @@
           "bento-saas"
         ],
         "motion": [
-          "gradient-shift",
           "floating-blobs",
+          "gradient-shift",
           "light-sweep"
         ],
-        "learn": [],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
         "prompts": []
       },
       "audit": {
@@ -327,11 +330,14 @@
       "related": {
         "designs": [],
         "motion": [
-          "reveal-lines",
+          "fade-up",
           "underline-draw",
-          "mask-reveal"
+          "check-draw"
         ],
-        "learn": [],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
         "prompts": []
       },
       "audit": {
@@ -500,11 +506,14 @@
       "related": {
         "designs": [],
         "motion": [
+          "dolly-in",
           "orbit",
-          "tilt-card",
-          "dolly-in"
+          "scroll-snap-cards"
         ],
-        "learn": [],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
         "prompts": []
       },
       "audit": {
@@ -675,11 +684,14 @@
           "liquid-glass"
         ],
         "motion": [
-          "count-up",
           "stagger",
+          "count-up",
           "scroll-fade-in"
         ],
-        "learn": [],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
         "prompts": []
       },
       "audit": {
@@ -837,10 +849,13 @@
       "related": {
         "designs": [],
         "motion": [
-          "stagger",
-          "underline-draw"
+          "split-letters",
+          "check-draw",
+          "pop-in"
         ],
-        "learn": [],
+        "learn": [
+          "learn/svg-motion"
+        ],
         "prompts": []
       },
       "audit": {
@@ -990,8 +1005,8 @@
       "related": {
         "designs": [],
         "motion": [
-          "count-up",
-          "stagger"
+          "stagger",
+          "fade-up"
         ],
         "learn": [],
         "prompts": []

@@ -69,8 +69,6 @@
 .dl-detail__head { margin-bottom: 28px; }
 .dl-stage { margin: 0; border: 1px solid var(--color-line); border-radius: var(--dl-radius); background: var(--color-surface); overflow: hidden; }
 .dl-stage__bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--color-line); }
-.dl-stage__bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--color-line); }
-.dl-stage__bar p { margin: 0 0 0 10px; color: var(--color-muted); font-size: 12px; }
 .dl-stage__view { position: relative; aspect-ratio: 16 / 10; max-height: 78vh; width: 100%; background: #0d0d10; }
 .dl-stage__frame, .dl-stage__poster { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 .dl-stage__poster { object-fit: contain; }
@@ -129,6 +127,32 @@
 .dl-related { padding: 20px; border: 1px solid var(--color-line); border-radius: var(--dl-radius); }
 .dl-related h2 { margin: 0 0 8px; font-size: 16px; }
 .dl-related h3 { margin: 14px 0 6px; font-size: 13px; color: var(--color-muted); }
+
+/* D2-A: viewport switch, controls, full screen. Without JS none of this applies (the stage stays a fluid iframe). */
+.dl-stage__bar { flex-wrap: wrap; row-gap: 8px; }
+.dl-stage__dots { display: inline-flex; gap: 6px; }
+.dl-stage__dots > span { width: 10px; height: 10px; border-radius: 50%; background: var(--color-line); }
+.dl-stage__title { margin: 0 auto 0 10px; color: var(--color-muted); font-size: 12px; }
+.dl-vp { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--color-bg); border: 1px solid var(--color-line); }
+.dl-vp__btn { min-height: 32px; padding: 4px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--color-muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.dl-vp__btn[aria-checked="true"] { background: var(--color-primary); color: #fff; }
+.dl-vp__btn:focus-visible { outline: 2px solid var(--dl-accent); outline-offset: 2px; }
+.dl-vp__px { font-weight: 500; font-size: 11px; }
+.dl-stage__canvas { position: absolute; inset: 0; }
+.dl-stage.is-sized .dl-stage__view { aspect-ratio: auto; max-height: none; display: flex; justify-content: center; align-items: flex-start; overflow: hidden; }
+.dl-stage.is-sized .dl-stage__canvas { position: relative; inset: auto; flex: none; overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08); }
+.dl-stage.is-sized .dl-stage__frame { position: absolute; left: 0; top: 0; right: auto; bottom: auto; transform-origin: 0 0; background: #fff; }
+.dl-stage__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px 0; }
+.dl-stage__controls .dl-btn[aria-pressed="true"] { border-color: var(--dl-accent); }
+.dl-stage__live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html.dl-noscroll, html.dl-noscroll body { overflow: hidden; }
+.dl-stage.is-full { position: fixed; inset: 0; z-index: 100000; display: flex; flex-direction: column; width: 100vw; height: 100vh; height: 100dvh; margin: 0; border: 0; border-radius: 0; background: #0d0d10; color: #f5f5f7; }
+.dl-stage.is-full .dl-stage__bar, .dl-stage.is-full .dl-stage__controls, .dl-stage.is-full .dl-stage__caption { flex: none; background: #17171b; border-color: #2a2a31; color: #c9c9d1; }
+.dl-stage.is-full .dl-stage__controls { padding: 10px 16px; }
+.dl-stage.is-full .dl-stage__caption { display: none; }
+.dl-stage.is-full .dl-stage__view { flex: 1 1 auto; min-height: 0; height: auto; align-items: center; padding: 12px; box-sizing: border-box; }
+.dl-stage.is-full .dl-btn { background: #24242b; color: #f5f5f7; border-color: #3a3a44; }
+.dl-stage:fullscreen { width: 100vw; height: 100vh; }
 
 @media (max-width: 960px) {
     .dl-filters { grid-template-columns: 1fr 1fr; }

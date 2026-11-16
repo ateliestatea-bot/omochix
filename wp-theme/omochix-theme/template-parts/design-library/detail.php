@@ -67,20 +67,49 @@ $omx_video   = $omx_item['video'] ?? null;
                 </figcaption>
             </figure>
         <?php else : ?>
-            <figure class="dl-stage" data-dl-stage data-state="<?php echo '' !== $omx_demo ? 'loading' : 'poster'; ?>">
-                <div class="dl-stage__bar" aria-hidden="true"><span></span><span></span><span></span><p><?php echo esc_html($omx_item['title']); ?></p></div>
-                <div class="dl-stage__view">
+            <?php
+            $omx_vps = [
+                'desktop' => ['label' => __('PC', 'omochix'), 'w' => 1280, 'h' => 800],
+                'tablet'  => ['label' => __('タブレット', 'omochix'), 'w' => 834, 'h' => 1112],
+                'mobile'  => ['label' => __('スマホ', 'omochix'), 'w' => 390, 'h' => 844],
+            ];
+            $omx_vps = array_intersect_key($omx_vps, array_flip($omx_item['preview']['viewports']));
+            ?>
+            <figure class="dl-stage dl-stage--web" data-dl-stage data-state="<?php echo '' !== $omx_demo ? 'loading' : 'poster'; ?>" aria-label="<?php echo esc_attr(sprintf(__('%sのプレビュー', 'omochix'), $omx_item['title'])); ?>">
+                <div class="dl-stage__bar">
+                    <span class="dl-stage__dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                    <p class="dl-stage__title"><?php echo esc_html($omx_item['title']); ?></p>
+                    <?php if ('' !== $omx_demo && count($omx_vps) > 1) : ?>
+                        <div class="dl-vp" role="radiogroup" aria-label="<?php esc_attr_e('表示サイズ', 'omochix'); ?>" data-dl-viewports hidden>
+                            <?php $omx_first = true; foreach ($omx_vps as $omx_key => $omx_vp) : ?>
+                                <button type="button" role="radio" class="dl-vp__btn" data-vp="<?php echo esc_attr($omx_key); ?>" data-w="<?php echo esc_attr((string) $omx_vp['w']); ?>" data-h="<?php echo esc_attr((string) $omx_vp['h']); ?>"
+                                    aria-checked="<?php echo $omx_first ? 'true' : 'false'; ?>" tabindex="<?php echo $omx_first ? '0' : '-1'; ?>"><?php echo esc_html($omx_vp['label']); ?> <span class="dl-vp__px"><?php echo esc_html($omx_vp['w'] . 'px'); ?></span></button>
+                            <?php $omx_first = false; endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="dl-stage__view" data-dl-view>
                     <?php if ('' !== $omx_demo) : ?>
-                        <iframe class="dl-stage__frame" data-dl-demo src="<?php echo esc_url($omx_demo); ?>" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer"
-                            title="<?php echo esc_attr(sprintf(__('%sのライブデモ', 'omochix'), $omx_item['title'])); ?>"></iframe>
+                        <div class="dl-stage__canvas" data-dl-canvas>
+                            <iframe class="dl-stage__frame" data-dl-demo src="<?php echo esc_url($omx_demo); ?>" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer"
+                                title="<?php echo esc_attr(sprintf(__('%sのライブデモ', 'omochix'), $omx_item['title'])); ?>"></iframe>
+                        </div>
                     <?php else : ?>
                         <img class="dl-stage__poster" src="<?php echo esc_url($omx_poster); ?>" width="1280" height="800" alt="<?php echo esc_attr(sprintf(__('%sの静止画', 'omochix'), $omx_item['title'])); ?>">
                     <?php endif; ?>
                 </div>
+                <?php if ('' !== $omx_demo) : ?>
+                    <div class="dl-stage__controls" data-dl-controls hidden>
+                        <button type="button" class="dl-btn" data-dl-toggle aria-pressed="false"><span data-dl-toggle-label><?php esc_html_e('一時停止', 'omochix'); ?></span></button>
+                        <button type="button" class="dl-btn" data-dl-restart><?php esc_html_e('最初から再生', 'omochix'); ?></button>
+                        <button type="button" class="dl-btn" data-dl-fullscreen aria-pressed="false"><span data-dl-fullscreen-label><?php esc_html_e('全画面', 'omochix'); ?></span></button>
+                        <span class="dl-stage__live" role="status" data-dl-live></span>
+                    </div>
+                <?php endif; ?>
                 <figcaption class="dl-stage__caption">
                     <span data-dl-status><?php echo '' !== $omx_demo ? esc_html__('ライブデモはサイト本体から切り離した環境で動いています。', 'omochix') : esc_html__('ライブデモは安全性の確認が終わるまで公開していません。静止画を表示しています。', 'omochix'); ?></span>
                     <?php if ('' !== $omx_demo) : ?>
-                        <a class="dl-btn" href="<?php echo esc_url($omx_demo); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('全画面で開く', 'omochix'); ?><span class="sr-only"><?php esc_html_e('（新しいタブ）', 'omochix'); ?></span></a>
+                        <a class="dl-btn" href="<?php echo esc_url($omx_demo); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('新しいタブで開く', 'omochix'); ?><span class="sr-only"><?php esc_html_e('（デモだけを全画面で表示）', 'omochix'); ?></span></a>
                     <?php endif; ?>
                 </figcaption>
             </figure>

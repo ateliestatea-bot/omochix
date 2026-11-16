@@ -134,6 +134,32 @@ check('related: Motion Gallery links need the gallery (not loaded here) -> none'
 $it['motionStudio'] = ['templateId' => 'rag-intro', 'status' => 'verified'];
 check('Motion Studio: no URL even for a verified mapping (no editor exists)', '' === omochix_design_motion_studio_url($it));
 
+// ------------------------------------------------------------------ D2-A: indexing, sitemap, JSON-LD
+$GLOBALS['stub']['env'] = 'local'; stub_page('publish');
+$items = omochix_design_get_catalog()['items'];
+check('index local: verified-local works are indexable here', omochix_design_is_indexable($items['liquid-glass']) && omochix_design_is_indexable($items['logo-reveal-short']));
+$u = $items['bento-saas']; $u['verification']['state'] = 'unverified';
+check('index: an unverified work is never indexable', !omochix_design_is_indexable($u));
+$GLOBALS['stub']['env'] = 'production';
+check('index production: verified-local works are NOT indexable (same rule as the demo)', !omochix_design_is_indexable($items['liquid-glass']) && [] === omochix_design_indexable_items('') && [] === omochix_design_sitemap_entries() && '' === omochix_design_sitemap_url());
+$p = $items['logo-reveal-short']; $p['verification']['state'] = 'verified-production';
+check('index production: a verified-production work is indexable', omochix_design_is_indexable($p));
+$GLOBALS['stub']['env'] = 'local';
+stub_page(null);
+check('sitemap: no design page -> no entries, no URL', [] === omochix_design_sitemap_entries() && '' === omochix_design_sitemap_url());
+stub_page('publish');
+$e = omochix_design_sitemap_entries();
+$locs = array_column($e, 'loc');
+check('sitemap: 2 list pages + 6 works, Web first, no demo URL, no top page (Slim SEO lists it)', 8 === count($e) && 'https://example.test/design/web/' === $locs[0] && in_array('https://example.test/design/video/logo-reveal-short/', $locs, true) && !preg_grep('#/design/demo/#', $locs) && !in_array('https://example.test/design/', $locs, true));
+check('sitemap: lastmod is the verification date', '2026-11-15' === $e[1]['lastmod'] && '2026-11-16' === $e[5]['lastmod']);
+$xml = omochix_design_sitemap_xml([['loc' => 'https://example.test/design/web/"><x>', 'lastmod' => '2026-11-16']]);
+check('sitemap: XML is escaped and well formed', false === strpos($xml, '<x>') && false !== @simplexml_load_string($xml));
+$cw = omochix_design_schema_entity($items['bento-saas']);
+$vo = omochix_design_schema_entity($items['data-chart-explainer']);
+check('schema: Web work -> CreativeWork with url, image, author, dateModified', 'CreativeWork' === $cw['@type'] && 'https://example.test/design/web/bento-saas/#work' === $cw['@id'] && false !== strpos($cw['image'], 'posters/bento-saas.webp') && 'OmochiX' === $cw['author']['name'] && '2026-11-15' === $cw['dateModified']);
+check('schema: video work -> VideoObject with contentUrl, thumbnail, ISO duration, uploadDate', 'VideoObject' === $vo['@type'] && 'PT8S' === $vo['duration'] && false !== strpos($vo['contentUrl'], 'videos/data-chart-explainer.mp4') && '2026-11-16' === $vo['uploadDate'] && 1920 === $vo['width']);
+check('schema: no demo URL and no HTML in the entities', false === strpos(json_encode([$cw, $vo]), '/design/demo/') && false === strpos(json_encode([$cw, $vo]), '<'));
+
 // ------------------------------------------------------------------ URLs
 $lg = omochix_design_get_catalog()['items']['liquid-glass']; $lv = omochix_design_get_catalog()['items']['logo-reveal-short'];
 check('urls: list, detail, demo for Web', 'https://example.test/design/web/' === omochix_design_medium_url('web') && 'https://example.test/design/web/liquid-glass/' === omochix_design_item_url($lg) && 'https://example.test/design/demo/web/liquid-glass/' === omochix_design_demo_url($lg));

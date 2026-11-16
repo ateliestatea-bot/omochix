@@ -66,6 +66,9 @@ function burst(array $paths, $n = 40) {
     return $out;
 }
 function non200(array $res) { $bad = []; foreach ($res as $p => $codes) { foreach ($codes as $c) { if (200 !== $c) { $bad[] = "$p $c"; } } } return $bad; }
+// The rule version the theme expects (read from the code, so a version bump does not break this test).
+preg_match("/const OMOCHIX_DESIGN_REWRITE_VERSION\\s*=\\s*'([^']+)'/", (string) file_get_contents(dirname(__DIR__, 2) . '/wp-theme/omochix-theme/inc/design-library.php'), $vm);
+$VER = $vm[1] ?? '?';
 $PATHS = ['/design/web/', '/design/video/logo-reveal-short/', '/about/', '/design/', '/design/demo/web/bento-saas/'];
 
 // ---------------------------------------------------------------- statement counting (optional)
@@ -94,7 +97,7 @@ if ($counting) {
 
 // ---------------------------------------------------------------- 1. normal state
 status('/');
-check('setup: our 3 rules are stored and the version is 2', 3 === design_rules() && '2' === shortinit('echo get_option("omochix_design_rewrite_version");'));
+check("setup: our 3 rules are stored and the version is $VER", 3 === design_rules() && $VER === shortinit('echo get_option("omochix_design_rewrite_version");'));
 $o = glog_offset(); $codes = [];
 foreach (array_merge($PATHS, $PATHS, $PATHS, $PATHS, $PATHS, $PATHS) as $p) { $codes[] = status($p); }
 $c = glog_counts($o);
@@ -143,7 +146,7 @@ foreach ([
 ] as $label => $code) {
     shortinit($code);
     $bad = non200(burst($PATHS, 40));
-    check("$label: 40 concurrent requests all 200, version 2 and our rules stored", [] === $bad && 3 === design_rules() && '2' === shortinit('echo get_option("omochix_design_rewrite_version");') && false !== strpos(shortinit('echo implode(" ", array_keys((array) get_option("rewrite_rules")));'), '^design/(web|video|app|components)/?$'), implode(', ', array_slice($bad, 0, 5)));
+    check("$label: 40 concurrent requests all 200, version $VER and our rules stored", [] === $bad && 3 === design_rules() && $VER === shortinit('echo get_option("omochix_design_rewrite_version");') && false !== strpos(shortinit('echo implode(" ", array_keys((array) get_option("rewrite_rules")));'), '^design/(web|video|app|components)/?$'), implode(', ', array_slice($bad, 0, 5)));
 }
 
 // ---------------------------------------------------------------- 5. rollback and deploy again
@@ -154,7 +157,7 @@ if ('' === $old || !is_file($old . '/style.css')) {
     full_wp('flush_rewrite_rules(false);'); // "regenerate permalinks" on the rolled-back theme (Runbook)
     check('rollback: the old theme (no Design Library) is active and the stored rules no longer contain ours', 0 === design_rules() && !is_file($old . '/inc/design-library.php'));
     check('rollback: /design/web/ is a 404 under the old theme (expected)', 404 === status('/design/web/'));
-    check('rollback: the version option still says 2 (what made D1 stay broken)', '2' === shortinit('echo get_option("omochix_design_rewrite_version");'));
+    check("rollback: the version option still says $VER (what made D1 stay broken)", $VER === shortinit('echo get_option("omochix_design_rewrite_version");'));
     @unlink($theme_link); symlink($theme_real, $theme_link); // deploy this theme again
     $bad = non200(burst($PATHS, 40));
     check('redeploy: 40 concurrent requests right after the deploy all succeed, rules stored', [] === $bad && 3 === design_rules(), implode(', ', array_slice($bad, 0, 5)));
@@ -167,6 +170,7 @@ if ('' === $old || !is_file($old . '/style.css')) {
     check('rollback + redeploy repeated 4 more times: no failed request', [] === $bad, implode(', ', array_slice($bad, 0, 5)));
 }
 
-check('end: our rules stored, version 2, theme link is this worktree', 3 === design_rules() && '2' === shortinit('echo get_option("omochix_design_rewrite_version");') && readlink($theme_link) === $theme_real);
+check("end: our rules stored, version $VER, theme link is this worktree", 3 === design_rules() && $VER === shortinit('echo get_option("omochix_design_rewrite_version");') && readlink($theme_link) === $theme_real);
+check('end: the sitemap rule (^design-sitemap\\.xml$) is stored too and the sitemap answers', false !== strpos(shortinit('echo implode(" ", array_keys((array) get_option("rewrite_rules")));'), '^' . preg_quote('design-sitemap.xml', '#') . '$') && 200 === status('/design-sitemap.xml')); // the key is built with preg_quote, like the theme
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

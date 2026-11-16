@@ -15,7 +15,11 @@
  *  - a request with "X-OMX-Test-Block-Headers: 1" makes the demo endpoint
  *    believe it cannot send headers (B9 fail-closed check);
  *  - a request with "X-OMX-Test-Hsts: 1" gets an HSTS header queued early, to
- *    check the demo endpoint keeps headers it does not own.
+ *    check the demo endpoint keeps headers it does not own;
+ *  - a request with "X-OMX-Test-Schema: 1" prints, in <head>, what Slim SEO
+ *    would print from its schema graph: a minimal WebPage + BreadcrumbList
+ *    passed through the real "slim_seo_schema_graph" filter (Slim SEO itself
+ *    is not installed on the throwaway site — EMULATION, not Slim SEO).
  * The hooks it uses can only add the probe or make the endpoint fail; none
  * can widen the demo CSP (that string has no filter).
  */
@@ -106,3 +110,16 @@ add_action('send_headers', static function () {
         header('Strict-Transport-Security: max-age=60');
     }
 });
+
+add_action('wp_head', static function () {
+    if ('1' !== ($_SERVER['HTTP_X_OMX_TEST_SCHEMA'] ?? '') || defined('SLIM_SEO_VER')) {
+        return;
+    }
+    $url   = (string) wp_get_canonical_url();
+    $graph = [
+        ['@type' => 'WebPage', '@id' => $url . '#webpage', 'url' => $url],
+        ['@type' => 'BreadcrumbList', '@id' => $url . '#breadcrumblist', 'itemListElement' => []],
+    ];
+    $graph = apply_filters('slim_seo_schema_graph', $graph);
+    echo '<script type="application/ld+json" id="omx-test-schema-emulation">' . wp_json_encode(['@context' => 'https://schema.org', '@graph' => $graph], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>' . "\n";
+}, 99);

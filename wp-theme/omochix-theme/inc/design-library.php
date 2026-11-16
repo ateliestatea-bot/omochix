@@ -27,7 +27,9 @@ const OMOCHIX_DESIGN_PATH             = 'design';
 const OMOCHIX_DESIGN_KIND_VAR         = 'omx_design_kind';
 const OMOCHIX_DESIGN_SLUG_VAR         = 'omx_design_slug';
 const OMOCHIX_DESIGN_DEMO_VAR         = 'omx_design_demo';
-const OMOCHIX_DESIGN_REWRITE_VERSION  = '2';
+const OMOCHIX_DESIGN_SITEMAP_VAR      = 'omx_design_sitemap';
+const OMOCHIX_DESIGN_SITEMAP_PATH     = 'design-sitemap.xml';
+const OMOCHIX_DESIGN_REWRITE_VERSION  = '3'; // 3: /design-sitemap.xml
 const OMOCHIX_DESIGN_CATALOG_VERSION  = 2;
 /** Cards that may play their loop at the same time (D0 §2.1). */
 const OMOCHIX_DESIGN_MAX_PLAYING      = 2;
@@ -697,12 +699,31 @@ function omochix_design_demo_allowed(array $item) {
     if ('web' !== ($item['medium'] ?? '') || !omochix_design_is_public('web', $item['slug'])) {
         return false;
     }
+    return omochix_design_verified_here($item);
+}
+
+/** Whether the item's verification state counts in this environment (production / staging / unset: verified-production only). */
+function omochix_design_verified_here(array $item) {
     $state = omochix_design_verification_state($item);
     $env   = function_exists('wp_get_environment_type') ? wp_get_environment_type() : 'production';
     if (in_array($env, ['local', 'development'], true)) {
         return in_array($state, ['verified-local', 'verified-production'], true);
     }
     return 'verified-production' === $state;
+}
+
+/**
+ * Whether a work may be indexed (detail page, sitemap, JSON-LD): public and
+ * verified for this environment — the same rule as the live demo, so a work
+ * only checked locally stays noindex in production.
+ */
+function omochix_design_is_indexable(array $item) {
+    return omochix_design_is_public($item['medium'] ?? '', $item['slug'] ?? '') && omochix_design_verified_here($item);
+}
+
+/** Indexable works of a medium ('' = all public mediums), catalog order. */
+function omochix_design_indexable_items($medium = '') {
+    return array_filter(omochix_design_get_items($medium), 'omochix_design_is_indexable');
 }
 
 /**
@@ -916,19 +937,20 @@ add_filter('query_vars', static function ($vars) {
     $vars[] = OMOCHIX_DESIGN_KIND_VAR;
     $vars[] = OMOCHIX_DESIGN_SLUG_VAR;
     $vars[] = OMOCHIX_DESIGN_DEMO_VAR;
+    $vars[] = OMOCHIX_DESIGN_SITEMAP_VAR;
     return $vars;
 });
 
 /**
- * The three Design Library query vars are internal: they may only come from
+ * The Design Library query vars are internal: they may only come from
  * the rewrite rules. If a request carries one in its query string (or form
  * body), it is a 404 — otherwise "?omx_design_demo=1" would turn a detail URL
  * into the demo document, and "?omx_design_slug=" a list URL into a detail.
  */
 add_filter('request', static function ($query_vars) {
-    foreach ([OMOCHIX_DESIGN_KIND_VAR, OMOCHIX_DESIGN_SLUG_VAR, OMOCHIX_DESIGN_DEMO_VAR] as $var) {
+    foreach ([OMOCHIX_DESIGN_KIND_VAR, OMOCHIX_DESIGN_SLUG_VAR, OMOCHIX_DESIGN_DEMO_VAR, OMOCHIX_DESIGN_SITEMAP_VAR] as $var) {
         if (isset($_GET[$var]) || isset($_POST[$var])) { // phpcs:ignore WordPress.Security.NonceVerification -- only detects the key to refuse it.
-            unset($query_vars[OMOCHIX_DESIGN_KIND_VAR], $query_vars[OMOCHIX_DESIGN_SLUG_VAR], $query_vars[OMOCHIX_DESIGN_DEMO_VAR]);
+            unset($query_vars[OMOCHIX_DESIGN_KIND_VAR], $query_vars[OMOCHIX_DESIGN_SLUG_VAR], $query_vars[OMOCHIX_DESIGN_DEMO_VAR], $query_vars[OMOCHIX_DESIGN_SITEMAP_VAR]);
             $query_vars['error'] = '404';
             return $query_vars;
         }
@@ -943,6 +965,7 @@ function omochix_design_register_rewrite_rules() {
     add_rewrite_rule("^$p/demo/$seg/([a-z0-9-]+)/?$", $page . '&' . OMOCHIX_DESIGN_DEMO_VAR . '=1&' . OMOCHIX_DESIGN_KIND_VAR . '=$matches[1]&' . OMOCHIX_DESIGN_SLUG_VAR . '=$matches[2]', 'top');
     add_rewrite_rule("^$p/$seg/([a-z0-9-]+)/?$", $page . '&' . OMOCHIX_DESIGN_KIND_VAR . '=$matches[1]&' . OMOCHIX_DESIGN_SLUG_VAR . '=$matches[2]', 'top');
     add_rewrite_rule("^$p/$seg/?$", $page . '&' . OMOCHIX_DESIGN_KIND_VAR . '=$matches[1]', 'top');
+    add_rewrite_rule('^' . preg_quote(OMOCHIX_DESIGN_SITEMAP_PATH, '#') . '$', 'index.php?' . OMOCHIX_DESIGN_SITEMAP_VAR . '=1', 'top');
 }
 add_action('init', 'omochix_design_register_rewrite_rules');
 
@@ -952,7 +975,7 @@ function omochix_design_rewrite_rules_present() {
         return true; // no rewrite rules in use; nothing to restore
     }
     $rules = get_option('rewrite_rules');
-    return is_array($rules) && isset($rules['^' . OMOCHIX_DESIGN_PATH . '/(web|video|app|components)/?$']);
+    return is_array($rules) && isset($rules['^' . OMOCHIX_DESIGN_PATH . '/(web|video|app|components)/?$'], $rules['^' . preg_quote(OMOCHIX_DESIGN_SITEMAP_PATH, '#') . '$']);
 }
 
 /**
@@ -1219,11 +1242,30 @@ add_filter('get_canonical_url', static function ($url, $post) {
     }
     return $url;
 }, 10, 2);
+/**
+ * Whether the current design view must not be indexed: a filtered list, a
+ * work that is not indexable here (not verified for this environment), or a
+ * list / top page without any indexable work.
+ */
+function omochix_design_view_noindex() {
+    $cur = omochix_design_current();
+    if ('none' === $cur['view']) {
+        return false;
+    }
+    if (omochix_design_is_filtered_list()) {
+        return true;
+    }
+    if ('detail' === $cur['view']) {
+        return !omochix_design_is_indexable($cur['item']);
+    }
+    return [] === omochix_design_indexable_items('list' === $cur['view'] ? $cur['medium'] : '');
+}
+
 add_filter('slim_seo_robots_index', static function ($indexed) {
-    return omochix_design_is_filtered_list() ? false : $indexed;
+    return omochix_design_view_noindex() ? false : $indexed;
 });
 add_filter('wp_robots', static function ($robots) {
-    if (omochix_design_is_filtered_list()) {
+    if (omochix_design_view_noindex()) {
         $robots['noindex'] = true;
         if (empty($robots['nofollow'])) {
             $robots['follow'] = true; // never "nofollow, follow" on a site that is not public
@@ -1254,6 +1296,179 @@ add_filter('single_post_title', static function ($title, $post) {
     }
     return $title;
 }, 10, 2);
+
+/* -------------------------------------------------------------------------
+ * Sitemap ("/design-sitemap.xml"): list pages and works that are indexable
+ * here. The page "/design/" itself is a normal page in Slim SEO's page
+ * sitemap and is not repeated; it leaves that sitemap while nothing is
+ * indexable. With nothing indexable the URL is a normal 404 and robots.txt
+ * does not mention it. Demo URLs are never listed (they send noindex).
+ * ---------------------------------------------------------------------- */
+
+/** @return array<int, array{loc: string, lastmod: string}> */
+function omochix_design_sitemap_entries() {
+    if (!omochix_design_page_id()) {
+        return [];
+    }
+    $out = [];
+    foreach (omochix_design_public_mediums() as $medium) {
+        $items = omochix_design_indexable_items($medium);
+        if (!$items) {
+            continue;
+        }
+        $dates = [];
+        $rows  = [];
+        foreach ($items as $item) {
+            $date    = (string) ($item['verification']['checked'] ?? $item['audit']['reviewed']);
+            $dates[] = $date;
+            $rows[]  = ['loc' => omochix_design_item_url($item), 'lastmod' => $date];
+        }
+        rsort($dates);
+        $out[] = ['loc' => omochix_design_medium_url($medium), 'lastmod' => $dates[0]];
+        $out   = array_merge($out, $rows);
+    }
+    return $out;
+}
+
+/** Public sitemap URL, or '' while nothing is indexable. */
+function omochix_design_sitemap_url() {
+    return omochix_design_sitemap_entries() ? home_url('/' . OMOCHIX_DESIGN_SITEMAP_PATH) : '';
+}
+
+function omochix_design_sitemap_xml(array $entries) {
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    foreach ($entries as $e) {
+        $xml .= "\t<url><loc>" . esc_url($e['loc']) . '</loc><lastmod>' . esc_html($e['lastmod']) . "</lastmod></url>\n";
+    }
+    return $xml . "</urlset>\n";
+}
+
+add_action('template_redirect', static function () {
+    if ('1' !== (string) get_query_var(OMOCHIX_DESIGN_SITEMAP_VAR, '')) {
+        return;
+    }
+    $entries = omochix_design_sitemap_entries();
+    if (!$entries) {
+        global $wp_query;
+        $wp_query->set_404();
+        status_header(404);
+        nocache_headers();
+        return;
+    }
+    if (!headers_sent()) {
+        status_header(200);
+        header('Content-Type: application/xml; charset=UTF-8');
+        header('X-Robots-Tag: noindex, follow');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: public, max-age=3600');
+    }
+    if ('HEAD' !== ($_SERVER['REQUEST_METHOD'] ?? 'GET')) {
+        echo omochix_design_sitemap_xml($entries); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in omochix_design_sitemap_xml().
+    }
+    exit;
+}, 0);
+
+/** Announce the sitemap in robots.txt (after Slim SEO), only while it exists and the site is public. */
+add_filter('robots_txt', static function ($output, $public) {
+    $url = $public ? omochix_design_sitemap_url() : '';
+    if ('' === $url || false !== stripos((string) $output, $url)) {
+        return $output;
+    }
+    return rtrim((string) $output, "\r\n") . "\nSitemap: " . $url . "\n";
+}, 10000, 2);
+
+/** The page "/design/" leaves Slim SEO's page sitemap while no work is indexable. */
+add_filter('slim_seo_sitemap_post_ignore', static function ($ignore, $post_id = 0) {
+    $id = $post_id instanceof WP_Post ? (int) $post_id->ID : (int) $post_id;
+    if ($id && $id === omochix_design_page_id()) {
+        return [] === omochix_design_indexable_items('');
+    }
+    return $ignore;
+}, 10, 2);
+
+/* -------------------------------------------------------------------------
+ * JSON-LD: added to Slim SEO's graph (Slim SEO already prints WebPage and
+ * BreadcrumbList from the breadcrumb links above), so nothing is duplicated.
+ * Detail: CreativeWork (Web) or VideoObject (video) as the page's main
+ * entity. Top / list: an ItemList of the indexable works. Nothing is added
+ * to a noindex view.
+ * ---------------------------------------------------------------------- */
+
+/** Schema entity of one work. */
+function omochix_design_schema_entity(array $item) {
+    $url    = omochix_design_item_url($item);
+    $date   = (string) ($item['verification']['checked'] ?? $item['audit']['reviewed']);
+    $poster = omochix_design_asset_url($item['posterFallback'] ?? $item['poster']);
+    $author = ['@type' => 'Organization', 'name' => $item['credits']['author']];
+    $tags   = [];
+    foreach (['use_cases' => omochix_design_use_cases(), 'motion_types' => omochix_design_motion_types(), 'technologies' => omochix_design_technologies()] as $field => $labels) {
+        foreach ($item[$field] as $v) {
+            $tags[] = $labels[$v];
+        }
+    }
+    if ('video' === $item['medium'] && !empty($item['video'])) {
+        $v = $item['video'];
+        return [
+            '@type'        => 'VideoObject',
+            '@id'          => $url . '#work',
+            'name'         => $item['title'],
+            'description'  => $item['description'],
+            'url'          => $url,
+            'thumbnailUrl' => [$poster],
+            'contentUrl'   => omochix_design_asset_url($v['mp4']),
+            'uploadDate'   => $date,
+            'duration'     => 'PT' . rtrim(rtrim(number_format((float) $v['seconds'], 2, '.', ''), '0'), '.') . 'S',
+            'width'        => $v['width'],
+            'height'       => $v['height'],
+            'inLanguage'   => 'ja',
+            'keywords'     => implode(', ', $tags),
+            'author'       => $author,
+        ];
+    }
+    return [
+        '@type'               => 'CreativeWork',
+        '@id'                 => $url . '#work',
+        'name'                => $item['title'],
+        'description'         => $item['description'],
+        'url'                 => $url,
+        'image'               => $poster,
+        'dateModified'        => $date,
+        'inLanguage'          => 'ja',
+        'keywords'            => implode(', ', $tags),
+        'isAccessibleForFree' => true,
+        'author'              => $author,
+    ];
+}
+
+/**
+ * @param array<int, array<string, mixed>> $graph Slim SEO's graph.
+ * @return array<int, array<string, mixed>>
+ */
+function omochix_design_schema_graph($graph) {
+    $cur = omochix_design_current();
+    if (!is_array($graph) || 'none' === $cur['view'] || omochix_design_view_noindex()) {
+        return $graph;
+    }
+    if ('detail' === $cur['view']) {
+        $main = omochix_design_schema_entity($cur['item']);
+    } else {
+        $page_url = 'list' === $cur['view'] ? omochix_design_medium_url($cur['medium']) : omochix_design_url();
+        $main     = ['@type' => 'ItemList', '@id' => $page_url . '#works', 'itemListElement' => []];
+        foreach (array_values(omochix_design_indexable_items('list' === $cur['view'] ? $cur['medium'] : '')) as $i => $item) {
+            $main['itemListElement'][] = ['@type' => 'ListItem', 'position' => $i + 1, 'url' => omochix_design_item_url($item), 'name' => $item['title']];
+        }
+        $main['numberOfItems'] = count($main['itemListElement']);
+    }
+    foreach ($graph as &$entity) {
+        if (isset($entity['@type']) && in_array($entity['@type'], ['WebPage', 'CollectionPage', 'ItemPage'], true)) {
+            $entity['mainEntity'] = ['@id' => $main['@id']];
+        }
+    }
+    unset($entity);
+    $graph[] = $main;
+    return $graph;
+}
+add_filter('slim_seo_schema_graph', 'omochix_design_schema_graph', 30);
 
 /** The shared editorial shell (left navigation) on the design pages. */
 add_filter('omochix_shell_enabled_for_request', static function ($enabled) {

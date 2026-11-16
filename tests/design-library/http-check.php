@@ -51,7 +51,7 @@ $matrix = [
     ['/design/app/', 404], ['/design/components/', 404], ['/design/app/liquid-glass/', 404], ['/design/components/liquid-glass/', 404],
     ['/design/guides/', 404], ['/design/hosting/', 404], ['/design/demo/', 404], ['/design/demo/web/', 404],
     ['/design/demo/web/no-such-item/', 404], ['/design/demo/app/liquid-glass/', 404], ['/design/demo/components/liquid-glass/', 404],
-    ['/design-sitemap.xml', 404], ['/design/video/', 200], ['/design/demo/video/', 404], ['/design/video/liquid-glass/', 404], ['/design/web/logo-reveal-short/', 404],
+    ['/design-sitemap.xml', 200], ['/design/video/', 200], ['/design/demo/video/', 404], ['/design/video/liquid-glass/', 404], ['/design/web/logo-reveal-short/', 404],
     // internal query vars from the query string are refused (review finding 1 and 3)
     ['/design/web/liquid-glass/?omx_design_demo=1', 404], ['/design/web/?omx_design_slug=liquid-glass', 404], ['/design/?omx_design_kind=web', 404],
     ['/design/video/logo-reveal-short/?omx_design_demo=1', 404],
@@ -152,6 +152,75 @@ foreach (['/design/web/liquid-glass/', '/design/video/logo-reveal-short/'] as $p
 }
 unlink($unverified);
 check('gate: with the shipped catalog (verified-local) the demos serve on this local site', 200 === req('/design/demo/web/liquid-glass/')['code']);
+touch($flag);
+
+// ------------------------------------------------------------ D2-A: preview markup (works without JS)
+$wd = req('/design/web/minimal-editorial/')['body'];
+check('D2-A markup: viewport radios PC 1280 / tablet 834 / phone 390, hidden until JS runs', false !== strpos($wd, 'role="radiogroup"') && 1 === preg_match('#data-dl-viewports hidden#', $wd) && false !== strpos($wd, 'data-w="1280"') && false !== strpos($wd, 'data-w="834"') && false !== strpos($wd, 'data-w="390"'));
+check('D2-A markup: play/pause, restart, full screen controls hidden until JS runs; new-tab link kept', 1 === preg_match('#data-dl-controls hidden#', $wd) && false !== strpos($wd, 'data-dl-toggle') && false !== strpos($wd, 'data-dl-restart') && false !== strpos($wd, 'data-dl-fullscreen') && false !== strpos($wd, '新しいタブで開く'));
+check('D2-A markup: the iframe keeps sandbox="allow-scripts" only, no allow / allowfullscreen attribute', 1 === preg_match('#<iframe[^>]*sandbox="allow-scripts"[^>]*>#', $wd) && 0 === preg_match('#<iframe[^>]*\s(allow|allowfullscreen)=#', $wd));
+$vdm = req('/design/video/logo-reveal-short/')['body'];
+check('D2-A markup: video works keep the native player (no viewport switch, no demo controls)', false === strpos($vdm, 'data-dl-viewports') && false === strpos($vdm, 'data-dl-toggle') && false !== strpos($vdm, '<video class="dl-stage__video" controls'));
+
+// ------------------------------------------------------------ D2-A: Learn links only to published pages
+$created = wp_php('$ids = []; $p = get_page_by_path("learn"); $par = $p ? $p->ID : 0; $ids[] = wp_insert_post(["post_type" => "page", "post_status" => "publish", "post_title" => "開発入門", "post_name" => "development", "post_parent" => $par]); $t = wp_insert_post(["post_type" => "page", "post_status" => "publish", "post_title" => "Tools", "post_name" => "tools", "post_parent" => $par]); $ids[] = $t; $ids[] = wp_insert_post(["post_type" => "page", "post_status" => "draft", "post_title" => "Vercel", "post_name" => "vercel", "post_parent" => $t]); echo implode(",", $ids);');
+$ld = req('/design/web/bento-saas/')['body'];
+check('Learn: a published Learn page is linked (開発入門 /learn/development/)', false !== strpos($ld, '/learn/development/') && false !== strpos($ld, '開発入門'));
+check('Learn: a draft Learn page is not linked (/learn/tools/vercel/)', false === strpos($ld, '/learn/tools/vercel/'));
+check('Learn: Motion Gallery samples used by the work are linked (count-up, stagger, scroll-fade-in)', false !== strpos($ld, '/learn/motion/count-up/') && false !== strpos($ld, '/learn/motion/stagger/') && false !== strpos($ld, '/learn/motion/scroll-fade-in/'));
+check('Learn: logo-reveal-short links the SVG Motion Studio page (published locally)', false !== strpos(req('/design/video/logo-reveal-short/')['body'], '/learn/svg-motion/'));
+check('Learn: data-chart-explainer has no Learn page and shows none', false === strpos(preg_replace('#<nav.*?</nav>|<footer.*?</footer>|<header.*?</header>#s', '', req('/design/video/data-chart-explainer/')['body']), 'Learn の記事'));
+wp_php('foreach ([' . $created . '] as $id) { wp_delete_post($id, true); }');
+check('Learn: test pages removed again', '' === wp_php('echo get_page_by_path("learn/development") ? "left" : "";'));
+
+// ------------------------------------------------------------ D2-A: SEO (site made public for this part only; probe off)
+@unlink($flag);
+wp_php('update_option("blog_public", "1");');
+$seo = [];
+foreach (array_merge(array_map(static function ($s) { return "/design/web/$s/"; }, $items), array_map(static function ($s) { return "/design/video/$s/"; }, $videos)) as $p) {
+    $r = req($p);
+    preg_match('#<title>([^<]*)</title>#', $r['body'], $t);
+    preg_match('#<link rel="canonical" href="([^"]*)"#', $r['body'], $c);
+    preg_match("#<meta name='robots' content='([^']*)'#", $r['body'], $rb);
+    $seo[$p] = ['title' => $t[1] ?? '', 'canonical' => $c[1] ?? '', 'robots' => $rb[1] ?? ''];
+    check("SEO $p: own title, canonical = itself, indexable", '' !== ($t[1] ?? '') && $base . $p === ($c[1] ?? '') && false === strpos($rb[1] ?? '', 'noindex'), json_encode($seo[$p], JSON_UNESCAPED_UNICODE));
+    check("SEO $p: visible breadcrumb Home / デザインライブラリー / medium / title", 1 === preg_match('#<nav class="breadcrumb"[^>]*>.*?デザインライブラリー.*?aria-current="page"#s', $r['body']));
+}
+check('SEO: the 6 titles are all different', 6 === count(array_unique(array_column($seo, 'title'))));
+$sch = req('/design/web/3d-interactive/', ['headers' => ['X-OMX-Test-Schema: 1']])['body'];
+preg_match('#<script type="application/ld\+json" id="omx-test-schema-emulation">(.*?)</script>#s', $sch, $m);
+$g = json_decode($m[1] ?? 'null', true)['@graph'] ?? [];
+$types = array_column($g, '@type');
+check('JSON-LD (Slim SEO graph emulation): Web detail adds one CreativeWork as the WebPage main entity, nothing duplicated', ['WebPage', 'BreadcrumbList', 'CreativeWork'] === $types && ($g[0]['mainEntity']['@id'] ?? '') === $base . '/design/web/3d-interactive/#work');
+$gv = json_decode(preg_match('#id="omx-test-schema-emulation">(.*?)</script>#s', req('/design/video/data-chart-explainer/', ['headers' => ['X-OMX-Test-Schema: 1']])['body'], $mv) ? $mv[1] : 'null', true)['@graph'] ?? [];
+check('JSON-LD: video detail adds a VideoObject with contentUrl, duration, thumbnail', 'VideoObject' === ($gv[2]['@type'] ?? '') && 'PT8S' === ($gv[2]['duration'] ?? '') && false !== strpos($gv[2]['contentUrl'] ?? '', '.mp4'));
+$gt = json_decode(preg_match('#id="omx-test-schema-emulation">(.*?)</script>#s', req('/design/', ['headers' => ['X-OMX-Test-Schema: 1']])['body'], $mt) ? $mt[1] : 'null', true)['@graph'] ?? [];
+check('JSON-LD: top page adds an ItemList of the 6 indexable works', 'ItemList' === ($gt[2]['@type'] ?? '') && 6 === ($gt[2]['numberOfItems'] ?? 0));
+$gf = req('/design/web/?use_case=lp', ['headers' => ['X-OMX-Test-Schema: 1']])['body'];
+check('JSON-LD: nothing added to a filtered (noindex) list', false !== strpos($gf, 'omx-test-schema-emulation') && false === strpos($gf, '"ItemList"'));
+$sm = req('/design-sitemap.xml');
+$xml = @simplexml_load_string($sm['body']);
+$locs = $xml ? array_map('strval', iterator_to_array($xml->url->children()->loc ?? [], false)) : [];
+$locs = [];
+if ($xml) { foreach ($xml->url as $u) { $locs[] = (string) $u->loc; } }
+check('sitemap: 200, XML, noindex header, 8 URLs (2 lists + 6 works)', 200 === $sm['code'] && 0 === strpos(hv($sm, 'content-type'), 'application/xml') && false !== strpos(hv($sm, 'x-robots-tag'), 'noindex') && 8 === count($locs), (string) count($locs));
+check('sitemap: no demo URL, no top page, no filtered URL', !preg_grep('#/design/demo/|\?#', $locs) && !in_array($base . '/design/', $locs, true));
+check('robots.txt: announces the design sitemap while the site is public', false !== strpos(req('/robots.txt')['body'], 'Sitemap: ' . $base . '/design-sitemap.xml'));
+check('sitemap: query-string variant is refused', 404 === req('/?omx_design_sitemap=1')['code']);
+// unverified: nothing indexable -> noindex everywhere, no sitemap, no robots line, no JSON-LD
+$unv = $site . '/design-isolation-unverified.on'; touch($unv);
+check('unverified: detail pages are noindex', false !== strpos(req('/design/web/liquid-glass/')['body'], 'noindex') && false !== strpos(req('/design/video/logo-reveal-short/')['body'], 'noindex'));
+check('unverified: top and list pages are noindex', false !== strpos(req('/design/')['body'], 'noindex') && false !== strpos(req('/design/video/')['body'], 'noindex'));
+check('unverified: /design-sitemap.xml is a 404 and robots.txt does not mention it', 404 === req('/design-sitemap.xml')['code'] && false === strpos(req('/robots.txt')['body'], 'design-sitemap'));
+check('unverified: no work entity in JSON-LD', false === strpos(req('/design/web/liquid-glass/', ['headers' => ['X-OMX-Test-Schema: 1']])['body'], '"CreativeWork"'));
+unlink($unv);
+wp_php('update_option("blog_public", "0");');
+check('site not public: robots.txt does not announce the design sitemap', false === strpos(req('/robots.txt')['body'], 'design-sitemap'));
+$pid = (int) wp_php('echo get_page_by_path("design")->ID;');
+wp_php("wp_update_post(['ID' => $pid, 'post_status' => 'draft']);");
+check('design page draft: /design-sitemap.xml is a 404', 404 === req('/design-sitemap.xml')['code']);
+wp_php("wp_update_post(['ID' => $pid, 'post_status' => 'publish']);");
+check('design page published again: sitemap is back', 200 === req('/design-sitemap.xml')['code']);
 touch($flag);
 
 // ------------------------------------------------------------ rewrite rules restored after a rollback

@@ -150,6 +150,47 @@ async function list() {
     check('video detail: no autoplay, plays when asked', v0.paused && v0.t === 0 && !v1.paused && v1.t > 0.3 && v1.w === 1920, [v0, v1]);
 }
 
+async function demoCtx() {
+    for (var i = 0; i < 80; i++) {
+        var tree = await send('browsingContext.getTree', { root: ctx });
+        var kids = (tree.contexts[0].children || []).filter(function (c) { return c.url.indexOf('/design/demo/web/') !== -1; });
+        if (kids.length) { try { if (await js('!!window.omxDemo', kids[0].context)) return kids[0].context; } catch (e) { /* loading */ } }
+        await wait(100);
+    }
+    throw new Error('no demo frame');
+}
+async function preview() {
+    L.flag(false);
+    await open('/design/web/3d-interactive/', 1440, 900);
+    await js('(document.querySelector("[data-dl-stage]").scrollIntoView(), true)');
+    var d = await demoCtx();
+    for (var i = 0; i < 40 && (await js('document.querySelector("[data-dl-stage]").dataset.state')) !== 'ready'; i++) await wait(100);
+    await js('(window.__mark = 1, true)', d);
+    var widths = [];
+    for (var v of ['desktop', 'tablet', 'mobile']) {
+        await js('(document.querySelector(\'[data-vp="' + v + '"]\').click(), true)');
+        await wait(350);
+        widths.push(await js('innerWidth', d));
+    }
+    var page = await js('({ sw: document.documentElement.scrollWidth, iw: innerWidth })');
+    check('D2-A viewport: the demo gets 1280 / 834 / 390 px without reloading, no side scroll', JSON.stringify(widths) === '[1280,834,390]' && (await js('window.__mark', d)) === 1 && page.sw <= page.iw + 1, [widths, page]);
+    async function raf(ms) { var a = await js('window.__raf', d); await wait(ms); return (await js('window.__raf', d)) - a; }
+    var run1 = await raf(800);
+    await js('(document.querySelector("[data-dl-toggle]").click(), true)'); await wait(300);
+    var stop = await raf(800);
+    await js('(document.querySelector("[data-dl-toggle]").click(), true)'); await wait(300);
+    var run2 = await raf(800);
+    check('D2-A pause / play: the 3D loop stops and resumes', run1 > 5 && stop === 0 && run2 > 5, [run1, stop, run2]);
+    await js('(document.querySelector("[data-dl-fullscreen]").click(), true)'); await wait(800);
+    var fs1 = await js('(() => { const s = document.querySelector("[data-dl-stage]"); return { full: s.dataset.full || "", sandbox: s.querySelector("iframe").getAttribute("sandbox") }; })()');
+    var iso = await js('(() => { let c; try { void document.cookie; c = "readable"; } catch (e) { c = e.name; } return { origin: String(self.origin), cookie: c, canFs: document.fullscreenEnabled === true }; })()', d);
+    await js('(document.querySelector("[data-dl-fullscreen]").focus(), true)');
+    await send('input.performActions', { context: ctx, actions: [{ type: 'key', id: 'k', actions: [{ type: 'keyDown', value: '\uE00C' }, { type: 'keyUp', value: '\uE00C' }] }] });
+    await wait(800);
+    var fs2 = await js('(() => { const s = document.querySelector("[data-dl-stage]"); return { full: s.classList.contains("is-full"), fe: !!document.fullscreenElement }; })()');
+    check('D2-A full screen: opens (' + fs1.full + '), sandbox unchanged, demo origin null, cookie blocked, demo cannot go full screen; Escape closes', !!fs1.full && fs1.sandbox === 'allow-scripts' && iso.origin === 'null' && iso.cookie === 'SecurityError' && iso.canFs === false && !fs2.full && !fs2.fe, [fs1, iso, fs2]);
+}
+
 (async function main() {
     L.flag(true);
     var ff = spawn(FIREFOX, ['-headless', '-no-remote', '-profile', profile, '--remote-debugging-port', String(BIDI_PORT), 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
@@ -164,10 +205,11 @@ async function list() {
         };
         var sess = await send('session.new', { capabilities: {} });
         L.info('Firefox ' + sess.capabilities.browserVersion + ' (headless, WebDriver BiDi)');
-        await send('script.addPreloadScript', { functionDeclaration: '() => { window.__csp = []; document.addEventListener("securitypolicyviolation", e => window.__csp.push(e.violatedDirective + " " + e.blockedURI)); }' });
+        await send('script.addPreloadScript', { functionDeclaration: '() => { window.__csp = []; document.addEventListener("securitypolicyviolation", e => window.__csp.push(e.violatedDirective + " " + e.blockedURI)); window.__raf = 0; const r = window.requestAnimationFrame.bind(window); window.requestAnimationFrame = cb => { window.__raf++; return r(cb); }; }' });
         ctx = (await send('browsingContext.getTree', {})).contexts[0].context;
         await run();
         await list();
+        await preview();
         await send('browser.close', {}).catch(function () {});
     } catch (e) {
         L.check('firefox unexpected error', false, String(e && e.stack || e));

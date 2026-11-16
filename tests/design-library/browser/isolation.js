@@ -83,6 +83,17 @@ async function run(type, launcher) {
     var injected = await f.evaluate(function () { return document.querySelectorAll('img[src="x"], b').length + document.querySelectorAll('script').length - window.__scriptsBefore; });
     check(T + ' B8: valid theme from the parent applies, a sibling frame is ignored', t1 === 'dark' && t2 === 'dark', [t1, t2]);
     check(T + ' B8: invalid values are not applied and nothing is injected', (t3 === 'light' || t3 === 'dark') && dialogs.length === 0 && injected === 0, [t3, injected]);
+    /* D2-A: control messages (parent -> demo) are validated like the theme message */
+    async function pausedAfter(fn) { await page.evaluate(fn); await L.wait(250); return f.evaluate(function () { return window.omxDemo.isPaused(); }); }
+    var c1 = await pausedAfter(function () { var w = document.querySelector('[data-dl-demo]').contentWindow; w.postMessage({ type: 'omx-design:control', action: '<script>' }, '*'); w.postMessage({ type: 'omx-design:control', action: 'stop' }, '*'); w.postMessage({ type: 'omx-design:control' }, '*'); });
+    var c2 = await pausedAfter(function () { var s = document.getElementById('b7-sibling').contentWindow; var sc = s.document.createElement('script'); sc.textContent = 'parent.document.querySelector("[data-dl-demo]").contentWindow.postMessage({type:"omx-design:control",action:"pause"},"*")'; s.document.body.appendChild(sc); });
+    var c3 = await pausedAfter(function () { document.querySelector('[data-dl-demo]').contentWindow.postMessage({ type: 'omx-design:control', action: 'pause' }, '*'); });
+    var c4 = await pausedAfter(function () { document.querySelector('[data-dl-demo]').contentWindow.postMessage({ type: 'omx-design:control', action: 'play' }, '*'); });
+    check(T + ' D2-A control: invalid actions and a sibling frame are ignored; pause / play from the parent apply', c1 === false && c2 === false && c3 === true && c4 === false, [c1, c2, c3, c4]);
+    var stBefore = await page.evaluate(function () { return document.querySelector('[data-dl-stage]').className; });
+    await f.evaluate(function () { window.parent.postMessage({ type: 'omx-design:key', key: 'Escape' }, '*'); window.parent.postMessage({ type: 'omx-design:key', key: 'F11' }, '*'); window.parent.postMessage({ type: 'omx-design:fullscreen' }, '*'); });
+    await L.wait(300);
+    check(T + ' D2-A key message: changes nothing when no overlay is open; no message can open full screen', stBefore === (await page.evaluate(function () { return document.querySelector('[data-dl-stage]').className; })) && !(await page.evaluate(function () { return !!document.fullscreenElement || document.querySelector('[data-dl-stage]').classList.contains('is-full'); })));
     /* positive control for B7: a valid error message from the demo itself is accepted */
     await f.evaluate(function () { window.__probeSendError(); });
     await L.wait(300);

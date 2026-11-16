@@ -3,54 +3,54 @@
   "environment": "local throwaway WordPress 7.1.4, PHP built-in server, headless Chromium (Playwright 1.62.1, SwiftShader WebGL), CDP throttling 4x CPU / 150 ms / 1.6 Mbps for LCP",
   "demos": {
     "liquid-glass": {
-      "transferKb": 6.4,
-      "jsKb": 1.8,
+      "transferKb": 6.8,
+      "jsKb": 2.3,
       "longTasks": 0,
       "heapMb": 0.9,
       "fpsP5": 60,
-      "lcpMs": 1976,
+      "lcpMs": 2256,
       "cls": 0
     },
     "minimal-editorial": {
-      "transferKb": 5.6,
-      "jsKb": 1.7,
+      "transferKb": 6.1,
+      "jsKb": 2.2,
       "longTasks": 0,
       "heapMb": 0.9,
       "fpsP5": 111,
-      "lcpMs": 1960,
+      "lcpMs": 2040,
       "cls": 0
     },
     "3d-interactive": {
-      "transferKb": 38.7,
-      "jsKb": 6.8,
+      "transferKb": 39.2,
+      "jsKb": 7.3,
       "longTasks": 1,
       "heapMb": 1.5,
-      "fpsP5": 108,
-      "lcpMs": 2020,
+      "fpsP5": 111,
+      "lcpMs": 2096,
       "cls": 0
     },
     "bento-saas": {
-      "transferKb": 6.5,
-      "jsKb": 1.8,
+      "transferKb": 6.9,
+      "jsKb": 2.3,
       "longTasks": 0,
       "heapMb": 1,
-      "fpsP5": 100,
-      "lcpMs": 2036,
+      "fpsP5": 111,
+      "lcpMs": 2068,
       "cls": 0
     }
   },
   "list": {
-    "transferKb": 422.5,
+    "transferKb": 423.1,
     "videos": [
-      "minimal-editorial.webm",
-      "liquid-glass.webm"
+      "liquid-glass.webm",
+      "minimal-editorial.webm"
     ],
     "cpuPct": 0,
     "heapMb": 1,
     "cls": 0
   },
   "listReducedMotion": {
-    "transferKb": 139,
+    "transferKb": 139.6,
     "videos": [],
     "cpuPct": 0,
     "heapMb": 1.6,

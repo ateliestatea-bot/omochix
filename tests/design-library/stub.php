@@ -18,6 +18,7 @@ function esc_html($t) { return htmlspecialchars((string) $t, ENT_QUOTES, 'UTF-8'
 function esc_html__($t, $d = '') { return esc_html($t); }
 function esc_attr($t) { return esc_html($t); }
 function esc_url($t) { return esc_html($t); }
+function esc_html_e($t, $d = '') { echo esc_html($t); }
 function get_theme_file_path($f) { global $THEME; return $THEME . $f; }
 function get_theme_file_uri($f) { return 'https://example.test/wp-content/themes/omochix-theme' . $f; }
 function home_url($p = '/') { return 'https://example.test' . $p; }
