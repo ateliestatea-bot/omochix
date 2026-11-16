@@ -131,6 +131,8 @@ async function list() {
         await wait(2500);
         var st = await js('({ sw: document.documentElement.scrollWidth, iw: innerWidth, cards: document.querySelectorAll("[data-dl-card]:not([hidden])").length, playing: [...document.querySelectorAll("video")].filter(v => !v.paused).length })');
         check('list ' + w + 'px: 6 cards, no horizontal scroll, at most 2 loops playing', st.cards === 6 && st.sw <= st.iw + 1 && st.playing <= 2, st);
+        var lay = await js('(() => { const cs = [...document.querySelectorAll("[data-dl-card]:not([hidden])")]; const rows = {}; cs.forEach(c => { const t = Math.round(c.getBoundingClientRect().top); rows[t] = (rows[t] || 0) + 1; }); return { cols: Math.max(...Object.values(rows)), below: cs.every(c => c.querySelector(".dl-card__medium").getBoundingClientRect().top >= c.querySelector(".dl-card__media").getBoundingClientRect().bottom - 0.5), play: (() => { const b = document.querySelector("[data-dl-play]"); const r = b.getBoundingClientRect(); return r.width <= 36 && !b.hidden; })() }; })()');
+        check('list ' + w + 'px (D2-C): ' + (w > 1000 ? 2 : 1) + ' column(s), labels below the previews, compact play button', lay.cols === (w > 1000 ? 2 : 1) && lay.below && lay.play, lay);
     }
     var max = 0;
     for (var k = 0; k < 12; k++) { await js('(scrollBy(0, 120), true)'); await wait(250); max = Math.max(max, await js('[...document.querySelectorAll("video")].filter(v => !v.paused).length')); }

@@ -1,7 +1,8 @@
 /* OmochiX Design Library: card loop playback and in-place filtering (list / top pages).
  *
  * Playback (D0 §2.1):
- *  - at most MAX cards play at once (hard cap 2), only while at least half on screen and the tab is visible;
+ *  - at most MAX cards play at once (hard cap 2), only while at least half of the card's preview is on screen
+ *    and the tab is visible (D2-C: the preview, not the whole card — two-column cards are taller than the first view);
  *  - no autoplay with prefers-reduced-motion, Save-Data / 2G, or deviceMemory < 4: the poster stays,
  *    and a card plays only after its play button is pressed;
  *  - the video sources are attached on first play (preload="none" before), a failed load keeps the poster;
@@ -24,7 +25,7 @@
     function autoAllowed() { return !reduce.matches && !lowPower(); }
 
     var cards = Array.prototype.slice.call(root.querySelectorAll('[data-dl-card]')).map(function (el, idx) {
-        return { el: el, idx: idx, video: el.querySelector('[data-dl-video]'), btn: el.querySelector('[data-dl-play]'), visible: false, onScreen: false, ratio: 0, user: null, failed: false, loaded: false };
+        return { el: el, idx: idx, media: el.querySelector('[data-dl-media]') || el, video: el.querySelector('[data-dl-video]'), btn: el.querySelector('[data-dl-play]'), visible: false, onScreen: false, ratio: 0, user: null, failed: false, loaded: false };
     }).filter(function (c) { return c.video; });
 
     function setPressed(c, on) {
@@ -97,7 +98,7 @@
     } else {
         var io = new IntersectionObserver(function (entries) {
             entries.forEach(function (en) {
-                var c = cards.filter(function (x) { return x.el === en.target; })[0];
+                var c = cards.filter(function (x) { return x.media === en.target; })[0];
                 if (!c) return;
                 c.ratio = en.intersectionRatio;
                 c.onScreen = en.isIntersecting && en.intersectionRatio > 0;
@@ -105,7 +106,7 @@
             });
             update();
         }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
-        cards.forEach(function (c) { io.observe(c.el); });
+        cards.forEach(function (c) { io.observe(c.media); });
     }
     document.addEventListener('visibilitychange', update);
     if (reduce.addEventListener) reduce.addEventListener('change', update);

@@ -836,6 +836,54 @@ function omochix_design_search_text(array $item) {
     return mb_strtolower(implode(' ', $parts));
 }
 
+/**
+ * D2-C: the short fact line of a list card, from catalog data only.
+ * Video: length, aspect ratio and orientation (e.g. "6 秒", "9:16 縦型"). Web: "ライブデモ" when the demo
+ * may open here, plus the rendering technique that sets the work apart (WebGL / Canvas). The medium label
+ * itself is printed separately; motion types stay in the tags, so nothing is shown twice.
+ *
+ * @return string[]
+ */
+function omochix_design_card_facts(array $item, $demo) {
+    $out = [];
+    if ('video' === $item['medium']) {
+        $v = $item['video'] ?? [];
+        $sec = (int) ($v['seconds'] ?? 0);
+        if ($sec > 0) {
+            $out[] = sprintf(__('%d 秒', 'omochix'), $sec);
+        }
+        $w = (int) ($v['width'] ?? 0);
+        $h = (int) ($v['height'] ?? 0);
+        if ($w > 0 && $h > 0) {
+            $g = $w;
+            for ($b = $h; $b; ) { $t = $g % $b; $g = $b; $b = $t; }
+            $out[] = sprintf('%d:%d %s', $w / $g, $h / $g, $h > $w ? __('縦型', 'omochix') : __('横型', 'omochix'));
+        }
+        return $out;
+    }
+    if ($demo) {
+        $out[] = __('ライブデモ', 'omochix');
+    }
+    foreach (['webgl' => 'WebGL', 'canvas' => 'Canvas'] as $tech => $label) {
+        if (in_array($tech, $item['technologies'], true)) {
+            $out[] = $label;
+        }
+    }
+    return $out;
+}
+
+/**
+ * D2-C: tags shown on a list card — at most two use cases and two motion types; the rest is counted.
+ * Filtering and keyword search still use every value (data attributes and search text are unchanged).
+ *
+ * @return array{use_cases: string[], motion_types: string[], more: int}
+ */
+function omochix_design_card_tags(array $item) {
+    $uc = array_slice($item['use_cases'], 0, 2);
+    $mt = array_slice($item['motion_types'], 0, 2);
+    return ['use_cases' => $uc, 'motion_types' => $mt, 'more' => count($item['use_cases']) + count($item['motion_types']) - count($uc) - count($mt)];
+}
+
 function omochix_design_item_matches(array $item, array $filters) {
     if (!empty($filters['medium']) && $filters['medium'] !== $item['medium']) {
         return false;

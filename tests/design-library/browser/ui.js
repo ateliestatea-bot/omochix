@@ -94,13 +94,13 @@ async function listChecks(type, browser) {
     check(type + ' keyboard: play button focusable with a visible ring and toggles aria-pressed', focusRing && wasPressed !== nowPressed, [focusRing, wasPressed, nowPressed]);
     await ctx2.close();
 
-    /* lazy posters load when scrolled to (phone width, all 6 works) */
+    /* lazy posters load when scrolled to (phone width, all 8 works; video backdrops are not counted) */
     var cz = await newCtx(browser, { vp: { width: 390, height: 844 } });
     var pz = await cz.newPage();
     await pz.goto(BASE + '/design/');
     for (var z = 0; z < 30; z++) { await pz.mouse.wheel(0, 400); await L.wait(100); }
     await L.wait(800);
-    var posters = await pz.evaluate(function () { return Array.prototype.map.call(document.querySelectorAll('[data-dl-card] img'), function (i) { return i.complete && i.naturalWidth > 0; }); });
+    var posters = await pz.evaluate(function () { return Array.prototype.map.call(document.querySelectorAll('[data-dl-card] picture:not(.dl-card__backdrop) img'), function (i) { return i.complete && i.naturalWidth > 0; }); });
     check(type + ' phone: all 8 lazy posters load when scrolled to', posters.length === 8 && posters.every(Boolean), posters);
     await cz.close();
 
