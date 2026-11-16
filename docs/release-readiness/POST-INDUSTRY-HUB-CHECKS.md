@@ -424,7 +424,7 @@ WordPress の中の索引のキャッシュ：transient `omochix_suggest_index_v
 
 **推奨：B（API だけ `no-store`）**。保持時間も `no-store` の扱いも分からないキャッシュに頼らず、非公開にした題名を保存の直後から出さないことを優先する。増える負荷は、検索欄を使った人の 1 回の REST（transient の読み取り）だけ。アクセラレータが `no-store` を守るかは、反映後に読み取りで確かめる（2 回取得して `Cache-Control: no-store` で、2 回目に `x-cache: HIT` が付かないこと）。HIT が付く場合は、アクセラレータでこの URL だけを除外する方法を運営者が確認する（ロリポップの回答では未確定）。
 
-**B に必要な最小の差分**（まだ変更していない）
+**B に必要な最小の差分**（2026-11-17 に `c711635` で実施。下の 7.10）
 
 1. `wp-theme/omochix-theme/inc/search-suggest.php`
    - 138〜139 行：`$res->header('Cache-Control', 'public, max-age=300, s-maxage=300');` と `$res->header('ETag', ...)` を、`$res->header('Cache-Control', 'no-store');` の 1 行にする。
@@ -432,3 +432,21 @@ WordPress の中の索引のキャッシュ：transient `omochix_suggest_index_v
 2. `tests/nav-ux/suggest-r2r3.php` 23〜26 行：通常の応答の期待値を「200 + `no-store` + ETag なし」にする。
 3. 文書：`docs/release-readiness/STAGING-CHECKLIST.md` の B1・L2〜L4・C5・K6 を `no-store` に合わせる（想定の残存時間は L5 の開いたタブだけになる）。`docs/ux-expansion/07-SEARCH-SUGGEST.md` のキャッシュの説明。
 4. JS・リリースの設定・独立の期待値：変更なし（`inc/search-suggest.php` は既に配布対象。ファイルの増減・パスの一覧は変わらない）。
+
+### 7.10 案 B の実施（2026-11-17、`c711635`）
+
+- 通常の 200 を `Cache-Control: no-store` にし、使われていなかった ETag を外した。再構築中の 503・`no-store`・`Retry-After: 5`、transient（15 分）・ロック・保存時の削除・JS は変えていない。
+- 確認（開発環境 8940）：`suggest-r2r3.php` 21/21（通常 200 が `no-store`・ETag なし、索引が transient に残る、503 の扱い、R3）、`suggest-leak.php`（非公開・保護・下書き・予約が入らない）、`suggest-flush.php`（保存で作り直す）、`suggest-warming.cjs`（503 から復旧して候補が出る）、HTTP で 2 回取得してどちらも 200・`no-store`・ETag なし。Release gate（1.30.0 30/30、Industry Hub 33/33）、plan 43 ステップ、release の unittest 97 件。
+- **未検証**：ロリポップ！アクセラレータが `no-store` を守るか。開いているタブに残る索引（L5：取得済みの情報。ページを移るか再読み込みするまで残る）。`x-cache` に HIT が付かないことだけでは、守ると判定しない。
+
+**本番に反映した後の確認**（読み取りのみ）
+
+1. 索引を匿名で 2 回取得：両方 200、`Cache-Control: no-store`、ETag なし。`x-cache` と `age` を記録する。
+2. 検証用の公開記事を作り、索引に題名が入ることを確認 → パスワード保護に変える → 匿名の取得で 15 秒ごとに確認し、消えるまでの時間を記録する（想定 0 秒）。終わったら記事を削除する。
+3. 1 と 2 を、時間をおいてもう一度（HIT の付き方が変わらないか）。
+
+**止める・戻す条件**
+
+- 2 の題名が、保護に変えた後の取得で 1 回でも返る（キャッシュが `no-store` を守らない）：検索候補を止める判断をする。戻すのはテーマ 1.29.0 へのロールバック（Runbook の手順）か、アクセラレータでこの URL を除外できるかを運営者が確かめるまで、この機能を使わない。
+- 1 で 503 が続く、または 200 にならない：ロールバックを検討する（候補がなくても通常の検索は動く）。
+- サーバーの負荷が上がる（REST の応答が遅い、エラーが増える）：ロールバックを検討する。内部の索引は 15 分の transient から返すので、想定は小さい。
