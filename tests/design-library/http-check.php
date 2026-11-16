@@ -65,16 +65,16 @@ foreach ($matrix as [$p, $want]) {
     check("route $p -> $want", $r['code'] === $want, (string) $r['code']);
 }
 $top = req('/design/');
-check('top: Web and video sections, 6 works (+ the test probe), every loop preload="none"', false !== strpos($top['body'], 'id="dl-section-web"') && false !== strpos($top['body'], 'id="dl-section-video"') && 6 <= substr_count($top['body'], 'data-dl-card') && 6 === substr_count($top['body'], 'data-dl-video') && 6 === substr_count($top['body'], 'preload="none"'));
+check('top: Web and video sections, 8 works (+ the test probe), every loop preload="none"', false !== strpos($top['body'], 'id="dl-section-web"') && false !== strpos($top['body'], 'id="dl-section-video"') && 8 <= substr_count($top['body'], 'data-dl-card') && 8 === substr_count($top['body'], 'data-dl-video') && 8 === substr_count($top['body'], 'preload="none"'));
 check('top: filters for medium, use case, motion type, technology (no style/motion selects any more)', false !== strpos($top['body'], 'name="medium"') && false !== strpos($top['body'], 'name="use_case"') && false !== strpos($top['body'], 'name="motion_type"') && false !== strpos($top['body'], 'name="technology"') && false === strpos($top['body'], 'name="style"'));
 $tf = req('/design/?medium=video&use_case=sns-short');
 check('top filtered on the server: only Logo Reveal Short visible, noindex, canonical is the top page', 1 === preg_match_all('#<li class="dl-card[^"]*" data-dl-card(?:(?!hidden>).)*?>\s*<article#s', $tf['body']) && false !== strpos($tf['body'], 'noindex') && false !== strpos($tf['body'], 'rel="canonical" href="' . $base . '/design/"'));
 $vl = req('/design/video/');
 check('video list: 2 works, a play button each, no live-demo link', 2 === substr_count($vl['body'], 'data-dl-video') && false === strpos($vl['body'], '/design/demo/'));
 $list = req('/design/web/');
-check('list: 4 cards (+ the test probe), each with poster, loop sources and a live-demo link', 4 <= substr_count($list['body'], 'data-dl-card') && 4 === substr_count($list['body'], 'data-dl-video') && 4 <= substr_count($list['body'], '/design/demo/web/'));
+check('list: 6 cards (+ the test probe), each with poster, loop sources and a live-demo link', 6 <= substr_count($list['body'], 'data-dl-card') && 6 === substr_count($list['body'], 'data-dl-video') && 6 <= substr_count($list['body'], '/design/demo/web/'));
 check('list: Report-Only CSP + X-Frame-Options + nosniff on the page', false !== strpos(hv($list, 'content-security-policy-report-only'), "frame-src 'self'") && 'SAMEORIGIN' === hv($list, 'x-frame-options') && 'nosniff' === hv($list, 'x-content-type-options'));
-check('list: no loop is preloaded (preload="none")', 4 === substr_count($list['body'], 'preload="none"'));
+check('list: no loop is preloaded (preload="none")', 6 === substr_count($list['body'], 'preload="none"'));
 $filtered = req('/design/web/?motion_type=pointer&q=%3Cscript%3E');
 check('filtered list: noindex and the query is escaped', false !== strpos($filtered['body'], 'noindex') && false === strpos($filtered['body'], '<script>alert') && false === strpos($filtered['body'], 'value="<script>'));
 $detail = req('/design/web/3d-interactive/');
@@ -195,7 +195,7 @@ check('JSON-LD (Slim SEO graph emulation): Web detail adds one CreativeWork as t
 $gv = json_decode(preg_match('#id="omx-test-schema-emulation">(.*?)</script>#s', req('/design/video/data-chart-explainer/', ['headers' => ['X-OMX-Test-Schema: 1']])['body'], $mv) ? $mv[1] : 'null', true)['@graph'] ?? [];
 check('JSON-LD: video detail adds a VideoObject with contentUrl, duration, thumbnail', 'VideoObject' === ($gv[2]['@type'] ?? '') && 'PT8S' === ($gv[2]['duration'] ?? '') && false !== strpos($gv[2]['contentUrl'] ?? '', '.mp4'));
 $gt = json_decode(preg_match('#id="omx-test-schema-emulation">(.*?)</script>#s', req('/design/', ['headers' => ['X-OMX-Test-Schema: 1']])['body'], $mt) ? $mt[1] : 'null', true)['@graph'] ?? [];
-check('JSON-LD: top page adds an ItemList of the 6 indexable works', 'ItemList' === ($gt[2]['@type'] ?? '') && 6 === ($gt[2]['numberOfItems'] ?? 0));
+check('JSON-LD: top page adds an ItemList of the 8 indexable works', 'ItemList' === ($gt[2]['@type'] ?? '') && 8 === ($gt[2]['numberOfItems'] ?? 0));
 $gf = req('/design/web/?use_case=lp', ['headers' => ['X-OMX-Test-Schema: 1']])['body'];
 check('JSON-LD: nothing added to a filtered (noindex) list', false !== strpos($gf, 'omx-test-schema-emulation') && false === strpos($gf, '"ItemList"'));
 $sm = req('/design-sitemap.xml');
@@ -203,7 +203,7 @@ $xml = @simplexml_load_string($sm['body']);
 $locs = $xml ? array_map('strval', iterator_to_array($xml->url->children()->loc ?? [], false)) : [];
 $locs = [];
 if ($xml) { foreach ($xml->url as $u) { $locs[] = (string) $u->loc; } }
-check('sitemap: 200, XML, noindex header, 8 URLs (2 lists + 6 works)', 200 === $sm['code'] && 0 === strpos(hv($sm, 'content-type'), 'application/xml') && false !== strpos(hv($sm, 'x-robots-tag'), 'noindex') && 8 === count($locs), (string) count($locs));
+check('sitemap: 200, XML, noindex header, 10 URLs (2 lists + 8 works)', 200 === $sm['code'] && 0 === strpos(hv($sm, 'content-type'), 'application/xml') && false !== strpos(hv($sm, 'x-robots-tag'), 'noindex') && 10 === count($locs), (string) count($locs));
 check('sitemap: no demo URL, no top page, no filtered URL', !preg_grep('#/design/demo/|\?#', $locs) && !in_array($base . '/design/', $locs, true));
 check('robots.txt: announces the design sitemap while the site is public', false !== strpos(req('/robots.txt')['body'], 'Sitemap: ' . $base . '/design-sitemap.xml'));
 check('sitemap: query-string variant is refused', 404 === req('/?omx_design_sitemap=1')['code']);

@@ -74,6 +74,26 @@ var SCRIPTS = {
             await p.mouse.move(980, 420, { steps: 20 }); await p.waitForTimeout(900);
             await smoothScroll(p, 760, 1800); await p.waitForTimeout(800);
         }
+    },
+    'dark-luxury': {
+        poster: async function (p) { await p.waitForTimeout(2800); },
+        loop: async function (p) {
+            await p.evaluate(function () { document.documentElement.style.scrollBehavior = 'auto'; });   // the demo scrolls smoothly for anchors
+            await p.waitForTimeout(2600);
+            await smoothScroll(p, 640, 1800); await p.waitForTimeout(300);
+            var y = await p.evaluate(function () { var w = document.querySelector('[data-dk-works]'); var top = w.getBoundingClientRect().top + window.scrollY; return [top, top + w.offsetHeight - window.innerHeight]; });
+            await smoothScroll(p, y[0], 1200);
+            await smoothScroll(p, y[1], 2600); await p.waitForTimeout(500);   // the pinned works slide sideways to the last one
+        }
+    },
+    'aurora-gradient': {
+        poster: async function (p) { await p.mouse.move(760, 220); await p.waitForTimeout(3200); },
+        loop: async function (p) {
+            await p.evaluate(function () { document.documentElement.style.scrollBehavior = 'auto'; });
+            await p.mouse.move(640, 200); await p.waitForTimeout(2400);
+            await glide(p, [[640, 200], [960, 160], [1120, 260], [760, 240]], 3600);
+            await smoothScroll(p, 520, 2000); await p.waitForTimeout(600);
+        }
     }
 };
 

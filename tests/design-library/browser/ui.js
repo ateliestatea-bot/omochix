@@ -101,7 +101,7 @@ async function listChecks(type, browser) {
     for (var z = 0; z < 30; z++) { await pz.mouse.wheel(0, 400); await L.wait(100); }
     await L.wait(800);
     var posters = await pz.evaluate(function () { return Array.prototype.map.call(document.querySelectorAll('[data-dl-card] img'), function (i) { return i.complete && i.naturalWidth > 0; }); });
-    check(type + ' phone: all 6 lazy posters load when scrolled to', posters.length === 6 && posters.every(Boolean), posters);
+    check(type + ' phone: all 8 lazy posters load when scrolled to', posters.length === 8 && posters.every(Boolean), posters);
     await cz.close();
 
     /* reduced motion and Save-Data: no autoplay, the button still plays */
@@ -144,18 +144,18 @@ async function listChecks(type, browser) {
     await px.goto(BASE + '/design/web/');
     function vis() { return px.evaluate(function () { return Array.prototype.filter.call(document.querySelectorAll('[data-dl-card]'), function (c) { return !c.hidden; }).map(function (c) { return c.querySelector('.dl-card__title').textContent.trim(); }); }); }
     await px.selectOption('#dl-motion_type', 'ambient'); await L.wait(200);
-    check(type + ' filter motion_type=ambient -> Liquid Glass, URL synced', JSON.stringify(await vis()) === '["Liquid Glass"]' && px.url().indexOf('motion_type=ambient') !== -1);
+    check(type + ' filter motion_type=ambient -> Liquid Glass and Aurora Gradient, URL synced', JSON.stringify(await vis()) === '["Liquid Glass","Aurora Gradient"]' && px.url().indexOf('motion_type=ambient') !== -1);
     await px.selectOption('#dl-motion_type', ''); await px.selectOption('#dl-technology', 'webgl'); await L.wait(200);
     check(type + ' filter technology=webgl -> 3D Interactive', JSON.stringify(await vis()) === '["3D Interactive"]');
     await px.selectOption('#dl-technology', ''); await px.selectOption('#dl-use_case', 'saas'); await L.wait(200);
-    check(type + ' filter use_case=saas -> Bento SaaS', JSON.stringify(await vis()) === '["Bento SaaS"]');
+    check(type + ' filter use_case=saas -> Bento SaaS and Aurora Gradient', JSON.stringify(await vis()) === '["Bento SaaS","Aurora Gradient"]');
     await px.selectOption('#dl-use_case', ''); await px.selectOption('#dl-industry', 'beauty'); await L.wait(200);
     check(type + ' filter industry=beauty -> Minimal Editorial', JSON.stringify(await vis()) === '["Minimal Editorial"]');
     await px.selectOption('#dl-industry', '');
     await px.fill('#dl-q', 'ガラス 3D'); await L.wait(400);
     check(type + ' keyword AND with no match shows the empty state and "0件"', (await vis()).length === 0 && !(await px.isHidden('[data-dl-empty]')) && (await px.textContent('[data-dl-count]')).indexOf('0件') === 0);
     await px.click('[data-dl-reset]'); await L.wait(200);
-    check(type + ' reset shows all 4 and clears the URL', (await vis()).length === 4 && px.url() === BASE + '/design/web/');
+    check(type + ' reset shows all 6 and clears the URL', (await vis()).length === 6 && px.url() === BASE + '/design/web/');
     // keyboard only
     await px.focus('#dl-q');
     await px.keyboard.type('カウント'); await L.wait(400);
@@ -166,7 +166,7 @@ async function listChecks(type, browser) {
     // top page: Web and video together, sections follow the filters
     await px.goto(BASE + '/design/');
     function secs() { return px.evaluate(function () { return Array.prototype.map.call(document.querySelectorAll('[data-dl-section]'), function (s) { return s.hidden ? 0 : 1; }).join(''); }); }
-    check(type + ' top: 6 works in two sections', (await vis()).length === 6 && (await secs()) === '11');
+    check(type + ' top: 8 works in two sections', (await vis()).length === 8 && (await secs()) === '11');
     await px.selectOption('#dl-medium', 'video'); await L.wait(200);
     check(type + ' top medium=video -> the 2 video works, Web section hidden', JSON.stringify(await vis()) === '["Logo Reveal Short","Data Chart Explainer"]' && (await secs()) === '01' && px.url().indexOf('medium=video') !== -1);
     await px.selectOption('#dl-medium', ''); await px.selectOption('#dl-motion_type', 'chart'); await L.wait(200);
@@ -203,11 +203,11 @@ async function listChecks(type, browser) {
     var cn = await newCtx(browser, { js: false });
     var pn = await cn.newPage();
     await pn.goto(BASE + '/design/web/');
-    check(type + ' no JS: 4 posters, no video playing', (await pn.locator('[data-dl-card] img').count()) === 4 && (await pn.locator('[data-dl-card]:not([hidden])').count()) === 4);
+    check(type + ' no JS: 6 posters, no video playing', (await pn.locator('[data-dl-card] img').count()) === 6 && (await pn.locator('[data-dl-card]:not([hidden])').count()) === 6);
     check(type + ' no JS: no play button is shown (it could not do anything)', (await pn.locator('[data-dl-play]:visible').count()) === 0);
     await pn.selectOption('#dl-use_case', 'saas');
     await Promise.all([pn.waitForNavigation(), pn.click('[data-dl-submit]')]);
-    check(type + ' no JS: the filter form submits and the server filters (Bento SaaS only)', pn.url().indexOf('use_case=saas') !== -1 && (await pn.locator('[data-dl-card]:not([hidden])').count()) === 1);
+    check(type + ' no JS: the filter form submits and the server filters (Bento SaaS and Aurora Gradient)', pn.url().indexOf('use_case=saas') !== -1 && (await pn.locator('[data-dl-card]:not([hidden])').count()) === 2);
     await pn.goto(BASE + '/design/video/logo-reveal-short/');
     check(type + ' no JS: the video detail keeps a playable <video controls> and hides the copy buttons', (await pn.locator('video.dl-stage__video[controls]').count()) === 1 && (await pn.locator('[data-dl-copy]:visible').count()) === 0);
     await pn.goto(BASE + '/design/web/3d-interactive/');
@@ -221,6 +221,8 @@ async function listChecks(type, browser) {
             var t = document.body.innerText;
             if (slug === 'minimal-editorial') return document.querySelectorAll('.ed-page').length === 3 && Array.prototype.every.call(document.querySelectorAll('.ed-page, .ed-line'), function (e) { return getComputedStyle(e).display !== 'none' && getComputedStyle(e).opacity === '1'; });
             if (slug === 'bento-saas') return t.indexOf('1,240') !== -1 && t.indexOf('99.9') !== -1 && Array.prototype.every.call(document.querySelectorAll('.bn-tile'), function (e) { return getComputedStyle(e).opacity === '1'; });
+            if (slug === 'dark-luxury') return t.indexOf('静けさを') !== -1 && document.querySelectorAll('.dk-card').length === 4 && Array.prototype.every.call(document.querySelectorAll('[data-dk-reveal], .dk-line'), function (e) { return getComputedStyle(e).opacity === '1'; });
+            if (slug === 'aurora-gradient') return getComputedStyle(document.querySelector('.au-static')).opacity === '1' && getComputedStyle(document.querySelector('.au-canvas')).opacity === '0' && Array.prototype.every.call(document.querySelectorAll('[data-au-reveal], .au-line'), function (e) { return getComputedStyle(e).opacity === '1'; });
             if (slug === 'liquid-glass') return getComputedStyle(document.querySelector('.lg-blob--1')).animationName === 'none' && t.indexOf('考えごとを') !== -1;
             return getComputedStyle(document.querySelector('.kd-fallback')).display !== 'none';
         }, s);

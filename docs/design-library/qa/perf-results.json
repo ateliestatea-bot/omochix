@@ -8,7 +8,7 @@
       "longTasks": 0,
       "heapMb": 0.9,
       "fpsP5": 60,
-      "lcpMs": 2256,
+      "lcpMs": 2068,
       "cls": 0
     },
     "minimal-editorial": {
@@ -16,17 +16,17 @@
       "jsKb": 2.2,
       "longTasks": 0,
       "heapMb": 0.9,
-      "fpsP5": 111,
-      "lcpMs": 2040,
+      "fpsP5": 110,
+      "lcpMs": 2028,
       "cls": 0
     },
     "3d-interactive": {
       "transferKb": 39.2,
       "jsKb": 7.3,
       "longTasks": 1,
-      "heapMb": 1.5,
-      "fpsP5": 111,
-      "lcpMs": 2096,
+      "heapMb": 1.6,
+      "fpsP5": 112,
+      "lcpMs": 2100,
       "cls": 0
     },
     "bento-saas": {
@@ -34,23 +34,41 @@
       "jsKb": 2.3,
       "longTasks": 0,
       "heapMb": 1,
-      "fpsP5": 111,
-      "lcpMs": 2068,
+      "fpsP5": 109,
+      "lcpMs": 2060,
+      "cls": 0
+    },
+    "dark-luxury": {
+      "transferKb": 9.6,
+      "jsKb": 2.7,
+      "longTasks": 0,
+      "heapMb": 0.9,
+      "fpsP5": 110,
+      "lcpMs": 2148,
+      "cls": 0
+    },
+    "aurora-gradient": {
+      "transferKb": 10.8,
+      "jsKb": 4.3,
+      "longTasks": 0,
+      "heapMb": 0.8,
+      "fpsP5": 110,
+      "lcpMs": 2140,
       "cls": 0
     }
   },
   "list": {
-    "transferKb": 423.1,
+    "transferKb": 455.9,
     "videos": [
-      "liquid-glass.webm",
-      "minimal-editorial.webm"
+      "minimal-editorial.webm",
+      "liquid-glass.webm"
     ],
     "cpuPct": 0,
     "heapMb": 1,
     "cls": 0
   },
   "listReducedMotion": {
-    "transferKb": 139.6,
+    "transferKb": 172.4,
     "videos": [],
     "cpuPct": 0,
     "heapMb": 1.6,

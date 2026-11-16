@@ -139,14 +139,16 @@ catalog.items.filter(function (i) { return i.medium === 'web'; }).forEach(functi
     check('sha256: ' + it.slug + ' matches its demo sources', hash.demoHash(it.slug) === it.deliverables.html.sha256);
 });
 var pub = function (m) { return catalog.items.filter(function (i) { return i.medium === m && i.status === 'published'; }).length; };
-check('catalog: 4 published Web works (kept from D1) and 2 published video works', pub('web') === 4 && pub('video') === 2);
+check('catalog: 6 published Web works (4 from D1, 2 from D2-B) and 2 published video works', pub('web') === 6 && pub('video') === 2);
+check('catalog: the D2-B works keep their ids and slugs', ['dl-web-0005:dark-luxury', 'dl-web-0006:aurora-gradient'].every(function (p) { var a = p.split(':'); return catalog.items.some(function (i) { return i.id === a[0] && i.slug === a[1]; }); }));
+check('catalog: no work claims verified-production (production checks are not done)', catalog.items.every(function (i) { return i.verification.state !== 'verified-production'; }));
 check('catalog: the 4 D1 works keep their ids and slugs', ['dl-web-0001:liquid-glass', 'dl-web-0002:minimal-editorial', 'dl-web-0003:3d-interactive', 'dl-web-0004:bento-saas'].every(function (p) { var a = p.split(':'); return catalog.items.some(function (i) { return i.id === a[0] && i.slug === a[1]; }); }));
 check('catalog: no work maps to a Motion Studio template (no verified template exists)', catalog.items.every(function (i) { return !i.motionStudio; }));
 check('catalog: every work is original (credits.source / license = original)', catalog.items.every(function (i) { return i.credits.source === 'original' && i.credits.license === 'original'; }));
 
 /* ---------- 3. bad catalogs: schema+rules and PHP both reject ---------- */
 function clone(x) { return JSON.parse(JSON.stringify(x)); }
-var W = 0, V = 4; // index of a Web and a video work
+var W = 0, V = catalog.items.findIndex(function (i) { return i.medium === 'video'; }); // index of a Web and a video work
 var MUT = [
     ['unknown item key', function (d) { d.items[W].extra = 1; }],
     ['unknown root key', function (d) { d.extra = 1; }, 'root'],

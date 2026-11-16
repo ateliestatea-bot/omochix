@@ -11,7 +11,7 @@ if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(BASE) || !fs.existsSync(SITE + '/wp')) {
 }
 var FLAG = SITE + '/design-isolation-test.on';
 var THEME = path.resolve(__dirname, '../../../wp-theme/omochix-theme');
-var DEMOS = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas'];
+var DEMOS = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient'];
 var GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--enable-precise-memory-info'];
 
 var results = { pass: 0, fail: 0, lines: [] };

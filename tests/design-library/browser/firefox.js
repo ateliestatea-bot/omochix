@@ -130,18 +130,18 @@ async function list() {
         await open('/design/web/', w, 900);
         await wait(2500);
         var st = await js('({ sw: document.documentElement.scrollWidth, iw: innerWidth, cards: document.querySelectorAll("[data-dl-card]:not([hidden])").length, playing: [...document.querySelectorAll("video")].filter(v => !v.paused).length })');
-        check('list ' + w + 'px: 4 cards, no horizontal scroll, at most 2 loops playing', st.cards === 4 && st.sw <= st.iw + 1 && st.playing <= 2, st);
+        check('list ' + w + 'px: 6 cards, no horizontal scroll, at most 2 loops playing', st.cards === 6 && st.sw <= st.iw + 1 && st.playing <= 2, st);
     }
     var max = 0;
     for (var k = 0; k < 12; k++) { await js('(scrollBy(0, 120), true)'); await wait(250); max = Math.max(max, await js('[...document.querySelectorAll("video")].filter(v => !v.paused).length')); }
     check('list: while scrolling, never more than 2 loops play', max <= 2, max);
     await js('(() => { const s = document.querySelector("#dl-motion_type"); s.value = "ambient"; s.dispatchEvent(new Event("change", { bubbles: true })); return true; })()');
     await wait(300);
-    check('list: motion-type filter in place (1 card, URL updated)', (await js('document.querySelectorAll("[data-dl-card]:not([hidden])").length')) === 1 && (await js('location.search')) === '?motion_type=ambient');
+    check('list: motion-type filter in place (2 cards, URL updated)', (await js('document.querySelectorAll("[data-dl-card]:not([hidden])").length')) === 2 && (await js('location.search')) === '?motion_type=ambient');
     await open('/design/', 1440, 900);
     await wait(2500);
     var top = await js('({ cards: document.querySelectorAll("[data-dl-card]:not([hidden])").length, playing: [...document.querySelectorAll("video[data-dl-video]")].filter(v => !v.paused).length, sw: document.documentElement.scrollWidth, iw: innerWidth })');
-    check('top: 6 works (Web + video), at most 2 loops playing, no horizontal scroll', top.cards === 6 && top.playing <= 2 && top.sw <= top.iw + 1, top);
+    check('top: 8 works (Web + video), at most 2 loops playing, no horizontal scroll', top.cards === 8 && top.playing <= 2 && top.sw <= top.iw + 1, top);
     await open('/design/video/data-chart-explainer/', 1280, 900);
     var v0 = await js('(() => { const v = document.querySelector(".dl-stage__video"); return { paused: v.paused, t: v.currentTime }; })()');
     await js('document.querySelector(".dl-stage__video").play().then(() => true)');

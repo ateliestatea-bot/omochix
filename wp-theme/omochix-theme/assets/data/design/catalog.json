@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated": "2026-11-16",
+  "updated": "2026-11-17",
   "items": [
     {
       "id": "dl-web-0001",
@@ -153,7 +153,8 @@
       },
       "related": {
         "designs": [
-          "bento-saas"
+          "bento-saas",
+          "aurora-gradient"
         ],
         "motion": [
           "floating-blobs",
@@ -328,7 +329,9 @@
         ]
       },
       "related": {
-        "designs": [],
+        "designs": [
+          "dark-luxury"
+        ],
         "motion": [
           "fade-up",
           "underline-draw",
@@ -681,7 +684,8 @@
       },
       "related": {
         "designs": [
-          "liquid-glass"
+          "liquid-glass",
+          "aurora-gradient"
         ],
         "motion": [
           "stagger",
@@ -703,6 +707,394 @@
           "heapMb": 1,
           "fpsP5": 110,
           "lcpMs": 1872,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0005",
+      "slug": "dark-luxury",
+      "medium": "web",
+      "status": "published",
+      "title": "Dark Luxury",
+      "summary": "黒の階調と控えめなゴールド、明朝の文字組みで見せる建築ブランドのサイト。奥行きのある層のスクロール演出と、作品の横送り。",
+      "description": "黒を基調に、明朝体の見出しと細い金の線で組んだ建築・不動産ブランド向けの見本。SVG で描いた建築を層で重ね、スクロールで奥行きを出し、作品は横に送る。",
+      "use_cases": [
+        "brand-intro",
+        "corporate",
+        "portfolio"
+      ],
+      "motion_types": [
+        "scroll",
+        "typography",
+        "ui"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "dark",
+        "monochrome",
+        "typography"
+      ],
+      "motions": [
+        "parallax",
+        "text-reveal",
+        "scroll-linked",
+        "line-draw",
+        "hover-lift"
+      ],
+      "industries": [
+        "real-estate",
+        "construction"
+      ],
+      "level": "advanced",
+      "palette": [
+        {
+          "name": "Sumi",
+          "value": "#0b0b0c"
+        },
+        {
+          "name": "Charcoal",
+          "value": "#18181b"
+        },
+        {
+          "name": "Bone",
+          "value": "#ece6da"
+        },
+        {
+          "name": "Gold",
+          "value": "#c9ab6e"
+        }
+      ],
+      "fonts": [
+        "Hiragino Mincho ProN",
+        "Yu Mincho",
+        "system-ui"
+      ],
+      "poster": "posters/dark-luxury.avif",
+      "posterFallback": "posters/dark-luxury.webp",
+      "loop": "loops/dark-luxury.webm",
+      "loopFallback": "loops/dark-luxury.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/dark-luxury/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（明朝・ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "建築の図版（インライン SVG・自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "アクセントの金",
+          "description": "細い線・番号・ボタンに使う 1 色（小さな文字のコントラストを保つ明るさで）"
+        },
+        {
+          "label": "黒の階調",
+          "description": "背景の 3 段階の黒（#0b0b0c・#111113・#18181b）"
+        },
+        {
+          "label": "作品の数",
+          "description": "横送りの作品カード。数を変えると送りの長さも自動で変わる"
+        }
+      ],
+      "prompt": {
+        "text": "建築・不動産ブランドの Web サイトを、黒の階調と控えめなゴールド、明朝体の見出しで作ってください。トップは SVG で描いた列柱とアーチを 3 層に重ね、スクロールで層ごとに違う速さで動かして奥行きを出します。見出しは一行ずつマスクの中から現れ、作品は広い画面ではセクションを固定して縦スクロールで横に送ります。ホバーでは金の細い下線、画像のわずかな拡大と光の通過、見出しの字間の変化を使います。写真は使わず、prefers-reduced-motion と狭い画面では固定と視差を止めて縦に並べ、JavaScript が無効でも全文が読めるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "黒の階調と書体を決める",
+          "body": "背景は 3 段階の黒（#0b0b0c・#111113・#18181b）、文字は暖かい白、補助の文字はやや暗い灰色、アクセントは金 1 色。見出しは明朝体、ラベルは字間を大きく取った大文字の欧文にする。小さな金の文字は、黒地とのコントラストが 4.5:1 以上になる明るさを選ぶ。"
+        },
+        {
+          "title": "建築を SVG で描いて重ねる",
+          "body": "アーチの列、列柱、階段の三つを別々の SVG にし、奥から順に重ねる。光の入る隙間は細い縦のグラデーションで表す。写真や外部の画像は使わない。"
+        },
+        {
+          "title": "スクロールで奥行きを出す",
+          "body": "ヒーローの高さに対するスクロール量を 0〜1 で計算し、奥の層ほど小さく、手前の層ほど大きく下へずらす。見出しは少し上へ逃がして薄くする。計算は requestAnimationFrame で 1 回にまとめ、常時のループは回さない。"
+        },
+        {
+          "title": "作品を横に送る",
+          "body": "広い画面だけ、作品のセクションを position: sticky で固定し、セクションの高さを横にはみ出す分だけ伸ばして、縦のスクロール量で横に動かす。キーボードでカードにフォーカスしたら、そのカードが見える位置までスクロールする。"
+        },
+        {
+          "title": "静的な表示を用意する",
+          "body": "prefers-reduced-motion、幅 900px 未満、JavaScript 無効では、固定と視差を使わずにカードを縦に並べる。出現のアニメーションも即時表示にする。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/dark-luxury/",
+          "sha256": "f46e1d1a48bf40eaee43d610915293ffa7c550fdb9fdd2736c4693dd2aa6e086"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "事務所名・作品・地名・仕様はすべて架空。写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "minimal-editorial"
+        ],
+        "motion": [
+          "parallax",
+          "mask-reveal",
+          "underline-draw"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {
+          "transferKb": 9.6,
+          "jsKb": 2.7,
+          "longTasks": 0,
+          "heapMb": 0.9,
+          "fpsP5": 97,
+          "lcpMs": 2156,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0006",
+      "slug": "aurora-gradient",
+      "medium": "web",
+      "status": "published",
+      "title": "Aurora Gradient",
+      "summary": "夜明けの空に流れるオーロラを Canvas 2D で描いた、SaaS の紹介サイト。ゆっくり流れる光の帯と、明るく静かな本文。",
+      "description": "深い藍から淡い夜明け色へ移る空に、Canvas 2D で描いたオーロラの帯を重ねたファーストビュー。下は明るい SaaS の構成（機能・導入・料金・CTA）。描画は低解像度・最大 30fps・帯の数を端末に合わせて制御する。",
+      "use_cases": [
+        "saas",
+        "lp",
+        "product"
+      ],
+      "motion_types": [
+        "ambient",
+        "pointer",
+        "scroll"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "canvas"
+      ],
+      "styles": [
+        "gradient",
+        "light",
+        "immersive"
+      ],
+      "motions": [
+        "pointer-follow",
+        "float",
+        "scroll-linked",
+        "text-reveal",
+        "stagger",
+        "hover-lift"
+      ],
+      "industries": [
+        "web-production"
+      ],
+      "level": "advanced",
+      "palette": [
+        {
+          "name": "Night",
+          "value": "#080b26"
+        },
+        {
+          "name": "Violet",
+          "value": "#3a2a78"
+        },
+        {
+          "name": "Aurora Mint",
+          "value": "#5ef0b4"
+        },
+        {
+          "name": "Dawn",
+          "value": "#f3dfe8"
+        },
+        {
+          "name": "Ink Violet",
+          "value": "#3d2399"
+        }
+      ],
+      "fonts": [
+        "system-ui",
+        "Hiragino Sans"
+      ],
+      "poster": "posters/aurora-gradient.avif",
+      "posterFallback": "posters/aurora-gradient.webp",
+      "loop": "loops/aurora-gradient.webm",
+      "loopFallback": "loops/aurora-gradient.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/aurora-gradient/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "オーロラの描画（Canvas 2D・自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "オーロラの色",
+          "description": "帯ごとの色と、下端の明るい縁の色（BANDS の c と rim）"
+        },
+        {
+          "label": "帯の数と速さ",
+          "description": "広い画面は 5 本、狭い画面・低性能な端末は 3 本。速さは s1〜s3 で調整"
+        },
+        {
+          "label": "空のグラデーション",
+          "description": "夜の藍から夜明けの淡い色まで、ヒーロー背景の 5 色"
+        }
+      ],
+      "prompt": {
+        "text": "SaaS の紹介サイトを作ってください。ファーストビューは、深い藍から淡い夜明け色へ移る CSS グラデーションの空に、Canvas 2D でオーロラを描きます。オーロラは細い縦のグラデーションの短冊を横に並べたカーテンを 3〜5 本重ね、正弦波の和でゆっくり揺らし、加算合成で光らせます。描画はキャンバスを CSS サイズの半分以下の解像度にし、最大 30fps、狭い画面や低性能な端末では帯を 3 本に減らします。ポインターの近くでは帯がわずかにたわみ、下端の縁が明るくなります。タブが非表示のとき、画面外のとき、prefers-reduced-motion と Save-Data では描画を止め（静止した 1 枚だけ描く）、JavaScript や Canvas が使えないときは CSS の放射グラデーションで静止したオーロラを見せてください。本文は明るい背景で、機能（左右交互）・導入の流れ・料金・CTA の構成にします。"
+      },
+      "steps": [
+        {
+          "title": "空とフォールバックを先に作る",
+          "body": "ヒーローの背景に、夜の藍（#080b26）から紫を経て淡い夜明け色へ移る縦のグラデーションを敷く。その上に CSS の放射グラデーションを重ねた静止のオーロラを置き、JavaScript や Canvas が無いときはこれがそのまま見えるようにする。"
+        },
+        {
+          "title": "オーロラを短冊で描く",
+          "body": "帯ごとに、上が透明で下端が明るい縦の線形グラデーションを 1 つ作る。横に数 px 間隔で短冊を並べ、各短冊の高さ位置を正弦波の和で、明るさを別の正弦波で決める。合成は lighter（加算）。乱数を毎フレーム使わないので、ちらつかない。"
+        },
+        {
+          "title": "負荷を抑える",
+          "body": "キャンバスは CSS サイズの 0.33〜0.5 倍の解像度で描き、拡大でぼかす。フレームは最大 30fps に間引き、描画が遅い状態が続いたら一度だけ軽い設定（帯 3 本・低解像度）に切り替える。"
+        },
+        {
+          "title": "止める条件をまとめる",
+          "body": "描画するのは、動きが許可され・Save-Data が無効で・タブが表示中で・親ページが一時停止しておらず・空が画面内にあるときだけ。reduced-motion と Save-Data では静止した 1 枚だけ描く。"
+        },
+        {
+          "title": "明るい本文で受け止める",
+          "body": "ヒーローの下は明るい背景にし、機能を左右交互に並べ、導入の流れ・料金・CTA へ続ける。小さなラベルの紫は背景とのコントラストが 4.5:1 以上になる濃さにする。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/aurora-gradient/",
+          "sha256": "aeca72964cf7366f761ed31bace6513a9782294a0aeb00d3eab21755f70a9f2c"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "製品名・企業・数値はすべて架空。オーロラは Canvas 2D で描画し、写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "liquid-glass",
+          "bento-saas"
+        ],
+        "motion": [
+          "gradient-shift",
+          "floating-blobs",
+          "fade-up"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {
+          "transferKb": 10.8,
+          "jsKb": 4.3,
+          "longTasks": 0,
+          "heapMb": 1.2,
+          "fpsP5": 98,
+          "lcpMs": 2132,
           "cls": 0
         }
       }
