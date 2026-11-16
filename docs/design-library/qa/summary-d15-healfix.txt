@@ -1,0 +1,9 @@
+catalog      OK  94 passed, 0 failed
+unit         OK  70 passed, 0 failed
+http         OK  131 passed, 0 failed
+isolation    OK  isolation (chromium, webkit): 72 passed, 0 failed
+firefox      OK  firefox: 22 passed, 0 failed
+ui           OK  ui (chromium, webkit): 192 passed, 0 failed
+perf         OK  perf (chromium): 32 passed, 0 failed
+heal         OK  24 passed, 0 failed (see logs/heal.log)
+regression   OK  compared 86 URLs, 0 differ

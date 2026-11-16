@@ -1,0 +1,42 @@
+/* 3D Interactive — depth and direct manipulation. The canvas appears only when WebGL started (html.gl). */
+*,*::before,*::after{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:#05060c;color:#eef1ff;font-family:system-ui,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,p{margin:0}
+.kd{background:radial-gradient(90% 60% at 70% 10%,#1b2353 0%,#090c1d 50%,#05060c 100%)}
+.kd-nav{display:flex;align-items:center;gap:14px;width:min(1200px,calc(100% - 40px));margin:0 auto;padding:22px 0}
+.kd-logo{font-weight:800;letter-spacing:.18em}
+.kd-logo span{color:#9d8cff}
+.kd-tag{font-size:12px;color:#c3c8e6;border:1px solid #ffffff33;border-radius:999px;padding:2px 10px}
+.kd-hero{position:relative;display:grid;grid-template-columns:1fr 1fr;align-items:center;width:min(1200px,calc(100% - 40px));margin:0 auto;min-height:calc(100vh - 80px);padding-bottom:40px}
+.kd-stage{position:relative;grid-column:2;grid-row:1;aspect-ratio:1/1;width:100%;max-width:620px;justify-self:end}
+.kd-canvas{display:none;width:100%;height:100%;border-radius:24px;cursor:grab;touch-action:pan-y;outline:none}
+.kd-canvas:active{cursor:grabbing}
+.kd-canvas:focus-visible{box-shadow:0 0 0 2px #9d8cff}
+html.gl .kd-canvas{display:block}
+.kd-fallback{display:grid;gap:12px;align-content:center;height:100%}
+.kd-fallback img{width:100%;height:auto;border-radius:20px;display:block}
+.kd-fallback p{font-size:13px;color:#c3c8e6}
+html.gl .kd-fallback{display:none}
+.kd-hint,.kd-label{position:absolute;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:.12em;padding:4px 12px;border-radius:999px;pointer-events:none;white-space:nowrap}
+.kd-hint{bottom:12px;color:#c3c8e6;background:#0b0f26cc;display:none}
+html.gl .kd-hint{display:block}
+.kd-label{top:12px;background:#eef1ff;color:#0b0f26;font-weight:700;opacity:0;transition:opacity .2s}
+.kd-label.is-on{opacity:1}
+.kd-copy{grid-column:1;grid-row:1;position:relative;z-index:1}
+.kd-eyebrow{font-size:12px;letter-spacing:.3em;color:#9d8cff;margin-bottom:16px}
+.kd-copy h1{font-size:clamp(40px,5.6vw,72px);line-height:1.12;font-weight:800}
+.kd-lead{margin-top:22px;max-width:30em;color:#cdd2ee;font-size:17px}
+.kd-scroll{margin-top:36px;font-size:13px;color:#a9b0d6}
+.kd-features{width:min(1200px,calc(100% - 40px));margin:0 auto;padding:80px 0 72px}
+.kd-features h2{font-size:clamp(28px,3.4vw,40px)}
+.kd-note{margin:10px 0 28px;color:#c3c8e6;font-size:14px}
+.kd-rail{display:grid;grid-auto-flow:column;grid-auto-columns:min(300px,78%);gap:18px;margin:0;padding:4px 4px 18px;list-style:none;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-color:#ffffff40 transparent}
+.kd-rail:focus-visible{outline:2px solid #9d8cff;outline-offset:4px;border-radius:12px}
+.kd-card{scroll-snap-align:start;padding:24px;border-radius:20px;background:linear-gradient(160deg,#141a3d,#0b0f26);border:1px solid #ffffff1f;transition:transform .3s,border-color .3s}
+.kd-card:hover,.kd-card:focus-visible,.kd-card.is-on{transform:translateY(-4px);border-color:#ffffff66;outline:none}
+.kd-card h3{font-size:19px;margin:14px 0 6px}
+.kd-card p{font-size:14px;color:#c3c8e6}
+.kd-dot{display:block;width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:0 0 14px var(--c)}
+.kd-foot{width:min(1200px,calc(100% - 40px));margin:0 auto;padding:24px 0 48px;border-top:1px solid #ffffff22;font-size:12px;color:#a9b0d6}
+@media (max-width:860px){.kd-hero{grid-template-columns:1fr;min-height:0}.kd-stage{grid-column:1;grid-row:1;justify-self:center;max-width:460px}.kd-copy{grid-row:2;margin-top:24px}}

@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- Design Library video work "logo-reveal-short" (original, fictional brand). 1080x1920, 6 s.
+     Rendered frame by frame by tools/design-library/render-video.js (Web Animations are seeked, not played in real time).
+     Not shipped with the theme; only the rendered MP4/WebM/posters are. -->
+<html lang="ja"><head><meta charset="utf-8"><title>logo-reveal-short</title>
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0b0c14;font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:#f4f2ff}
+.bg{position:absolute;inset:0;background:radial-gradient(70% 45% at 50% 42%,#2a1f63 0%,#120f2b 55%,#0b0c14 100%)}
+.ring{position:absolute;left:50%;top:42%;width:1400px;height:1400px;margin:-700px 0 0 -700px;border-radius:50%;border:2px solid #ffffff14;animation:ring 6s linear both}
+.ring:nth-child(3){width:1000px;height:1000px;margin:-500px 0 0 -500px;animation-duration:6s;animation-direction:reverse}
+@keyframes ring{from{transform:scale(.6) rotate(0);opacity:0}20%{opacity:1}to{transform:scale(1.05) rotate(40deg);opacity:1}}
+.mark{position:absolute;left:50%;top:42%;width:420px;height:420px;margin:-210px 0 0 -210px}
+.mark path,.mark circle{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.m1{stroke:#a78bfa;stroke-width:22;stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 1.4s cubic-bezier(.6,0,.2,1) .2s both}
+.m2{stroke:#5eead4;stroke-width:22;stroke-dasharray:900;stroke-dashoffset:900;animation:draw 1.2s cubic-bezier(.6,0,.2,1) .6s both}
+.m3{fill:#fbbf24!important;stroke:none;transform-origin:288px 132px;animation:pop .7s cubic-bezier(.34,1.56,.64,1) 1.5s both}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.glow{position:absolute;left:50%;top:42%;width:700px;height:700px;margin:-350px 0 0 -350px;border-radius:50%;background:radial-gradient(closest-side,#8b5cf655,transparent);animation:glow 6s ease-in-out both}
+@keyframes glow{0%,25%{opacity:0;transform:scale(.7)}45%{opacity:1;transform:scale(1)}100%{opacity:.6;transform:scale(1.1)}}
+.word{position:absolute;left:0;right:0;top:1140px;text-align:center;font-size:150px;font-weight:800;letter-spacing:.06em}
+.word span{display:inline-block;opacity:0;animation:rise .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(80px) rotate(8deg)}to{opacity:1;transform:none}}
+.tag{position:absolute;left:0;right:0;top:1360px;text-align:center;font-size:46px;letter-spacing:.3em;color:#c4b5fd;opacity:0;animation:fade .9s ease 3.3s both}
+@keyframes fade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.line{position:absolute;left:340px;right:340px;top:1320px;height:3px;background:linear-gradient(90deg,transparent,#a78bfa,transparent);transform:scaleX(0);animation:line .9s cubic-bezier(.6,0,.2,1) 3.1s both}
+@keyframes line{to{transform:scaleX(1)}}
+.note{position:absolute;left:0;right:0;bottom:120px;text-align:center;font-size:30px;color:#8e88b8;letter-spacing:.08em;opacity:0;animation:fade .8s ease 4.4s both}
+</style></head><body>
+<div class="bg"></div><div class="ring"></div><div class="ring"></div><div class="glow"></div>
+<svg class="mark" viewBox="0 0 420 420" aria-hidden="true">
+  <path class="m1" d="M210 40 C 320 40 380 120 380 210 C 380 310 300 380 210 380 C 110 380 40 300 40 210 C 40 130 95 70 160 52"/>
+  <path class="m2" d="M120 260 L 190 150 L 240 230 L 300 140"/>
+  <circle class="m3" cx="288" cy="132" r="26"/>
+</svg>
+<div class="word" aria-label="HOSHIORI"><span style="animation-delay:2.0s">H</span><span style="animation-delay:2.08s">O</span><span style="animation-delay:2.16s">S</span><span style="animation-delay:2.24s">H</span><span style="animation-delay:2.32s">I</span><span style="animation-delay:2.40s">O</span><span style="animation-delay:2.48s">R</span><span style="animation-delay:2.56s">I</span></div>
+<div class="line"></div>
+<div class="tag">星を織る、小さな工房</div>
+<div class="note">架空のブランドによる見本 — OmochiX Design Library</div>
+</body></html>

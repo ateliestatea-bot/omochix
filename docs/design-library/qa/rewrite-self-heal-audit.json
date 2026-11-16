@@ -1,0 +1,213 @@
+{
+ "S1_normal_28_requests": {
+  "rewrite_writes": {},
+  "codes": [
+   200
+  ]
+ },
+ "S2_missing_rules": {
+  "first_anonymous_GET": {
+   "path": "/about/",
+   "code": 200,
+   "ms": 18,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   },
+   "design_rules_after": 3
+  },
+  "next_30_requests": {
+   "rewrite_writes": {},
+   "codes": [
+    200
+   ]
+  },
+  "normal_request_ms_for_comparison": 17
+ },
+ "S3_version_1": {
+  "first_GET_writes": {
+   "UPDATE omochix_design_rewrite_version": 1
+  },
+  "second_GET_writes": {},
+  "version_now": "2"
+ },
+ "S3_version_deleted": {
+  "first_GET_writes": {
+   "INSERT omochix_design_rewrite_version": 1
+  },
+  "second_GET_writes": {},
+  "version_now": "2"
+ },
+ "S4_entry_points": {
+  "GET /about/": {
+   "code": 200,
+   "healed": true,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   }
+  },
+  "HEAD /": {
+   "code": 200,
+   "healed": true,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   }
+  },
+  "GET /wp-json/": {
+   "code": 200,
+   "healed": true,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   }
+  },
+  "GET /wp-cron.php": {
+   "code": 200,
+   "healed": true,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   }
+  },
+  "POST /wp-admin/admin-ajax.php (unknown action)": {
+   "code": 400,
+   "healed": true,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   }
+  },
+  "GET /feed/": {
+   "code": 200,
+   "healed": true,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   }
+  },
+  "GET a 404 URL": {
+   "code": 404,
+   "healed": true,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   }
+  },
+  "GET /wp-login.php": {
+   "code": 200,
+   "healed": true,
+   "rewrite_writes": {
+    "UPDATE rewrite_rules": 1
+   }
+  },
+  "GET a static file (not PHP)": {
+   "code": 200,
+   "healed": false,
+   "rewrite_writes": {}
+  }
+ },
+ "S5_unfixable_20_GETs": {
+  "rewrite_writes": {},
+  "design_rules": 3,
+  "median_ms_with_drop": 18,
+  "median_ms_normal": 14
+ },
+ "S6_concurrency": {
+  "rounds": [
+   {
+    "round": 1,
+    "non_200": [
+     [
+      "/design/demo/web/bento-saas/",
+      404
+     ],
+     [
+      "/design/video/logo-reveal-short/",
+      404
+     ],
+     [
+      "/design/web/",
+      404
+     ]
+    ],
+    "rewrite_writes": {
+     "UPDATE rewrite_rules": 7
+    },
+    "design_rules_after": 3
+   },
+   {
+    "round": 2,
+    "non_200": [
+     [
+      "/design/demo/web/bento-saas/",
+      404
+     ],
+     [
+      "/design/web/",
+      404
+     ]
+    ],
+    "rewrite_writes": {
+     "UPDATE rewrite_rules": 7
+    },
+    "design_rules_after": 3
+   },
+   {
+    "round": 3,
+    "non_200": [
+     [
+      "/design/demo/web/bento-saas/",
+      404
+     ],
+     [
+      "/design/video/logo-reveal-short/",
+      404
+     ],
+     [
+      "/design/web/",
+      404
+     ]
+    ],
+    "rewrite_writes": {
+     "UPDATE rewrite_rules": 7
+    },
+    "design_rules_after": 3
+   },
+   {
+    "round": 4,
+    "non_200": [
+     [
+      "/design/web/",
+      404
+     ]
+    ],
+    "rewrite_writes": {
+     "UPDATE rewrite_rules": 7
+    },
+    "design_rules_after": 3
+   },
+   {
+    "round": 5,
+    "non_200": [
+     [
+      "/design/demo/web/bento-saas/",
+      404
+     ],
+     [
+      "/design/video/logo-reveal-short/",
+      404
+     ],
+     [
+      "/design/web/",
+      404
+     ]
+    ],
+    "rewrite_writes": {
+     "UPDATE rewrite_rules": 7
+    },
+    "design_rules_after": 3
+   }
+  ],
+  "php_errors": []
+ },
+ "htaccess_unchanged": true,
+ "final_state": {
+  "design_rules": 3,
+  "version": "2",
+  "temp_plugin_removed": true
+ }
+}
