@@ -378,8 +378,10 @@ Industry Hub の完了は推測しない。**下の「0. 統合の基準を決�
 | M2 | iPhone（Safari）：変換中の「改行」 | **PASS**（利用者による実機確認） |
 | M3 | iPhone：Safe Area（縦・横、トップ・Learn・Labs・記事・検索） | **PASS**（利用者による実機確認） |
 | M4 | iPhone：Learn 実践ページの固定バー | **PASS**（利用者による実機確認） |
-| M1 | Mac・Windows：日本語 IME | 未検証 |
-| M5 | VoiceOver（Mac）・NVDA・TalkBack | 未検証 |
+| M1 | Mac：日本語 IME（変換中の Enter は文字の確定だけで、検索へ移らない） | **PASS**（利用者による実機確認、2026-11-17。確定後の ↓ → Enter で候補へ移る操作は報告に含まれていない） |
+| M1 | Windows：日本語 IME | 未検証 |
+| M5 | VoiceOver（Mac） | **PASS**（利用者による実機確認、2026-11-17） |
+| M5 | NVDA（Windows）・TalkBack（Android） | 未検証 |
 | — | Android（M2〜M4 相当） | 未検証 |
 
 確認の後、8940 を `127.0.0.1` だけの待ち受けに戻し、`wp-config.php` を元に戻し（バックアップと同じ内容）、合成の実践ページを削除した。LAN のアドレスからは接続できず、`127.0.0.1` では表示できることを確認した。開発環境 8940 には、7 章の確認のための Slim SEO の読み込み（`mu-plugins`）と、opcache を無効にした起動が残っている（共有 DB と 8941 には影響しない）。
