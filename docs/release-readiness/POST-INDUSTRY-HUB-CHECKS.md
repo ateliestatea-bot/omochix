@@ -536,3 +536,39 @@ B. 本番のテスト投稿を使う確認（**未承認**。本番のコンテ�
 - 本番の Slim SEO の設定との組み合わせ（版は同じ。description・OG 画像・リダイレクトは公開の応答で確認済み、全設定は未確認）。
 - 実機：Windows（IME・NVDA）、Android（IME・表示・固定バー・TalkBack）。Mac の M1・M5、iPhone の M2〜M4 は利用者が確認済み。
 - タグのサイトマップの変化（記事 1 件のタグ 406 件が外れる。ページは残り、既に noindex）。方針は了承済み。
+
+### 8.5 本番反映の記録（テーマ 1.30.0、2026-11-17）
+
+| 項目 | 内容 |
+|---|---|
+| main | `6fce4265095038fe19d6c5e2620feb1eef9ca42a`（PR #66 を head `3aae7cc` で通常の merge。親は `3ef4a14` と `3aae7cc`。承認したコード `7f0d4d9` との差は報告書だけ） |
+| Version | テーマ 1.30.0（本番の `style.css` と全ページの `ver=1.30.0` で確認）。Core 1.10.0 は変更なし |
+| 計画 | `release-plan.json` の SHA-256 `6d7a61e42ec8833ccb8fad11ad7a8d35a6121c33680b5eeb26431904f42a5d6a`（ローカル・サーバーとも一致） |
+| 配布物の照合 | 計画の commit は `7f0d4d9`。zip とマニフェストの SHA-256 は計画の記録と一致、`SHA256SUMS` 全件 OK、`verify.py` PASS。サーバーに送った 4 ファイル（計画・`deploy.py`・zip・マニフェスト）は 4/4 一致。main の Theme 194/194 が 1.30.0 のマニフェスト、Core 59/59 が 1.10.0 と一致 |
+| CI | merge 前の head `3aae7cc`：17/17 成功（SVG Motion の WebKit 2 ジョブは macOS の実行環境を確保できず未開始だったため、その 2 ジョブだけ再実行して成功）。merge 後の main `6fce426`：Industry Hub・Tests・Labs の 6/6 成功 |
+| 反映 | preflight PASS（反映前のスナップショットからの差異なし）→ ロック → バックアップ（21 ファイル、verified）→ 43 ステップの配置（add・replace 43、終了コード 0）→ `verify release: PASS` |
+| OPcache | リセット不要（配置の直後から新しいコードが動作。検索候補 API が 200、全ページ `ver=1.30.0`） |
+| 終了 | ロック解除（`lock: removed`）、トークン削除済み |
+| 保管場所（サーバーのホーム、公開領域の外） | 置き場 `~/rel1300-stage-7f0d4d9`、バックアップ `~/rel1300-backup-20261117`、監査ログ `~/rel1300-apply-20261117.audit.jsonl`。手元の配布物 `releases/theme-1.30.0-7f0d4d9/`（未追跡、commit しない） |
+
+**関門 B**（反映前後で同じ 33 URL を確認用のパラメーター付きで取得。critical error 0、`debug.log` なし）
+
+| URL | 反映前 | 反映後 |
+|---|---|---|
+| `/page/2/` | 200、canonical `/2/` | 301 が 1 回で `/` |
+| `/learn/page/2/` | 200 | 301 が 1 回で `/learn/` |
+| `/sitemap-taxonomy-post_tag.xml` | 544 URL | 138 URL（記事 1 件のタグを除外。タグのページは残る） |
+| `/wp-json/omochix/v1/suggest-index` | 404 | 200・`Cache-Control: no-store`・ETag なし・318 件 |
+| ほかの 29 URL（トップ、`/ai-news/`・2 ページ目、`/category/ai-news/` の 301、記事、AI Tools、Prompts、Learn、実践、SVG Motion、Labs、`/labs-sitemap.xml`、About、Contact、検索、404、業種の一覧と `real-estate`（404 のまま）、`/sitemap.xml`、`/robots.txt` など） | — | ステータス・title・canonical・robots・主なヘッダーが同じ |
+
+- 表示：`/learn/` に SVG Motion のカードと「次にできること」（カードが先）。トップ・Labs・AI Tools・記事でナビ・フッター・検索候補あり。HTML の全ページでアイコンのタグ 5 本。
+- 検索候補：重複を除く 317 URL を取得し、404・権限拒否は 0、業種の項目なし。既存の 301 が 2 件：`/category/ai-news/` → `/ai-news/`（Slim SEO の規則）、`/nvidia-rtx-spark-launch-announcement/` → `/microsoft-nvidia-rtx-spark-local-ai-windows-2026/`（記事の URL の変更）。
+- 索引の匿名取得 2 回：どちらも 200・`no-store`・ETag なし・`x-cache: MISS`。
+
+**未検証のまま（解消していない）**
+
+- ロリポップ！アクセラレータが `no-store` を守るか（`x-cache: MISS` だけでは判定しない）。
+- 開いているタブに残る索引（取得済みの情報）。
+- 本番のテスト投稿による確認（7.10 B）は未実施（未承認）。
+- Windows（IME・NVDA）・Android（IME・表示・固定バー・TalkBack）の実機。
+- 単一ページの `/page/N/` の 301 に、サーバーが `Cache-Control: max-age=3600` を付けている（テーマのコードは付けていない）。ブラウザやキャッシュが最大 1 時間 301 を保持しうるので、1.29.0 に切り戻しても、その間は 301 が残りうる。
