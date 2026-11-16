@@ -8,7 +8,9 @@
  *    locally, so typing causes NO request and nothing the visitor types ever reaches the server or the logs.
  *  - Server cost: one DB pass per 15 minutes (transient + stampede lock), invalidated when content changes.
  *  - Only published, non-password-protected content. No user data, no private meta, no auth required (read-only public data).
- *  - Response is size-capped; Cache-Control public for 5 minutes (+ ETag) so CDN / browser cache absorb bursts.
+ *  - Response is size-capped and sent with Cache-Control: no-store, so no shared or browser cache keeps a title that was
+ *    made private after the response; the transient above absorbs the load instead (production's host cache could not
+ *    be confirmed to honour expiry, see docs/release-readiness/POST-INDUSTRY-HUB-CHECKS.md 7.9).
  *
  * Search results page: also shows matching Labs tools and Learn pages (they are not WP search post types), with all
  * output escaped. The search term itself is only echoed through esc_html / esc_attr.
@@ -135,8 +137,7 @@ add_action('rest_api_init', static function () {
                 return $res;
             }
             $res = new WP_REST_Response($data);   // a real index, even an empty one, carries a content hash as "v"
-            $res->header('Cache-Control', 'public, max-age=300, s-maxage=300');
-            $res->header('ETag', '"' . $data['v'] . '"');
+            $res->header('Cache-Control', 'no-store');   // see the header comment: the transient is the only cache
             return $res;
         },
     ]);

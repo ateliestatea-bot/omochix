@@ -20,10 +20,11 @@ do_action('rest_api_init');
 $admin = get_users(['role' => 'administrator', 'number' => 1]);
 $admin_id = $admin ? $admin[0]->ID : 1;
 
-// R2-1: normal index -> 200, public cache, ETag = v.
+// R2-1: normal index -> 200, no-store (no shared or browser cache), no ETag; the index itself is kept in the transient.
 delete_transient($T); delete_transient($L);
 [$st, $h, $d] = $call();
-$check('normal: 200 + public cache + ETag', 200 === $st && false !== strpos($h['Cache-Control'] ?? '', 'public') && ($h['ETag'] ?? '') === '"' . $d['v'] . '"' && count($d['items']) > 0, "status=$st items=" . count($d['items']));
+$check('normal: 200 + no-store, no ETag', 200 === $st && 'no-store' === ($h['Cache-Control'] ?? '') && !isset($h['ETag']) && count($d['items']) > 0, "status=$st cc=" . ($h['Cache-Control'] ?? '-') . ' items=' . count($d['items']));
+$check('normal: index kept in the transient (internal cache)', is_array(get_transient($T)) && get_transient($T)['v'] === $d['v']);
 
 // R2-2: rebuild in progress (lock held, no index) -> 503, no-store, Retry-After, no ETag, nothing cached.
 delete_transient($T); set_transient($L, 1, 30);
@@ -32,10 +33,10 @@ $check('warming: 503 + no-store + Retry-After, no ETag', 503 === $st && 'no-stor
 $check('warming: index not written', false === get_transient($T));
 delete_transient($L);
 
-// R2-3: a real but empty index stays a normal, cacheable 200 (distinguished from "warming" by its hash).
+// R2-3: a real but empty index stays a normal 200 (distinguished from "warming" by its hash).
 set_transient($T, ['items' => [], 'v' => substr(md5(wp_json_encode([])), 0, 12)], 60);
 [$st, $h, $d] = $call();
-$check('empty real index: 200 + public cache', 200 === $st && false !== strpos($h['Cache-Control'] ?? '', 'public') && 'warming' !== $d['v'] && [] === $d['items'], "status=$st v=" . $d['v']);
+$check('empty real index: 200 + no-store', 200 === $st && 'no-store' === ($h['Cache-Control'] ?? '') && 'warming' !== $d['v'] && [] === $d['items'], "status=$st v=" . $d['v']);
 delete_transient($T);
 
 // R3: the build throws (Exception and Error) while an administrator is the current user.
