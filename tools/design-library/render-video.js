@@ -23,7 +23,8 @@ var { chromium } = require('playwright');
 
 var SPECS = {
     'logo-reveal-short': { width: 1080, height: 1920, fps: 30, seconds: 6, posterAt: 4.8 },
-    'data-chart-explainer': { width: 1920, height: 1080, fps: 30, seconds: 8, posterAt: 6.4 }
+    'data-chart-explainer': { width: 1920, height: 1080, fps: 30, seconds: 8, posterAt: 6.4 },
+    'brand-typography': { width: 1080, height: 1080, fps: 30, seconds: 10, posterAt: 9.6 }
 };
 var slug = process.argv[2];
 var spec = SPECS[slug];

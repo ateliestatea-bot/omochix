@@ -15,6 +15,9 @@ run isolation node tests/design-library/browser/isolation.js
 run firefox   node tests/design-library/browser/firefox.js
 run ui        node tests/design-library/browser/ui.js
 run layout    node tests/design-library/browser/list-layout.js
+run d2d-video node tests/design-library/browser/d2d-video.js
+run d2d-new   node tests/design-library/browser/new-works.js ${DL_D2D_WEB:-ai-workspace micro-interactions}
+run d2d-web   node tests/design-library/browser/d2d-web.js ${DL_D2D_WEB:-}
 run preview   node tests/design-library/browser/preview.js
 run perf      node tests/design-library/browser/perf.js
 run heal      php tests/design-library/rewrite-heal-check.php   # DL_ROLLBACK_THEME / DL_MYSQL optional

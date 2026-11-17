@@ -18,7 +18,7 @@ var fs = require('fs');
 var { chromium, webkit } = require('playwright');
 var L = require('./lib.js');
 var check = L.check, BASE = L.BASE;
-var SHOTS = path.resolve(__dirname, '../../../docs/design-library/qa/d2a/after');
+var SHOTS = L.qaOut('d2a/after');
 fs.mkdirSync(SHOTS, { recursive: true });
 var AXE = L.axePath();
 var VPS = { desktop: [1280, 800], tablet: [834, 1112], mobile: [390, 844] };

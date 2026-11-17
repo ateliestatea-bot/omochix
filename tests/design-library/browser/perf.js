@@ -38,7 +38,7 @@ async function demoMetrics(browser, slug) {
     await page.goto(BASE + '/design/demo/web/' + slug + '/', { waitUntil: 'load' });
     var html = await page.content();
     await L.wait(5000);
-    await Promise.all(bodies);
+    await Promise.race([Promise.all(bodies), L.wait(10000)]);   // a response body can stay unresolved in headless runs; do not wait forever
     var scripts = (await page.evaluate(function () { return Array.prototype.map.call(document.querySelectorAll('script'), function (s) { return s.textContent; }).join('\n'); }));
     var long = await page.evaluate(function () { return window.__longtasks.slice(); });
     var heap = (await cdp.send('Performance.getMetrics')).metrics.filter(function (m) { return m.name === 'JSHeapUsedSize'; })[0].value;
@@ -80,7 +80,7 @@ async function listMetrics(browser, reduce) {
     var m0 = (await cdp.send('Performance.getMetrics')).metrics;
     await L.wait(5000);
     var m1 = (await cdp.send('Performance.getMetrics')).metrics;
-    await Promise.all(bodies);
+    await Promise.race([Promise.all(bodies), L.wait(10000)]);   // a response body can stay unresolved in headless runs; do not wait forever
     function g(ms, n) { return ms.filter(function (m) { return m.name === n; })[0].value; }
     var out = { transferKb: kb(bytes), videos: media, cpuPct: Math.round((g(m1, 'TaskDuration') - g(m0, 'TaskDuration')) / 5 * 100), heapMb: Math.round(g(m1, 'JSHeapUsedSize') / 1048576 * 10) / 10, cls: Math.round((await page.evaluate(function () { return window.__cls; })) * 1000) / 1000 };
     await ctx.close();
@@ -118,7 +118,7 @@ async function listMetrics(browser, reduce) {
     check('perf list: reduced motion downloads no video', listReduced.videos.length === 0, listReduced.videos);
     check('perf list: CLS ≤ 0.05', list.cls <= 0.05, list.cls);
     await browser.close();
-    var out = path.resolve(__dirname, '../../../docs/design-library/qa/perf-results.json');
+    var out = L.qaOut('perf-results.json');
     fs.mkdirSync(path.dirname(out), { recursive: true });
     fs.writeFileSync(out, JSON.stringify({ measured: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10), environment: 'local throwaway WordPress 7.1.4, PHP built-in server, headless Chromium (Playwright 1.62.1, SwiftShader WebGL), CDP throttling 4x CPU / 150 ms / 1.6 Mbps for LCP', demos: results, list: list, listReducedMotion: listReduced }, null, 2) + '\n');
     if (process.argv.indexOf('--write') !== -1) {

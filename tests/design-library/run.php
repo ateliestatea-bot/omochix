@@ -15,8 +15,8 @@ ini_set('error_log', '/dev/null');
 $pass = 0; $fail = 0;
 function check($name, $cond) { global $pass, $fail; if ($cond) { $pass++; echo "PASS $name\n"; } else { $fail++; echo "FAIL $name\n"; } }
 
-$WEB   = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient'];
-$VIDEO = ['logo-reveal-short', 'data-chart-explainer'];
+$WEB   = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient', 'ai-workspace', 'micro-interactions'];
+$VIDEO = ['logo-reveal-short', 'data-chart-explainer', 'brand-typography'];
 
 // ------------------------------------------------------------ C1-C5
 stub_page(null);
@@ -34,18 +34,18 @@ check('C2: app and component are never public (D0 §16)', !omochix_design_is_pub
 check('C3/C4: every shipped work is public under its own medium', array_reduce($WEB, static function ($c, $s) { return $c && omochix_design_is_public('web', $s); }, true) && array_reduce($VIDEO, static function ($c, $s) { return $c && omochix_design_is_public('video', $s); }, true));
 check('C2: a work is not public under another medium', !omochix_design_is_public('video', 'liquid-glass') && !omochix_design_is_public('web', 'logo-reveal-short'));
 check('C3: unknown slug is not public', !omochix_design_is_public('web', 'no-such-item'));
-check('list: 6 Web works (4 from D1, 2 from D2-B), in catalog order', array_keys(omochix_design_get_items('web')) === $WEB);
-check('list: 2 video works', array_keys(omochix_design_get_items('video')) === $VIDEO);
-check('top: all 8 works, Web first', array_keys(omochix_design_get_items('')) === array_merge($WEB, $VIDEO));
+check('list: ' . count($WEB) . ' Web works (4 from D1, 2 from D2-B, the rest from D2-D), in catalog order', array_keys(omochix_design_get_items('web')) === $WEB);
+check('list: 3 video works (2 from D1.5, 1 from D2-D)', array_keys(omochix_design_get_items('video')) === $VIDEO);
+check('top: all ' . count($WEB) . ' + ' . count($VIDEO) . ' works, Web first', array_keys(omochix_design_get_items('')) === array_merge($WEB, $VIDEO));
 
 $tmp = tempnam(sys_get_temp_dir(), 'dlc');
 file_put_contents($tmp, str_replace('"status": "published"', '"status": "draft"', file_get_contents(omochix_design_catalog_file()))); // text edit keeps {} as {}
 $res = omochix_design_load_catalog_from_file($tmp);
-check('C4: draft works load (valid) but are not published', 8 === count($res['items']) && 'draft' === $res['items']['logo-reveal-short']['status']);
+check('C4: draft works load (valid) but are not published', count($WEB) + count($VIDEO) === count($res['items']) && 'draft' === $res['items']['logo-reveal-short']['status']);
 $raw = file_get_contents(omochix_design_catalog_file());
 file_put_contents($tmp, str_replace('"perf": {}', '"perf": []', $raw));
 $res = omochix_design_load_catalog_from_file($tmp);
-check('validation: "perf": [] (list instead of object) drops the work', count($res['items']) < 8 && false !== strpos(implode(' ', $res['errors']), 'audit.perf'));
+check('validation: "perf": [] (list instead of object) drops the work', count($res['items']) < count($WEB) + count($VIDEO) && false !== strpos(implode(' ', $res['errors']), 'audit.perf'));
 unlink($tmp);
 
 // -------------------------------------------------------- demo gate (env x state)
@@ -113,13 +113,13 @@ check('match: motion type chart (Web and video)', array_keys(omochix_design_get_
 check('match: technology FFmpeg', array_keys(omochix_design_get_items('', ['technology' => 'ffmpeg'])) === $VIDEO);
 check('match: technology WebGL', array_keys(omochix_design_get_items('web', ['technology' => 'webgl'])) === ['3d-interactive']);
 check('match: industry (term must exist)', array_keys(omochix_design_get_items('', ['industry' => 'beauty'])) === ['minimal-editorial']);
-check('match: keyword in Japanese labels', array_keys(omochix_design_get_items('', ['q' => 'ロゴ'])) === ['logo-reveal-short']);
+check('match: keyword in Japanese labels', array_keys(omochix_design_get_items('', ['q' => 'ロゴ'])) === ['logo-reveal-short', 'brand-typography']);
 check('match: keyword AND across fields', array_keys(omochix_design_get_items('', ['q' => 'グラフ 解説'])) === ['data-chart-explainer']);
 $o = omochix_design_filter_options('');
 check('options: only values used by public works, in vocabulary order', array_keys($o['medium']) === ['web', 'video'] && !isset($o['technology']['blender']) && !isset($o['technology']['remotion']) && array_keys($o['use_case'])[0] === 'lp');
 check('options: the video list offers only video values', array_keys(omochix_design_filter_options('video')['use_case']) === ['brand-intro', 'sns-short', 'explainer', 'presentation']);
 $GLOBALS['stub']['terms'] = []; omochix_design_reset_cache(); stub_page('publish');
-check('options: no Industry Hub -> no industry filter, page still works', [] === omochix_design_filter_options('')['industry'] && 8 === count(omochix_design_get_items('')));
+check('options: no Industry Hub -> no industry filter, page still works', [] === omochix_design_filter_options('')['industry'] && count($WEB) + count($VIDEO) === count(omochix_design_get_items('')));
 
 // ------------------------------------------------------------ related, Motion Studio
 $GLOBALS['stub']['pages']['learn/development'] = new WP_Post(['ID' => 80, 'post_name' => 'learn/development', 'post_status' => 'publish', 'post_title' => 'AI開発']);
@@ -150,8 +150,10 @@ check('sitemap: no design page -> no entries, no URL', [] === omochix_design_sit
 stub_page('publish');
 $e = omochix_design_sitemap_entries();
 $locs = array_column($e, 'loc');
-check('sitemap: 2 list pages + 8 works, Web first, no demo URL, no top page (Slim SEO lists it)', 10 === count($e) && 'https://example.test/design/web/' === $locs[0] && in_array('https://example.test/design/video/logo-reveal-short/', $locs, true) && !preg_grep('#/design/demo/#', $locs) && !in_array('https://example.test/design/', $locs, true));
-check('sitemap: lastmod is the verification date', '2026-11-15' === $e[1]['lastmod'] && '2026-11-17' === $e[5]['lastmod'] && '2026-11-16' === $e[7]['lastmod']);
+$NI = count(array_filter(omochix_design_get_catalog()['items'], static function ($i) { return 'verified-local' === $i['verification']['state']; }));
+check('sitemap: 2 list pages + every verified work, Web first, no demo URL, no top page (Slim SEO lists it)', 2 + $NI === count($e) && 'https://example.test/design/web/' === $locs[0] && in_array('https://example.test/design/video/logo-reveal-short/', $locs, true) && !preg_grep('#/design/demo/#', $locs) && !in_array('https://example.test/design/', $locs, true));
+$lm = array_column($e, 'lastmod', 'loc'); $u = 'https://example.test/design/';
+check('sitemap: lastmod is the verification date (a list: its latest work)', '2026-11-15' === $lm[$u . 'web/liquid-glass/'] && '2026-11-17' === $lm[$u . 'web/aurora-gradient/'] && '2026-11-16' === $lm[$u . 'video/logo-reveal-short/'] && '2026-11-17' === $lm[$u . 'video/']);
 $xml = omochix_design_sitemap_xml([['loc' => 'https://example.test/design/web/"><x>', 'lastmod' => '2026-11-16']]);
 check('sitemap: XML is escaped and well formed', false === strpos($xml, '<x>') && false !== @simplexml_load_string($xml));
 $cw = omochix_design_schema_entity($items['bento-saas']);

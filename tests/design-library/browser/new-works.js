@@ -14,7 +14,7 @@
  *    CSP-bypassing test context; the demo's real CSP is checked separately above)
  *  - reduced motion: no frame loop when idle, all content visible; JavaScript off: all content visible
  *  - embedded: pause stops the frame loop, play resumes it, restart reloads; hidden tab stops frames
- *  - keyboard: links / buttons get a visible focus ring
+ *  - keyboard: links / buttons get a visible focus ring (D2-D: spec.focus names the first visible header control)
  * Work-specific checks come from SPEC below.
  */
 'use strict';
@@ -39,6 +39,18 @@ var SPEC = {
         accent: ['.au-eyebrow', '.au-kicker', '.au-badge', '.au-plan__tag'],
         content: ['.au-title', '.au-row', '.au-cta'],
         loop: true
+    },
+    'ai-workspace': {
+        accent: ['.aw-cite', '.aw-up', '.aw-src__n', '.aw-hint', '.aw-src__err', '.aw-send', '.aw-side__h'],
+        content: ['.aw-thread__head h1', '.aw-msg--ai > p', '.aw-table', '.aw-src'],
+        focus: '[data-aw-open-palette]',
+        loop: false
+    },
+    'micro-interactions': {
+        accent: ['.mi-step', '.mi-msg', '.mi-btn--primary', '.mi-row__d', '.mi-item__d', '.mi-states small', '.mi-top__note'],
+        content: ['.mi-card h2', '.mi-row', '.mi-item', '.mi-states li'],
+        focus: '.mi-nav a',
+        loop: false
     }
 };
 
@@ -211,7 +223,7 @@ async function run(type, launcher) {
         var ck = await browser.newContext({ viewport: { width: 1440, height: 900 } });
         var pk = await ck.newPage();
         await pk.goto(demoUrl); await L.wait(800);
-        await pk.focus('nav a, header button');
+        await pk.focus(spec.focus || 'nav a, header button');
         var ring = await pk.evaluate(function () { var e = document.activeElement; var cs = getComputedStyle(e); return e !== document.body && (parseFloat(cs.outlineWidth) > 0 || cs.boxShadow !== 'none'); });
         check(T + ' keyboard: the first header control takes focus with a visible ring', ring);
         if (slug === 'dark-luxury') {

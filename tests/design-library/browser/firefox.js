@@ -130,7 +130,7 @@ async function list() {
         await open('/design/web/', w, 900);
         await wait(2500);
         var st = await js('({ sw: document.documentElement.scrollWidth, iw: innerWidth, cards: document.querySelectorAll("[data-dl-card]:not([hidden])").length, playing: [...document.querySelectorAll("video")].filter(v => !v.paused).length })');
-        check('list ' + w + 'px: 6 cards, no horizontal scroll, at most 2 loops playing', st.cards === 6 && st.sw <= st.iw + 1 && st.playing <= 2, st);
+        check('list ' + w + 'px: ' + L.published('web').length + ' cards, no horizontal scroll, at most 2 loops playing', st.cards === L.published('web').length && st.sw <= st.iw + 1 && st.playing <= 2, st);
         var lay = await js('(() => { const cs = [...document.querySelectorAll("[data-dl-card]:not([hidden])")]; const rows = {}; cs.forEach(c => { const t = Math.round(c.getBoundingClientRect().top); rows[t] = (rows[t] || 0) + 1; }); return { cols: Math.max(...Object.values(rows)), below: cs.every(c => c.querySelector(".dl-card__medium").getBoundingClientRect().top >= c.querySelector(".dl-card__media").getBoundingClientRect().bottom - 0.5), play: (() => { const b = document.querySelector("[data-dl-play]"); const r = b.getBoundingClientRect(); return r.width <= 36 && !b.hidden; })() }; })()');
         check('list ' + w + 'px (D2-C): ' + (w > 1000 ? 2 : 1) + ' column(s), labels below the previews, compact play button', lay.cols === (w > 1000 ? 2 : 1) && lay.below && lay.play, lay);
     }
@@ -143,7 +143,7 @@ async function list() {
     await open('/design/', 1440, 900);
     await wait(2500);
     var top = await js('({ cards: document.querySelectorAll("[data-dl-card]:not([hidden])").length, playing: [...document.querySelectorAll("video[data-dl-video]")].filter(v => !v.paused).length, sw: document.documentElement.scrollWidth, iw: innerWidth })');
-    check('top: 8 works (Web + video), at most 2 loops playing, no horizontal scroll', top.cards === 8 && top.playing <= 2 && top.sw <= top.iw + 1, top);
+    check('top: ' + L.published().length + ' works (Web + video), at most 2 loops playing, no horizontal scroll', top.cards === L.published().length && top.playing <= 2 && top.sw <= top.iw + 1, top);
     await open('/design/video/data-chart-explainer/', 1280, 900);
     var v0 = await js('(() => { const v = document.querySelector(".dl-stage__video"); return { paused: v.paused, t: v.currentTime }; })()');
     await js('document.querySelector(".dl-stage__video").play().then(() => true)');

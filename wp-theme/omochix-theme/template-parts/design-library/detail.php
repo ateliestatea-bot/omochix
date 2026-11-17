@@ -53,8 +53,8 @@ $omx_video   = $omx_item['video'] ?? null;
         </header>
 
         <?php if ('video' === $omx_medium && is_array($omx_video)) : ?>
-            <?php $omx_portrait = $omx_video['height'] > $omx_video['width']; ?>
-            <figure class="dl-stage dl-stage--video<?php echo $omx_portrait ? ' dl-stage--portrait' : ''; ?>" data-dl-stage data-state="video">
+            <?php $omx_portrait = $omx_video['height'] > $omx_video['width']; $omx_square = $omx_video['height'] === $omx_video['width']; ?>
+            <figure class="dl-stage dl-stage--video<?php echo $omx_portrait ? ' dl-stage--portrait' : ($omx_square ? ' dl-stage--square' : ''); ?>" data-dl-stage data-state="video">
                 <div class="dl-stage__view" style="aspect-ratio: <?php echo esc_attr($omx_video['width'] . ' / ' . $omx_video['height']); ?>">
                     <video class="dl-stage__video" controls playsinline muted preload="none" width="<?php echo esc_attr((string) $omx_video['width']); ?>" height="<?php echo esc_attr((string) $omx_video['height']); ?>"
                         poster="<?php echo esc_url($omx_poster); ?>" aria-label="<?php echo esc_attr(sprintf(__('%sの動画（音声なし）', 'omochix'), $omx_item['title'])); ?>">

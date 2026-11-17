@@ -139,7 +139,8 @@ catalog.items.filter(function (i) { return i.medium === 'web'; }).forEach(functi
     check('sha256: ' + it.slug + ' matches its demo sources', hash.demoHash(it.slug) === it.deliverables.html.sha256);
 });
 var pub = function (m) { return catalog.items.filter(function (i) { return i.medium === m && i.status === 'published'; }).length; };
-check('catalog: 6 published Web works (4 from D1, 2 from D2-B) and 2 published video works', pub('web') === 6 && pub('video') === 2);
+check('catalog: 8 published Web works (4 from D1, 2 from D2-B, 2 from D2-D) and 3 published video works (1 from D2-D)', pub('web') === 8 && pub('video') === 3);
+check('catalog: the D2-D works keep their ids and slugs', ['dl-video-0003:brand-typography', 'dl-web-0007:ai-workspace', 'dl-web-0008:micro-interactions'].every(function (p) { var a = p.split(':'); return catalog.items.some(function (i) { return i.id === a[0] && i.slug === a[1]; }); }));
 check('catalog: the D2-B works keep their ids and slugs', ['dl-web-0005:dark-luxury', 'dl-web-0006:aurora-gradient'].every(function (p) { var a = p.split(':'); return catalog.items.some(function (i) { return i.id === a[0] && i.slug === a[1]; }); }));
 check('catalog: no work claims verified-production (production checks are not done)', catalog.items.every(function (i) { return i.verification.state !== 'verified-production'; }));
 check('catalog: the 4 D1 works keep their ids and slugs', ['dl-web-0001:liquid-glass', 'dl-web-0002:minimal-editorial', 'dl-web-0003:3d-interactive', 'dl-web-0004:bento-saas'].every(function (p) { var a = p.split(':'); return catalog.items.some(function (i) { return i.id === a[0] && i.slug === a[1]; }); }));

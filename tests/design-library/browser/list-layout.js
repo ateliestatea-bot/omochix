@@ -100,7 +100,7 @@ async function run(type, launcher) {
     var pn = await cn.newPage();
     await pn.goto(BASE + '/design/');
     var nojs = await pn.evaluate(function () { return { labels: document.querySelectorAll('.dl-card__body .dl-card__medium').length, play: Array.prototype.filter.call(document.querySelectorAll('[data-dl-play]'), function (b) { return b.offsetParent !== null; }).length, sw: document.documentElement.scrollWidth, iw: innerWidth }; });
-    check(type + ' no JS: 8 labels below the previews, no play button, no side scroll', nojs.labels === 8 && nojs.play === 0 && nojs.sw <= nojs.iw + 1, nojs);
+    check(type + ' no JS: ' + L.published().length + ' labels below the previews, no play button, no side scroll', nojs.labels === L.published().length && nojs.play === 0 && nojs.sw <= nojs.iw + 1, nojs);
     await cn.close();
     await browser.close();
 }

@@ -11,7 +11,11 @@ if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(BASE) || !fs.existsSync(SITE + '/wp')) {
 }
 var FLAG = SITE + '/design-isolation-test.on';
 var THEME = path.resolve(__dirname, '../../../wp-theme/omochix-theme');
-var DEMOS = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient'];
+/* Published works (status published), from the catalog: the expected counts follow the shipped works. */
+function published(medium) { return catalog().items.filter(function (i) { return i.status === 'published' && (!medium || i.medium === medium); }); }
+/* QA output (screenshots, perf record): DL_QA_OUT=<dir> writes there instead of docs/design-library/qa (keeps the committed QA files as they are). */
+function qaOut(rel) { var base = process.env.DL_QA_OUT ? path.resolve(process.env.DL_QA_OUT) : path.resolve(__dirname, '../../../docs/design-library/qa'); return path.join(base, rel); }
+var DEMOS = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient', 'ai-workspace', 'micro-interactions'];
 var GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--enable-precise-memory-info'];
 
 var results = { pass: 0, fail: 0, lines: [] };
@@ -47,4 +51,4 @@ function summary(label) {
     console.log('\n' + label + ': ' + results.pass + ' passed, ' + results.fail + ' failed');
     return results.fail ? 1 : 0;
 }
-module.exports = { BASE: BASE, SITE: SITE, THEME: THEME, DEMOS: DEMOS, GL_ARGS: GL_ARGS, check: check, info: info, flag: flag, catalog: catalog, axePath: axePath, INIT: INIT, wait: wait, summary: summary, results: results };
+module.exports = { BASE: BASE, SITE: SITE, THEME: THEME, DEMOS: DEMOS, GL_ARGS: GL_ARGS, check: check, info: info, flag: flag, catalog: catalog, axePath: axePath, INIT: INIT, wait: wait, summary: summary, results: results, published: published, qaOut: qaOut };

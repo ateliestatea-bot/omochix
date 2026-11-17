@@ -94,6 +94,31 @@ var SCRIPTS = {
             await glide(p, [[640, 200], [960, 160], [1120, 260], [760, 240]], 3600);
             await smoothScroll(p, 520, 2000); await p.waitForTimeout(600);
         }
+    },
+    'ai-workspace': {
+        poster: async function (p) { await p.waitForTimeout(3000); },
+        loop: async function (p) {
+            await p.waitForTimeout(2600);   // the first answer appears block by block
+            await p.click('[data-aw-cite="2"]'); await p.waitForTimeout(900);
+            await p.keyboard.press('Control+k'); await p.waitForTimeout(400);
+            await p.keyboard.type('テーマ', { delay: 90 }); await p.waitForTimeout(300); await p.keyboard.press('Enter'); await p.waitForTimeout(700);
+            await p.click('[data-aw-input]'); await p.keyboard.type('予約制の不満点は？', { delay: 70 }); await p.keyboard.press('Enter');
+            await p.waitForTimeout(2600);
+        }
+    },
+    'micro-interactions': {
+        poster: async function (p) { await p.click('label[for="mi-sw-2"]'); await p.waitForTimeout(700); },
+        loop: async function (p) {
+            await p.waitForTimeout(900);
+            await p.click('label[for="mi-sw-2"]'); await p.waitForTimeout(700);
+            await p.click('label[for="mi-start-25"]'); await p.waitForTimeout(700);
+            await p.fill('#mi-amount', '12a'); await p.press('#mi-amount', 'Enter'); await p.waitForTimeout(700);
+            await p.fill('#mi-amount', '1280'); await p.press('#mi-amount', 'Enter'); await p.waitForTimeout(400);
+            await p.click('[data-mi-submit]'); await p.waitForTimeout(1600);
+            await p.evaluate(function () { window.scrollTo(0, document.querySelector('#mi-list').offsetTop - 80); }); await p.waitForTimeout(500);
+            await p.click('label[for="mi-it-2"]'); await p.waitForTimeout(800);
+            await p.click('#mi-list .mi-item:nth-child(3) [data-mi-del]'); await p.waitForTimeout(1400);
+        }
     }
 };
 

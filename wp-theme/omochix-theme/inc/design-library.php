@@ -857,7 +857,7 @@ function omochix_design_card_facts(array $item, $demo) {
         if ($w > 0 && $h > 0) {
             $g = $w;
             for ($b = $h; $b; ) { $t = $g % $b; $g = $b; $b = $t; }
-            $out[] = sprintf('%d:%d %s', $w / $g, $h / $g, $h > $w ? __('縦型', 'omochix') : __('横型', 'omochix'));
+            $out[] = sprintf('%d:%d %s', $w / $g, $h / $g, $h > $w ? __('縦型', 'omochix') : ($h < $w ? __('横型', 'omochix') : __('正方形', 'omochix')));
         }
         return $out;
     }

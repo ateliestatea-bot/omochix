@@ -1100,6 +1100,389 @@
       }
     },
     {
+      "id": "dl-web-0007",
+      "slug": "ai-workspace",
+      "medium": "web",
+      "status": "published",
+      "title": "AI Workspace UI",
+      "summary": "架空の AI リサーチアプリの作業画面。スレッド・会話・出典の 3 カラムに、コマンドパレットと出典の参照、ライトとダークの切り替え。",
+      "description": "製品を紹介するページではなく、AI リサーチアプリそのものの画面の見本。回答は用意した文章を段落ごとに表示し、出典の番号から参照パネルへ移る。AI には接続せず、入力内容はどこにも送らない。",
+      "use_cases": [
+        "saas",
+        "product"
+      ],
+      "motion_types": [
+        "ui",
+        "transition",
+        "typography"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "dashboard",
+        "minimal",
+        "light",
+        "dark"
+      ],
+      "motions": [
+        "stagger",
+        "text-reveal",
+        "page-transition",
+        "hover-lift"
+      ],
+      "industries": [
+        "web-production"
+      ],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Paper",
+          "value": "#f6f5f2"
+        },
+        {
+          "name": "Graphite",
+          "value": "#17181c"
+        },
+        {
+          "name": "Olive",
+          "value": "#3f6a0a"
+        },
+        {
+          "name": "Lime",
+          "value": "#a3e635"
+        }
+      ],
+      "fonts": [
+        "system-ui",
+        "Hiragino Sans"
+      ],
+      "poster": "posters/ai-workspace.avif",
+      "posterFallback": "posters/ai-workspace.webp",
+      "loop": "loops/ai-workspace.webm",
+      "loopFallback": "loops/ai-workspace.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/ai-workspace/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": false,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "アイコン（SVG・自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "配色",
+          "description": "ライトとダークの 2 組のトークン（--bg・--ink・--accent など）。アクセントは文字と背景で 4.5:1 以上"
+        },
+        {
+          "label": "返答の文章",
+          "description": "REPLY の配列。段落ごとに 0.38 秒ずつ表示する"
+        },
+        {
+          "label": "コマンド",
+          "description": "パレットの項目（data-cmd）と、それぞれの動作（CMDS）"
+        },
+        {
+          "label": "レイアウト",
+          "description": "1200px 以上で 3 カラム、768〜1199px でサイドバーを引き出しに、767px 以下で下のタブで 1 画面ずつ"
+        }
+      ],
+      "prompt": {
+        "text": "架空の AI リサーチアプリの作業画面を HTML・CSS・JavaScript で作ってください。上部にブランド名・コマンド検索・テーマ切り替え・出典パネルの開閉、左にプロジェクトとスレッドの一覧、中央に会話（質問、出典番号付きの回答、表、続けて聞く候補、入力欄）、右に出典とメモのタブを置きます。⌘K / Ctrl+K でコマンドパレットを開き、矢印キーで選び Enter で実行、Esc で閉じて元の場所へフォーカスを戻します。回答は用意した文章を段落ごとに表示し、出典番号を押すと右の出典に移って強調します。入力内容はどこにも送らず textContent でだけ表示します。ライトとダークの両方を用意し、タブレットではサイドバーを引き出しに、スマホでは下のタブで 1 画面ずつ見せます。prefers-reduced-motion では回答を一度に表示し、JavaScript が無いときはすべてを縦に並べて読めるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "3 カラムの骨組み",
+          "body": "grid-template-areas で top / side / main / panel を置く。JavaScript があるときだけ高さを 100dvh に固定し、各カラムの中をスクロールさせる。無いときはページ全体が流れる。"
+        },
+        {
+          "title": "回答を段落ごとに出す",
+          "body": "回答の各段落に is-pending を付けて隠し、0.38 秒ずつ外す。止めるボタンで残りを取り除き、その旨を表示する。タイマーは一時停止中・非表示中は保留し、再開したら続ける。"
+        },
+        {
+          "title": "出典との往復",
+          "body": "出典番号は button にして aria-pressed を持たせる。押したら右の出典に tabindex=-1 でフォーカスを移し、枠を一時的に強調する。スマホでは出典の画面に切り替える。"
+        },
+        {
+          "title": "コマンドパレット",
+          "body": "role=dialog と aria-modal。入力欄は combobox、一覧は listbox で、aria-activedescendant で選択中の項目を伝える。Tab は欄の中にとどめ、Esc で閉じて開く前の要素にフォーカスを戻す。"
+        },
+        {
+          "title": "状態を見せる",
+          "body": "回答の前のスケルトン、送信中のボタン（aria-busy）、読み込めなかった出典と再読み込み、新しい調査の空の状態を用意する。reduced-motion では動きを止め、文字と形で伝える。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/ai-workspace/",
+          "sha256": "1d28b74a081d55e9d3658907c12ec873ce6633fe0f30b4b751ac68f101be8ce3"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "アプリ名・市・資料・数値はすべて架空。AI・外部 API には接続せず、写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "bento-saas",
+          "micro-interactions"
+        ],
+        "motion": [
+          "skeleton-loading",
+          "typewriter",
+          "tabs-indicator",
+          "drawer-menu",
+          "toast"
+        ],
+        "learn": [
+          "learn/development"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {
+          "transferKb": 12.6,
+          "jsKb": 5.6,
+          "longTasks": 0,
+          "heapMb": 1,
+          "fpsP5": 109,
+          "lcpMs": 2204,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0008",
+      "slug": "micro-interactions",
+      "medium": "web",
+      "status": "published",
+      "title": "Micro Interaction Collection",
+      "summary": "架空の家計・経費アプリの画面で見せる、小さな操作の手応え。設定の保存、入力の確認、送信の成功と失敗、精算の切り替えと元に戻す。",
+      "description": "動きを 1 つずつ並べた見本帳ではなく、1 つのアプリの画面の中で状態の変化（保存・エラー・読み込み中・成功・失敗・取り消し）を一貫した小さな動きで伝える見本。状態は色だけでなく形・記号・文字でも示す。",
+      "use_cases": [
+        "product",
+        "saas"
+      ],
+      "motion_types": [
+        "ui",
+        "pointer",
+        "transition"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "minimal",
+        "light"
+      ],
+      "motions": [
+        "hover-lift",
+        "line-draw",
+        "count-up",
+        "stagger"
+      ],
+      "industries": [],
+      "level": "beginner",
+      "palette": [
+        {
+          "name": "Clay",
+          "value": "#f3efe8"
+        },
+        {
+          "name": "Ink",
+          "value": "#1d1b26"
+        },
+        {
+          "name": "Coral",
+          "value": "#ff6b4a"
+        },
+        {
+          "name": "Success",
+          "value": "#17703f"
+        },
+        {
+          "name": "Error",
+          "value": "#c62828"
+        }
+      ],
+      "fonts": [
+        "system-ui",
+        "Hiragino Sans"
+      ],
+      "poster": "posters/micro-interactions.avif",
+      "posterFallback": "posters/micro-interactions.webp",
+      "loop": "loops/micro-interactions.webm",
+      "loopFallback": "loops/micro-interactions.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/micro-interactions/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "アイコン（SVG・自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "状態の色",
+          "description": "成功・エラー・強調の 3 色と、それぞれの薄い背景（--ok・--err・--coral）"
+        },
+        {
+          "label": "動きの強さ",
+          "description": "スイッチの行き過ぎ（cubic-bezier）、エラーの揺れ幅 4px、取り消しの猶予 5 秒"
+        },
+        {
+          "label": "確認のルール",
+          "description": "金額の範囲（1〜1,000,000 円）とメッセージ、メモの文字数の上限と警告の位置"
+        }
+      ],
+      "prompt": {
+        "text": "架空の家計・経費アプリの画面を HTML・CSS・JavaScript で作り、マイクロインタラクションを見せてください。① 設定：role=switch のチェックボックス（無効の理由付き）、2 択のセグメント、範囲スライダー。変えるたびに「保存しました」を短く表示します。② 記録：金額の確認（範囲外は aria-invalid とメッセージ、1 回だけ横に揺らす）、メモの文字数、記録ボタンの読み込み中 → 成功（チェックを描く）→ 元に戻る、失敗の例も。③ 一覧：精算済みのチェックで未精算の合計が数字の動きで変わり、削除は 5 秒間「元に戻す」を出します。状態は色だけでなく形と文字でも伝え、押せる部分は 44px 以上。prefers-reduced-motion では揺れや移動をやめ、JavaScript が無くても設定と一覧が使えるようにしてください。入力内容は送信も保存もしません。"
+      },
+      "steps": [
+        {
+          "title": "標準の部品から始める",
+          "body": "スイッチは input type=checkbox に role=switch、セグメントは radio、割合は range。JavaScript が無くても操作でき、キーボードの動きもブラウザーのものをそのまま使える。"
+        },
+        {
+          "title": "手応えは短く",
+          "body": "80〜250ms の transform と opacity だけを動かす。スイッチのつまみは押している間わずかに伸び、離すと行き過ぎて戻る。保存の印は 2.2 秒で消える。"
+        },
+        {
+          "title": "状態を言葉でも伝える",
+          "body": "エラーは aria-invalid と aria-describedby、読み込み中は aria-busy、結果と取り消しは role=status。色の違いに頼らず、記号（! と ✓）と文字を添える。"
+        },
+        {
+          "title": "取り消せる削除",
+          "body": "行を消したら次の行にフォーカスを移し、5 秒間「元に戻す」を出す。戻したら同じ位置に戻し、その行にフォーカスを返す。一時停止中や非表示の間は猶予の時間を進めない。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/micro-interactions/",
+          "sha256": "f15828593bedfc39465b31dd9a33bd051c4e5ee0394666d0273cc021ab66a9c3"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "アプリ名・金額・品目はすべて架空。外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "ai-workspace",
+          "bento-saas"
+        ],
+        "motion": [
+          "toggle-switch",
+          "button-press",
+          "morph-submit",
+          "check-draw",
+          "toast",
+          "number-flip"
+        ],
+        "learn": [
+          "learn/development"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {
+          "transferKb": 10.6,
+          "jsKb": 4.6,
+          "longTasks": 0,
+          "heapMb": 0.9,
+          "fpsP5": 100,
+          "lcpMs": 2180,
+          "cls": 0
+        }
+      }
+    },
+    {
       "id": "dl-video-0001",
       "slug": "logo-reveal-short",
       "medium": "video",
@@ -1239,7 +1622,9 @@
         ]
       },
       "related": {
-        "designs": [],
+        "designs": [
+          "brand-typography"
+        ],
         "motion": [
           "split-letters",
           "check-draw",
@@ -1405,6 +1790,182 @@
       },
       "audit": {
         "reviewed": "2026-11-16",
+        "perf": {}
+      }
+    },
+    {
+      "id": "dl-video-0003",
+      "slug": "brand-typography",
+      "medium": "video",
+      "status": "published",
+      "title": "Brand Typography Motion",
+      "summary": "正方形 10 秒、文字だけで語るブランド動画。紙・明るい緑・黄色の面が切り替わり、和文の縦組みと欧文、直線と円弧で作ったワードマークで締める。",
+      "description": "架空の書店兼カフェ「YOMIBA」の、ロゴを使わず文字だけで組んだ 1:1 の SNS 向け動画。4 つの場面で地の色と組み方を変え、最後はフォントを使わず直線と円弧で自作したワードマークで締める。HTML と CSS で組み、フレームごとに書き出した。",
+      "use_cases": [
+        "sns-short",
+        "brand-intro"
+      ],
+      "motion_types": [
+        "typography",
+        "transition"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "svg",
+        "ffmpeg"
+      ],
+      "styles": [
+        "typography",
+        "editorial",
+        "light"
+      ],
+      "motions": [
+        "text-reveal",
+        "stagger",
+        "page-transition",
+        "line-draw"
+      ],
+      "industries": [
+        "restaurant"
+      ],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Paper",
+          "value": "#f2ecdf"
+        },
+        {
+          "name": "Leaf",
+          "value": "#3cc47c"
+        },
+        {
+          "name": "Signal",
+          "value": "#ffd23f"
+        },
+        {
+          "name": "Ink",
+          "value": "#12352b"
+        }
+      ],
+      "fonts": [
+        "Hiragino Mincho ProN",
+        "Hiragino Sans",
+        "system-ui"
+      ],
+      "poster": "posters/brand-typography.avif",
+      "posterFallback": "posters/brand-typography.webp",
+      "loop": "loops/brand-typography.webm",
+      "loopFallback": "loops/brand-typography.mp4",
+      "video": {
+        "mp4": "videos/brand-typography.mp4",
+        "webm": "videos/brand-typography.webm",
+        "width": 1080,
+        "height": 1080,
+        "fps": 30,
+        "seconds": 10
+      },
+      "preview": {
+        "type": "video",
+        "orientation": "square"
+      },
+      "materials": [
+        {
+          "name": "システムフォント（明朝・ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "ワードマーク YOMIBA の線画（自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "HTML・CSS・SVG の構成（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "動画内の文字（全文）",
+          "description": "YOMIBA · BOOK & COFFEE／よむ。／一冊と、一杯のあいだ。／PAUSE BETWEEN PAGES.／ページの間で、ひと休み。／OPEN 8:00 — 21:00／本と、珈琲と、ゆっくりの時間。／YOMIBA 本と珈琲の店（架空）"
+        },
+        {
+          "label": "言葉",
+          "description": "4 場面の見出し・縦組みの一文・3 行のコピー（文字数に合わせて遅延を調整）"
+        },
+        {
+          "label": "配色",
+          "description": "紙・緑・黄の 3 面と、文字の墨色。文字は面とのコントラスト 4.5:1 以上を保つ"
+        },
+        {
+          "label": "ワードマーク",
+          "description": "直線と円弧の path。線の太さ 30、文字幅 100 の格子で組み直せる"
+        }
+      ],
+      "prompt": {
+        "text": "1080×1080、10 秒、音声なしのブランド動画を HTML と CSS で作ってください。ロゴは使わず文字だけで、4 場面に分けます。① 紙色の地に明朝の大きな一語を 1 文字ずつ下からマスクで出し、罫線と一文を添える ② 明るい緑の面を左から拭き取るように出し、右に和文の縦組みを 1 文字ずつ、左に欧文の太字 3 行を下からせり上げる ③ 黄色の面を上から下ろし、太さの違う 3 行を字間が詰まりながら現れるように出す ④ 紙色の円が中央から広がり、直線と円弧の線で作ったワードマークを stroke-dashoffset で描いて 1 秒以上止める。すべての動きは CSS で定義し、Web Animations API で時間を指定して 1 フレームずつ書き出せるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "4 つの面を重ねる",
+          "body": "紙・緑・黄・紙の 4 枚の面を重ね、後の面ほど上に置く。緑は scaleX、黄は scaleY、最後の紙は clip-path の円で出す。緑の直前に細い黄色の面を 0.1 秒先に走らせ、切り替わりに奥行きを付ける。"
+        },
+        {
+          "title": "組み方で声を変える",
+          "body": "一語は明朝の 300px、縦組みは writing-mode: vertical-rl、欧文は太字の詰めた字間。黄色の場面は細・太・明朝の 3 行で、letter-spacing を 0.5em から 0.02em へ詰めながら出す。"
+        },
+        {
+          "title": "ワードマークを線で作る",
+          "body": "文字幅 100・高さ 165 の格子に、直線と円弧だけで 6 文字を組む。各 path に pathLength=\"1\" を付け、stroke-dashoffset を 1 から 0 にして順に描く。フォントを使わないので、書き出し環境に左右されない。"
+        },
+        {
+          "title": "フレームごとに書き出す",
+          "body": "document.getAnimations() を一時停止して currentTime を 1/30 秒ずつ進め、PNG を ffmpeg で H.264（yuv420p、faststart、音声なし）と VP9 に変換する。最後の 1 秒は止めて、ループの継ぎ目を目立たせない。"
+        }
+      ],
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "ブランド名・営業時間は架空。音声・写真・外部素材・Web フォントは使っていない。ワードマークは線で自作し、和文はシステムフォントで書き出した"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox",
+          "ffprobe"
+        ],
+        "limitations": [
+          "実機のスマートフォンでの再生は未確認",
+          "書き出しに使ったシステムフォントの、動画での利用条件は運営者の確認待ち"
+        ]
+      },
+      "related": {
+        "designs": [
+          "logo-reveal-short",
+          "minimal-editorial"
+        ],
+        "motion": [
+          "split-letters",
+          "kinetic-words",
+          "mask-reveal",
+          "reveal-lines"
+        ],
+        "learn": [
+          "learn/svg-motion"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
         "perf": {}
       }
     }
