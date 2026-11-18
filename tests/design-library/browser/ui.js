@@ -227,6 +227,7 @@ async function listChecks(type, browser) {
             if (slug === 'aurora-gradient') return getComputedStyle(document.querySelector('.au-static')).opacity === '1' && getComputedStyle(document.querySelector('.au-canvas')).opacity === '0' && Array.prototype.every.call(document.querySelectorAll('[data-au-reveal], .au-line'), function (e) { return getComputedStyle(e).opacity === '1'; });
             if (slug === 'ai-workspace') return t.indexOf('来館者が増えた理由') !== -1 && t.indexOf('開館時間の変更記録') !== -1 && getComputedStyle(document.querySelector('.aw-composer')).display === 'none' && Array.prototype.every.call(document.querySelectorAll('.aw-msg--ai > *, .aw-src'), function (e) { return getComputedStyle(e).opacity === '1' && getComputedStyle(e).display !== 'none'; });
             if (slug === 'micro-interactions') return t.indexOf('今月の経費') !== -1 && document.querySelectorAll('.mi-row').length === 3 && getComputedStyle(document.querySelector('.mi-del')).display === 'none';
+            if (slug === 'interactive-story') return t.indexOf('一枚の紙が') !== -1 && Array.prototype.filter.call(document.querySelectorAll('.sk-fig'), function (f) { return getComputedStyle(f).display !== 'none'; }).length === 13 && getComputedStyle(document.querySelector('[data-sk-stage]')).display === 'none';
             if (slug === 'liquid-glass') return getComputedStyle(document.querySelector('.lg-blob--1')).animationName === 'none' && t.indexOf('考えごとを') !== -1;
             return getComputedStyle(document.querySelector('.kd-fallback')).display !== 'none';
         }, s);

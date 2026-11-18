@@ -119,6 +119,21 @@ var SCRIPTS = {
             await p.click('label[for="mi-it-2"]'); await p.waitForTimeout(800);
             await p.click('#mi-list .mi-item:nth-child(3) [data-mi-del]'); await p.waitForTimeout(1400);
         }
+    },
+    'interactive-story': {
+        poster: async function (p) {
+            await p.evaluate(function () { var e = document.querySelector('.sk-step[data-step="8"]'); window.scrollTo(0, e.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.4); });
+            await p.waitForTimeout(1500);
+        },
+        loop: async function (p) {
+            await p.evaluate(function () { document.documentElement.style.scrollBehavior = 'auto'; });
+            var y = function (n) { return p.evaluate(function (k) { var e = document.querySelector('.sk-step[data-step="' + k + '"]'); return e.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.4; }, n); };
+            await p.waitForTimeout(800);
+            await smoothScroll(p, await y(1), 1400); await p.waitForTimeout(700);
+            await smoothScroll(p, await y(3), 1300); await p.waitForTimeout(600);
+            await smoothScroll(p, await y(6), 1500); await p.waitForTimeout(600);
+            await smoothScroll(p, await y(8), 1300); await p.waitForTimeout(900);
+        }
     }
 };
 

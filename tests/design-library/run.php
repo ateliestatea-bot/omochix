@@ -15,7 +15,7 @@ ini_set('error_log', '/dev/null');
 $pass = 0; $fail = 0;
 function check($name, $cond) { global $pass, $fail; if ($cond) { $pass++; echo "PASS $name\n"; } else { $fail++; echo "FAIL $name\n"; } }
 
-$WEB   = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient', 'ai-workspace', 'micro-interactions'];
+$WEB   = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient', 'ai-workspace', 'micro-interactions', 'interactive-story'];
 $VIDEO = ['logo-reveal-short', 'data-chart-explainer', 'brand-typography'];
 
 // ------------------------------------------------------------ C1-C5

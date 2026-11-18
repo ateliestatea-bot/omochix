@@ -15,7 +15,7 @@ var THEME = path.resolve(__dirname, '../../../wp-theme/omochix-theme');
 function published(medium) { return catalog().items.filter(function (i) { return i.status === 'published' && (!medium || i.medium === medium); }); }
 /* QA output (screenshots, perf record): DL_QA_OUT=<dir> writes there instead of docs/design-library/qa (keeps the committed QA files as they are). */
 function qaOut(rel) { var base = process.env.DL_QA_OUT ? path.resolve(process.env.DL_QA_OUT) : path.resolve(__dirname, '../../../docs/design-library/qa'); return path.join(base, rel); }
-var DEMOS = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient', 'ai-workspace', 'micro-interactions'];
+var DEMOS = ['liquid-glass', 'minimal-editorial', '3d-interactive', 'bento-saas', 'dark-luxury', 'aurora-gradient', 'ai-workspace', 'micro-interactions', 'interactive-story'];
 var GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--enable-precise-memory-info'];
 
 var results = { pass: 0, fail: 0, lines: [] };

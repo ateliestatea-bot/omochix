@@ -51,6 +51,12 @@ var SPEC = {
         content: ['.mi-card h2', '.mi-row', '.mi-item', '.mi-states li'],
         focus: '.mi-nav a',
         loop: false
+    },
+    'interactive-story': {
+        accent: ['.sk-kicker', '.sk-meta', '.sk-toc a span', '.sk-ch__h span', '.sk-voice label small', '.sk-bar__ch', '.sk-end__note', '.sk-brand__en'],
+        content: ['.sk-intro h1', '.sk-ch__h', '.sk-p--craft', '.sk-year li'],
+        focus: '.sk-bar__toc',
+        loop: false
     }
 };
 

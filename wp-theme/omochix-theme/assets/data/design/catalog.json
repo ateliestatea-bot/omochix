@@ -1483,6 +1483,209 @@
       }
     },
     {
+      "id": "dl-web-0009",
+      "slug": "interactive-story",
+      "medium": "web",
+      "status": "published",
+      "title": "Interactive Storytelling",
+      "summary": "架空の手漉き和紙の工房の一年を、スクロールに合わせて挿絵が描き変わる物語で。職人の目と紙の目、2 つの語りを途中で切り替えられる。",
+      "description": "4 章 13 場面の読み物。段落が画面の中ほどに来ると、横（スマホでは上）に固定した挿絵がその場面に変わる。語り手を職人と紙で切り替えても、読んでいる位置は保たれる。WebGL・画像は使わず、挿絵はすべて SVG で自作した。",
+      "use_cases": [
+        "brand-intro",
+        "media",
+        "corporate"
+      ],
+      "motion_types": [
+        "scroll",
+        "typography",
+        "transition"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "editorial",
+        "light",
+        "typography"
+      ],
+      "motions": [
+        "scroll-linked",
+        "parallax",
+        "line-draw",
+        "page-transition"
+      ],
+      "industries": [],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Washi",
+          "value": "#f4efe4"
+        },
+        {
+          "name": "Sumi",
+          "value": "#22201c"
+        },
+        {
+          "name": "Indigo",
+          "value": "#1f3a5f"
+        },
+        {
+          "name": "Persimmon",
+          "value": "#a8432f"
+        }
+      ],
+      "fonts": [
+        "Hiragino Mincho ProN",
+        "Yu Mincho",
+        "Hiragino Sans",
+        "system-ui"
+      ],
+      "poster": "posters/interactive-story.avif",
+      "posterFallback": "posters/interactive-story.webp",
+      "loop": "loops/interactive-story.webm",
+      "loopFallback": "loops/interactive-story.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/interactive-story/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（明朝・ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "挿絵 13 場面（SVG・自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "物語の文章（自作）",
+          "type": "data",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "物語",
+          "description": "章と段落の配列（各段落に 2 つの語り）。段落を増やしたら挿絵の symbol も同じ数だけ用意する"
+        },
+        {
+          "label": "挿絵",
+          "description": "symbol #sk-s1〜#sk-s13。固定の挿絵と JavaScript 無効時の挿絵は同じ symbol を use で描く"
+        },
+        {
+          "label": "章の色",
+          "description": "--ch1〜--ch4（本文の地）と、固定の挿絵の地の色"
+        },
+        {
+          "label": "切り替えの位置",
+          "description": "IntersectionObserver の rootMargin（画面の 50〜60% の帯に入った段落が現在の場面）"
+        }
+      ],
+      "prompt": {
+        "text": "架空の手漉き和紙の工房の一年を、スクロールに合わせて挿絵が変わる読み物として HTML・CSS・JavaScript・SVG で作ってください。4 章 13 段落で、各段落に「職人の目」と「紙の目」の 2 つの語りを用意し、ラジオボタンで切り替えます（CSS の :has で切り替え、JS は読んでいる位置を保つ）。PC では本文の横、スマホでは本文の上に挿絵を固定し、画面の中ほどに来た段落の場面へ交差フェードで変えます。挿絵は 13 個の SVG symbol にまとめ、固定の挿絵と、JavaScript 無効・prefers-reduced-motion のときに段落ごとに並べる挿絵の両方を use で描きます。上部に章名と読書位置の棒、目次のダイアログ（Esc で閉じてフォーカスを戻す）、各章の終わりに「次の章へ」を置きます。常に回るアニメーションは作らず、一時停止中・非表示中は場面を切り替えず、再開したときに合わせてください。"
+      },
+      "steps": [
+        {
+          "title": "静的な形を先に作る",
+          "body": "各段落に、その場面の挿絵（svg と use）と 2 つの語りを置く。JavaScript が無い・動きを減らす設定のときは、これがそのまま読み物になる。語りの切り替えは :has で、JavaScript が無くても動く。"
+        },
+        {
+          "title": "挿絵を symbol にまとめる",
+          "body": "13 場面を symbol #sk-s1〜13 として 1 度だけ定義し、固定の挿絵では 13 個の use を重ねて、現在の場面だけを表示する。部品（雪・川・漉き舟・簀桁・紙）は色のクラスを共通にする。"
+        },
+        {
+          "title": "段落と挿絵を同期する",
+          "body": "IntersectionObserver の rootMargin を '-50% 0px -40% 0px' にして、画面の帯に入った段落を現在の場面にする。場面の番号から、遠景の山のずれ・太陽の位置・下の線の描画（stroke-dashoffset）を CSS 変数で決める。"
+        },
+        {
+          "title": "止めるときの扱い",
+          "body": "ランタイムの一時停止は CSS アニメーションを止めるが transition は止めない。そこで一時停止中・非表示中は場面を切り替えず、最後の段落を覚えておき、再開したときに一度で反映する。読書位置の棒もスクロール中の rAF 1 本だけにし、止めている間は描かない。"
+        },
+        {
+          "title": "読み進めやすくする",
+          "body": "目次は role=dialog のシートにし、章に移ったら見出しにフォーカスを移す。語りを切り替えても、現在の段落が画面の同じ位置に残るように scrollBy で補正する。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/interactive-story/",
+          "sha256": "130c0e9d30cde519a1f1d98baf09e76e444391a7047e911581b204e41965fd54"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "工房・人物・地名は架空（工房名「紙季廊」は商標未確認の仮の名前）。紙すきの工程は一般的な流れを簡単にしたもの。写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-18",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "minimal-editorial",
+          "brand-typography"
+        ],
+        "motion": [
+          "section-pin",
+          "scroll-progress",
+          "reveal-lines",
+          "scroll-fade-in",
+          "underline-draw",
+          "mask-reveal"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/svg-motion"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-18",
+        "perf": {
+          "transferKb": 13.6,
+          "jsKb": 3.7,
+          "longTasks": 0,
+          "heapMb": 1,
+          "fpsP5": 108,
+          "lcpMs": 2260,
+          "cls": 0
+        }
+      }
+    },
+    {
       "id": "dl-video-0001",
       "slug": "logo-reveal-short",
       "medium": "video",
