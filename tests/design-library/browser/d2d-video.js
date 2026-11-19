@@ -88,12 +88,22 @@ async function run(type, launcher) {
         check(T + ' ' + w[0] + 'px detail: square stage (1:1, ≤ 80vh), <video controls preload=none>, no side scroll', ds.square && Math.abs(ds.ratio - 1) < 0.02 && ds.h <= ds.vh * 0.8 + 1 && ds.controls && ds.preload === 'none' && ds.sw <= ds.iw + 1, ds);
         if (w[0] === 1440) {
             var vs = async function () { return p.evaluate(function () { var v = document.querySelector('.dl-stage__video'); return { paused: v.paused, t: Math.round(v.currentTime * 100) / 100, ready: v.readyState }; }); };
+            // Diagnostics only (the pass condition below is unchanged): media events and page state, reported with a failure.
+            await p.evaluate(function () {
+                var v = document.querySelector('.dl-stage__video'), t0 = performance.now(); window.__omxMediaLog = [];
+                function rec(n) { window.__omxMediaLog.push(n + '@' + Math.round(performance.now() - t0) + ' t=' + v.currentTime.toFixed(2) + ' rs=' + v.readyState + ' ns=' + v.networkState + ' vis=' + document.visibilityState + (v.error ? ' err=' + v.error.code : '')); }
+                ['play', 'playing', 'pause', 'waiting', 'stalled', 'suspend', 'ended', 'emptied', 'abort', 'error', 'seeking', 'seeked'].forEach(function (n) { v.addEventListener(n, function () { rec(n); }); });
+                document.addEventListener('visibilitychange', function () { rec('visibilitychange'); });
+            });
             await p.evaluate(function () { var v = document.querySelector('.dl-stage__video'); v.muted = true; return v.play(); });
             await L.wait(1500); var v1 = await vs();
             await p.evaluate(function () { document.querySelector('.dl-stage__video').pause(); }); await L.wait(600); var v2 = await vs();
             await L.wait(600); var v3 = await vs();
             await p.evaluate(function () { return document.querySelector('.dl-stage__video').play(); }); await L.wait(1000); var v4 = await vs();
-            check(T + ' detail video: plays, pauses (time holds), resumes from the same point', !v1.paused && v1.t > 0.5 && v2.paused && v3.t === v2.t && !v4.paused && v4.t > v2.t, [v1, v2, v3, v4]);
+            var mediaLog = await p.evaluate(function () { return window.__omxMediaLog || []; });
+            var resumed = !v1.paused && v1.t > 0.5 && v2.paused && v3.t === v2.t && !v4.paused && v4.t > v2.t;
+            check(T + ' detail video: plays, pauses (time holds), resumes from the same point', resumed, [v1, v2, v3, v4]);
+            if (!resumed) console.log('DIAG ' + T + ' detail video media events: ' + JSON.stringify(mediaLog));
         }
         var csp = await p.evaluate(function () { return window.__csp; });
         check(T + ' ' + w[0] + 'px: no request outside the site, no CSP violation, no page error', outside.length === 0 && csp.length === 0 && errs.length === 0, { outside: outside, csp: csp, errs: errs });
