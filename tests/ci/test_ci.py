@@ -393,6 +393,46 @@ class IntegrationGate(RepoCase):
 
 # --------------------------------------------------------------------------- CI change guard
 
+PREV_2F8 = "Release gate for the previous release on its own commit (Industry Hub, 2f800b2)"
+# A fictional future release check, so these tests do not depend on how many real ones exist.
+PREV_NEXT = "Release gate for the previous release on its own commit (theme 9.9.9, 0123456)"
+STEP_NEXT = (
+    "      - name: " + PREV_NEXT + "\n"
+    "        if: steps.scope.outputs.target == 'true'\n"
+    "        run: |\n"
+    "          set -e\n"
+    "          tree=\"$RUNNER_TEMP/theme-9.9.9-tree\"; mkdir -p \"$tree\"\n"
+    "          git archive 0123456789abcdef0123456789abcdef01234567 wp-plugin wp-theme | tar -x -C \"$tree\"\n"
+    "          OMOCHIX_RELEASE_CONFIG=theme-9.9.9.json OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php\n\n")
+
+
+def step_block(text, name):
+    """The YAML text of one step (from its '- name:' line to the next step)."""
+    start = text.index("      - name: " + name + "\n")
+    nxt = text.find("\n      - ", start + 1)
+    return text[start:(nxt + 1) if nxt != -1 else len(text)]
+
+
+def drop_step(text, name):
+    return text.replace(step_block(text, name), "", 1)
+
+
+def add_release_step(text, block=None):
+    """Insert a release check the way PR #69 does: after the previous-release gate."""
+    block = STEP_NEXT if block is None else block
+    anchor = "      - name: Release tools ("
+    assert anchor in text
+    return text.replace(anchor, block + anchor, 1)
+
+
+def pin_steps(repo_dir, inventory_text):
+    """The inventory with 'pinned_steps' refreshed from the repository's release.yml (what --print-steps prints)."""
+    d = json.loads(inventory_text)
+    doc = workflow_policy.load_yaml(slurp(os.path.join(repo_dir, ".github/workflows/release.yml")))
+    d["workflows"][".github/workflows/release.yml"]["pinned_steps"]["gate"] = workflow_policy._walk_steps(doc["jobs"]["gate"])
+    return json.dumps(d, indent=2)
+
+
 def drop_line(text, line):
     assert line in text, line
     return text.replace(line, "", 1)
@@ -493,7 +533,7 @@ class Guard(RepoCase):
         "tests-swallowed": (".github/workflows/tests.yml", lambda s: s.replace('php "$test" || status=1', 'php "$test" || true', 1), "swallow a failure"),
         "release-gate-removed": (".github/workflows/release.yml", lambda s: s.replace("run: php tests/release/release-gate.php", "run: echo skipped", 1), "no longer runs 'php tests/release/release-gate.php'"),
         "release-gate-diluted": (".github/workflows/release.yml", lambda s: s.replace("run: php tests/release/release-gate.php", "run: php tests/release/release-gate.php --help", 1), "no longer runs 'php tests/release/release-gate.php'"),
-        "previous-release-gate-removed": (".github/workflows/release.yml", lambda s: s.replace('OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php', "true", 1), "no longer runs 'OMOCHIX_RELEASE_TREE"),
+        "previous-release-gate-removed": (".github/workflows/release.yml", lambda s: s.replace(step_block(s, PREV_2F8), step_block(s, PREV_2F8).replace('OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php', "true", 1), 1), "step '%s' differs from its pinned copy (run)" % PREV_2F8),
         "release-tools-tests-removed": (".github/workflows/release.yml", lambda s: s.replace("run: python3 -W error::ResourceWarning -m unittest discover -s tests/release -v", "run: echo no", 1), "no longer runs 'python3 -W error"),
         "build-verify-removed": (".github/workflows/release.yml", lambda s: s.replace("python3 tools/release/verify.py --commit HEAD", "echo verify", 1), "no longer runs 'python3 tools/release/verify.py"),
         "release-continue-on-error": (".github/workflows/release.yml", lambda s: s.replace("      - name: Release tools (", "      - continue-on-error: true\n        name: Release tools (", 1), "continue-on-error"),
@@ -524,6 +564,14 @@ class Guard(RepoCase):
         "integration-bootstrap-from-head": (".github/workflows/integration.yml", lambda s: s.replace('git archive "$trusted" tools/ci', "git archive HEAD tools/ci", 1), "job 'gate' no longer runs 'set -euo pipefail"),
         "workflow-run": (".github/workflows/svg-motion.yml", lambda s: s.replace("on:\n", "on:\n  workflow_run:\n    workflows: [Tests]\n", 1), "'workflow_run'"),
         "integration-other-branch": (".github/workflows/integration.yml", lambda s: s.replace("    branches: ['integrate/web2']\n    # 'edited'", "    branches: ['integrate/other']\n    # 'edited'", 1), "pull_request.branches is ['integrate/other']"),
+        "previous-release-step-removed": (".github/workflows/release.yml", lambda s: drop_step(s, PREV_2F8), "pinned step '%s' is gone" % PREV_2F8),
+        "release-step-if-dropped": (".github/workflows/release.yml", lambda s: s.replace("        if: steps.scope.outputs.target == 'true'\n        run: python3 -W error", "        run: python3 -W error", 1), "differs from its pinned copy (if)"),
+        "release-gate-if-dropped": (".github/workflows/release.yml", lambda s: s.replace("        if: steps.scope.outputs.target == 'true'\n        run: php tests/release/release-gate.php", "        run: php tests/release/release-gate.php", 1), "must run under 'if: steps.scope.outputs.target == 'true'' (got no 'if')"),
+        "release-steps-reordered": (".github/workflows/release.yml", lambda s: drop_step(s, PREV_2F8).replace("      - name: Release gate (versions,", step_block(s, PREV_2F8) + "      - name: Release gate (versions,", 1), "not in the pinned order"),
+        "release-step-env-added": (".github/workflows/release.yml", lambda s: s.replace("        run: php tests/release/release-gate.php\n", "        env:\n          BASH_ENV: ./x.sh\n        run: php tests/release/release-gate.php\n", 1), "differs from its pinned copy (env)"),
+        "release-job-env": (".github/workflows/release.yml", lambda s: s.replace("    timeout-minutes: 10\n", "    timeout-minutes: 10\n    env:\n      BASH_ENV: ./x.sh\n", 1), "job-level 'env'"),
+        "release-top-defaults": (".github/workflows/release.yml", lambda s: s.replace("\njobs:\n", "\ndefaults:\n  run:\n    shell: bash {0}\n\njobs:\n", 1), "top-level 'defaults'"),
+        "release-step-renamed": (".github/workflows/release.yml", lambda s: s.replace("      - name: " + PREV_2F8, "      - name: Previous release (off)", 1), "pinned step '%s' is gone" % PREV_2F8),
         "guard-removed": (".github/workflows/ci-guard.yml", lambda s: s.replace("    name: CI change guard\n", "    name: CI change guard (off)\n", 1), "job 'guard' produces checks"),
     }
 
@@ -548,7 +596,7 @@ class Guard(RepoCase):
                 self.r.pr("sec-" + name, {path: fn})
                 ok, lines = self.guard()
                 self.assertTrue(any(l.startswith("FAIL") and "security findings" in l for l in lines), "\n".join(lines))
-                self.assertFalse(any("description: ci-weakening-approved:" in l for l in lines))
+                # Other findings may be approvable; the security ones never are (asserted below).
                 body = "\n".join(l.split("description: ", 1)[1] for l in lines if "description: " in l)
                 inv = self.base_inventory()
                 hits = [x for x in cilib.changed_paths("HEAD^1", "HEAD", cwd=self.r.dir) if cilib.matches(x, inv["protected_paths"])]
@@ -574,6 +622,88 @@ class Guard(RepoCase):
         ok, lines = self.guard(labels=["ci-weakening-approved"], body=line)
         self.assertTrue(ok, "\n".join(lines))
         self.assertTrue(any("accepted with the 'ci-weakening-approved' label" in l for l in lines))
+
+    def test_a_step_that_could_change_the_tree_needs_a_review_and_a_pin(self):
+        tamper = "      - name: Prepare\n        run: git checkout a04511722accd560216b019ca47a4bfcaad630ab -- wp-theme\n\n"
+        self.r.pr("tamper", {".github/workflows/release.yml": lambda s: s.replace("      - name: Release scope (", tamper + "      - name: Release scope (", 1)})
+        ok, lines = self.guard()
+        self.assertFailsWith((ok, lines), "step 'Prepare' is not pinned")
+        # The CI policy job (the head's own inventory) fails too until the inventory pins it.
+        self.assertTrue(any("step 'Prepare' is not pinned" in x for x in workflow_policy.check(rev="HEAD", cwd=self.r.dir)))
+
+    def with_two_previous_releases_on_main(self):
+        """main as it would be after PR #69: two previous-release checks, both pinned."""
+        self.r.git("checkout", "-q", "main")
+        self.r.write(".github/workflows/release.yml", add_release_step(self.r.read(".github/workflows/release.yml")))
+        self.r.write("tools/ci/required-checks.json", pin_steps(self.r.dir, self.r.read("tools/ci/required-checks.json")))
+        self.r.commit("second previous-release check, pinned")
+        self.r.git("update-ref", "refs/remotes/origin/main", "main")
+        self.assertEqual(workflow_policy.check(rev="HEAD", cwd=self.r.dir), [])
+
+    def test_removing_either_of_two_similar_release_checks_fails(self):
+        # The substring check could not tell these two apart: both run
+        # OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php.
+        self.with_two_previous_releases_on_main()
+        for name in (PREV_2F8, PREV_NEXT):
+            with self.subTest(name):
+                self.r.git("checkout", "-q", "main")
+                self.r.pr("rm-" + name[-8:-1], {".github/workflows/release.yml": lambda s, n=name: drop_step(s, n)})
+                review = self.approval("ci-change-reviewed")
+                self.assertFailsWith(self.guard(labels=["ci-change-reviewed"], body=review), "pinned step '%s' is gone" % name)
+
+    def test_dropping_the_condition_of_a_new_release_check_fails(self):
+        self.with_two_previous_releases_on_main()
+        self.r.pr("no-if", {".github/workflows/release.yml": lambda s: s.replace(
+            "      - name: " + PREV_NEXT + "\n        if: steps.scope.outputs.target == 'true'\n", "      - name: " + PREV_NEXT + "\n", 1)})
+        self.assertFailsWith(self.guard(labels=["ci-change-reviewed"], body=self.approval("ci-change-reviewed")), "differs from its pinned copy (if)")
+
+    def test_adding_a_release_check_the_way_pr_69_does(self):
+        # Without the scope condition and without a pin: both are findings.
+        unconditional = STEP_NEXT.replace("        if: steps.scope.outputs.target == 'true'\n", "", 1)
+        self.r.pr("pr69-as-is", {".github/workflows/release.yml": lambda s: add_release_step(s, unconditional)})
+        ok, lines = self.guard()
+        self.assertFailsWith((ok, lines), "step '%s' must run under" % PREV_NEXT)
+        self.assertFailsWith((ok, lines), "step '%s' is not pinned" % PREV_NEXT)
+        # With the condition and the inventory refreshed in the same pull request: a review is enough.
+        self.r.git("checkout", "-q", "main")
+        self.r.git("checkout", "-q", "-B", "pr69-fixed", "main")
+        self.r.write(".github/workflows/release.yml", add_release_step(self.r.read(".github/workflows/release.yml")))
+        self.r.write("tools/ci/required-checks.json", pin_steps(self.r.dir, self.r.read("tools/ci/required-checks.json")))
+        self.r.commit("release check + pin")
+        self.r.git("checkout", "-q", "--detach", "main")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", "pr69-fixed")
+        ok, lines = self.guard()
+        self.assertFalse(ok)
+        self.assertFalse(any("must run under" in l or "security" in l for l in lines), "\n".join(lines))
+        self.assertTrue(any("is not pinned" in l for l in lines))          # base inventory does not know it yet
+        ok, lines = self.guard(labels=["ci-change-reviewed"], body=self.approval("ci-change-reviewed"))
+        self.assertTrue(ok, "\n".join(lines))
+        self.assertEqual(workflow_policy.check(rev="HEAD", cwd=self.r.dir), [])   # CI policy (head inventory)
+
+    def test_adding_a_line_to_a_pinned_step_needs_a_review_removing_one_is_a_weakening(self):
+        plan2f8 = "OMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json python3 tools/release/plan.py --commit 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 --check"
+        added = "          OMOCHIX_RELEASE_CONFIG=theme-9.9.9.json python3 tools/release/plan.py --commit 0123456789abcdef0123456789abcdef01234567 --check\n"
+        self.r.pr("add-line", {".github/workflows/release.yml": lambda s: s.replace("          " + plan2f8 + "\n", "          " + plan2f8 + "\n" + added, 1)})
+        ok, lines = self.guard()
+        self.assertFailsWith((ok, lines), "adds lines to its pinned script")
+        self.assertFalse(any("can weaken" in l for l in lines), "\n".join(lines))
+        self.assertTrue(self.guard(labels=["ci-change-reviewed"], body=self.approval("ci-change-reviewed"))[0])
+        # Dropping the previous release's plan check is a weakening, also next to an added line.
+        for name, fn in (("drop", lambda s: s.replace("          " + plan2f8 + "\n", "", 1)),
+                         ("swap", lambda s: s.replace("          " + plan2f8 + "\n", added, 1)),
+                         ("dilute", lambda s: s.replace(plan2f8, plan2f8 + " || true", 1))):
+            with self.subTest(name):
+                self.r.git("checkout", "-q", "main")
+                self.r.pr("plan-" + name, {".github/workflows/release.yml": fn})
+                self.assertFailsWith(self.guard(labels=["ci-change-reviewed"], body=self.approval("ci-change-reviewed")),
+                                     "step 'Build twice and verify (packages stay in the runner)' differs from its pinned copy (run)")
+
+    def test_print_steps_matches_the_pinned_inventory(self):
+        res = subprocess.run([sys.executable, os.path.join(REPO, "tools/ci/workflow_policy.py"), "--print-steps", ".github/workflows/release.yml", "gate"],
+                             cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        inv = json.loads(slurp(os.path.join(REPO, "tools/ci/required-checks.json")))
+        self.assertEqual(json.loads(res.stdout), inv["workflows"][".github/workflows/release.yml"]["pinned_steps"]["gate"])
 
     def test_unexpected_event_fails(self):
         self.r.pr("docs", {"docs/readme.md": "x\n"})

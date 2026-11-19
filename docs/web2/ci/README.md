@@ -38,6 +38,12 @@ GitHub の Ruleset は運営者が別に承認してから設定します。こ�
 - **判定スクリプト自体:** workflow のステップの中で、PR の送り先（base）のコミットから `git archive` で `tools/ci/` を取り出し、`python3 -I` で実行します。
   - 取り出す処理も含めて、PR 側のファイルは一切実行しません。以前の `use-base-copy.sh` は PR 側のファイルで、書き換えると検査を回避できたため廃止しました。
   - ステップのスクリプト全体を `required-checks.json` に固定しているので、ステップを書き換えると CI change guard がポリシー違反として止めます。
+- **検査ステップの固定:** `release.yml` の gate ジョブ（Integration gate・CI change guard も同じ）は、全ステップを順番どおり、ステップ単位で丸ごと `required-checks.json` の `pinned_steps` に固定しています。名前・`if`・`env`・`run`・`uses`・`with` のどれが違っても検出します。コマンドの部分一致では判定しません。
+  - 似たリリース検査が2つある場合（前回リリースのゲートが2本など）、どちらを消しても失敗になります。
+  - 固定されていないステップが足された場合（新しいリリース検査、または検査の前に tree を書き換えうるステップ）は、CI change guard が `ci-change-reviewed` の承認を求めます。CI policy は、PR 側の一覧がそのステップを固定するまで失敗します。
+  - Release scope より後のステップは、すべて `if: steps.scope.outputs.target == 'true'` で動く必要があります（`gated_after`）。条件が無い、または別の条件だと失敗します。
+  - ワークフロー全体またはジョブに `env`・`defaults`（ジョブでは `container`・`services` も）を書くと失敗します（`BASH_ENV` やシェルの差し替えで、固定したステップの動きを変えられるため）。
+  - **リリース検査を足す手順:** ステップを `if: steps.scope.outputs.target == 'true'` 付きで足し、`python3 tools/ci/workflow_policy.py --print-steps .github/workflows/release.yml gate` の出力で `pinned_steps` を更新し、同じ PR に含めます。
 - **base に `tools/ci/` が無いとき**（`tools/ci/` を持ち込む最初の PR）: 判定スクリプトを実行せず、すべてを検査します（fail-closed）。
 
 `tests/release/release-gate.php` と `tools/release/` は一切変えていません。
@@ -121,6 +127,25 @@ GitHub の Ruleset は運営者が別に承認してから設定します。こ�
 - **最初の PR:** main にまだ `ci-guard.yml` が無いので、この PR では CI change guard が走りません（`pull_request_target` は base の workflow を使うため）。差分は人が読んで確認します。
   - Release gate は、base に判定スクリプトが無いのですべてを検査します。
   - この PR を merge した直後の main への push では、CI change guard が「base に信頼できる規則が無い」として **失敗** します（fail-closed）。その commit だけの想定どおりの結果で、次の commit からは通常どおり判定します。
+
+## PR #69（Design Library）との統合（2026-11-19 時点）
+
+#69（head f61944c）は `release.yml` に「theme 1.30.0 の前回リリースのゲート」のステップを足し、Build ステップに plan の行を1行足しています。
+隔離した一時クローンで、#68 → #69 の順に統合した状態を試しました。
+
+- **merge:** 競合はありません。
+- **#69 そのままの場合:** CI policy が失敗します（3件）。
+  - 新しいステップに `if` が無い
+  - 新しいステップが `pinned_steps` に無い
+  - Build ステップに行が足されている
+- **#69 側で必要な修正**（#69 の作業として行う。CI 側で検査を緩めて合わせることはしない）
+  1. 新しいステップに `if: steps.scope.outputs.target == 'true'` を足す
+  2. `python3 tools/ci/workflow_policy.py --print-steps .github/workflows/release.yml gate` の出力で、`tools/ci/required-checks.json` の `pinned_steps` の `.github/workflows/release.yml` → `gate` を置き換える
+- **修正した後の確認結果:**
+  - CI policy は PASS、CI テストは81件 OK
+  - CI change guard の結果は、弱める変更0件と要レビュー2件です。`ci-change-reviewed` とダイジェストの承認で通ります。
+  - Release gate は 30 passed、前回リリースのゲートは2本とも PASS
+- **merge の順番:** #68 → #69 の順にします。#69 は #68 が入った main を取り込んでから、上の2点を足します。
 
 ## Ruleset（推奨。設定は運営者の別承認）
 

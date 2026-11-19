@@ -15,6 +15,8 @@ a YAML reader); nothing from the pull request runs.
   2. Other workflow policy findings (a required check would weaken: removed or renamed
      job, paths filter, continue-on-error, missing trigger, a gate command removed ...):
        FAIL unless APPROVED with 'ci-weakening-approved'.
+  2b. REVIEW findings (a step that the base inventory does not pin yet, e.g. a new release
+     check): FAIL unless APPROVED with 'ci-change-reviewed' (or the weakening label).
   3. Protected paths changed (workflows, CI scripts and tests, the ownership file, the
      Release gate and release tool code):
        pull request -> FAIL unless APPROVED with 'ci-change-reviewed' (or the weakening label).
@@ -91,10 +93,11 @@ def guard(base, head, event, labels, inventory=None, cwd=None, body=""):
     except (cilib.GitError, ValueError, KeyError) as exc:
         violations = [workflow_policy.SECURITY + "the workflow policy could not run: %s" % exc]
     security = [x for x in violations if x.startswith(workflow_policy.SECURITY)]
-    weak = [x for x in violations if not x.startswith(workflow_policy.SECURITY)]
+    review = [x for x in violations if x.startswith(workflow_policy.REVIEW)]
+    weak = [x for x in violations if not x.startswith((workflow_policy.SECURITY, workflow_policy.REVIEW))]
 
     try:
-        full = digest(hits, weak, base, head, cwd=cwd)
+        full = digest(hits, weak + review, base, head, cwd=cwd)
     except cilib.GitError as exc:
         return False, ["FAIL git could not read the changed files: %s" % exc]
     short = full[:16]
@@ -125,6 +128,16 @@ def guard(base, head, event, labels, inventory=None, cwd=None, body=""):
             if pr:
                 lines.append("NOTE if this is intended, change the ruleset in the same step.")
                 lines.append(how(weakening))
+    if review:
+        if approved(reviewed) or approved(weakening):
+            lines.append("WARN workflow policy: %d new steps not pinned on the base, reviewed for digest %s:" % (len(review), short))
+            lines += ["WARN   " + x for x in review]
+        else:
+            ok = False
+            lines.append("FAIL workflow policy: %d new steps are not pinned on the base (a new release check, or a step that could change the tree before a check runs); read them:" % len(review))
+            lines += ["FAIL   " + x for x in review]
+            if pr and not weak:
+                lines.append(how(reviewed))
     if not violations:
         lines.append("PASS workflow policy (base inventory against head workflows)")
 

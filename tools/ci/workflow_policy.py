@@ -37,6 +37,10 @@ INVENTORY = "tools/ci/required-checks.json"
 WORKFLOW_DIR = ".github/workflows"
 DEFAULT_PR_TYPES = ["opened", "synchronize", "reopened"]
 SECURITY = "SECURITY "
+# A step the base inventory does not pin yet (a new release check, or a step that could
+# change the tree before a check runs). The CI change guard accepts it only with a review
+# of this exact content; CI policy (head inventory) fails until the inventory pins it.
+REVIEW = "REVIEW "
 
 
 # ---------------------------------------------------------------------------
@@ -344,6 +348,64 @@ def least_privilege(path, doc, target_allowed=(), text=""):
     return [SECURITY + x for x in v]
 
 
+def _step_key(st):
+    return st.get("name") if isinstance(st.get("name"), str) else None
+
+
+def _diff_step(got, want):
+    """Keys whose values differ between a workflow step and its pinned copy."""
+    out = []
+    for k in sorted(set(got) | set(want), key=str):
+        if got.get(k) != want.get(k):
+            out.append(str(k))
+    return out
+
+
+def _only_adds_lines(old, new):
+    """Every line of old appears in new, in the same order (new only adds lines)."""
+    it = iter(new.splitlines())
+    return all(any(line == got for got in it) for line in old.splitlines())
+
+
+def pinned_steps(path, jid, job, want):
+    """A closed, ordered list: every step of the job is pinned in full (name, if, env, run, uses, with ...).
+
+    Each release check is one named step, compared as a whole, never by a substring of the
+    job's scripts: removing one of two similar checks, dropping its 'if', adding a step that
+    could change the tree before a check runs, or reordering the steps are all findings.
+    """
+    v = []
+    steps = _walk_steps(job)
+    names = [_step_key(st) for st in steps]
+    for i, st in enumerate(steps):
+        if names[i] is None:
+            v.append("%s: job '%s' step %d has no name (every step of this job is pinned by name)" % (path, jid, i + 1))
+    for n in sorted({n for n in names if n and names.count(n) > 1}):
+        v.append("%s: job '%s' has more than one step named '%s'" % (path, jid, n))
+    want_names = [w.get("name") for w in want]
+    by_name = {n: st for n, st in zip(names, steps) if n}
+    for w in want:
+        n = w.get("name")
+        st = by_name.get(n)
+        if st is None:
+            v.append("%s: job '%s' pinned step '%s' is gone" % (path, jid, n))
+            continue
+        diff = _diff_step(st, w)
+        if diff == ["run"] and _only_adds_lines(str(w.get("run", "")), str(st.get("run", ""))):
+            # Every pinned line is still there, in order; lines were only added (a new
+            # release check in an existing step). Not a weakening, but it must be read.
+            v.append(REVIEW + "%s: job '%s' step '%s' adds lines to its pinned script (refresh 'pinned_steps' in the inventory)" % (path, jid, n))
+        elif diff:
+            v.append("%s: job '%s' step '%s' differs from its pinned copy (%s)" % (path, jid, n, ", ".join(diff)))
+    for n in names:
+        if n and n not in want_names:
+            v.append(REVIEW + "%s: job '%s' step '%s' is not pinned (add it to 'pinned_steps' in the inventory, in a reviewed pull request)" % (path, jid, n))
+    order = [n for n in names if n in want_names]
+    if order != [n for n in want_names if n in by_name]:
+        v.append("%s: job '%s' steps are not in the pinned order" % (path, jid))
+    return v
+
+
 def required(inv, rev, cwd=None):
     """Policy for the workflows that produce required checks. Returns (violations, names)."""
     v, names = [], {}
@@ -389,6 +451,11 @@ def required(inv, rev, cwd=None):
             for b in spec["push_branches"]:
                 if b not in have:
                     v.append("%s: push.branches lacks %s (no check after a push there)" % (path, b))
+        # Workflow- or job-level env/defaults/container would change how every pinned step
+        # runs (BASH_ENV, a custom shell, another image) without touching the steps.
+        for key in ("env", "defaults"):
+            if key in doc:
+                v.append("%s: top-level '%s' is not allowed in a workflow that produces required checks" % (path, key))
         jobs = doc.get("jobs") or {}
         for jid, want_names in spec["jobs"].items():
             job = jobs.get(jid)
@@ -403,6 +470,23 @@ def required(inv, rev, cwd=None):
                 v.append("%s: job '%s' has a job-level 'if' (a skipped job reports success to required checks)" % (path, jid))
             if "continue-on-error" in job:
                 v.append("%s: job '%s' has continue-on-error" % (path, jid))
+            for key in ("env", "defaults", "container", "services"):
+                if key in job:
+                    v.append("%s: job '%s' has a job-level '%s' (it changes how every step runs)" % (path, jid, key))
+            if jid in spec.get("pinned_steps", {}):
+                v += pinned_steps(path, jid, job, spec["pinned_steps"][jid])
+            gated = spec.get("gated_after", {}).get(jid)
+            if gated:
+                # Every step after the scope decision runs under exactly that condition:
+                # a check added later cannot run unconditionally or under another 'if'.
+                steps = _walk_steps(job)
+                idx = [i for i, st in enumerate(steps) if st.get("name") == gated["step"]]
+                if not idx:
+                    v.append("%s: job '%s' has no step '%s'" % (path, jid, gated["step"]))
+                else:
+                    for st in steps[idx[0] + 1:]:
+                        if str(st.get("if", "")).strip() != gated["if"]:
+                            v.append("%s: job '%s' step '%s' must run under 'if: %s' (got %s)" % (path, jid, st.get("name", "?"), gated["if"], ("'if: %s'" % st["if"]) if "if" in st else "no 'if'"))
             for st in _walk_steps(job):
                 if "continue-on-error" in st:
                     v.append("%s: job '%s' step '%s' has continue-on-error" % (path, jid, st.get("name", "?")))
@@ -480,8 +564,19 @@ def _could_be(pattern, name):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--rev", help="read workflows from this commit (default: working tree)")
+    ap.add_argument("--print-steps", nargs=2, metavar=("WORKFLOW", "JOB"),
+                    help="print the job's steps as JSON for 'pinned_steps' in the inventory (after adding a release check)")
     ap.add_argument("--inventory-rev", help="read the inventory from this commit (default: same as --rev)")
     a = ap.parse_args(argv)
+    if a.print_steps:
+        wf, jid = a.print_steps
+        text = cilib.show(a.rev, wf) if a.rev else _read(wf)
+        job = ((load_yaml(text or "") or {}).get("jobs") or {}).get(jid)
+        if not isinstance(job, dict):
+            print("no job '%s' in %s" % (jid, wf))
+            return 1
+        print(json.dumps(_walk_steps(job), indent=2, ensure_ascii=False))
+        return 0
     inv = None
     if a.inventory_rev:
         inv = json.loads(cilib.show(a.inventory_rev, INVENTORY) or "null")

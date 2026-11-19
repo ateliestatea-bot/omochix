@@ -5,7 +5,8 @@
     "against it; the CI change guard uses the copy from the pull request's BASE commit.",
     "Keep 'required_checks' in step with the ruleset settings (operator, separate approval).",
     "pull_request_target is allowed only in 'pull_request_target_allowed' (the guard, which reads the pull request as data).",
-    "must_run entries starting with '=' pin a step's whole script: the steps that copy tools/ci/ from the base are pinned, so editing them is a policy finding."
+    "must_run entries starting with '=' pin a step's whole script: the steps that copy tools/ci/ from the base are pinned, so editing them is a policy finding.",
+    "'pinned_steps' is a closed, ordered list of whole steps for the gate jobs: each release check is identified by its step, not by a substring. After adding a release check, refresh it with: python3 tools/ci/workflow_policy.py --print-steps .github/workflows/release.yml gate"
   ],
   "version": 1,
   "labels": {
@@ -82,7 +83,60 @@
       },
       "allowed_step_if": [
         "steps.scope.outputs.target == 'true'"
-      ]
+      ],
+      "pinned_steps": {
+        "gate": [
+          {
+            "name": "Check out",
+            "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "with": {
+              "persist-credentials": "false",
+              "fetch-depth": "0"
+            }
+          },
+          {
+            "name": "Set up PHP",
+            "uses": "shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962",
+            "with": {
+              "php-version": "${{ matrix.php }}",
+              "extensions": "mbstring, ctype",
+              "coverage": "none",
+              "tools": "none"
+            }
+          },
+          {
+            "name": "Release scope (what this event must check)",
+            "id": "scope",
+            "run": "set -euo pipefail\nbase=\"\"\nif [ \"$GITHUB_EVENT_NAME\" = pull_request ]; then base=$(git rev-parse --verify --quiet HEAD^1) || base=\"\"; fi\nif [ -z \"$base\" ] || ! git cat-file -e \"$base:tools/ci/release_scope.py\" 2>/dev/null; then\n  echo \"RELEASE TARGET: event '$GITHUB_EVENT_NAME' without a trusted scope script on the base: the full gate runs\"\n  echo \"target=true\" >> \"$GITHUB_OUTPUT\"\n  exit 0\nfi\ndir=\"$RUNNER_TEMP/ci-trusted\"\nrm -rf \"$dir\"; mkdir -p \"$dir\"\ngit archive \"$base\" tools/ci | tar -x -C \"$dir\"\npython3 -I \"$dir/tools/ci/release_scope.py\" --event pull_request\n"
+          },
+          {
+            "name": "Release gate (versions, markers, scope against production)",
+            "if": "steps.scope.outputs.target == 'true'",
+            "run": "php tests/release/release-gate.php"
+          },
+          {
+            "name": "Release gate for the previous release on its own commit (Industry Hub, 2f800b2)",
+            "if": "steps.scope.outputs.target == 'true'",
+            "run": "set -e\ntree=\"$RUNNER_TEMP/industry-hub-tree\"; mkdir -p \"$tree\"\ngit archive 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 wp-plugin wp-theme | tar -x -C \"$tree\"\nOMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php\n"
+          },
+          {
+            "name": "Release tools (reproducible build, verify, plan, staged replace rehearsal)",
+            "if": "steps.scope.outputs.target == 'true'",
+            "run": "python3 -W error::ResourceWarning -m unittest discover -s tests/release -v"
+          },
+          {
+            "name": "Build twice and verify (packages stay in the runner)",
+            "if": "steps.scope.outputs.target == 'true'",
+            "run": "set -e\nout1=\"$RUNNER_TEMP/build1\"; out2=\"$RUNNER_TEMP/build2\"\npython3 tools/release/build.py --commit HEAD --out \"$out1\"\npython3 tools/release/build.py --commit HEAD --out \"$out2\"\nfor z in \"$out1\"/*.zip; do cmp \"$z\" \"$out2/$(basename \"$z\")\"; done\npython3 tools/release/verify.py --commit HEAD --dir \"$out1\"\npython3 tools/release/plan.py --commit HEAD --check\nOMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json python3 tools/release/plan.py --commit 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 --check\n"
+          }
+        ]
+      },
+      "gated_after": {
+        "gate": {
+          "step": "Release scope (what this event must check)",
+          "if": "steps.scope.outputs.target == 'true'"
+        }
+      }
     },
     ".github/workflows/tests.yml": {
       "pull_request_branches": "all",
@@ -188,6 +242,28 @@
         "gate": [
           "=set -euo pipefail\nzero=0000000000000000000000000000000000000000\ncase \"$EVENT\" in\n  pull_request)\n    if ! base=$(git rev-parse --verify --quiet HEAD^1); then echo \"::error::HEAD is not the pull request's merge commit\"; exit 1; fi\n    trusted=\"$base\" ;;\n  push)\n    base=\"$BEFORE\"\n    if [ -z \"$base\" ] || [ \"$base\" = \"$zero\" ]; then\n      # A new branch: compare with, and take the rules from, where it left main.\n      if ! base=$(git merge-base origin/main HEAD); then echo \"::error::new branch without a merge base on origin/main\"; exit 1; fi\n    fi\n    trusted=\"$base\" ;;\n  *)\n    echo \"::error::unexpected event $EVENT\"; exit 1 ;;\nesac\nif ! git cat-file -e \"$trusted:tools/ci/integration_gate.py\" 2>/dev/null; then\n  echo \"::error::the base commit has no tools/ci/integration_gate.py; nothing trusted can judge this change\"; exit 1\nfi\ndir=\"$RUNNER_TEMP/ci-trusted\"\nrm -rf \"$dir\"; mkdir -p \"$dir\"\ngit archive \"$trusted\" tools/ci | tar -x -C \"$dir\"\nif [ \"$EVENT\" = pull_request ]; then\n  python3 -I \"$dir/tools/ci/integration_gate.py\" --mode pr --head-ref \"$HEAD_REF\" --same-repo \"$SAME_REPO\"\nelse\n  python3 -I \"$dir/tools/ci/integration_gate.py\" --mode push --base \"$base\" --head HEAD\nfi"
         ]
+      },
+      "pinned_steps": {
+        "gate": [
+          {
+            "name": "Check out",
+            "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "with": {
+              "persist-credentials": "false",
+              "fetch-depth": "0"
+            }
+          },
+          {
+            "name": "Integration gate (versions, release settings, ownership)",
+            "env": {
+              "EVENT": "${{ github.event_name }}",
+              "HEAD_REF": "${{ github.head_ref }}",
+              "SAME_REPO": "${{ github.event.pull_request.head.repo.full_name == github.repository }}",
+              "BEFORE": "${{ github.event.before }}"
+            },
+            "run": "set -euo pipefail\nzero=0000000000000000000000000000000000000000\ncase \"$EVENT\" in\n  pull_request)\n    if ! base=$(git rev-parse --verify --quiet HEAD^1); then echo \"::error::HEAD is not the pull request's merge commit\"; exit 1; fi\n    trusted=\"$base\" ;;\n  push)\n    base=\"$BEFORE\"\n    if [ -z \"$base\" ] || [ \"$base\" = \"$zero\" ]; then\n      # A new branch: compare with, and take the rules from, where it left main.\n      if ! base=$(git merge-base origin/main HEAD); then echo \"::error::new branch without a merge base on origin/main\"; exit 1; fi\n    fi\n    trusted=\"$base\" ;;\n  *)\n    echo \"::error::unexpected event $EVENT\"; exit 1 ;;\nesac\nif ! git cat-file -e \"$trusted:tools/ci/integration_gate.py\" 2>/dev/null; then\n  echo \"::error::the base commit has no tools/ci/integration_gate.py; nothing trusted can judge this change\"; exit 1\nfi\ndir=\"$RUNNER_TEMP/ci-trusted\"\nrm -rf \"$dir\"; mkdir -p \"$dir\"\ngit archive \"$trusted\" tools/ci | tar -x -C \"$dir\"\nif [ \"$EVENT\" = pull_request ]; then\n  python3 -I \"$dir/tools/ci/integration_gate.py\" --mode pr --head-ref \"$HEAD_REF\" --same-repo \"$SAME_REPO\"\nelse\n  python3 -I \"$dir/tools/ci/integration_gate.py\" --mode push --base \"$base\" --head HEAD\nfi\n"
+          }
+        ]
       }
     },
     ".github/workflows/ci-guard.yml": {
@@ -213,6 +289,30 @@
       "must_run": {
         "guard": [
           "=set -euo pipefail\nzero=0000000000000000000000000000000000000000\ncase \"$EVENT\" in\n  pull_request_target)\n    # GITHUB_SHA is the base branch tip, the commit this workflow file comes from.\n    trusted=\"$GITHUB_SHA\"\n    head=$(git rev-parse --verify HEAD)\n    if [ \"$head\" != \"$PR_HEAD_SHA\" ]; then echo \"::error::checked-out commit is not the pull request head\"; exit 1; fi\n    if ! tree=$(git merge-tree --write-tree \"$trusted\" \"$head\"); then\n      echo \"::error::the pull request does not merge cleanly into its base; resolve the conflict first\"; exit 1\n    fi\n    tree=$(printf '%s\\n' \"$tree\" | head -n 1)\n    merged=$(GIT_AUTHOR_NAME=ci GIT_AUTHOR_EMAIL=ci@example.invalid GIT_COMMITTER_NAME=ci GIT_COMMITTER_EMAIL=ci@example.invalid \\\n      git commit-tree \"$tree\" -p \"$trusted\" -p \"$head\" -m \"merge for the CI change guard\")\n    base=\"$trusted\"; event=pull_request ;;\n  push)\n    base=\"$BEFORE\"\n    if [ -z \"$base\" ] || [ \"$base\" = \"$zero\" ] || ! git cat-file -e \"$base^{commit}\" 2>/dev/null; then\n      base=$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD^)\n    fi\n    trusted=\"$base\"; merged=$(git rev-parse HEAD); event=push ;;\n  *)\n    echo \"::error::unexpected event $EVENT\"; exit 1 ;;\nesac\ndir=\"$RUNNER_TEMP/ci-trusted\"\nrm -rf \"$dir\"; mkdir -p \"$dir\"\nif git cat-file -e \"$trusted:tools/ci/ci_guard.py\" 2>/dev/null; then\n  git archive \"$trusted\" tools/ci | tar -x -C \"$dir\"\nelse\n  # Fail-closed: without the base's rules nothing trusted can judge this change\n  # (only the push that merges the pull request introducing tools/ci/).\n  echo \"::error::the base commit has no tools/ci/ci_guard.py; nothing trusted can judge this change\"; exit 1\nfi\npython3 -I \"$dir/tools/ci/ci_guard.py\" --event \"$event\" --base \"$base\" --head \"$merged\""
+        ]
+      },
+      "pinned_steps": {
+        "guard": [
+          {
+            "name": "Check out (pull request head as data only)",
+            "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "with": {
+              "ref": "${{ github.event.pull_request.head.sha || github.sha }}",
+              "persist-credentials": "false",
+              "fetch-depth": "0"
+            }
+          },
+          {
+            "name": "CI change guard (base rules against this change)",
+            "env": {
+              "EVENT": "${{ github.event_name }}",
+              "BEFORE": "${{ github.event.before }}",
+              "PR_HEAD_SHA": "${{ github.event.pull_request.head.sha }}",
+              "PR_LABELS": "${{ join(github.event.pull_request.labels.*.name, ',') }}",
+              "PR_BODY": "${{ github.event.pull_request.body }}"
+            },
+            "run": "set -euo pipefail\nzero=0000000000000000000000000000000000000000\ncase \"$EVENT\" in\n  pull_request_target)\n    # GITHUB_SHA is the base branch tip, the commit this workflow file comes from.\n    trusted=\"$GITHUB_SHA\"\n    head=$(git rev-parse --verify HEAD)\n    if [ \"$head\" != \"$PR_HEAD_SHA\" ]; then echo \"::error::checked-out commit is not the pull request head\"; exit 1; fi\n    if ! tree=$(git merge-tree --write-tree \"$trusted\" \"$head\"); then\n      echo \"::error::the pull request does not merge cleanly into its base; resolve the conflict first\"; exit 1\n    fi\n    tree=$(printf '%s\\n' \"$tree\" | head -n 1)\n    merged=$(GIT_AUTHOR_NAME=ci GIT_AUTHOR_EMAIL=ci@example.invalid GIT_COMMITTER_NAME=ci GIT_COMMITTER_EMAIL=ci@example.invalid \\\n      git commit-tree \"$tree\" -p \"$trusted\" -p \"$head\" -m \"merge for the CI change guard\")\n    base=\"$trusted\"; event=pull_request ;;\n  push)\n    base=\"$BEFORE\"\n    if [ -z \"$base\" ] || [ \"$base\" = \"$zero\" ] || ! git cat-file -e \"$base^{commit}\" 2>/dev/null; then\n      base=$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD^)\n    fi\n    trusted=\"$base\"; merged=$(git rev-parse HEAD); event=push ;;\n  *)\n    echo \"::error::unexpected event $EVENT\"; exit 1 ;;\nesac\ndir=\"$RUNNER_TEMP/ci-trusted\"\nrm -rf \"$dir\"; mkdir -p \"$dir\"\nif git cat-file -e \"$trusted:tools/ci/ci_guard.py\" 2>/dev/null; then\n  git archive \"$trusted\" tools/ci | tar -x -C \"$dir\"\nelse\n  # Fail-closed: without the base's rules nothing trusted can judge this change\n  # (only the push that merges the pull request introducing tools/ci/).\n  echo \"::error::the base commit has no tools/ci/ci_guard.py; nothing trusted can judge this change\"; exit 1\nfi\npython3 -I \"$dir/tools/ci/ci_guard.py\" --event \"$event\" --base \"$base\" --head \"$merged\"\n"
+          }
         ]
       }
     },
