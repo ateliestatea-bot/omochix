@@ -91,6 +91,7 @@ jobs:
           OMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php
 
       - name: Release gate for the previous release on its own commit (theme 1.30.0, 7f0d4d9)
+        if: steps.scope.outputs.target == 'true'
         run: |
           set -e
           tree="$RUNNER_TEMP/theme-1.30.0-tree"; mkdir -p "$tree"
