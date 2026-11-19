@@ -14,6 +14,7 @@ import unittest
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 GATE = os.path.join(ROOT, 'tests', 'release', 'release-gate.php')
 HUB = 'industry-hub-core-1.10.0-theme-1.29.0.json'
+PREV = 'theme-1.30.0.json'
 THEME = 'wp-theme/omochix-theme'
 CORE = 'wp-plugin/omochix-core'
 
@@ -77,6 +78,13 @@ class ReleaseGate(unittest.TestCase):
         code, fails = self.gate(self.tree(expected(HUB)['commit']), HUB)
         self.assertEqual((0, []), (code, fails))
 
+    def test_previous_release_still_passes_on_its_commit(self):
+        code, fails = self.gate(self.tree(expected(PREV)['commit']), PREV)
+        self.assertEqual((0, []), (code, fails))
+
+    def test_the_current_config_does_not_pass_on_the_previous_release_tree(self):
+        self.assertFails(self.gate(self.tree(expected(PREV)['commit'])), 'theme: the expected version')
+
     def test_a_release_config_does_not_pass_on_another_release_tree(self):
         self.assertFails(self.gate(self.tree(expected('release.json')['commit']), HUB), 'theme: the expected version')
 
@@ -89,8 +97,8 @@ class ReleaseGate(unittest.TestCase):
 
     def test_a_missing_release_file_fails(self):
         tree = self.tree('HEAD')
-        os.remove(os.path.join(tree, THEME, 'inc', 'nav.php'))
-        self.assertFails(self.gate(tree), 'planned but unchanged: theme:inc/nav.php', 'omochix-theme: 194 files', 'exactly the expected set')
+        os.remove(os.path.join(tree, THEME, 'inc', 'design-library.php'))
+        self.assertFails(self.gate(tree), 'planned but unchanged: theme:inc/design-library.php', 'omochix-theme: 287 files', 'exactly the expected set')
 
     def test_an_extra_file_fails(self):
         tree = self.tree('HEAD')
@@ -114,7 +122,7 @@ class ReleaseGate(unittest.TestCase):
         with open(os.path.join(tree, THEME, 'page-labs.php'), 'a', encoding='utf-8') as fh:
             fh.write('\n')
         self.edit_config(lambda c: c['order'].insert(0, ['theme', 'page-labs.php']))
-        self.assertFails(self.gate(tree), 'no Labs or SVG Motion file except', 'exactly the expected set', '43 steps')
+        self.assertFails(self.gate(tree), 'no Labs or SVG Motion file except', 'exactly the expected set', '95 steps')
 
     def test_a_symlink_in_the_package_fails(self):
         tree = self.tree('HEAD')
@@ -127,13 +135,15 @@ class ReleaseGate(unittest.TestCase):
         with open(os.path.join(tree, THEME, 'extra.php'), 'w', encoding='utf-8') as fh:
             fh.write('<?php\n')
         self.edit_config(lambda c: c['order'].insert(0, ['theme', 'extra.php']))
-        self.assertFails(self.gate(tree), '22 added and 21 replaced', '43 steps', 'exactly the expected set')
+        self.assertFails(self.gate(tree), '93 added and 2 replaced', '95 steps', 'exactly the expected set')
 
     # ------------------------------------------------------------------ faults in the config or the baseline
-    def test_functions_php_after_a_template_that_needs_it_fails(self):
+    def test_functions_php_before_the_last_new_file_fails(self):
+        # 1.31.0 replaces only functions.php and style.css, so functions.php already sits just before style.css;
+        # one step earlier puts it before a new inc file it loads.
         def late(c):
             c['order'].remove(['theme', 'functions.php'])
-            c['order'].insert(len(c['order']) - 1, ['theme', 'functions.php'])  # just before style.css
+            c['order'].insert(len(c['order']) - 2, ['theme', 'functions.php'])
         self.edit_config(late)
         self.assertFails(self.gate(self.tree('HEAD')), 'theme:functions.php after every add and before every replace')
 
@@ -163,7 +173,7 @@ class ReleaseGate(unittest.TestCase):
         self.assertFails(self.gate(self.tree('HEAD')), 'scope: the release ships exactly the expected packages', 'core: not part of this release')
 
     def test_a_tampered_baseline_hash_fails(self):
-        path = os.path.join(self.repo, 'tools', 'release', 'baseline', 'omochix-theme-1.29.0.sha256')
+        path = os.path.join(self.repo, 'tools', 'release', 'baseline', 'omochix-theme-1.30.0.sha256')
         with open(path, encoding='utf-8') as fh:
             lines = fh.readlines()
         lines[0] = ('0' * 64) + lines[0][64:]

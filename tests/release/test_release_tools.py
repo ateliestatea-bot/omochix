@@ -123,6 +123,9 @@ class ReleaseExpectations(unittest.TestCase):
                     self.assertEqual(want['baseline_sha256'], rl.sha256_file(os.path.join(ROOT, cfg['packages'][key]['baseline'])), key)
                 self.assertEqual(exp['gates'], list(plan['gates']))
                 self.assertEqual(exp['rollback']['count'], len(plan['rollback_order']))
+                if 'release.json' == name:
+                    self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
+                    self.assertTrue(any('draft' in n for n in plan['after_rollback']), 'rollback closes the publish gate before the files')
                 if BOTH_PACKAGES == name:
                     self.assertEqual(['plugins/omochix-core/omochix-core.php'], [s['target'] for s in plan['steps'] if s['n'] == 14])
                     self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
@@ -158,9 +161,9 @@ class ReleaseExpectations(unittest.TestCase):
     def test_plan_refuses_a_step_missing_from_the_order_and_a_step_that_does_not_change(self):
         with release_config('release.json'):
             cfg = rl.load_config()
-        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'inc/nav.php']])
+        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'inc/design-library.php']])
         extra = dict(cfg, order=[['theme', '404.php']] + cfg['order'])
-        for bad, needle in ((dropped, 'inc/nav.php differs from production but is not in the approved order'),
+        for bad, needle in ((dropped, 'inc/design-library.php differs from production but is not in the approved order'),
                             (extra, '404.php is in the order but does not change')):
             with self.subTest(needle=needle):
                 orig = rl.load_config

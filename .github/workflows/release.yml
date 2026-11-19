@@ -54,6 +54,13 @@ jobs:
           git archive 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 wp-plugin wp-theme | tar -x -C "$tree"
           OMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php
 
+      - name: Release gate for the previous release on its own commit (theme 1.30.0, 7f0d4d9)
+        run: |
+          set -e
+          tree="$RUNNER_TEMP/theme-1.30.0-tree"; mkdir -p "$tree"
+          git archive 7f0d4d91138683ec825620a05ae7350eeb686994 wp-plugin wp-theme | tar -x -C "$tree"
+          OMOCHIX_RELEASE_CONFIG=theme-1.30.0.json OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php
+
       - name: Release tools (reproducible build, verify, plan, staged replace rehearsal)
         run: python3 -W error::ResourceWarning -m unittest discover -s tests/release -v
 
@@ -67,3 +74,4 @@ jobs:
           python3 tools/release/verify.py --commit HEAD --dir "$out1"
           python3 tools/release/plan.py --commit HEAD --check
           OMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json python3 tools/release/plan.py --commit 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 --check
+          OMOCHIX_RELEASE_CONFIG=theme-1.30.0.json python3 tools/release/plan.py --commit 7f0d4d91138683ec825620a05ae7350eeb686994 --check
