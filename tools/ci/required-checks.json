@@ -1,0 +1,248 @@
+{
+  "_comment": [
+    "Inventory of the status checks the main and integrate/** rulesets should require, and what",
+    "each producing workflow must keep doing. tools/ci/workflow_policy.py checks the workflows",
+    "against it; the CI change guard uses the copy from the pull request's BASE commit.",
+    "Keep 'required_checks' in step with the ruleset settings (operator, separate approval).",
+    "pull_request_target is allowed only in 'pull_request_target_allowed' (the guard, which reads the pull request as data)."
+  ],
+  "version": 1,
+  "labels": {
+    "reviewed": "ci-change-reviewed",
+    "weakening": "ci-weakening-approved"
+  },
+  "protected_paths": [
+    ".github/**",
+    "tools/ci/**",
+    "tests/ci/**",
+    "docs/web2/ownership.json",
+    "tests/release/release-gate.php",
+    "tests/release/*.py",
+    "tools/release/*.py"
+  ],
+  "pull_request_target_allowed": [
+    ".github/workflows/ci-guard.yml"
+  ],
+  "required_checks": {
+    "main": [
+      "Release gate (PHP 8.1)",
+      "Release gate (PHP 8.3)",
+      "Tests (PHP 8.1)",
+      "Tests (PHP 8.3)",
+      "Industry Hub (PHP 8.1)",
+      "Industry Hub (PHP 8.3)",
+      "Labs (PHP 8.1)",
+      "Labs (PHP 8.3)",
+      "CI change guard",
+      "CI policy"
+    ],
+    "integrate/web2": [
+      "Tests (PHP 8.1)",
+      "Tests (PHP 8.3)",
+      "Industry Hub (PHP 8.1)",
+      "Industry Hub (PHP 8.3)",
+      "Labs (PHP 8.1)",
+      "Labs (PHP 8.3)",
+      "Integration gate",
+      "CI change guard",
+      "CI policy"
+    ]
+  },
+  "workflows": {
+    ".github/workflows/release.yml": {
+      "pull_request_branches": [
+        "main"
+      ],
+      "pull_request_types": [
+        "opened",
+        "synchronize",
+        "reopened",
+        "edited"
+      ],
+      "push_branches": [
+        "main"
+      ],
+      "jobs": {
+        "gate": [
+          "Release gate (PHP 8.1)",
+          "Release gate (PHP 8.3)"
+        ]
+      },
+      "must_run": {
+        "gate": [
+          "tools/ci/use-base-copy.sh",
+          "release_scope.py\" --event",
+          "=php tests/release/release-gate.php",
+          "OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php",
+          "=python3 -W error::ResourceWarning -m unittest discover -s tests/release -v",
+          "python3 tools/release/build.py --commit HEAD",
+          "python3 tools/release/verify.py --commit HEAD",
+          "python3 tools/release/plan.py --commit HEAD --check"
+        ]
+      },
+      "allowed_step_if": [
+        "steps.scope.outputs.target == 'true'"
+      ]
+    },
+    ".github/workflows/tests.yml": {
+      "pull_request_branches": "all",
+      "pull_request_types": [
+        "opened",
+        "synchronize",
+        "reopened",
+        "edited"
+      ],
+      "push_branches": [
+        "main",
+        "integrate/**"
+      ],
+      "jobs": {
+        "test": [
+          "Tests (PHP 8.1)",
+          "Tests (PHP 8.3)"
+        ]
+      },
+      "must_run": {
+        "test": [
+          "git ls-files -z '*.php'",
+          "tests/nav/run.php",
+          "tests/editorial-home/run.php"
+        ]
+      },
+      "allowed_step_if": [
+        "${{ !cancelled() }}"
+      ]
+    },
+    ".github/workflows/industry-hub.yml": {
+      "pull_request_branches": "all",
+      "pull_request_types": [
+        "opened",
+        "synchronize",
+        "reopened",
+        "edited"
+      ],
+      "push_branches": [
+        "main",
+        "integrate/**"
+      ],
+      "jobs": {
+        "test": [
+          "Industry Hub (PHP 8.1)",
+          "Industry Hub (PHP 8.3)"
+        ]
+      },
+      "must_run": {
+        "test": [
+          "tests/industry-hub/run.php",
+          "=php tests/industry-hub/theme-without-core.php"
+        ]
+      }
+    },
+    ".github/workflows/labs.yml": {
+      "pull_request_branches": "all",
+      "pull_request_types": [
+        "opened",
+        "synchronize",
+        "reopened",
+        "edited"
+      ],
+      "push_branches": [
+        "main",
+        "integrate/**"
+      ],
+      "jobs": {
+        "test": [
+          "Labs (PHP 8.1)",
+          "Labs (PHP 8.3)"
+        ]
+      },
+      "must_run": {
+        "test": [
+          "=php tests/labs/run.php",
+          "node tests/labs/core.js"
+        ]
+      },
+      "allowed_step_if": [
+        "${{ !cancelled() }}"
+      ]
+    },
+    ".github/workflows/integration.yml": {
+      "pull_request_branches": [
+        "integrate/web2"
+      ],
+      "pull_request_types": [
+        "opened",
+        "synchronize",
+        "reopened",
+        "edited"
+      ],
+      "push_branches": [
+        "integrate/web2"
+      ],
+      "jobs": {
+        "gate": [
+          "Integration gate"
+        ]
+      },
+      "must_run": {
+        "gate": [
+          "tools/ci/use-base-copy.sh",
+          "integration_gate.py\" --mode pr",
+          "integration_gate.py\" --mode push"
+        ]
+      }
+    },
+    ".github/workflows/ci-guard.yml": {
+      "pull_request_event": "pull_request_target",
+      "pull_request_branches": "all",
+      "pull_request_types": [
+        "opened",
+        "synchronize",
+        "reopened",
+        "edited",
+        "labeled",
+        "unlabeled"
+      ],
+      "push_branches": [
+        "main",
+        "integrate/**"
+      ],
+      "jobs": {
+        "guard": [
+          "CI change guard"
+        ]
+      },
+      "must_run": {
+        "guard": [
+          "git merge-tree --write-tree \"$trusted\" \"$head\"",
+          "git archive \"$trusted\" tools/ci",
+          "python3 -I \"$dir/tools/ci/ci_guard.py\" --event \"$event\" --base \"$base\" --head \"$merged\""
+        ]
+      }
+    },
+    ".github/workflows/ci-policy.yml": {
+      "pull_request_branches": "all",
+      "pull_request_types": [
+        "opened",
+        "synchronize",
+        "reopened",
+        "edited"
+      ],
+      "push_branches": [
+        "main",
+        "integrate/**"
+      ],
+      "jobs": {
+        "policy": [
+          "CI policy"
+        ]
+      },
+      "must_run": {
+        "policy": [
+          "=python3 tools/ci/workflow_policy.py",
+          "=python3 -m unittest discover -s tests/ci -v"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+# CI policy: this commit's own CI self-tests and its workflows against its own inventory.
+# It runs the pull request's code, so it stays on pull_request (never pull_request_target).
+# It shows that a CI change is consistent; the CI change guard (ci-guard.yml) is the check
+# that judges a CI change with the base's rules. Read-only: no secrets, no deploy.
+name: CI policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: [main, 'integrate/**']
+
+permissions: {}
+
+concurrency:
+  group: ci-policy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  policy:
+    name: CI policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0   # the self-tests build throwaway repositories from local commits
+
+      - name: Workflow policy (this commit against its own inventory)
+        run: python3 tools/ci/workflow_policy.py
+
+      - name: CI self-tests (gates, scope, guard, policy; normal and failure cases)
+        run: python3 -m unittest discover -s tests/ci -v

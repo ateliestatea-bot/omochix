@@ -1,0 +1,57 @@
+# Integration gate for the Web 2.0 integration branch (integrate/web2 only: other integrate/*
+# branches, such as the existing local integrate/p0-theme-1.27.1-into-main, are not Web 2.0
+# streams and keep only the common checks).
+# An integration branch collects feature work before a release; it must not carry a release
+# of its own. tools/ci/integration_gate.py checks that versions and release settings are
+# unchanged and that every changed file belongs to the branch's stream (docs/web2/ownership.json
+# read from the base commit). Merging main into an integration branch passes as a sync.
+#
+# The gate runs from the BASE commit's copy of tools/ci/ (tools/ci/use-base-copy.sh), so a
+# pull request cannot edit the script that judges it. Read-only: no secrets, no deploy.
+name: Integration
+
+on:
+  pull_request:
+    branches: ['integrate/web2']
+    # 'edited': re-run when a pull request's base branch is changed to an integration branch.
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: ['integrate/web2']
+
+permissions: {}
+
+concurrency:
+  group: integration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  gate:
+    name: Integration gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0   # the base commit, the pull request head and origin/main are all needed
+
+      - name: Integration gate (versions, release settings, ownership)
+        env:
+          # Event data goes through env, never straight into the script.
+          EVENT: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          SAME_REPO: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = pull_request ]; then base=$(git rev-parse HEAD^1); else base="$BEFORE"; fi
+          ci=$(bash tools/ci/use-base-copy.sh "$base")
+          if [ -f "$ci/../../BOOTSTRAP" ]; then echo "::warning::Integration gate runs this commit's own tools/ci (the base has none yet)"; fi
+          if [ "$EVENT" = pull_request ]; then
+            python3 "$ci/integration_gate.py" --mode pr --head-ref "$HEAD_REF" --same-repo "$SAME_REPO"
+          else
+            python3 "$ci/integration_gate.py" --mode push --base "$BEFORE" --head HEAD
+          fi

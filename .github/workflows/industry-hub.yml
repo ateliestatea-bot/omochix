@@ -3,29 +3,29 @@
 # Read-only: no secrets, no deploy, no production access.
 name: Industry Hub
 
+# Required check: no paths filter (a filtered-out workflow leaves the check pending), every
+# pull request and every push to main or an integration branch. 'edited' re-runs it when a
+# pull request's base branch changes.
 on:
   pull_request:
-    paths:
-      - 'wp-plugin/**'
-      - 'tests/industry-hub/**'
-      - 'wp-theme/omochix-theme/inc/learn-industries.php'
-      - '.github/workflows/industry-hub.yml'
+    types: [opened, synchronize, reopened, edited, ready_for_review]
   push:
-    branches: [main]
+    branches: [main, 'integrate/**']
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
-  group: industry-hub-${{ github.ref }}
-  cancel-in-progress: true
+  group: industry-hub-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }}
+    name: Industry Hub (PHP ${{ matrix.php }})
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:

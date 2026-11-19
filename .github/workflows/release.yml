@@ -3,28 +3,40 @@
 # in the runner's temp folder only and never uploads them.
 name: Release
 
+# When it runs (Web 2.0 CI Phase 1):
+# - every pull request into main, whatever it changes (no paths filter, so the required
+#   check never stays pending). 'edited' re-runs it when a pull request's base is changed
+#   to main, so a result computed for another base never counts here.
+# - every push to main: the merged state is checked again. This cannot stop the push
+#   itself; the main ruleset (pull request required, no bypass) does that.
+# - by hand.
+# The job always runs and always has the same name. tools/ci/release_scope.py decides what
+# it does: pull requests that change no release path (packages, release tools, CI) end
+# successfully with the reason in the step summary; everything else runs the full gate.
+# Pushes and manual runs always run the full gate.
 on:
   pull_request:
-    paths:
-      - 'wp-plugin/**'
-      - 'wp-theme/**'
-      - 'tools/release/**'
-      - 'tests/release/**'
-      - '.github/workflows/release.yml'
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
+# Least privilege: nothing at the top level, read-only contents for the job.
+permissions: {}
 
 concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-${{ github.event.pull_request.number || github.ref }}
+  # Pull requests: a newer run replaces the older one. Pushes to main: every commit is checked.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   gate:
     name: Release gate (PHP ${{ matrix.php }})
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -44,10 +56,29 @@ jobs:
           coverage: none
           tools: none
 
+      - name: Release scope (what this event must check)
+        id: scope
+        # Runs the BASE commit's copy of tools/ci/ (pull request: the main tip it is merged
+        # into; push: the commit before the push), so a pull request cannot edit the script
+        # that decides whether it is checked.
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          case "$GITHUB_EVENT_NAME" in
+            pull_request) base=$(git rev-parse --verify --quiet HEAD^1) || base="" ;;
+            push) base="$BEFORE" ;;
+            *) base=$(git rev-parse HEAD) ;;
+          esac
+          ci=$(bash tools/ci/use-base-copy.sh "$base")
+          python3 "$ci/release_scope.py" --event "$GITHUB_EVENT_NAME"
+
       - name: Release gate (versions, markers, scope against production)
+        if: steps.scope.outputs.target == 'true'
         run: php tests/release/release-gate.php
 
       - name: Release gate for the previous release on its own commit (Industry Hub, 2f800b2)
+        if: steps.scope.outputs.target == 'true'
         run: |
           set -e
           tree="$RUNNER_TEMP/industry-hub-tree"; mkdir -p "$tree"
@@ -55,9 +86,11 @@ jobs:
           OMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php
 
       - name: Release tools (reproducible build, verify, plan, staged replace rehearsal)
+        if: steps.scope.outputs.target == 'true'
         run: python3 -W error::ResourceWarning -m unittest discover -s tests/release -v
 
       - name: Build twice and verify (packages stay in the runner)
+        if: steps.scope.outputs.target == 'true'
         run: |
           set -e
           out1="$RUNNER_TEMP/build1"; out2="$RUNNER_TEMP/build2"
