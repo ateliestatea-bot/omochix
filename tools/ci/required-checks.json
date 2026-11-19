@@ -4,7 +4,8 @@
     "each producing workflow must keep doing. tools/ci/workflow_policy.py checks the workflows",
     "against it; the CI change guard uses the copy from the pull request's BASE commit.",
     "Keep 'required_checks' in step with the ruleset settings (operator, separate approval).",
-    "pull_request_target is allowed only in 'pull_request_target_allowed' (the guard, which reads the pull request as data)."
+    "pull_request_target is allowed only in 'pull_request_target_allowed' (the guard, which reads the pull request as data).",
+    "must_run entries starting with '=' pin a step's whole script: the steps that copy tools/ci/ from the base are pinned, so editing them is a policy finding."
   ],
   "version": 1,
   "labels": {
@@ -70,8 +71,7 @@
       },
       "must_run": {
         "gate": [
-          "tools/ci/use-base-copy.sh",
-          "release_scope.py\" --event",
+          "=set -euo pipefail\nbase=\"\"\nif [ \"$GITHUB_EVENT_NAME\" = pull_request ]; then base=$(git rev-parse --verify --quiet HEAD^1) || base=\"\"; fi\nif [ -z \"$base\" ] || ! git cat-file -e \"$base:tools/ci/release_scope.py\" 2>/dev/null; then\n  echo \"RELEASE TARGET: event '$GITHUB_EVENT_NAME' without a trusted scope script on the base: the full gate runs\"\n  echo \"target=true\" >> \"$GITHUB_OUTPUT\"\n  exit 0\nfi\ndir=\"$RUNNER_TEMP/ci-trusted\"\nrm -rf \"$dir\"; mkdir -p \"$dir\"\ngit archive \"$base\" tools/ci | tar -x -C \"$dir\"\npython3 -I \"$dir/tools/ci/release_scope.py\" --event pull_request",
           "=php tests/release/release-gate.php",
           "OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php",
           "=python3 -W error::ResourceWarning -m unittest discover -s tests/release -v",
@@ -186,9 +186,7 @@
       },
       "must_run": {
         "gate": [
-          "tools/ci/use-base-copy.sh",
-          "integration_gate.py\" --mode pr",
-          "integration_gate.py\" --mode push"
+          "=set -euo pipefail\nzero=0000000000000000000000000000000000000000\ncase \"$EVENT\" in\n  pull_request)\n    if ! base=$(git rev-parse --verify --quiet HEAD^1); then echo \"::error::HEAD is not the pull request's merge commit\"; exit 1; fi\n    trusted=\"$base\" ;;\n  push)\n    base=\"$BEFORE\"\n    if [ -z \"$base\" ] || [ \"$base\" = \"$zero\" ]; then\n      # A new branch: compare with, and take the rules from, where it left main.\n      if ! base=$(git merge-base origin/main HEAD); then echo \"::error::new branch without a merge base on origin/main\"; exit 1; fi\n    fi\n    trusted=\"$base\" ;;\n  *)\n    echo \"::error::unexpected event $EVENT\"; exit 1 ;;\nesac\nif ! git cat-file -e \"$trusted:tools/ci/integration_gate.py\" 2>/dev/null; then\n  echo \"::error::the base commit has no tools/ci/integration_gate.py; nothing trusted can judge this change\"; exit 1\nfi\ndir=\"$RUNNER_TEMP/ci-trusted\"\nrm -rf \"$dir\"; mkdir -p \"$dir\"\ngit archive \"$trusted\" tools/ci | tar -x -C \"$dir\"\nif [ \"$EVENT\" = pull_request ]; then\n  python3 -I \"$dir/tools/ci/integration_gate.py\" --mode pr --head-ref \"$HEAD_REF\" --same-repo \"$SAME_REPO\"\nelse\n  python3 -I \"$dir/tools/ci/integration_gate.py\" --mode push --base \"$base\" --head HEAD\nfi"
         ]
       }
     },
@@ -214,9 +212,7 @@
       },
       "must_run": {
         "guard": [
-          "git merge-tree --write-tree \"$trusted\" \"$head\"",
-          "git archive \"$trusted\" tools/ci",
-          "python3 -I \"$dir/tools/ci/ci_guard.py\" --event \"$event\" --base \"$base\" --head \"$merged\""
+          "=set -euo pipefail\nzero=0000000000000000000000000000000000000000\ncase \"$EVENT\" in\n  pull_request_target)\n    # GITHUB_SHA is the base branch tip, the commit this workflow file comes from.\n    trusted=\"$GITHUB_SHA\"\n    head=$(git rev-parse --verify HEAD)\n    if [ \"$head\" != \"$PR_HEAD_SHA\" ]; then echo \"::error::checked-out commit is not the pull request head\"; exit 1; fi\n    if ! tree=$(git merge-tree --write-tree \"$trusted\" \"$head\"); then\n      echo \"::error::the pull request does not merge cleanly into its base; resolve the conflict first\"; exit 1\n    fi\n    tree=$(printf '%s\\n' \"$tree\" | head -n 1)\n    merged=$(GIT_AUTHOR_NAME=ci GIT_AUTHOR_EMAIL=ci@example.invalid GIT_COMMITTER_NAME=ci GIT_COMMITTER_EMAIL=ci@example.invalid \\\n      git commit-tree \"$tree\" -p \"$trusted\" -p \"$head\" -m \"merge for the CI change guard\")\n    base=\"$trusted\"; event=pull_request ;;\n  push)\n    base=\"$BEFORE\"\n    if [ -z \"$base\" ] || [ \"$base\" = \"$zero\" ] || ! git cat-file -e \"$base^{commit}\" 2>/dev/null; then\n      base=$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD^)\n    fi\n    trusted=\"$base\"; merged=$(git rev-parse HEAD); event=push ;;\n  *)\n    echo \"::error::unexpected event $EVENT\"; exit 1 ;;\nesac\ndir=\"$RUNNER_TEMP/ci-trusted\"\nrm -rf \"$dir\"; mkdir -p \"$dir\"\nif git cat-file -e \"$trusted:tools/ci/ci_guard.py\" 2>/dev/null; then\n  git archive \"$trusted\" tools/ci | tar -x -C \"$dir\"\nelse\n  # Fail-closed: without the base's rules nothing trusted can judge this change\n  # (only the push that merges the pull request introducing tools/ci/).\n  echo \"::error::the base commit has no tools/ci/ci_guard.py; nothing trusted can judge this change\"; exit 1\nfi\npython3 -I \"$dir/tools/ci/ci_guard.py\" --event \"$event\" --base \"$base\" --head \"$merged\""
         ]
       }
     },

@@ -516,7 +516,12 @@ class Guard(RepoCase):
         "guard-back-to-pull-request": (".github/workflows/ci-guard.yml", lambda s: s.replace("  pull_request_target:\n", "  pull_request:\n", 1), "no pull_request_target trigger"),
         "guard-secret": (".github/workflows/ci-guard.yml", lambda s: s.replace("          PR_BODY: ${{ github.event.pull_request.body }}\n", "          PR_BODY: ${{ github.event.pull_request.body }}\n          T: ${{ secrets.DEPLOY_TOKEN }}\n", 1), "must not use secrets"),
         "guard-other-action": (".github/workflows/ci-guard.yml", lambda s: s.replace("      - name: CI change guard (base rules", "      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b\n      - name: CI change guard (base rules", 1), "may only use actions/checkout"),
-        "guard-runs-head-script": (".github/workflows/ci-guard.yml", lambda s: s.replace('python3 -I "$dir/tools/ci/ci_guard.py"', "python3 tools/ci/ci_guard.py", 1), "no longer runs 'python3 -I"),
+        "guard-runs-head-script": (".github/workflows/ci-guard.yml", lambda s: s.replace('python3 -I "$dir/tools/ci/ci_guard.py"', "python3 tools/ci/ci_guard.py", 1), "job 'guard' no longer runs 'set -euo pipefail"),
+        "release-scope-runs-head-script": (".github/workflows/release.yml", lambda s: s.replace('python3 -I "$dir/tools/ci/release_scope.py" --event pull_request', "python3 tools/ci/release_scope.py --event pull_request", 1), "job 'gate' no longer runs 'set -euo pipefail"),
+        "release-scope-copies-from-head": (".github/workflows/release.yml", lambda s: s.replace('git archive "$base" tools/ci', "git archive HEAD tools/ci", 1), "job 'gate' no longer runs 'set -euo pipefail"),
+        "release-scope-helper-again": (".github/workflows/release.yml", lambda s: s.replace('          dir="$RUNNER_TEMP/ci-trusted"\n          rm -rf "$dir"; mkdir -p "$dir"\n          git archive "$base" tools/ci | tar -x -C "$dir"\n', '          dir=$(bash tools/ci/use-base-copy.sh "$base")/../..\n', 1), "job 'gate' no longer runs 'set -euo pipefail"),
+        "integration-runs-head-script": (".github/workflows/integration.yml", lambda s: s.replace('python3 -I "$dir/tools/ci/integration_gate.py" --mode pr', "python3 tools/ci/integration_gate.py --mode pr", 1), "job 'gate' no longer runs 'set -euo pipefail"),
+        "integration-bootstrap-from-head": (".github/workflows/integration.yml", lambda s: s.replace('git archive "$trusted" tools/ci', "git archive HEAD tools/ci", 1), "job 'gate' no longer runs 'set -euo pipefail"),
         "workflow-run": (".github/workflows/svg-motion.yml", lambda s: s.replace("on:\n", "on:\n  workflow_run:\n    workflows: [Tests]\n", 1), "'workflow_run'"),
         "integration-other-branch": (".github/workflows/integration.yml", lambda s: s.replace("    branches: ['integrate/web2']\n    # 'edited'", "    branches: ['integrate/other']\n    # 'edited'", 1), "pull_request.branches is ['integrate/other']"),
         "guard-removed": (".github/workflows/ci-guard.yml", lambda s: s.replace("    name: CI change guard\n", "    name: CI change guard (off)\n", 1), "job 'guard' produces checks"),
@@ -591,51 +596,51 @@ class Guard(RepoCase):
         res = self.guard(labels=["ci-change-reviewed"], body=line)
         self.assertFailsWith(res, "push.branches lacks main")
 
-    def test_base_copy_ignores_the_pull_requests_own_scripts(self):
-        self.r.pr("evil", {"tools/ci/ci_guard.py": "import sys\nsys.exit(0)\n"})
-        res = subprocess.run(["bash", "tools/ci/use-base-copy.sh", "HEAD^1"], cwd=self.r.dir,
-                             env=dict(os.environ, RUNNER_TEMP=tempfile.mkdtemp(prefix="omx-ci-rt-")),
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.assertEqual(res.returncode, 0, res.stderr)
-        copy = res.stdout.decode().strip()
-        self.addCleanup(shutil.rmtree, os.path.dirname(os.path.dirname(copy)), True)
-        self.assertEqual(slurp(os.path.join(copy, "ci_guard.py")), slurp(os.path.join(REPO, "tools/ci/ci_guard.py")))
-        self.assertFalse(os.path.exists(os.path.join(copy, "..", "..", "BOOTSTRAP")))
-        run = subprocess.run([sys.executable, os.path.join(copy, "ci_guard.py"), "--base", "HEAD^1", "--head", "HEAD", "--event", "pull_request"],
-                             cwd=self.r.dir, env=dict(os.environ, PR_LABELS=""), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.assertEqual(run.returncode, 1, run.stdout.decode())
-        self.assertIn("tools/ci/ci_guard.py", run.stdout.decode())
-
-
-class GuardBootstrap(RepoCase):
+class Bootstrap(RepoCase):
+    """The base has no tools/ci/ (the pull request that introduces it): every gate fails closed."""
     with_ci = False
 
-    def test_bootstrap_uses_the_heads_copy_and_says_so(self):
-        # The pull request that introduces tools/ci/: the base has none.
+    def introduce_ci(self, extra=None):
         self.r.git("checkout", "-q", "-B", "ci", "main")
         for sub in ("tools/ci", ".github/workflows"):
             shutil.copytree(os.path.join(REPO, sub), os.path.join(self.r.dir, sub), ignore=shutil.ignore_patterns("__pycache__"))
         self.r.write("docs/web2/ownership.json", slurp(os.path.join(REPO, "docs/web2/ownership.json")))
+        self.r.apply(extra or {})
         self.r.commit("introduce CI")
         self.r.git("checkout", "-q", "--detach", "main")
         self.r.git("merge", "-q", "--no-ff", "--no-edit", "ci")
-        rt = tempfile.mkdtemp(prefix="omx-ci-rt-")
-        self.addCleanup(shutil.rmtree, rt, True)
-        res = subprocess.run(["bash", "tools/ci/use-base-copy.sh", "HEAD^1"], cwd=self.r.dir, env=dict(os.environ, RUNNER_TEMP=rt),
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.assertEqual(res.returncode, 0)
-        self.assertIn("BOOTSTRAP", res.stderr.decode())
-        copy = res.stdout.decode().strip()
-        self.assertTrue(os.path.exists(os.path.join(copy, "..", "..", "BOOTSTRAP")))
-        run = subprocess.run([sys.executable, os.path.join(copy, "ci_guard.py"), "--base", "HEAD^1", "--head", "HEAD", "--bootstrap"],
-                             cwd=self.r.dir, env=dict(os.environ, PR_LABELS="", PR_BODY=""), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out = run.stdout.decode()
-        self.assertEqual(run.returncode, 1, out)           # CI files changed and no label yet
-        self.assertIn("bootstrap", out)
-        line = [l.split("description: ", 1)[1] for l in out.splitlines() if "description: ci-change-reviewed:" in l][0]
-        run = subprocess.run([sys.executable, os.path.join(copy, "ci_guard.py"), "--base", "HEAD^1", "--head", "HEAD", "--bootstrap"],
-                             cwd=self.r.dir, env=dict(os.environ, PR_LABELS="ci-change-reviewed", PR_BODY=line), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.assertEqual(run.returncode, 0, run.stdout.decode())
+
+    def test_release_scope_runs_the_full_gate_and_never_the_heads_script(self):
+        # The introducing pull request even says "not a target" in its own scope script.
+        self.introduce_ci({"tools/ci/release_scope.py": EVIL_SCOPE})
+        code, log, outputs = WorkflowSteps.run_step(self, *WorkflowSteps.SCOPE, GITHUB_EVENT_NAME="pull_request")
+        self.assertEqual(code, 0, log)
+        self.assertEqual(outputs.strip(), "target=true")
+        self.assertIn("without a trusted scope script", log)
+        self.assertNotIn("evil", log)
+
+    def test_integration_gate_fails(self):
+        self.introduce_ci({"tools/ci/integration_gate.py": "print('evil pass')\n"})
+        code, log, _ = WorkflowSteps.run_step(self, *WorkflowSteps.INTEG, EVENT="pull_request", HEAD_REF="web2/ci/x", SAME_REPO="true", BEFORE="")
+        self.assertEqual(code, 1, log)
+        self.assertIn("nothing trusted can judge", log)
+        self.assertNotIn("evil", log)
+
+    def test_guard_push_fails(self):
+        before = self.r.git("rev-parse", "main")
+        self.introduce_ci({"tools/ci/ci_guard.py": "print('evil pass')\n"})
+        code, log, _ = WorkflowSteps.run_step(self, *WorkflowSteps.GUARD, EVENT="push", BEFORE=before, PR_LABELS="", PR_BODY="", PR_HEAD_SHA="", GITHUB_SHA="")
+        self.assertEqual(code, 1, log)
+        self.assertIn("nothing trusted can judge", log)
+        self.assertNotIn("evil", log)
+
+
+EVIL_COPY = """#!/usr/bin/env bash
+# A pull request's helper that points the caller at the pull request's own scripts.
+d="${RUNNER_TEMP}/evil"; mkdir -p "$d/tools"; cp -R tools/ci "$d/tools/ci"; echo "$d/tools/ci"
+"""
+EVIL_SCOPE = "import os\nopen(os.environ['GITHUB_OUTPUT'], 'a').write('target=false\\n')\nprint('NOT A RELEASE TARGET (evil)')\n"
+EVIL_GATE = "print('Integration gate: PASS (evil)')\n"
 
 
 # --------------------------------------------------------------------------- Workflow policy on this repository
@@ -727,6 +732,24 @@ class Policy(unittest.TestCase):
                 if "ci_guard.py" in run:
                     self.assertIn('python3 -I "$dir/tools/ci/ci_guard.py"', run)
         self.assertNotIn("pull_request_target", self.docs[".github/workflows/ci-policy.yml"]["on"])
+
+    def test_trusted_copy_steps_run_nothing_from_the_working_tree(self):
+        steps = {(".github/workflows/release.yml", "gate", "Release scope (what this event must check)"): "release_scope.py",
+                 (".github/workflows/integration.yml", "gate", "Integration gate (versions, release settings, ownership)"): "integration_gate.py",
+                 (".github/workflows/ci-guard.yml", "guard", "CI change guard (base rules against this change)"): "ci_guard.py"}
+        self.assertFalse(os.path.exists(os.path.join(REPO, "tools/ci/use-base-copy.sh")))
+        for (wf, job, name), script in steps.items():
+            st = [x for x in self.docs[wf]["jobs"][job]["steps"] if x.get("name") == name][0]
+            run = st["run"]
+            with self.subTest(wf):
+                for bad in ("bash tools/", "python3 tools/", "use-base-copy", "./", "source ", ". tools"):
+                    self.assertNotIn(bad, run)
+                self.assertIn('git archive "$', run)
+                for line in run.splitlines():
+                    if "python3" in line:
+                        self.assertIn('python3 -I "$dir/tools/ci/%s"' % script, line)
+                # The whole script is pinned: any edit is a policy finding for the CI change guard.
+                self.assertIn("=" + run.strip(), self.inv["workflows"][wf]["must_run"][job])
 
     def test_reader_matches_ruby_yaml(self):
         ruby = shutil.which("ruby")
@@ -826,6 +849,53 @@ class WorkflowSteps(RepoCase):
         code, log, _ = self.run_step(*self.INTEG, EVENT="pull_request", HEAD_REF="web2/seo/a", SAME_REPO="true", BEFORE="")
         self.assertEqual(code, 1, log)
         self.assertIn("outside stream 'seo'", log)
+
+    def test_release_scope_step_ignores_a_rewritten_copy_helper(self):
+        # The attack on the old design: the pull request brings its own copy helper and scope script.
+        self.r.pr("evil", {"tools/ci/use-base-copy.sh": EVIL_COPY, "tools/ci/release_scope.py": EVIL_SCOPE,
+                           "wp-theme/omochix-theme/style.css": STYLE.replace("1.30.0", "9.9.9")})
+        code, log, outputs = self.run_step(*self.SCOPE, GITHUB_EVENT_NAME="pull_request")
+        self.assertEqual(code, 0, log)
+        self.assertEqual(outputs.strip(), "target=true")
+        self.assertNotIn("evil", log)
+
+    def test_release_scope_docs_pr_with_an_evil_helper_is_still_judged_by_the_base(self):
+        # Only docs and tools/ci change: the base script judges, and tools/ci is a release path.
+        self.r.pr("evil-docs", {"tools/ci/use-base-copy.sh": EVIL_COPY, "tools/ci/release_scope.py": EVIL_SCOPE, "docs/readme.md": "x\n"})
+        code, log, outputs = self.run_step(*self.SCOPE, GITHUB_EVENT_NAME="pull_request")
+        self.assertEqual(outputs.strip(), "target=true", log)
+
+    def test_integration_step_ignores_a_rewritten_copy_helper(self):
+        self.r.git("branch", "integrate/web2", "main")
+        self.r.pr("web2/kh/x", {"tools/ci/use-base-copy.sh": EVIL_COPY, "tools/ci/integration_gate.py": EVIL_GATE,
+                                "wp-theme/omochix-theme/style.css": STYLE.replace("1.30.0", "9.9.9"),
+                                "wp-theme/omochix-theme/front-page.php": "<?php // held\n"}, base="integrate/web2")
+        code, log, _ = self.run_step(*self.INTEG, EVENT="pull_request", HEAD_REF="web2/kh/x", SAME_REPO="true", BEFORE="")
+        self.assertEqual(code, 1, log)
+        self.assertNotIn("evil", log)
+        for text in ("theme style.css Version changed", "front-page.php is held", "tools/ci/integration_gate.py is outside stream"):
+            self.assertIn(text, log)
+
+    def test_integration_step_needs_a_merge_commit_and_a_known_event(self):
+        self.r.git("checkout", "-q", "-B", "integrate/web2", "main")
+        self.r.write("docs/web2/kh/a.md", "x\n")
+        self.r.commit("plain")
+        code, log, _ = self.run_step(*self.INTEG, EVENT="pull_request", HEAD_REF="web2/kh/a", SAME_REPO="true", BEFORE="")
+        self.assertEqual(code, 1, log)
+        self.assertIn("not the pull request's merge commit", log)
+        code, log, _ = self.run_step(*self.INTEG, EVENT="workflow_dispatch", HEAD_REF="", SAME_REPO="true", BEFORE="")
+        self.assertEqual(code, 1, log)
+        self.assertIn("unexpected event", log)
+
+    def test_integration_step_on_a_new_branch_push_uses_main_rules(self):
+        self.r.git("checkout", "-q", "-B", "integrate/web2", "main")
+        self.r.write("tools/ci/integration_gate.py", EVIL_GATE)
+        self.r.write("wp-theme/omochix-theme/style.css", STYLE.replace("1.30.0", "1.31.0"))
+        self.r.commit("new branch with its own gate")
+        code, log, _ = self.run_step(*self.INTEG, EVENT="push", HEAD_REF="", SAME_REPO="false", BEFORE="0" * 40)
+        self.assertEqual(code, 1, log)
+        self.assertNotIn("evil", log)
+        self.assertIn("theme style.css Version changed", log)
 
     def test_integration_step_on_push(self):
         self.r.git("checkout", "-q", "-B", "integrate/web2", "main")

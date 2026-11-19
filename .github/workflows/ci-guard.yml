@@ -60,7 +60,6 @@ jobs:
         run: |
           set -euo pipefail
           zero=0000000000000000000000000000000000000000
-          extra=""
           case "$EVENT" in
             pull_request_target)
               # GITHUB_SHA is the base branch tip, the commit this workflow file comes from.
@@ -87,10 +86,9 @@ jobs:
           rm -rf "$dir"; mkdir -p "$dir"
           if git cat-file -e "$trusted:tools/ci/ci_guard.py" 2>/dev/null; then
             git archive "$trusted" tools/ci | tar -x -C "$dir"
-          elif [ "$event" = push ]; then
-            git archive "$merged" tools/ci | tar -x -C "$dir"; extra="--bootstrap"
-            echo "::warning::CI change guard runs the pushed commit's own tools/ci (the base has none yet)"
           else
-            echo "::error::the base commit has no tools/ci/ci_guard.py"; exit 1
+            # Fail-closed: without the base's rules nothing trusted can judge this change
+            # (only the push that merges the pull request introducing tools/ci/).
+            echo "::error::the base commit has no tools/ci/ci_guard.py; nothing trusted can judge this change"; exit 1
           fi
-          python3 -I "$dir/tools/ci/ci_guard.py" --event "$event" --base "$base" --head "$merged" $extra
+          python3 -I "$dir/tools/ci/ci_guard.py" --event "$event" --base "$base" --head "$merged"

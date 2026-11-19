@@ -6,8 +6,10 @@
 # unchanged and that every changed file belongs to the branch's stream (docs/web2/ownership.json
 # read from the base commit). Merging main into an integration branch passes as a sync.
 #
-# The gate runs from the BASE commit's copy of tools/ci/ (tools/ci/use-base-copy.sh), so a
-# pull request cannot edit the script that judges it. Read-only: no secrets, no deploy.
+# The gate runs from the BASE commit's copy of tools/ci/, taken with git archive inside the
+# step itself and run with python3 -I: no script from the pull request runs here. A base
+# without tools/ci/ fails (fail-closed). The whole step script is pinned in
+# tools/ci/required-checks.json. Read-only: no secrets, no deploy.
 name: Integration
 
 on:
@@ -47,11 +49,29 @@ jobs:
           BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = pull_request ]; then base=$(git rev-parse HEAD^1); else base="$BEFORE"; fi
-          ci=$(bash tools/ci/use-base-copy.sh "$base")
-          if [ -f "$ci/../../BOOTSTRAP" ]; then echo "::warning::Integration gate runs this commit's own tools/ci (the base has none yet)"; fi
+          zero=0000000000000000000000000000000000000000
+          case "$EVENT" in
+            pull_request)
+              if ! base=$(git rev-parse --verify --quiet HEAD^1); then echo "::error::HEAD is not the pull request's merge commit"; exit 1; fi
+              trusted="$base" ;;
+            push)
+              base="$BEFORE"
+              if [ -z "$base" ] || [ "$base" = "$zero" ]; then
+                # A new branch: compare with, and take the rules from, where it left main.
+                if ! base=$(git merge-base origin/main HEAD); then echo "::error::new branch without a merge base on origin/main"; exit 1; fi
+              fi
+              trusted="$base" ;;
+            *)
+              echo "::error::unexpected event $EVENT"; exit 1 ;;
+          esac
+          if ! git cat-file -e "$trusted:tools/ci/integration_gate.py" 2>/dev/null; then
+            echo "::error::the base commit has no tools/ci/integration_gate.py; nothing trusted can judge this change"; exit 1
+          fi
+          dir="$RUNNER_TEMP/ci-trusted"
+          rm -rf "$dir"; mkdir -p "$dir"
+          git archive "$trusted" tools/ci | tar -x -C "$dir"
           if [ "$EVENT" = pull_request ]; then
-            python3 "$ci/integration_gate.py" --mode pr --head-ref "$HEAD_REF" --same-repo "$SAME_REPO"
+            python3 -I "$dir/tools/ci/integration_gate.py" --mode pr --head-ref "$HEAD_REF" --same-repo "$SAME_REPO"
           else
-            python3 "$ci/integration_gate.py" --mode push --base "$BEFORE" --head HEAD
+            python3 -I "$dir/tools/ci/integration_gate.py" --mode push --base "$base" --head HEAD
           fi

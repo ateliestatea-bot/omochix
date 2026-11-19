@@ -58,20 +58,25 @@ jobs:
 
       - name: Release scope (what this event must check)
         id: scope
-        # Runs the BASE commit's copy of tools/ci/ (pull request: the main tip it is merged
-        # into; push: the commit before the push), so a pull request cannot edit the script
-        # that decides whether it is checked.
-        env:
-          BEFORE: ${{ github.event.before }}
+        # Only a pull request can be judged "not a release target", and only by the BASE
+        # commit's tools/ci/release_scope.py: this step copies it with git archive from the
+        # main tip the pull request is merged into and runs it with python3 -I. No script
+        # from the pull request runs here. Every other event, and a base without the script
+        # (the pull request that introduces tools/ci/), runs the full gate (fail-closed).
+        # The whole script is pinned in tools/ci/required-checks.json.
         run: |
           set -euo pipefail
-          case "$GITHUB_EVENT_NAME" in
-            pull_request) base=$(git rev-parse --verify --quiet HEAD^1) || base="" ;;
-            push) base="$BEFORE" ;;
-            *) base=$(git rev-parse HEAD) ;;
-          esac
-          ci=$(bash tools/ci/use-base-copy.sh "$base")
-          python3 "$ci/release_scope.py" --event "$GITHUB_EVENT_NAME"
+          base=""
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then base=$(git rev-parse --verify --quiet HEAD^1) || base=""; fi
+          if [ -z "$base" ] || ! git cat-file -e "$base:tools/ci/release_scope.py" 2>/dev/null; then
+            echo "RELEASE TARGET: event '$GITHUB_EVENT_NAME' without a trusted scope script on the base: the full gate runs"
+            echo "target=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          dir="$RUNNER_TEMP/ci-trusted"
+          rm -rf "$dir"; mkdir -p "$dir"
+          git archive "$base" tools/ci | tar -x -C "$dir"
+          python3 -I "$dir/tools/ci/release_scope.py" --event pull_request
 
       - name: Release gate (versions, markers, scope against production)
         if: steps.scope.outputs.target == 'true'

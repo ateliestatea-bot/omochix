@@ -65,7 +65,7 @@ def approved_in(body, label, full):
     return False
 
 
-def guard(base, head, event, labels, inventory=None, bootstrap=False, cwd=None, body=""):
+def guard(base, head, event, labels, inventory=None, cwd=None, body=""):
     """Return (ok, lines)."""
     lines, ok = [], True
     if event == "pull_request_target":
@@ -80,8 +80,6 @@ def guard(base, head, event, labels, inventory=None, bootstrap=False, cwd=None, 
     reviewed = inv.get("labels", {}).get("reviewed", "ci-change-reviewed")
     weakening = inv.get("labels", {}).get("weakening", "ci-weakening-approved")
     protected = inv.get("protected_paths") or FALLBACK_PROTECTED
-    if bootstrap:
-        lines.append("NOTE bootstrap: the base commit has no tools/ci yet, so this run uses the change's own copy. Review its diff by hand.")
     try:
         paths = cilib.changed_paths(cilib.rev(base, cwd=cwd), cilib.rev(head, cwd=cwd), cwd=cwd)
     except cilib.GitError as exc:
@@ -153,7 +151,6 @@ def main(argv=None):
     ap.add_argument("--event", default="pull_request")
     ap.add_argument("--labels", default=os.environ.get("PR_LABELS", ""))
     ap.add_argument("--body", default=os.environ.get("PR_BODY", ""))
-    ap.add_argument("--bootstrap", action="store_true")
     a = ap.parse_args(argv)
     labels = [x.strip() for x in a.labels.split(",") if x.strip()]
     base = a.base
@@ -165,7 +162,7 @@ def main(argv=None):
             base = cilib.git("merge-base", "origin/main", a.head).decode().strip()
         except cilib.GitError:
             base = a.head + "^"
-    ok, lines = guard(base, a.head, a.event, labels, bootstrap=a.bootstrap, body=a.body)
+    ok, lines = guard(base, a.head, a.event, labels, body=a.body)
     print("\n".join(lines))
     print("\nCI change guard: %s" % ("PASS" if ok else "FAIL"))
     cilib.write_summary("**CI change guard: %s**\n\n%s" % ("PASS" if ok else "FAIL", "\n".join("- " + l.replace("`", "'") for l in lines)))

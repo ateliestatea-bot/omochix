@@ -35,13 +35,16 @@ GitHub の Ruleset は運営者が別に承認してから設定します。こ�
 - **main への push・手動実行:** 必ずすべてを検査します。ただし事後の検査なので、push そのものは止められません。止めるには Ruleset が必要です。
 - **判定に迷う場合**（merge commit が無い、git がエラーを返すなど）: すべてを検査します（安全側に倒します）。
 - **移動・削除:** `--no-renames` で比較するので、リリース対象のファイルを外へ移動・削除しても対象と判定されます。
-- **判定スクリプト自体:** PR の送り先（base）のコミットにある `tools/ci/` を `tools/ci/use-base-copy.sh` で取り出して実行します。PR の中で判定スクリプトを書き換えても、その PR の判定には効きません。
+- **判定スクリプト自体:** workflow のステップの中で、PR の送り先（base）のコミットから `git archive` で `tools/ci/` を取り出し、`python3 -I` で実行します。
+  - 取り出す処理も含めて、PR 側のファイルは一切実行しません。以前の `use-base-copy.sh` は PR 側のファイルで、書き換えると検査を回避できたため廃止しました。
+  - ステップのスクリプト全体を `required-checks.json` に固定しているので、ステップを書き換えると CI change guard がポリシー違反として止めます。
+- **base に `tools/ci/` が無いとき**（`tools/ci/` を持ち込む最初の PR）: 判定スクリプトを実行せず、すべてを検査します（fail-closed）。
 
 `tests/release/release-gate.php` と `tools/release/` は一切変えていません。
 
 ## Integration gate（integrate/web2）
 
-`tools/ci/integration_gate.py` を、Release gate と同じく base のコミットにあるコピーから実行します。
+`tools/ci/integration_gate.py` を、Release gate と同じくステップ内で base から取り出したコピーで実行します。base に `tools/ci/` が無いとき、および新しいブランチの push で origin/main との merge base が無いときは失敗します（fail-closed）。新しいブランチの push は、main から分かれた地点の規則で判定します。
 対象は `integrate/web2` だけです。ほかの `integrate/*`（既存のローカルブランチ `integrate/p0-theme-1.27.1-into-main` など）は Web 2.0 の工程ではないので、Tests などの共通チェックだけが走り、所有範囲で止まることはありません。
 
 1. **版番号:** 次の値が変わっていないことを確認します。
@@ -116,6 +119,8 @@ GitHub の Ruleset は運営者が別に承認してから設定します。こ�
   - `edited`（送り先・説明文の変更）とラベルで再実行されること、古い結果が使われないこと
   - チェック名の表示
 - **最初の PR:** main にまだ `ci-guard.yml` が無いので、この PR では CI change guard が走りません（`pull_request_target` は base の workflow を使うため）。差分は人が読んで確認します。
+  - Release gate は、base に判定スクリプトが無いのですべてを検査します。
+  - この PR を merge した直後の main への push では、CI change guard が「base に信頼できる規則が無い」として **失敗** します（fail-closed）。その commit だけの想定どおりの結果で、次の commit からは通常どおり判定します。
 
 ## Ruleset（推奨。設定は運営者の別承認）
 
