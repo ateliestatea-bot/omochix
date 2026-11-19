@@ -1,0 +1,77 @@
+# Integration gate for the Web 2.0 integration branch (integrate/web2 only: other integrate/*
+# branches, such as the existing local integrate/p0-theme-1.27.1-into-main, are not Web 2.0
+# streams and keep only the common checks).
+# An integration branch collects feature work before a release; it must not carry a release
+# of its own. tools/ci/integration_gate.py checks that versions and release settings are
+# unchanged and that every changed file belongs to the branch's stream (docs/web2/ownership.json
+# read from the base commit). Merging main into an integration branch passes as a sync.
+#
+# The gate runs from the BASE commit's copy of tools/ci/, taken with git archive inside the
+# step itself and run with python3 -I: no script from the pull request runs here. A base
+# without tools/ci/ fails (fail-closed). The whole step script is pinned in
+# tools/ci/required-checks.json. Read-only: no secrets, no deploy.
+name: Integration
+
+on:
+  pull_request:
+    branches: ['integrate/web2']
+    # 'edited': re-run when a pull request's base branch is changed to an integration branch.
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: ['integrate/web2']
+
+permissions: {}
+
+concurrency:
+  group: integration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  gate:
+    name: Integration gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0   # the base commit, the pull request head and origin/main are all needed
+
+      - name: Integration gate (versions, release settings, ownership)
+        env:
+          # Event data goes through env, never straight into the script.
+          EVENT: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          SAME_REPO: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          zero=0000000000000000000000000000000000000000
+          case "$EVENT" in
+            pull_request)
+              if ! base=$(git rev-parse --verify --quiet HEAD^1); then echo "::error::HEAD is not the pull request's merge commit"; exit 1; fi
+              trusted="$base" ;;
+            push)
+              base="$BEFORE"
+              if [ -z "$base" ] || [ "$base" = "$zero" ]; then
+                # A new branch: compare with, and take the rules from, where it left main.
+                if ! base=$(git merge-base origin/main HEAD); then echo "::error::new branch without a merge base on origin/main"; exit 1; fi
+              fi
+              trusted="$base" ;;
+            *)
+              echo "::error::unexpected event $EVENT"; exit 1 ;;
+          esac
+          if ! git cat-file -e "$trusted:tools/ci/integration_gate.py" 2>/dev/null; then
+            echo "::error::the base commit has no tools/ci/integration_gate.py; nothing trusted can judge this change"; exit 1
+          fi
+          dir="$RUNNER_TEMP/ci-trusted"
+          rm -rf "$dir"; mkdir -p "$dir"
+          git archive "$trusted" tools/ci | tar -x -C "$dir"
+          if [ "$EVENT" = pull_request ]; then
+            python3 -I "$dir/tools/ci/integration_gate.py" --mode pr --head-ref "$HEAD_REF" --same-repo "$SAME_REPO"
+          else
+            python3 -I "$dir/tools/ci/integration_gate.py" --mode push --base "$base" --head HEAD
+          fi

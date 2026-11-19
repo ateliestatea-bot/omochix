@@ -1,0 +1,108 @@
+{
+  "_comment": [
+    "Web 2.0 file ownership, checked by tools/ci/integration_gate.py on pull requests into integrate/**.",
+    "The gate reads this file from the pull request's BASE, never from its head: a branch cannot widen its own scope.",
+    "Branch names: web2/<stream>/<topic>. A path must match the stream's 'owns' globs. '**' spans folders, '*' does not.",
+    "'held' and 'release_only' win over every stream: nobody changes them on an integration branch.",
+    "Source: Phase 0.5 Dev-Safety, section 2.4 and 3. Changing this file is a CI change (CI change guard)."
+  ],
+  "version": 1,
+  "release_only": [
+    "wp-theme/omochix-theme/style.css",
+    "wp-plugin/omochix-core/readme.txt",
+    "tools/release/**",
+    "tests/release/**"
+  ],
+  "held": [
+    "wp-theme/omochix-theme/front-page.php",
+    "wp-theme/omochix-theme/header.php",
+    "wp-theme/omochix-theme/footer*.php",
+    "wp-theme/omochix-theme/page-design.php",
+    "wp-theme/omochix-theme/inc/design-library*.php",
+    "wp-theme/omochix-theme/template-parts/design-library/**",
+    "wp-theme/omochix-theme/assets/design/**",
+    "wp-theme/omochix-theme/assets/data/design/**",
+    "wp-theme/omochix-theme/assets/css/design-library*.css",
+    "wp-theme/omochix-theme/assets/js/design-library*.js",
+    "docs/design-library/**",
+    "tests/design-library/**",
+    "tools/design-library/**"
+  ],
+  "streams": {
+    "ci": {
+      "owns": [
+        ".github/workflows/**",
+        "tools/ci/**",
+        "tests/ci/**",
+        "docs/web2/ownership.json",
+        "docs/web2/ci/**"
+      ]
+    },
+    "hooks": {
+      "owns": [
+        "wp-theme/omochix-theme/functions.php",
+        "wp-plugin/omochix-core/omochix-core.php",
+        "wp-theme/omochix-theme/inc/web2-loader.php",
+        "wp-plugin/omochix-core/includes/web2-loader.php",
+        "wp-theme/omochix-theme/inc/nav.php",
+        "wp-theme/omochix-theme/inc/search-suggest.php",
+        "tools/web2/**",
+        "tests/web2/hooks/**",
+        "docs/web2/hooks/**"
+      ]
+    },
+    "sec": {
+      "owns": [
+        "wp-plugin/omochix-core/includes/web2/security.php",
+        "tests/security/**",
+        "docs/web2/sec/**"
+      ]
+    },
+    "kh": {
+      "owns": [
+        "wp-plugin/omochix-core/includes/web2/glossary-*.php",
+        "wp-plugin/omochix-core/admin/web2/glossary-*.php",
+        "wp-theme/omochix-theme/inc/web2/glossary.php",
+        "wp-theme/omochix-theme/archive-omx_glossary.php",
+        "wp-theme/omochix-theme/single-omx_glossary.php",
+        "wp-theme/omochix-theme/taxonomy-omx_glossary_category.php",
+        "wp-theme/omochix-theme/template-parts/glossary/**",
+        "wp-theme/omochix-theme/assets/css/glossary.css",
+        "tests/glossary/**",
+        "docs/web2/kh/**"
+      ]
+    },
+    "seo": {
+      "owns": [
+        "content/glossary/**",
+        "docs/web2/seo/**"
+      ]
+    },
+    "ih": {
+      "owns": [
+        "wp-plugin/omochix-core/includes/industry-*.php",
+        "wp-plugin/omochix-core/admin/industry-*",
+        "wp-plugin/omochix-core/admin/industry-*/**",
+        "wp-plugin/omochix-core/includes/workflow-*",
+        "wp-plugin/omochix-core/includes/resource-*",
+        "wp-theme/omochix-theme/inc/learn-industries.php",
+        "wp-theme/omochix-theme/template-parts/learn-industries/**",
+        "wp-theme/omochix-theme/taxonomy-omx_industry.php",
+        "wp-theme/omochix-theme/page-learn-industries.php",
+        "tests/industry-hub/**",
+        "content/industry/**",
+        "docs/web2/ih/**"
+      ]
+    },
+    "ux": {
+      "owns": [
+        "wp-theme/omochix-theme/inc/web2/next-steps.php",
+        "wp-theme/omochix-theme/template-parts/next-steps.php",
+        "wp-theme/omochix-theme/assets/css/web2-nav.css",
+        "wp-theme/omochix-theme/search.php",
+        "tests/nav/**",
+        "docs/web2/ux/**"
+      ]
+    }
+  }
+}

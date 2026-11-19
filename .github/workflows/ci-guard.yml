@@ -1,0 +1,94 @@
+# CI guard: a change to CI cannot pass silently.
+#
+# Trust: on pull requests this runs on pull_request_target, so GitHub takes THIS FILE from the
+# base branch, never from the pull request. A pull request that edits or deletes this file
+# still gets the base's guard. The job only reads the pull request as data: it checks the
+# head out, builds the merge GitHub would make (git merge-tree), and runs tools/ci/ci_guard.py
+# from the base commit's copy with python3 -I. Nothing from the pull request runs; the token
+# is read-only and no secret is used. workflow_policy.py allows pull_request_target only in
+# this file ('pull_request_target_allowed' in tools/ci/required-checks.json).
+#
+# "CI change guard":
+# - a pull request that changes workflows, CI scripts, the ownership file or the Release gate
+#   code fails until an owner has read the diff, set the 'ci-change-reviewed' label AND put
+#   'ci-change-reviewed: <digest>' (printed by the failing run) in the description. The
+#   digest covers the content, so commits pushed after the review need a new review;
+# - a change that would weaken a required check fails unless 'ci-weakening-approved' is
+#   approved the same way (meant only together with a ruleset change);
+# - security findings (write permission, unpinned action, script injection, shadowed check
+#   names ...) always fail; the policy has to change first in its own pull request.
+# "CI policy" (this commit's own self-tests) is in ci-policy.yml: it runs pull request code,
+# so it must not run on pull_request_target.
+name: CI guard
+
+on:
+  pull_request_target:
+    # 'edited' also re-runs after the description (the approval line) changes.
+    types: [opened, synchronize, reopened, edited, ready_for_review, labeled, unlabeled]
+  push:
+    branches: [main, 'integrate/**']
+
+permissions: {}
+
+concurrency:
+  group: ci-guard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
+
+jobs:
+  guard:
+    name: CI change guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Check out (pull request head as data only)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: CI change guard (base rules against this change)
+        env:
+          # Event data goes through env, never straight into the script.
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          zero=0000000000000000000000000000000000000000
+          case "$EVENT" in
+            pull_request_target)
+              # GITHUB_SHA is the base branch tip, the commit this workflow file comes from.
+              trusted="$GITHUB_SHA"
+              head=$(git rev-parse --verify HEAD)
+              if [ "$head" != "$PR_HEAD_SHA" ]; then echo "::error::checked-out commit is not the pull request head"; exit 1; fi
+              if ! tree=$(git merge-tree --write-tree "$trusted" "$head"); then
+                echo "::error::the pull request does not merge cleanly into its base; resolve the conflict first"; exit 1
+              fi
+              tree=$(printf '%s\n' "$tree" | head -n 1)
+              merged=$(GIT_AUTHOR_NAME=ci GIT_AUTHOR_EMAIL=ci@example.invalid GIT_COMMITTER_NAME=ci GIT_COMMITTER_EMAIL=ci@example.invalid \
+                git commit-tree "$tree" -p "$trusted" -p "$head" -m "merge for the CI change guard")
+              base="$trusted"; event=pull_request ;;
+            push)
+              base="$BEFORE"
+              if [ -z "$base" ] || [ "$base" = "$zero" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+                base=$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD^)
+              fi
+              trusted="$base"; merged=$(git rev-parse HEAD); event=push ;;
+            *)
+              echo "::error::unexpected event $EVENT"; exit 1 ;;
+          esac
+          dir="$RUNNER_TEMP/ci-trusted"
+          rm -rf "$dir"; mkdir -p "$dir"
+          if git cat-file -e "$trusted:tools/ci/ci_guard.py" 2>/dev/null; then
+            git archive "$trusted" tools/ci | tar -x -C "$dir"
+          else
+            # Fail-closed: without the base's rules nothing trusted can judge this change
+            # (only the push that merges the pull request introducing tools/ci/).
+            echo "::error::the base commit has no tools/ci/ci_guard.py; nothing trusted can judge this change"; exit 1
+          fi
+          python3 -I "$dir/tools/ci/ci_guard.py" --event "$event" --base "$base" --head "$merged"
