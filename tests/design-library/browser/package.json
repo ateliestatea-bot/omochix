@@ -1,0 +1,7 @@
+{
+  "name": "omochix-design-library-browser-tests",
+  "private": true,
+  "description": "Local browser checks for the Design Library (isolation B2-B9, UI, performance). Separate from the repository's dependency-free tests. Firefox runs over WebDriver BiDi on the installed Firefox (firefox.js), without Playwright.",
+  "scripts": { "isolation": "node isolation.js", "ui": "node ui.js", "perf": "node perf.js", "firefox": "node firefox.js" },
+  "devDependencies": { "axe-core": "4.14.0", "playwright": "1.62.1" }
+}

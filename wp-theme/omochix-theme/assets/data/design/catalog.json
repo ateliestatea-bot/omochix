@@ -1,0 +1,2176 @@
+{
+  "version": 2,
+  "updated": "2026-11-17",
+  "items": [
+    {
+      "id": "dl-web-0001",
+      "slug": "liquid-glass",
+      "medium": "web",
+      "status": "published",
+      "title": "Liquid Glass",
+      "summary": "半透明のガラス層と、ゆっくり動く光のグラデーション。ポインターを追うハイライトと、スクロールで変わるぼかしが特徴です。",
+      "description": "ガラスのような半透明カードと光のグラデーションで構成した、AI・テック製品向けの LP の見本。ポインター追従のハイライト、カードの浮遊、スクロール連動のぼかし。",
+      "use_cases": [
+        "lp",
+        "product"
+      ],
+      "motion_types": [
+        "pointer",
+        "scroll",
+        "ambient"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "glass",
+        "gradient",
+        "dark"
+      ],
+      "motions": [
+        "pointer-follow",
+        "float",
+        "scroll-linked"
+      ],
+      "industries": [
+        "web-production",
+        "ecommerce"
+      ],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Night",
+          "value": "#060918"
+        },
+        {
+          "name": "Violet",
+          "value": "#7c5cff"
+        },
+        {
+          "name": "Cyan",
+          "value": "#22d3ee"
+        },
+        {
+          "name": "Pink",
+          "value": "#f472b6"
+        }
+      ],
+      "fonts": [
+        "system-ui"
+      ],
+      "poster": "posters/liquid-glass.avif",
+      "posterFallback": "posters/liquid-glass.webp",
+      "loop": "loops/liquid-glass.webm",
+      "loopFallback": "loops/liquid-glass.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/liquid-glass/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "CSS・SVG・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "アクセント色",
+          "description": "背景の光とボタンの色。CSS の色の指定を差し替える"
+        },
+        {
+          "label": "ぼかしの強さ",
+          "description": "backdrop-filter の blur の値（重い端末では小さく）"
+        },
+        {
+          "label": "動きの速さ",
+          "description": "背景の光の移動とカードの浮遊の周期"
+        }
+      ],
+      "prompt": {
+        "text": "暗い背景の上に、半透明のガラスカード（backdrop-filter のぼかしと細い白の枠線）を重ねた LP を作ってください。背景はゆっくり動く紫・水色・ピンクのぼかしたグラデーション、ポインター位置に柔らかいハイライト、スクロールに合わせてガラスのぼかしを強めます。prefers-reduced-motion では背景とハイライトを止め、JavaScript が無効でもレイアウトは崩れないようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "背景の光を作る",
+          "body": "大きな円形の radial-gradient を 4 つ重ね、transform だけで 20 秒前後かけてゆっくり動かす。ぼかしフィルターは使わず、グラデーション自体を柔らかくする。"
+        },
+        {
+          "title": "ガラスの層を重ねる",
+          "body": "ナビゲーションと主役のパネルに backdrop-filter の blur と saturate、細い白の枠線、上辺のハイライトを付ける。数の多いカードは、ぼかしを使わない半透明のグラデーションにして描画の負荷を抑える。"
+        },
+        {
+          "title": "ポインターとスクロールに反応させる",
+          "body": "pointermove の値を requestAnimationFrame で 1 回にまとめ、ハイライトの層だけを transform で動かす。スクロール量に合わせて、ぼかしの値を整数で切り替える。"
+        },
+        {
+          "title": "動きを止める条件を入れる",
+          "body": "prefers-reduced-motion では背景とハイライトを止め、タブが非表示のときは CSS アニメーションを一時停止する。JavaScript が無効でも静止したレイアウトで読めるようにする。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/liquid-glass/",
+          "sha256": "db35c5a5015bb458fa108a9e475b3d8b5d6474cc013d6e2456c0a26388a64fab"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "製品名・文章・数値はすべて架空。写真・外部素材・外部ライブラリは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-15",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "bento-saas",
+          "aurora-gradient"
+        ],
+        "motion": [
+          "floating-blobs",
+          "gradient-shift",
+          "light-sweep"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-15",
+        "perf": {
+          "transferKb": 6.4,
+          "jsKb": 1.8,
+          "longTasks": 0,
+          "heapMb": 0.9,
+          "fpsP5": 60,
+          "lcpMs": 1872,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0002",
+      "slug": "minimal-editorial",
+      "medium": "web",
+      "status": "published",
+      "title": "Minimal Editorial",
+      "summary": "色を一色に絞り、文字と余白で読ませる雑誌風のレイアウト。見出しの行ごとの出現と、スクロールで引かれる細い罫線。",
+      "description": "12 カラムのグリッドと大きな余白、縦書きの引用を使った、メディア・ブランドストーリー向けの見本。見出しの行単位フェード、罫線の描画、ページ送り風の切り替え。",
+      "use_cases": [
+        "media",
+        "brand-intro"
+      ],
+      "motion_types": [
+        "typography",
+        "scroll",
+        "transition"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "minimal",
+        "editorial",
+        "typography",
+        "light"
+      ],
+      "motions": [
+        "text-reveal",
+        "line-draw",
+        "page-transition"
+      ],
+      "industries": [
+        "restaurant",
+        "beauty"
+      ],
+      "level": "beginner",
+      "palette": [
+        {
+          "name": "Paper",
+          "value": "#f4f1ea"
+        },
+        {
+          "name": "Ink",
+          "value": "#171614"
+        },
+        {
+          "name": "Vermilion",
+          "value": "#b0301c"
+        }
+      ],
+      "fonts": [
+        "Hiragino Mincho ProN",
+        "Yu Mincho",
+        "system-ui"
+      ],
+      "poster": "posters/minimal-editorial.avif",
+      "posterFallback": "posters/minimal-editorial.webp",
+      "loop": "loops/minimal-editorial.webm",
+      "loopFallback": "loops/minimal-editorial.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/minimal-editorial/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "CSS・SVG・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "本文の書体",
+          "description": "明朝体とゴシック体の切り替え"
+        },
+        {
+          "label": "強調色",
+          "description": "見出しの頭文字と罫線の 1 色"
+        },
+        {
+          "label": "余白",
+          "description": "段の間隔と見出しの上下の余白"
+        }
+      ],
+      "prompt": {
+        "text": "生成りの紙のような背景に、明朝体の大きな見出しと本文だけで構成する雑誌風のページを作ってください。12 カラムのグリッド、強調色は朱色の一色のみ、縦書きの引用を一つ。見出しは行ごとに順にフェードイン、セクション間の細い罫線はスクロールに合わせて描かれ、記事の切り替えはページをめくるような左右のワイプにします。prefers-reduced-motion では即時表示、JavaScript が無効でも全文が読めるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "グリッドと書体を決める",
+          "body": "12 カラムのグリッドに、明朝体の大見出しとゴシック体の本文を置く。強調色は 1 色だけにする。"
+        },
+        {
+          "title": "見出しを行ごとに出す",
+          "body": "見出しの各行を別の要素にし、opacity と translateY を少しずつ遅らせて表示する。読み上げ用に見出し全体のラベルを付ける。"
+        },
+        {
+          "title": "罫線をスクロールで引く",
+          "body": "罫線は横方向の scaleX、図版は SVG の stroke-dashoffset を、要素の画面内の位置から求めた進み具合で変える。"
+        },
+        {
+          "title": "記事を切り替える",
+          "body": "ボタンで記事を切り替え、clip-path のワイプでページをめくるように見せる。reduced-motion では即時に切り替え、JavaScript が無効なら全記事を並べて表示する。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/minimal-editorial/",
+          "sha256": "e769c9f30db60b9c5d6c9304dbadb50442f05230af6f1eff3868f34f4ff50e6e"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "製品名・文章・数値はすべて架空。写真・外部素材・外部ライブラリは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-15",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "dark-luxury"
+        ],
+        "motion": [
+          "fade-up",
+          "underline-draw",
+          "check-draw"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-15",
+        "perf": {
+          "transferKb": 5.6,
+          "jsKb": 1.7,
+          "longTasks": 0,
+          "heapMb": 0.9,
+          "fpsP5": 108,
+          "lcpMs": 1908,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0003",
+      "slug": "3d-interactive",
+      "medium": "web",
+      "status": "published",
+      "title": "3D Interactive",
+      "summary": "ドラッグで回せる 3D モデルが主役。読み込み時の組み立て演出、スクロールでのカメラ移動、部品のハイライト。",
+      "description": "プログラムで生成した抽象的な 3D モジュールを WebGL で描く、製品紹介・製造業向けの見本。ドラッグ回転、スクロール連動のカメラ、ホバーで部品を強調、横スクロールの機能紹介。",
+      "use_cases": [
+        "product",
+        "lp"
+      ],
+      "motion_types": [
+        "3d",
+        "pointer",
+        "scroll"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "webgl"
+      ],
+      "styles": [
+        "3d",
+        "immersive",
+        "dark"
+      ],
+      "motions": [
+        "drag-rotate",
+        "camera-scroll",
+        "assemble",
+        "hover-lift"
+      ],
+      "industries": [
+        "construction",
+        "ecommerce"
+      ],
+      "level": "advanced",
+      "palette": [
+        {
+          "name": "Space",
+          "value": "#05060c"
+        },
+        {
+          "name": "Core",
+          "value": "#9d8cff"
+        },
+        {
+          "name": "Mint",
+          "value": "#5eead4"
+        },
+        {
+          "name": "Amber",
+          "value": "#fbbf24"
+        }
+      ],
+      "fonts": [
+        "system-ui"
+      ],
+      "poster": "posters/3d-interactive.avif",
+      "posterFallback": "posters/3d-interactive.webp",
+      "loop": "loops/3d-interactive.webm",
+      "loopFallback": "loops/3d-interactive.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/3d-interactive/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": true
+      },
+      "materials": [
+        {
+          "name": "システムフォント",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "WebGL のシェーダーと頂点データ（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "部品の色",
+          "description": "コア・リング・サテライトの色（シェーダーの uColor）"
+        },
+        {
+          "label": "自動回転の速さ",
+          "description": "1 秒あたりの回転量"
+        },
+        {
+          "label": "ライトの向き",
+          "description": "シェーダーの uLight"
+        }
+      ],
+      "prompt": {
+        "text": "WebGL（ライブラリなし）で、多面体のコアと 2 本のリング、周回する 6 個の立方体からなる抽象的な 3D モジュールを描く製品紹介ページを作ってください。読み込み時に部品が集まって組み上がり、ドラッグと矢印キーで回転、ページのスクロールでカメラが近づき、部品や対応するカードにポインターを重ねるとその部品が光ります。prefers-reduced-motion では自動回転とカメラ移動を止めてドラッグ回転だけを残し、WebGL が使えないときは静止画と説明を表示してください。"
+      },
+      "steps": [
+        {
+          "title": "形をプログラムで作る",
+          "body": "20 面体を 1 回分割したコア、2 本のトーラス、6 個の立方体、外周の線を頂点データとして生成する。外部の 3D ファイルやライブラリは使わない。"
+        },
+        {
+          "title": "シェーダーで陰影を付ける",
+          "body": "平行光の拡散反射、半球の環境光、フチの光（リム）を 1 つのシェーダーで計算し、ハイライトする部品だけ明るくする。"
+        },
+        {
+          "title": "操作とカメラを付ける",
+          "body": "ドラッグと矢印キーで回転、慣性で減速。ページのスクロール量でカメラの距離と高さを変え、部品の中心を画面に投影してポインターに近い部品を選ぶ。"
+        },
+        {
+          "title": "描画を止める条件を入れる",
+          "body": "画面外・タブ非表示・動きがないときは描画ループを止める。reduced-motion では自動回転とカメラ移動を止め、WebGL が使えないときは静止画と説明を出す。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/3d-interactive/",
+          "sha256": "6c35dca9638d9d085bd938dacab7c45a2b223a333338935c030e94cf9d278b70"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "製品名・文章・数値はすべて架空。写真・外部素材・外部ライブラリは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-15",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [],
+        "motion": [
+          "dolly-in",
+          "orbit",
+          "scroll-snap-cards"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-15",
+        "perf": {
+          "transferKb": 38.7,
+          "jsKb": 6.8,
+          "longTasks": 1,
+          "heapMb": 1.5,
+          "fpsP5": 108,
+          "lcpMs": 1884,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0004",
+      "slug": "bento-saas",
+      "medium": "web",
+      "status": "published",
+      "title": "Bento SaaS",
+      "summary": "大きさの違うタイルに情報を詰めた SaaS のダッシュボード風 LP。タイルの順次出現、数値のカウントアップ、グラフの描画。",
+      "description": "不揃いな Bento グリッドと料金表で構成した、SaaS・B2B ツール向けの見本。タイルの順次出現、ホバーで拡大と影、数値のカウントアップ、折れ線・棒グラフの描画。数値と価格は架空。",
+      "use_cases": [
+        "saas",
+        "lp"
+      ],
+      "motion_types": [
+        "ui",
+        "chart",
+        "scroll"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "bento",
+        "dashboard",
+        "light"
+      ],
+      "motions": [
+        "stagger",
+        "hover-lift",
+        "count-up",
+        "chart-draw"
+      ],
+      "industries": [
+        "web-production",
+        "real-estate"
+      ],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Mist",
+          "value": "#f5f6fb"
+        },
+        {
+          "name": "Indigo",
+          "value": "#4338ca"
+        },
+        {
+          "name": "Teal",
+          "value": "#0f766e"
+        },
+        {
+          "name": "Ink",
+          "value": "#0f172a"
+        }
+      ],
+      "fonts": [
+        "system-ui"
+      ],
+      "poster": "posters/bento-saas.avif",
+      "posterFallback": "posters/bento-saas.webp",
+      "loop": "loops/bento-saas.webm",
+      "loopFallback": "loops/bento-saas.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/bento-saas/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "CSS・SVG・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "アクセント色",
+          "description": "グラフと強調タイルの色"
+        },
+        {
+          "label": "角丸",
+          "description": "タイルとボタンの角の丸み"
+        },
+        {
+          "label": "タイルの間隔",
+          "description": "グリッドの gap"
+        }
+      ],
+      "prompt": {
+        "text": "大きさの違うタイルを組み合わせた Bento グリッドで、SaaS の機能を一覧できる LP を作ってください。折れ線グラフ、KPI の数値、担当ごとの棒グラフ、ミニボード、連携アイコン（汎用の図形のみ）、料金表 3 プラン。タイルは画面に入ると順に出現し、数値はカウントアップ、グラフは線が描かれます。ホバーでタイルを少し拡大して影を付けます。prefers-reduced-motion では最終状態で表示し、数値と価格は架空であることを明記してください。"
+      },
+      "steps": [
+        {
+          "title": "タイルを配置する",
+          "body": "6 列のグリッドで、グラフは 4 列 × 2 行、数値は 2 列など大きさを変えて並べ、幅に応じて 2 列・1 列に組み替える。"
+        },
+        {
+          "title": "順に出す",
+          "body": "IntersectionObserver で画面に入ったタイルから、少しずつ遅らせて opacity と transform を戻す。"
+        },
+        {
+          "title": "数値とグラフを動かす",
+          "body": "数値は 0 から最終値まで約 1.4 秒で数え上げる。折れ線は stroke-dashoffset、棒は scaleX で描く。"
+        },
+        {
+          "title": "最終状態でも読めるようにする",
+          "body": "HTML には最終値を書いておき、reduced-motion や JavaScript 無効ではそのまま表示する。数値と価格は架空であることを明記する。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/bento-saas/",
+          "sha256": "b73b63be855dfdc134369335ebcc8745c8169f52dbb1f7db6af4d38b06dd7b16"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "製品名・文章・数値はすべて架空。写真・外部素材・外部ライブラリは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-15",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "liquid-glass",
+          "aurora-gradient"
+        ],
+        "motion": [
+          "stagger",
+          "count-up",
+          "scroll-fade-in"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-15",
+        "perf": {
+          "transferKb": 6.5,
+          "jsKb": 1.8,
+          "longTasks": 0,
+          "heapMb": 1,
+          "fpsP5": 110,
+          "lcpMs": 1872,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0005",
+      "slug": "dark-luxury",
+      "medium": "web",
+      "status": "published",
+      "title": "Dark Luxury",
+      "summary": "黒の階調と控えめなゴールド、明朝の文字組みで見せる建築ブランドのサイト。奥行きのある層のスクロール演出と、作品の横送り。",
+      "description": "黒を基調に、明朝体の見出しと細い金の線で組んだ建築・不動産ブランド向けの見本。SVG で描いた建築を層で重ね、スクロールで奥行きを出し、作品は横に送る。",
+      "use_cases": [
+        "brand-intro",
+        "corporate",
+        "portfolio"
+      ],
+      "motion_types": [
+        "scroll",
+        "typography",
+        "ui"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "dark",
+        "monochrome",
+        "typography"
+      ],
+      "motions": [
+        "parallax",
+        "text-reveal",
+        "scroll-linked",
+        "line-draw",
+        "hover-lift"
+      ],
+      "industries": [
+        "real-estate",
+        "construction"
+      ],
+      "level": "advanced",
+      "palette": [
+        {
+          "name": "Sumi",
+          "value": "#0b0b0c"
+        },
+        {
+          "name": "Charcoal",
+          "value": "#18181b"
+        },
+        {
+          "name": "Bone",
+          "value": "#ece6da"
+        },
+        {
+          "name": "Gold",
+          "value": "#c9ab6e"
+        }
+      ],
+      "fonts": [
+        "Hiragino Mincho ProN",
+        "Yu Mincho",
+        "system-ui"
+      ],
+      "poster": "posters/dark-luxury.avif",
+      "posterFallback": "posters/dark-luxury.webp",
+      "loop": "loops/dark-luxury.webm",
+      "loopFallback": "loops/dark-luxury.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/dark-luxury/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（明朝・ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "建築の図版（インライン SVG・自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "アクセントの金",
+          "description": "細い線・番号・ボタンに使う 1 色（小さな文字のコントラストを保つ明るさで）"
+        },
+        {
+          "label": "黒の階調",
+          "description": "背景の 3 段階の黒（#0b0b0c・#111113・#18181b）"
+        },
+        {
+          "label": "作品の数",
+          "description": "横送りの作品カード。数を変えると送りの長さも自動で変わる"
+        }
+      ],
+      "prompt": {
+        "text": "建築・不動産ブランドの Web サイトを、黒の階調と控えめなゴールド、明朝体の見出しで作ってください。トップは SVG で描いた列柱とアーチを 3 層に重ね、スクロールで層ごとに違う速さで動かして奥行きを出します。見出しは一行ずつマスクの中から現れ、作品は広い画面ではセクションを固定して縦スクロールで横に送ります。ホバーでは金の細い下線、画像のわずかな拡大と光の通過、見出しの字間の変化を使います。写真は使わず、prefers-reduced-motion と狭い画面では固定と視差を止めて縦に並べ、JavaScript が無効でも全文が読めるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "黒の階調と書体を決める",
+          "body": "背景は 3 段階の黒（#0b0b0c・#111113・#18181b）、文字は暖かい白、補助の文字はやや暗い灰色、アクセントは金 1 色。見出しは明朝体、ラベルは字間を大きく取った大文字の欧文にする。小さな金の文字は、黒地とのコントラストが 4.5:1 以上になる明るさを選ぶ。"
+        },
+        {
+          "title": "建築を SVG で描いて重ねる",
+          "body": "アーチの列、列柱、階段の三つを別々の SVG にし、奥から順に重ねる。光の入る隙間は細い縦のグラデーションで表す。写真や外部の画像は使わない。"
+        },
+        {
+          "title": "スクロールで奥行きを出す",
+          "body": "ヒーローの高さに対するスクロール量を 0〜1 で計算し、奥の層ほど小さく、手前の層ほど大きく下へずらす。見出しは少し上へ逃がして薄くする。計算は requestAnimationFrame で 1 回にまとめ、常時のループは回さない。"
+        },
+        {
+          "title": "作品を横に送る",
+          "body": "広い画面だけ、作品のセクションを position: sticky で固定し、セクションの高さを横にはみ出す分だけ伸ばして、縦のスクロール量で横に動かす。キーボードでカードにフォーカスしたら、そのカードが見える位置までスクロールする。"
+        },
+        {
+          "title": "静的な表示を用意する",
+          "body": "prefers-reduced-motion、幅 900px 未満、JavaScript 無効では、固定と視差を使わずにカードを縦に並べる。出現のアニメーションも即時表示にする。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/dark-luxury/",
+          "sha256": "99bc45a92ffb97f3f6e5d5e03ea8ccd6976d9c9180e850f8b4cf4af841b108a4"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "事務所名・作品・地名・仕様はすべて架空。写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "minimal-editorial"
+        ],
+        "motion": [
+          "parallax",
+          "mask-reveal",
+          "underline-draw"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {
+          "transferKb": 9.6,
+          "jsKb": 2.7,
+          "longTasks": 0,
+          "heapMb": 0.9,
+          "fpsP5": 97,
+          "lcpMs": 2156,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0006",
+      "slug": "aurora-gradient",
+      "medium": "web",
+      "status": "published",
+      "title": "Aurora Gradient",
+      "summary": "夜明けの空に流れるオーロラを Canvas 2D で描いた、SaaS の紹介サイト。ゆっくり流れる光の帯と、明るく静かな本文。",
+      "description": "深い藍から淡い夜明け色へ移る空に、Canvas 2D で描いたオーロラの帯を重ねたファーストビュー。下は明るい SaaS の構成（機能・導入・料金・CTA）。描画は低解像度・最大 30fps・帯の数を端末に合わせて制御する。",
+      "use_cases": [
+        "saas",
+        "lp",
+        "product"
+      ],
+      "motion_types": [
+        "ambient",
+        "pointer",
+        "scroll"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "canvas"
+      ],
+      "styles": [
+        "gradient",
+        "light",
+        "immersive"
+      ],
+      "motions": [
+        "pointer-follow",
+        "float",
+        "scroll-linked",
+        "text-reveal",
+        "stagger",
+        "hover-lift"
+      ],
+      "industries": [
+        "web-production"
+      ],
+      "level": "advanced",
+      "palette": [
+        {
+          "name": "Night",
+          "value": "#080b26"
+        },
+        {
+          "name": "Violet",
+          "value": "#3a2a78"
+        },
+        {
+          "name": "Aurora Mint",
+          "value": "#5ef0b4"
+        },
+        {
+          "name": "Dawn",
+          "value": "#f3dfe8"
+        },
+        {
+          "name": "Ink Violet",
+          "value": "#3d2399"
+        }
+      ],
+      "fonts": [
+        "system-ui",
+        "Hiragino Sans"
+      ],
+      "poster": "posters/aurora-gradient.avif",
+      "posterFallback": "posters/aurora-gradient.webp",
+      "loop": "loops/aurora-gradient.webm",
+      "loopFallback": "loops/aurora-gradient.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/aurora-gradient/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "オーロラの描画（Canvas 2D・自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "オーロラの色",
+          "description": "帯ごとの色と、下端の明るい縁の色（BANDS の c と rim）"
+        },
+        {
+          "label": "帯の数と速さ",
+          "description": "広い画面は 5 本、狭い画面・低性能な端末は 3 本。速さは s1〜s3 で調整"
+        },
+        {
+          "label": "空のグラデーション",
+          "description": "夜の藍から夜明けの淡い色まで、ヒーロー背景の 5 色"
+        }
+      ],
+      "prompt": {
+        "text": "SaaS の紹介サイトを作ってください。ファーストビューは、深い藍から淡い夜明け色へ移る CSS グラデーションの空に、Canvas 2D でオーロラを描きます。オーロラは細い縦のグラデーションの短冊を横に並べたカーテンを 3〜5 本重ね、正弦波の和でゆっくり揺らし、加算合成で光らせます。描画はキャンバスを CSS サイズの半分以下の解像度にし、最大 30fps、狭い画面や低性能な端末では帯を 3 本に減らします。ポインターの近くでは帯がわずかにたわみ、下端の縁が明るくなります。タブが非表示のとき、画面外のとき、prefers-reduced-motion と Save-Data では描画を止め（静止した 1 枚だけ描く）、JavaScript や Canvas が使えないときは CSS の放射グラデーションで静止したオーロラを見せてください。本文は明るい背景で、機能（左右交互）・導入の流れ・料金・CTA の構成にします。"
+      },
+      "steps": [
+        {
+          "title": "空とフォールバックを先に作る",
+          "body": "ヒーローの背景に、夜の藍（#080b26）から紫を経て淡い夜明け色へ移る縦のグラデーションを敷く。その上に CSS の放射グラデーションを重ねた静止のオーロラを置き、JavaScript や Canvas が無いときはこれがそのまま見えるようにする。"
+        },
+        {
+          "title": "オーロラを短冊で描く",
+          "body": "帯ごとに、上が透明で下端が明るい縦の線形グラデーションを 1 つ作る。横に数 px 間隔で短冊を並べ、各短冊の高さ位置を正弦波の和で、明るさを別の正弦波で決める。合成は lighter（加算）。乱数を毎フレーム使わないので、ちらつかない。"
+        },
+        {
+          "title": "負荷を抑える",
+          "body": "キャンバスは CSS サイズの 0.33〜0.5 倍の解像度で描き、拡大でぼかす。フレームは最大 30fps に間引き、描画が遅い状態が続いたら一度だけ軽い設定（帯 3 本・低解像度）に切り替える。"
+        },
+        {
+          "title": "止める条件をまとめる",
+          "body": "描画するのは、動きが許可され・Save-Data が無効で・タブが表示中で・親ページが一時停止しておらず・空が画面内にあるときだけ。reduced-motion と Save-Data では静止した 1 枚だけ描く。"
+        },
+        {
+          "title": "明るい本文で受け止める",
+          "body": "ヒーローの下は明るい背景にし、機能を左右交互に並べ、導入の流れ・料金・CTA へ続ける。小さなラベルの紫は背景とのコントラストが 4.5:1 以上になる濃さにする。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/aurora-gradient/",
+          "sha256": "aeca72964cf7366f761ed31bace6513a9782294a0aeb00d3eab21755f70a9f2c"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "製品名・企業・数値はすべて架空。オーロラは Canvas 2D で描画し、写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "liquid-glass",
+          "bento-saas"
+        ],
+        "motion": [
+          "gradient-shift",
+          "floating-blobs",
+          "fade-up"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/tools/vercel"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {
+          "transferKb": 10.8,
+          "jsKb": 4.3,
+          "longTasks": 0,
+          "heapMb": 1.2,
+          "fpsP5": 98,
+          "lcpMs": 2132,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0007",
+      "slug": "ai-workspace",
+      "medium": "web",
+      "status": "published",
+      "title": "AI Workspace UI",
+      "summary": "架空の AI リサーチアプリの作業画面。スレッド・会話・出典の 3 カラムに、コマンドパレットと出典の参照、ライトとダークの切り替え。",
+      "description": "製品を紹介するページではなく、AI リサーチアプリそのものの画面の見本。回答は用意した文章を段落ごとに表示し、出典の番号から参照パネルへ移る。AI には接続せず、入力内容はどこにも送らない。",
+      "use_cases": [
+        "saas",
+        "product"
+      ],
+      "motion_types": [
+        "ui",
+        "transition",
+        "typography"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "dashboard",
+        "minimal",
+        "light",
+        "dark"
+      ],
+      "motions": [
+        "stagger",
+        "text-reveal",
+        "page-transition",
+        "hover-lift"
+      ],
+      "industries": [
+        "web-production"
+      ],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Paper",
+          "value": "#f6f5f2"
+        },
+        {
+          "name": "Graphite",
+          "value": "#17181c"
+        },
+        {
+          "name": "Olive",
+          "value": "#3f6a0a"
+        },
+        {
+          "name": "Lime",
+          "value": "#a3e635"
+        }
+      ],
+      "fonts": [
+        "system-ui",
+        "Hiragino Sans"
+      ],
+      "poster": "posters/ai-workspace.avif",
+      "posterFallback": "posters/ai-workspace.webp",
+      "loop": "loops/ai-workspace.webm",
+      "loopFallback": "loops/ai-workspace.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/ai-workspace/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": false,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "アイコン（SVG・自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "配色",
+          "description": "ライトとダークの 2 組のトークン（--bg・--ink・--accent など）。アクセントは文字と背景で 4.5:1 以上"
+        },
+        {
+          "label": "返答の文章",
+          "description": "REPLY の配列。段落ごとに 0.38 秒ずつ表示する"
+        },
+        {
+          "label": "コマンド",
+          "description": "パレットの項目（data-cmd）と、それぞれの動作（CMDS）"
+        },
+        {
+          "label": "レイアウト",
+          "description": "1200px 以上で 3 カラム、768〜1199px でサイドバーを引き出しに、767px 以下で下のタブで 1 画面ずつ"
+        }
+      ],
+      "prompt": {
+        "text": "架空の AI リサーチアプリの作業画面を HTML・CSS・JavaScript で作ってください。上部にブランド名・コマンド検索・テーマ切り替え・出典パネルの開閉、左にプロジェクトとスレッドの一覧、中央に会話（質問、出典番号付きの回答、表、続けて聞く候補、入力欄）、右に出典とメモのタブを置きます。⌘K / Ctrl+K でコマンドパレットを開き、矢印キーで選び Enter で実行、Esc で閉じて元の場所へフォーカスを戻します。回答は用意した文章を段落ごとに表示し、出典番号を押すと右の出典に移って強調します。入力内容はどこにも送らず textContent でだけ表示します。ライトとダークの両方を用意し、タブレットではサイドバーを引き出しに、スマホでは下のタブで 1 画面ずつ見せます。prefers-reduced-motion では回答を一度に表示し、JavaScript が無いときはすべてを縦に並べて読めるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "3 カラムの骨組み",
+          "body": "grid-template-areas で top / side / main / panel を置く。JavaScript があるときだけ高さを 100dvh に固定し、各カラムの中をスクロールさせる。無いときはページ全体が流れる。"
+        },
+        {
+          "title": "回答を段落ごとに出す",
+          "body": "回答の各段落に is-pending を付けて隠し、0.38 秒ずつ外す。止めるボタンで残りを取り除き、その旨を表示する。タイマーは一時停止中・非表示中は保留し、再開したら続ける。"
+        },
+        {
+          "title": "出典との往復",
+          "body": "出典番号は button にして aria-pressed を持たせる。押したら右の出典に tabindex=-1 でフォーカスを移し、枠を一時的に強調する。スマホでは出典の画面に切り替える。"
+        },
+        {
+          "title": "コマンドパレット",
+          "body": "role=dialog と aria-modal。入力欄は combobox、一覧は listbox で、aria-activedescendant で選択中の項目を伝える。Tab は欄の中にとどめ、Esc で閉じて開く前の要素にフォーカスを戻す。"
+        },
+        {
+          "title": "状態を見せる",
+          "body": "回答の前のスケルトン、送信中のボタン（aria-busy）、読み込めなかった出典と再読み込み、新しい調査の空の状態を用意する。reduced-motion では動きを止め、文字と形で伝える。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/ai-workspace/",
+          "sha256": "1d28b74a081d55e9d3658907c12ec873ce6633fe0f30b4b751ac68f101be8ce3"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "アプリ名・市・資料・数値はすべて架空。AI・外部 API には接続せず、写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "bento-saas",
+          "micro-interactions"
+        ],
+        "motion": [
+          "skeleton-loading",
+          "typewriter",
+          "tabs-indicator",
+          "drawer-menu",
+          "toast"
+        ],
+        "learn": [
+          "learn/development"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {
+          "transferKb": 12.6,
+          "jsKb": 5.6,
+          "longTasks": 0,
+          "heapMb": 1,
+          "fpsP5": 109,
+          "lcpMs": 2204,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0008",
+      "slug": "micro-interactions",
+      "medium": "web",
+      "status": "published",
+      "title": "Micro Interaction Collection",
+      "summary": "架空の家計・経費アプリの画面で見せる、小さな操作の手応え。設定の保存、入力の確認、送信の成功と失敗、精算の切り替えと元に戻す。",
+      "description": "動きを 1 つずつ並べた見本帳ではなく、1 つのアプリの画面の中で状態の変化（保存・エラー・読み込み中・成功・失敗・取り消し）を一貫した小さな動きで伝える見本。状態は色だけでなく形・記号・文字でも示す。",
+      "use_cases": [
+        "product",
+        "saas"
+      ],
+      "motion_types": [
+        "ui",
+        "pointer",
+        "transition"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "minimal",
+        "light"
+      ],
+      "motions": [
+        "hover-lift",
+        "line-draw",
+        "count-up",
+        "stagger"
+      ],
+      "industries": [],
+      "level": "beginner",
+      "palette": [
+        {
+          "name": "Clay",
+          "value": "#f3efe8"
+        },
+        {
+          "name": "Ink",
+          "value": "#1d1b26"
+        },
+        {
+          "name": "Coral",
+          "value": "#ff6b4a"
+        },
+        {
+          "name": "Success",
+          "value": "#17703f"
+        },
+        {
+          "name": "Error",
+          "value": "#c62828"
+        }
+      ],
+      "fonts": [
+        "system-ui",
+        "Hiragino Sans"
+      ],
+      "poster": "posters/micro-interactions.avif",
+      "posterFallback": "posters/micro-interactions.webp",
+      "loop": "loops/micro-interactions.webm",
+      "loopFallback": "loops/micro-interactions.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/micro-interactions/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "アイコン（SVG・自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "状態の色",
+          "description": "成功・エラー・強調の 3 色と、それぞれの薄い背景（--ok・--err・--coral）"
+        },
+        {
+          "label": "動きの強さ",
+          "description": "スイッチの行き過ぎ（cubic-bezier）、エラーの揺れ幅 4px、取り消しの猶予 5 秒"
+        },
+        {
+          "label": "確認のルール",
+          "description": "金額の範囲（1〜1,000,000 円）とメッセージ、メモの文字数の上限と警告の位置"
+        }
+      ],
+      "prompt": {
+        "text": "架空の家計・経費アプリの画面を HTML・CSS・JavaScript で作り、マイクロインタラクションを見せてください。① 設定：role=switch のチェックボックス（無効の理由付き）、2 択のセグメント、範囲スライダー。変えるたびに「保存しました」を短く表示します。② 記録：金額の確認（範囲外は aria-invalid とメッセージ、1 回だけ横に揺らす）、メモの文字数、記録ボタンの読み込み中 → 成功（チェックを描く）→ 元に戻る、失敗の例も。③ 一覧：精算済みのチェックで未精算の合計が数字の動きで変わり、削除は 5 秒間「元に戻す」を出します。状態は色だけでなく形と文字でも伝え、押せる部分は 44px 以上。prefers-reduced-motion では揺れや移動をやめ、JavaScript が無くても設定と一覧が使えるようにしてください。入力内容は送信も保存もしません。"
+      },
+      "steps": [
+        {
+          "title": "標準の部品から始める",
+          "body": "スイッチは input type=checkbox に role=switch、セグメントは radio、割合は range。JavaScript が無くても操作でき、キーボードの動きもブラウザーのものをそのまま使える。"
+        },
+        {
+          "title": "手応えは短く",
+          "body": "80〜250ms の transform と opacity だけを動かす。スイッチのつまみは押している間わずかに伸び、離すと行き過ぎて戻る。保存の印は 2.2 秒で消える。"
+        },
+        {
+          "title": "状態を言葉でも伝える",
+          "body": "エラーは aria-invalid と aria-describedby、読み込み中は aria-busy、結果と取り消しは role=status。色の違いに頼らず、記号（! と ✓）と文字を添える。"
+        },
+        {
+          "title": "取り消せる削除",
+          "body": "行を消したら次の行にフォーカスを移し、5 秒間「元に戻す」を出す。戻したら同じ位置に戻し、その行にフォーカスを返す。一時停止中や非表示の間は猶予の時間を進めない。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/micro-interactions/",
+          "sha256": "f15828593bedfc39465b31dd9a33bd051c4e5ee0394666d0273cc021ab66a9c3"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "アプリ名・金額・品目はすべて架空。外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "ai-workspace",
+          "bento-saas"
+        ],
+        "motion": [
+          "toggle-switch",
+          "button-press",
+          "morph-submit",
+          "check-draw",
+          "toast",
+          "number-flip"
+        ],
+        "learn": [
+          "learn/development"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {
+          "transferKb": 10.6,
+          "jsKb": 4.6,
+          "longTasks": 0,
+          "heapMb": 0.9,
+          "fpsP5": 100,
+          "lcpMs": 2180,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-web-0009",
+      "slug": "interactive-story",
+      "medium": "web",
+      "status": "published",
+      "title": "Interactive Storytelling",
+      "summary": "架空の手漉き和紙の工房の一年を、スクロールに合わせて挿絵が描き変わる物語で。職人の目と紙の目、2 つの語りを途中で切り替えられる。",
+      "description": "4 章 13 場面の読み物。段落が画面の中ほどに来ると、横（スマホでは上）に固定した挿絵がその場面に変わる。語り手を職人と紙で切り替えても、読んでいる位置は保たれる。WebGL・画像は使わず、挿絵はすべて SVG で自作した。",
+      "use_cases": [
+        "brand-intro",
+        "media",
+        "corporate"
+      ],
+      "motion_types": [
+        "scroll",
+        "typography",
+        "transition"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "js",
+        "svg"
+      ],
+      "styles": [
+        "editorial",
+        "light",
+        "typography"
+      ],
+      "motions": [
+        "scroll-linked",
+        "parallax",
+        "line-draw",
+        "page-transition"
+      ],
+      "industries": [],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Washi",
+          "value": "#f4efe4"
+        },
+        {
+          "name": "Sumi",
+          "value": "#22201c"
+        },
+        {
+          "name": "Indigo",
+          "value": "#1f3a5f"
+        },
+        {
+          "name": "Persimmon",
+          "value": "#a8432f"
+        }
+      ],
+      "fonts": [
+        "Hiragino Mincho ProN",
+        "Yu Mincho",
+        "Hiragino Sans",
+        "system-ui"
+      ],
+      "poster": "posters/interactive-story.avif",
+      "posterFallback": "posters/interactive-story.webp",
+      "loop": "loops/interactive-story.webm",
+      "loopFallback": "loops/interactive-story.mp4",
+      "preview": {
+        "type": "browser",
+        "entry": "demos/interactive-story/",
+        "viewports": [
+          "desktop",
+          "tablet",
+          "mobile"
+        ],
+        "scroll": true,
+        "webgl": false
+      },
+      "materials": [
+        {
+          "name": "システムフォント（明朝・ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "挿絵 13 場面（SVG・自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "物語の文章（自作）",
+          "type": "data",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "CSS・JavaScript（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "物語",
+          "description": "章と段落の配列（各段落に 2 つの語り）。段落を増やしたら挿絵の symbol も同じ数だけ用意する"
+        },
+        {
+          "label": "挿絵",
+          "description": "symbol #sk-s1〜#sk-s13。固定の挿絵と JavaScript 無効時の挿絵は同じ symbol を use で描く"
+        },
+        {
+          "label": "章の色",
+          "description": "--ch1〜--ch4（本文の地）と、固定の挿絵の地の色"
+        },
+        {
+          "label": "切り替えの位置",
+          "description": "IntersectionObserver の rootMargin（画面の 50〜60% の帯に入った段落が現在の場面）"
+        }
+      ],
+      "prompt": {
+        "text": "架空の手漉き和紙の工房の一年を、スクロールに合わせて挿絵が変わる読み物として HTML・CSS・JavaScript・SVG で作ってください。4 章 13 段落で、各段落に「職人の目」と「紙の目」の 2 つの語りを用意し、ラジオボタンで切り替えます（CSS の :has で切り替え、JS は読んでいる位置を保つ）。PC では本文の横、スマホでは本文の上に挿絵を固定し、画面の中ほどに来た段落の場面へ交差フェードで変えます。挿絵は 13 個の SVG symbol にまとめ、固定の挿絵と、JavaScript 無効・prefers-reduced-motion のときに段落ごとに並べる挿絵の両方を use で描きます。上部に章名と読書位置の棒、目次のダイアログ（Esc で閉じてフォーカスを戻す）、各章の終わりに「次の章へ」を置きます。常に回るアニメーションは作らず、一時停止中・非表示中は場面を切り替えず、再開したときに合わせてください。"
+      },
+      "steps": [
+        {
+          "title": "静的な形を先に作る",
+          "body": "各段落に、その場面の挿絵（svg と use）と 2 つの語りを置く。JavaScript が無い・動きを減らす設定のときは、これがそのまま読み物になる。語りの切り替えは :has で、JavaScript が無くても動く。"
+        },
+        {
+          "title": "挿絵を symbol にまとめる",
+          "body": "13 場面を symbol #sk-s1〜13 として 1 度だけ定義し、固定の挿絵では 13 個の use を重ねて、現在の場面だけを表示する。部品（雪・川・漉き舟・簀桁・紙）は色のクラスを共通にする。"
+        },
+        {
+          "title": "段落と挿絵を同期する",
+          "body": "IntersectionObserver の rootMargin を '-50% 0px -40% 0px' にして、画面の帯に入った段落を現在の場面にする。場面の番号から、遠景の山のずれ・太陽の位置・下の線の描画（stroke-dashoffset）を CSS 変数で決める。"
+        },
+        {
+          "title": "止めるときの扱い",
+          "body": "ランタイムの一時停止は CSS アニメーションを止めるが transition は止めない。そこで一時停止中・非表示中は場面を切り替えず、最後の段落を覚えておき、再開したときに一度で反映する。読書位置の棒もスクロール中の rAF 1 本だけにし、止めている間は描かない。"
+        },
+        {
+          "title": "読み進めやすくする",
+          "body": "目次は role=dialog のシートにし、章に移ったら見出しにフォーカスを移す。語りを切り替えても、現在の段落が画面の同じ位置に残るように scrollBy で補正する。"
+        }
+      ],
+      "deliverables": {
+        "html": {
+          "file": "demos/interactive-story/",
+          "sha256": "130c0e9d30cde519a1f1d98baf09e76e444391a7047e911581b204e41965fd54"
+        },
+        "showCode": true
+      },
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "工房・人物・地名は架空（工房名「紙季廊」は商標未確認の仮の名前）。紙すきの工程は一般的な流れを簡単にしたもの。写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-18",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox"
+        ],
+        "limitations": [
+          "本番環境（LiteSpeed・キャッシュ経由）での隔離は未確認",
+          "実機の Safari（macOS・iOS）と Android の Chrome では未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "minimal-editorial",
+          "brand-typography"
+        ],
+        "motion": [
+          "section-pin",
+          "scroll-progress",
+          "reveal-lines",
+          "scroll-fade-in",
+          "underline-draw",
+          "mask-reveal"
+        ],
+        "learn": [
+          "learn/development",
+          "learn/svg-motion"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-18",
+        "perf": {
+          "transferKb": 13.6,
+          "jsKb": 3.7,
+          "longTasks": 0,
+          "heapMb": 1,
+          "fpsP5": 108,
+          "lcpMs": 2260,
+          "cls": 0
+        }
+      }
+    },
+    {
+      "id": "dl-video-0001",
+      "slug": "logo-reveal-short",
+      "medium": "video",
+      "status": "published",
+      "title": "Logo Reveal Short",
+      "summary": "縦型 6 秒のロゴ登場。線で描かれるマーク、1 文字ずつ立ち上がるワードマーク、タグラインの順に現れる SNS 向けの見本。",
+      "description": "架空のブランドのロゴを、線の描画と文字の順次出現で見せる縦型ショート動画の見本。HTML と CSS で組み、フレームごとに書き出した。",
+      "use_cases": [
+        "sns-short",
+        "brand-intro"
+      ],
+      "motion_types": [
+        "logo",
+        "typography"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "svg",
+        "ffmpeg"
+      ],
+      "styles": [
+        "dark",
+        "gradient"
+      ],
+      "motions": [
+        "logo-draw",
+        "text-reveal",
+        "stagger"
+      ],
+      "industries": [],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Night",
+          "value": "#0b0c14"
+        },
+        {
+          "name": "Violet",
+          "value": "#a78bfa"
+        },
+        {
+          "name": "Mint",
+          "value": "#5eead4"
+        },
+        {
+          "name": "Star",
+          "value": "#fbbf24"
+        }
+      ],
+      "fonts": [
+        "Hiragino Sans",
+        "system-ui"
+      ],
+      "poster": "posters/logo-reveal-short.avif",
+      "posterFallback": "posters/logo-reveal-short.webp",
+      "loop": "loops/logo-reveal-short.webm",
+      "loopFallback": "loops/logo-reveal-short.mp4",
+      "video": {
+        "mp4": "videos/logo-reveal-short.mp4",
+        "webm": "videos/logo-reveal-short.webm",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30,
+        "seconds": 6
+      },
+      "preview": {
+        "type": "video",
+        "orientation": "portrait"
+      },
+      "materials": [
+        {
+          "name": "システムフォント",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "HTML・CSS・SVG の構成（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "ブランド名",
+          "description": "ワードマークの文字（文字数に合わせて遅延を調整）"
+        },
+        {
+          "label": "タグライン",
+          "description": "下に出す一文"
+        },
+        {
+          "label": "配色",
+          "description": "マークの線の 2 色と点の色"
+        }
+      ],
+      "prompt": {
+        "text": "縦型 1080×1920、6 秒、音声なしのロゴ登場動画を HTML と CSS で作ってください。暗い紫の背景に、円弧と折れ線のロゴマークを stroke-dashoffset で描き、右上の点を行き過ぎて戻る動きで出します。続けてワードマークを 1 文字ずつ下から回転しながら出し、最後に細い罫線とタグラインを表示します。すべてのアニメーションは CSS で定義し、Web Animations API で時間を指定して 1 フレームずつ書き出せるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "1080×1920 の画面を作る",
+          "body": "縦型の HTML に、背景の光、ロゴマークの SVG、ワードマーク、タグラインを置く。外部の画像やフォントは使わない。"
+        },
+        {
+          "title": "動きを CSS で組む",
+          "body": "ロゴは stroke-dashoffset で線を描き、点は行き過ぎて戻るイージングで出す。文字は 0.08 秒ずつ遅らせて下から回転しながら出し、最後に罫線とタグラインを出す。"
+        },
+        {
+          "title": "フレームごとに書き出す",
+          "body": "ブラウザで開き、document.getAnimations() の各アニメーションを一時停止して currentTime を 1/30 秒ずつ進め、毎フレームを PNG で撮る。再生速度やマシンの速さに左右されない。"
+        },
+        {
+          "title": "動画にする",
+          "body": "PNG の列を ffmpeg で H.264（yuv420p、faststart、音声なし）と VP9 に変換する。例：ffmpeg -framerate 30 -i frame-%04d.png -c:v libx264 -crf 24 -pix_fmt yuv420p -movflags +faststart out.mp4"
+        }
+      ],
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "ブランド名・数値は架空。音声・写真・外部素材は使っていない。HTML と CSS で組んだ構成からフレームごとに書き出した"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-16",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox",
+          "ffprobe"
+        ],
+        "limitations": [
+          "実機のスマートフォンでの再生は未確認"
+        ]
+      },
+      "related": {
+        "designs": [
+          "brand-typography"
+        ],
+        "motion": [
+          "split-letters",
+          "check-draw",
+          "pop-in"
+        ],
+        "learn": [
+          "learn/svg-motion"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-16",
+        "perf": {}
+      }
+    },
+    {
+      "id": "dl-video-0002",
+      "slug": "data-chart-explainer",
+      "medium": "video",
+      "status": "published",
+      "title": "Data Chart Explainer",
+      "summary": "横型 8 秒のデータ解説。棒グラフが順に伸び、折れ線が描かれ、要点のカードが入る。数値はすべて架空。",
+      "description": "月ごとの件数を棒グラフと折れ線で見せ、要点を 2 枚のカードでまとめる横型の解説動画の見本。HTML・CSS・SVG で組み、フレームごとに書き出した。",
+      "use_cases": [
+        "explainer",
+        "presentation"
+      ],
+      "motion_types": [
+        "chart",
+        "typography"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "svg",
+        "ffmpeg"
+      ],
+      "styles": [
+        "light",
+        "dashboard"
+      ],
+      "motions": [
+        "chart-draw",
+        "stagger",
+        "text-reveal"
+      ],
+      "industries": [],
+      "level": "beginner",
+      "palette": [
+        {
+          "name": "Paper",
+          "value": "#f6f5f1"
+        },
+        {
+          "name": "Blue",
+          "value": "#2f6fde"
+        },
+        {
+          "name": "Orange",
+          "value": "#e0592a"
+        },
+        {
+          "name": "Teal",
+          "value": "#0f766e"
+        }
+      ],
+      "fonts": [
+        "Hiragino Sans",
+        "system-ui"
+      ],
+      "poster": "posters/data-chart-explainer.avif",
+      "posterFallback": "posters/data-chart-explainer.webp",
+      "loop": "loops/data-chart-explainer.webm",
+      "loopFallback": "loops/data-chart-explainer.mp4",
+      "video": {
+        "mp4": "videos/data-chart-explainer.mp4",
+        "webm": "videos/data-chart-explainer.webm",
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
+        "seconds": 8
+      },
+      "preview": {
+        "type": "video",
+        "orientation": "landscape"
+      },
+      "materials": [
+        {
+          "name": "システムフォント",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "HTML・CSS・SVG の構成（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "データ",
+          "description": "棒の高さと数値ラベル（SVG の値）"
+        },
+        {
+          "label": "見出しと要点",
+          "description": "見出し・サブ見出し・カード 2 枚の文言"
+        },
+        {
+          "label": "強調色",
+          "description": "最後の棒と要点の色"
+        }
+      ],
+      "prompt": {
+        "text": "横型 1920×1080、8 秒、音声なしのデータ解説動画を HTML・CSS・SVG で作ってください。見出しのあと、6 か月分の棒グラフを左から順に下から伸ばし、数値ラベルを出し、折れ線を描いてから、右側に要点のカードを 2 枚スライドインさせます。数値は架空であることを画面の下に書いてください。すべて CSS アニメーションで定義し、Web Animations API で時間を指定して 1 フレームずつ書き出せるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "1920×1080 の画面を作る",
+          "body": "見出し、SVG の棒グラフと折れ線、要点のカード 2 枚を置く。数値は架空であることを画面内に書く。"
+        },
+        {
+          "title": "順番を決める",
+          "body": "見出し → 棒が左から順に伸びる → 数値ラベル → 折れ線を描く → 要点のカードが右から入る、の順に animation-delay で並べる。"
+        },
+        {
+          "title": "フレームごとに書き出す",
+          "body": "document.getAnimations() を一時停止し、currentTime を 1/30 秒ずつ進めて 240 フレームを撮る。"
+        },
+        {
+          "title": "動画にする",
+          "body": "ffmpeg で H.264（yuv420p、faststart、音声なし）と VP9 に変換する。一覧カード用には長辺 960 px に縮めた短いファイルも作る。"
+        }
+      ],
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "ブランド名・数値は架空。音声・写真・外部素材は使っていない。HTML と CSS で組んだ構成からフレームごとに書き出した"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-16",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox",
+          "ffprobe"
+        ],
+        "limitations": [
+          "実機のスマートフォンでの再生は未確認"
+        ]
+      },
+      "related": {
+        "designs": [],
+        "motion": [
+          "stagger",
+          "fade-up"
+        ],
+        "learn": [],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-16",
+        "perf": {}
+      }
+    },
+    {
+      "id": "dl-video-0003",
+      "slug": "brand-typography",
+      "medium": "video",
+      "status": "published",
+      "title": "Brand Typography Motion",
+      "summary": "正方形 10 秒、文字だけで語るブランド動画。紙・明るい緑・黄色の面が切り替わり、和文の縦組みと欧文、直線と円弧で作ったワードマークで締める。",
+      "description": "架空の書店兼カフェ「YOMIBA」の、ロゴを使わず文字だけで組んだ 1:1 の SNS 向け動画。4 つの場面で地の色と組み方を変え、最後はフォントを使わず直線と円弧で自作したワードマークで締める。HTML と CSS で組み、フレームごとに書き出した。",
+      "use_cases": [
+        "sns-short",
+        "brand-intro"
+      ],
+      "motion_types": [
+        "typography",
+        "transition"
+      ],
+      "technologies": [
+        "html",
+        "css",
+        "svg",
+        "ffmpeg"
+      ],
+      "styles": [
+        "typography",
+        "editorial",
+        "light"
+      ],
+      "motions": [
+        "text-reveal",
+        "stagger",
+        "page-transition",
+        "line-draw"
+      ],
+      "industries": [
+        "restaurant"
+      ],
+      "level": "intermediate",
+      "palette": [
+        {
+          "name": "Paper",
+          "value": "#f2ecdf"
+        },
+        {
+          "name": "Leaf",
+          "value": "#3cc47c"
+        },
+        {
+          "name": "Signal",
+          "value": "#ffd23f"
+        },
+        {
+          "name": "Ink",
+          "value": "#12352b"
+        }
+      ],
+      "fonts": [
+        "Hiragino Mincho ProN",
+        "Hiragino Sans",
+        "system-ui"
+      ],
+      "poster": "posters/brand-typography.avif",
+      "posterFallback": "posters/brand-typography.webp",
+      "loop": "loops/brand-typography.webm",
+      "loopFallback": "loops/brand-typography.mp4",
+      "video": {
+        "mp4": "videos/brand-typography.mp4",
+        "webm": "videos/brand-typography.webm",
+        "width": 1080,
+        "height": 1080,
+        "fps": 30,
+        "seconds": 10
+      },
+      "preview": {
+        "type": "video",
+        "orientation": "square"
+      },
+      "materials": [
+        {
+          "name": "システムフォント（明朝・ゴシック）",
+          "type": "font",
+          "source": "system",
+          "license": "system-font"
+        },
+        {
+          "name": "ワードマーク YOMIBA の線画（自作）",
+          "type": "image",
+          "source": "original",
+          "license": "original"
+        },
+        {
+          "name": "HTML・CSS・SVG の構成（自作）",
+          "type": "code",
+          "source": "original",
+          "license": "original"
+        }
+      ],
+      "customization": [
+        {
+          "label": "動画内の文字（全文）",
+          "description": "YOMIBA · BOOK & COFFEE／よむ。／一冊と、一杯のあいだ。／PAUSE BETWEEN PAGES.／ページの間で、ひと休み。／OPEN 8:00 — 21:00／本と、珈琲と、ゆっくりの時間。／YOMIBA 本と珈琲の店（架空）"
+        },
+        {
+          "label": "言葉",
+          "description": "4 場面の見出し・縦組みの一文・3 行のコピー（文字数に合わせて遅延を調整）"
+        },
+        {
+          "label": "配色",
+          "description": "紙・緑・黄の 3 面と、文字の墨色。文字は面とのコントラスト 4.5:1 以上を保つ"
+        },
+        {
+          "label": "ワードマーク",
+          "description": "直線と円弧の path。線の太さ 30、文字幅 100 の格子で組み直せる"
+        }
+      ],
+      "prompt": {
+        "text": "1080×1080、10 秒、音声なしのブランド動画を HTML と CSS で作ってください。ロゴは使わず文字だけで、4 場面に分けます。① 紙色の地に明朝の大きな一語を 1 文字ずつ下からマスクで出し、罫線と一文を添える ② 明るい緑の面を左から拭き取るように出し、右に和文の縦組みを 1 文字ずつ、左に欧文の太字 3 行を下からせり上げる ③ 黄色の面を上から下ろし、太さの違う 3 行を字間が詰まりながら現れるように出す ④ 紙色の円が中央から広がり、直線と円弧の線で作ったワードマークを stroke-dashoffset で描いて 1 秒以上止める。すべての動きは CSS で定義し、Web Animations API で時間を指定して 1 フレームずつ書き出せるようにしてください。"
+      },
+      "steps": [
+        {
+          "title": "4 つの面を重ねる",
+          "body": "紙・緑・黄・紙の 4 枚の面を重ね、後の面ほど上に置く。緑は scaleX、黄は scaleY、最後の紙は clip-path の円で出す。緑の直前に細い黄色の面を 0.1 秒先に走らせ、切り替わりに奥行きを付ける。"
+        },
+        {
+          "title": "組み方で声を変える",
+          "body": "一語は明朝の 300px、縦組みは writing-mode: vertical-rl、欧文は太字の詰めた字間。黄色の場面は細・太・明朝の 3 行で、letter-spacing を 0.5em から 0.02em へ詰めながら出す。"
+        },
+        {
+          "title": "ワードマークを線で作る",
+          "body": "文字幅 100・高さ 165 の格子に、直線と円弧だけで 6 文字を組む。各 path に pathLength=\"1\" を付け、stroke-dashoffset を 1 から 0 にして順に描く。フォントを使わないので、書き出し環境に左右されない。"
+        },
+        {
+          "title": "フレームごとに書き出す",
+          "body": "document.getAnimations() を一時停止して currentTime を 1/30 秒ずつ進め、PNG を ffmpeg で H.264（yuv420p、faststart、音声なし）と VP9 に変換する。最後の 1 秒は止めて、ループの継ぎ目を目立たせない。"
+        }
+      ],
+      "credits": {
+        "author": "OmochiX",
+        "source": "original",
+        "license": "original",
+        "notes": "ブランド名・営業時間は架空。音声・写真・外部素材・Web フォントは使っていない。ワードマークは線で自作し、和文はシステムフォントで書き出した"
+      },
+      "verification": {
+        "state": "verified-local",
+        "checked": "2026-11-17",
+        "environments": [
+          "chromium",
+          "webkit",
+          "firefox",
+          "ffprobe"
+        ],
+        "limitations": [
+          "実機のスマートフォンでの再生は未確認",
+          "書き出しに使ったシステムフォントの、動画での利用条件は運営者の確認待ち"
+        ]
+      },
+      "related": {
+        "designs": [
+          "logo-reveal-short",
+          "minimal-editorial"
+        ],
+        "motion": [
+          "split-letters",
+          "kinetic-words",
+          "mask-reveal",
+          "reveal-lines"
+        ],
+        "learn": [
+          "learn/svg-motion"
+        ],
+        "prompts": []
+      },
+      "audit": {
+        "reviewed": "2026-11-17",
+        "perf": {}
+      }
+    }
+  ]
+}
