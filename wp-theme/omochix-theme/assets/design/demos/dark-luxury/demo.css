@@ -41,6 +41,7 @@ html.js:not(.reduced) .dk-slit{animation:dk-breathe 9s ease-in-out infinite}
 .dk-hero__copy{position:absolute;left:clamp(20px,6vw,96px);bottom:clamp(120px,25vh,250px);max-width:760px}
 html.js:not(.reduced) .dk-hero__copy{transform:translate3d(0,calc(var(--p,0)*-70px),0);opacity:calc(1 - var(--p,0)*1.3)}
 .dk-kicker{font-size:11px;letter-spacing:.42em;color:var(--gold);margin-bottom:26px}
+.dk-ph{display:inline-block}
 .dk-title{font-family:var(--serif);font-weight:500;font-size:clamp(46px,7.4vw,112px);line-height:1.18;letter-spacing:.08em}
 .dk-line{display:block;overflow:hidden;padding-bottom:.06em}
 .dk-line>span{display:inline-block}
@@ -122,5 +123,8 @@ html.dk-pin .dk-card svg{max-height:56vh;width:auto;margin:0 auto}
   .dk-track{grid-template-columns:1fr;gap:56px}
   .dk-layer--front{height:72%}
   .dk-hero__copy{bottom:150px}
+  .dk-kicker{letter-spacing:.3em;line-height:1.9;text-shadow:0 0 14px rgba(11,11,12,.95),0 0 3px rgba(11,11,12,.9)}
+  .dk-kicker__en,.dk-kicker__ja{display:block;white-space:nowrap}
+  .dk-kicker__sep{display:none}
   .dk-works__head{flex-wrap:wrap}
 }

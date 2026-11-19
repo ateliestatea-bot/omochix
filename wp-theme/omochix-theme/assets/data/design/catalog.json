@@ -128,7 +128,7 @@
       "deliverables": {
         "html": {
           "file": "demos/liquid-glass/",
-          "sha256": "8c0a350fa6c9d267e8c40a88d5a0681c8e7f5021ac0a9d65955c98b97c5f1f11"
+          "sha256": "db35c5a5015bb458fa108a9e475b3d8b5d6474cc013d6e2456c0a26388a64fab"
         },
         "showCode": true
       },
@@ -305,7 +305,7 @@
       "deliverables": {
         "html": {
           "file": "demos/minimal-editorial/",
-          "sha256": "c99941560e082d71ac833faa169f02c1e25ee43c79c01e51cf6bbdaa810b4c73"
+          "sha256": "e769c9f30db60b9c5d6c9304dbadb50442f05230af6f1eff3868f34f4ff50e6e"
         },
         "showCode": true
       },
@@ -852,7 +852,7 @@
       "deliverables": {
         "html": {
           "file": "demos/dark-luxury/",
-          "sha256": "f46e1d1a48bf40eaee43d610915293ffa7c550fdb9fdd2736c4693dd2aa6e086"
+          "sha256": "99bc45a92ffb97f3f6e5d5e03ea8ccd6976d9c9180e850f8b4cf4af841b108a4"
         },
         "showCode": true
       },

@@ -55,7 +55,7 @@ defined('ABSPATH') || exit;
                 </svg>
             </div>
             <div class="dk-hero__copy">
-                <p class="dk-kicker">ARCHITECTURE &amp; RESIDENCES — 架空の建築ブランド</p>
+                <p class="dk-kicker"><span class="dk-kicker__en">ARCHITECTURE &amp; RESIDENCES</span><span class="dk-kicker__sep"> — </span><span class="dk-kicker__ja">架空の建築ブランド</span></p>
                 <h1 id="dk-hero-h" class="dk-title" aria-label="静けさを、設計する。">
                     <span class="dk-line" aria-hidden="true"><span>静けさを、</span></span>
                     <span class="dk-line" aria-hidden="true"><span>設計する。</span></span>
@@ -184,7 +184,7 @@ defined('ABSPATH') || exit;
         <section class="dk-contact" id="dk-contact" aria-labelledby="dk-ct-h">
             <div class="dk-wrap">
                 <p class="dk-label" data-dk-reveal>VISIT</p>
-                <h2 id="dk-ct-h" class="dk-h2 dk-h2--center" data-dk-reveal>静けさを、体で確かめる。</h2>
+                <h2 id="dk-ct-h" class="dk-h2 dk-h2--center" data-dk-reveal><span class="dk-ph">静けさを、</span><span class="dk-ph">体で確かめる。</span></h2>
                 <p class="dk-contact__lead" data-dk-reveal>完成した住まいを、季節ごとに一組ずつご案内しています。</p>
                 <div class="dk-contact__actions" data-dk-reveal>
                     <button class="dk-btn dk-btn--gold" type="button">見学を予約する</button>

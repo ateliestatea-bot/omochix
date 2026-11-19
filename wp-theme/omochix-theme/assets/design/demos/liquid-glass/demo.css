@@ -44,7 +44,8 @@ html.js:not(.reduced) .glass:hover::after{opacity:1}
 main{width:min(1120px,calc(100% - 32px));margin:0 auto}
 .lg-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;min-height:calc(100vh - 90px);padding:64px 0}
 .lg-eyebrow{font-size:12px;letter-spacing:.24em;color:#b9c2ff;margin-bottom:18px}
-.lg-hero h1{font-size:clamp(40px,6vw,76px);font-weight:800;background:linear-gradient(100deg,#fff 20%,#c9d4ff 50%,#a5f3fc 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lg-hero h1{font-size:clamp(40px,6vw,72px);font-weight:800;background:linear-gradient(100deg,#fff 20%,#c9d4ff 50%,#a5f3fc 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lg-ph{display:inline-block}
 .lg-lead{margin-top:24px;max-width:34em;color:#d3d8f2;font-size:17px}
 .lg-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
 .lg-hero__panel{padding:20px 22px 24px}

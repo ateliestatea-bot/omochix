@@ -51,7 +51,7 @@ defined('ABSPATH') || exit;
 
         <section class="ed-pager" aria-labelledby="ed-pager-h">
             <div class="ed-pager__head">
-                <h2 id="ed-pager-h">今号のほかの記事</h2>
+                <h2 id="ed-pager-h"><span class="ed-ph">今号の</span><span class="ed-ph">ほかの記事</span></h2>
                 <div class="ed-pager__nav">
                     <button type="button" class="ed-btn" data-ed-prev aria-label="前の記事">←</button>
                     <span class="ed-pager__count" aria-live="polite"><span data-ed-index>1</span> / 3</span>

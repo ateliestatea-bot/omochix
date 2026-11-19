@@ -68,3 +68,6 @@ html.js .ed-pager__nav{visibility:visible}
   .ed-mast__sub{display:none}.ed-hero{padding:56px 0 72px}.ed-article{padding:56px 0}
 }
 @media (min-width:1100px){.ed-body p:not(.ed-drop){max-width:none}}
+.ed-ph{display:inline-block}
+.ed-pager__count{white-space:nowrap}
+@media (max-width:359px){.ed-pager__head{flex-wrap:wrap}}

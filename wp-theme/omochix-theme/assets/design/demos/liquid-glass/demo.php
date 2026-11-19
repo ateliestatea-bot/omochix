@@ -26,7 +26,7 @@ defined('ABSPATH') || exit;
         <section class="lg-hero">
             <div class="lg-hero__text">
                 <p class="lg-eyebrow">AI WORKSPACE · 架空の製品</p>
-                <h1>考えごとを、<br>光のように軽く。</h1>
+                <h1><span class="lg-ph">考えごとを、</span><br><span class="lg-ph">光のように</span><span class="lg-ph">軽く。</span></h1>
                 <p class="lg-lead">メモ、資料、会議の記録をひとつの画面に。Aerolume は散らばった考えを集めて、次にやることを静かに差し出します。</p>
                 <div class="lg-cta">
                     <button class="lg-btn lg-btn--primary" type="button">はじめる</button>
