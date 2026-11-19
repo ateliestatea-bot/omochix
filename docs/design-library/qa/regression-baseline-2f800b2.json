@@ -1,0 +1,700 @@
+{
+    "/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "4bf9b956a9afa791d43549d18c7732660a9e215a031dbcbd2421ec637d1c3234",
+        "design": 0
+    },
+    "/learn/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "1fd1ccf975ac1d5184763f180e1e4ade2b0a5ae140da9a4282dbf1282a6db9cd",
+        "design": 0
+    },
+    "/learn/motion/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "d3ff19656b03d3878ab94bf9e24a329bc8c72c2fc868e85054a18647e1a2b72b",
+        "design": 0
+    },
+    "/learn/motion/compose/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "52f769d51a832b42a02d7d1ff9466cb14408e7622d234f443a1459fb0dca4987",
+        "design": 0
+    },
+    "/learn/svg-motion/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8",
+            "content-security-policy-report-only": "default-src 'self'; script-src http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/header.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/lib/purify.min.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/safety.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/compile.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/frame.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/analyze.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/import.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/preview-image.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/store.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/export.js http://127.0.0.1:8961/wp-content/themes/omochix-theme/assets/js/svg-motion/studio.js 'sha256-aoMyw86fyju3sa0Ue71+u5OU4yM04gd57kMuDGTk1P4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; manifest-src 'self'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+            "x-frame-options": "SAMEORIGIN"
+        },
+        "sha256": "f06cbeb0727ed3ec58c4d8a9c2512da203b0fc10c9c5f4034bb4fd900d8b0539",
+        "design": 0
+    },
+    "/learn/industries/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "608493409644b9560ce46f84077d8bcefef02f8d3f9fde739302880247846de2",
+        "design": 0
+    },
+    "/labs/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8",
+            "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://s.w.org https://secure.gravatar.com https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+        },
+        "sha256": "07a133027af007b6c61779bb3e95577e6c1dd060bce136831d077ea61f78da5e",
+        "design": 0
+    },
+    "/ai-tools/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "fcb386994ead531fbd14b540434a3ed6f298833dda3d0fe6a105229c06bd2e2d",
+        "design": 0
+    },
+    "/ai-tools/chatgpt/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "70ce0e1d3c13c5cb9139fd4e62da43c02b40210a44a45c62dcac0d000b2c6339",
+        "design": 0
+    },
+    "/prompts/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "8b7e4e4b204e6ddd8d4ae906c4041e129e6c8992615d8ee8eb9ae20987d19939",
+        "design": 0
+    },
+    "/prompts/prompt-1/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "00df63fd593c2c3113814151ffe4542e8f052777db5072fc8b15bfa6301921fc",
+        "design": 0
+    },
+    "/category/design/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "7a6cb2f1e80ea47230e4ea2f08ce335d5dc26f7dbd6479be1de5768ac3072cdc",
+        "design": 2
+    },
+    "/design-post-1/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "5c4c338f15901e46d7262080f58f02a99628b75533d54f3349721dfeabecfaba",
+        "design": 3
+    },
+    "/news/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "4a60a867ff10c259aacc6cd143d0421b5ee7a7bfc019236cf1a13e7222fad299",
+        "design": 0
+    },
+    "/about/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "43785ab1470a78b181f288cab0e7752af5eea38859492e2e9f673ae5156fe33e",
+        "design": 0
+    },
+    "/contact/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "e0f424aee0359e9f0d2d68be75df5665f169332dbe00b1ab1d1b2bc2fe151366",
+        "design": 0
+    },
+    "/privacy-policy/": {
+        "status": 301,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8",
+            "location": "http://127.0.0.1:8961/privacy-policy-2/"
+        },
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "design": 0
+    },
+    "/terms/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "2183eb35cc4c4e005858b9579150e455dcfa3b80eea21982c5f606b285daf3b2",
+        "design": 0
+    },
+    "/company/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "c4585166ac26cb4ca381461cd34daed7056da3f01c0ec6a0c0691c3a75952662",
+        "design": 0
+    },
+    "/sitemap.xml": {
+        "status": 301,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8",
+            "location": "http://127.0.0.1:8961/wp-sitemap.xml"
+        },
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "design": 0
+    },
+    "/robots.txt": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/plain; charset=utf-8"
+        },
+        "sha256": "9311bab30d8b5d05f5fa5563a251b8c96b8470873bb77c62d3d17c146d7acab7",
+        "design": 0
+    },
+    "/wp-json/": {
+        "status": 200,
+        "headers": {
+            "content-type": "application/json; charset=UTF-8",
+            "x-robots-tag": "noindex"
+        },
+        "sha256": "734f9693bf30abd32056c63662d5b3732fcdbd13f64b250252ad74381f718b64",
+        "design": 0
+    },
+    "/feed/": {
+        "status": 200,
+        "headers": {
+            "content-type": "application/rss+xml; charset=UTF-8"
+        },
+        "sha256": "ed8c3edcd5cede45fe3b2240a2c3228039cd7ee187bb7d3d046308bd3e4fb908",
+        "design": 0
+    },
+    "/no-such-page-xyz/": {
+        "status": 404,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "4772d288b870575be99429745c87fbafd4f95775997a1c4d28530a04dd530a15",
+        "design": 0
+    },
+    "/learn/motion/no-such-sample/": {
+        "status": 404,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "4772d288b870575be99429745c87fbafd4f95775997a1c4d28530a04dd530a15",
+        "design": 0
+    },
+    "/labs/no-such-tool/": {
+        "status": 404,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "4772d288b870575be99429745c87fbafd4f95775997a1c4d28530a04dd530a15",
+        "design": 0
+    },
+    "/learn/industries/real-estate/": {
+        "status": 404,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8",
+            "x-robots-tag": "noindex, follow"
+        },
+        "sha256": "4772d288b870575be99429745c87fbafd4f95775997a1c4d28530a04dd530a15",
+        "design": 0
+    },
+    "/?s=AI": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "c1011f5f5136907cf135296229eb3dc2e3a15d3089f9cbec72f55d50a385a070",
+        "design": 0
+    },
+    "/ai-tools/category/design/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "8d0cf20c642ae260b2effd4b11f907b008354abf004e623329a1bc1c2f7b2e00",
+        "design": 1
+    },
+    "/learn/motion/pop-in/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "bfbd069775be58facfe134608548f705d4c89d6abdd5236f056a222d5b5f9343",
+        "design": 0
+    },
+    "/learn/motion/fade-up/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "02029f4478f1616927ec625d10d538e3e569e027a6504f5b1bd7a192fb180a4e",
+        "design": 0
+    },
+    "/learn/motion/stagger/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "00ff4e629e0435db405f919a00b78b36a376b93dcf7d236daa0d60d177dfc6ed",
+        "design": 0
+    },
+    "/learn/motion/mask-reveal/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "c51edaf5f9570201ac614f7f81ab28504111961b1d12419131c814ccbbfd711d",
+        "design": 0
+    },
+    "/learn/motion/typewriter/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "b19eab7f17923f6b4c012c83d28e31e5620965e5084aa065dda006815d25e5f5",
+        "design": 0
+    },
+    "/learn/motion/count-up/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "03b63be65f184c26020e13680a7cad38723df793d14028521d5a44040ba4db27",
+        "design": 0
+    },
+    "/learn/motion/marker-highlight/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "9fe8c39ffa746d4ca182d67caa13bca03dac95e71b4cb6fd327925d84c2e30c2",
+        "design": 0
+    },
+    "/learn/motion/kinetic-words/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "b32b29b985efd0111a8786dbb627f683470950e0757a373d23acf8d36f7b624c",
+        "design": 0
+    },
+    "/learn/motion/toggle-switch/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "1b2606eabca2dfd1b9590d23609b3530248d8a44e6a822a48c0cea4f028df6a0",
+        "design": 0
+    },
+    "/learn/motion/button-press/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "ebd7d113c85a4e4059a690c14d13a112fb584449a81e0d81aeeb616406df36e0",
+        "design": 0
+    },
+    "/learn/motion/toast/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "992ccd16177ca48f74e6ece7eb95b78474442e9f210aa9a689ba163673748cb5",
+        "design": 0
+    },
+    "/learn/motion/skeleton-loading/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "372929e2456b41f363056014d9bad874b8a9b80c4095ba7f5a3674508102a625",
+        "design": 0
+    },
+    "/learn/motion/scroll-fade-in/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "4aa675019a9f30cd313496aef7f112f3e8a03fb60fab4b535e7f229783452f85",
+        "design": 0
+    },
+    "/learn/motion/sticky-header/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "ed83d7e6ea4a1c19a9c2bb9e403997a2d59829259fcf0d440d4fe65447a76683",
+        "design": 0
+    },
+    "/learn/motion/scroll-progress/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "cce794ba97b50eede4a8538709347be62882137a4aef92a8be06ab7d8f9a36c5",
+        "design": 0
+    },
+    "/learn/motion/parallax/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "0fcd860226d3fa31ba62f7d8a86b90cafef081fa28dc6c997f3ca58faab7d5e3",
+        "design": 0
+    },
+    "/learn/motion/gradient-shift/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "23812864b5178e70b273e3bafd0814f0b544dd4a3a2ce665e6a7a5ba80f6450b",
+        "design": 0
+    },
+    "/learn/motion/floating-blobs/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "3160243cb5814fc78efc0ff7aafb2944301071ad2f243a2f97961ce582c96e07",
+        "design": 0
+    },
+    "/learn/motion/light-sweep/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "f4822d2a0dd2d63e21b23096bbc141f75c2686e1c58e8998f3b60d0b5607a49d",
+        "design": 0
+    },
+    "/learn/motion/particles/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "d2f628d8a297b1c0cd889a502a5787d4f3678729c096c760b8aada8283f1cc07",
+        "design": 0
+    },
+    "/learn/motion/dolly-in/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "1b2934ec5f84af05291941fc199c50d72d2e81cc3d38b04f8ddb1b5a9ab1be1d",
+        "design": 0
+    },
+    "/learn/motion/pan/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "f8a93136d3d38f0a6d8d585e529e9c20cebae58425cb0c8a31ded431c04ddedc",
+        "design": 0
+    },
+    "/learn/motion/orbit/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "aedc492310a3de196d2adade70ebf58277f28e9c63eca4f87bd0ee63e9f38753",
+        "design": 0
+    },
+    "/learn/motion/magnetic-button/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "e4413c8d02a8cbfa745d20d675f38daa4f0320fecbc3e74c848a09a20b252fd4",
+        "design": 0
+    },
+    "/learn/motion/shine-button/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "1dd4d4cb96c2b51026ad6ccabe8ebb9d9b8664778ace1e0939dbe62636e53020",
+        "design": 0
+    },
+    "/learn/motion/pulse-ring/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "093b5cf44a57a34688fcd8f3c99bac89629c1cb36b42b952685aa2d19195d279",
+        "design": 0
+    },
+    "/learn/motion/arrow-nudge/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "646c09a48f7bc9149544dd578c7c879d5a31dceee2f4285fc49422fe7440f153",
+        "design": 0
+    },
+    "/learn/motion/morph-submit/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "3cf7c29771fea3cb92c0f6b2836706fa028b6e41b431ed3f3755d3bfd13208fd",
+        "design": 0
+    },
+    "/learn/motion/fab-expand/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "d08fdbf44adc75d4decb05beb0e107fac56c006f2ea0646d455f1e0079fdc87d",
+        "design": 0
+    },
+    "/learn/motion/split-letters/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "52eb17ecdabddc4d83987e82f1229270ba1716b53035665a657aed736ec2a160",
+        "design": 0
+    },
+    "/learn/motion/gradient-text/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "27b17af4076c7fd7f2dd9862b9a03e9da6edef2a6e0ea866fc2aa43f0eda069b",
+        "design": 0
+    },
+    "/learn/motion/scramble-text/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "74488e997349f058b4d2ae54ed2e8bcd85c6911a2a33850f8444279bfa111c4e",
+        "design": 0
+    },
+    "/learn/motion/underline-draw/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "a6a376da0451354c129e255effde19bbe95e1d9e6d509b84fde22da77ce98440",
+        "design": 0
+    },
+    "/learn/motion/marquee-ticker/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "96f65e2a43e9899b659d4df27803c7e60436a3585cd0c4ba177a0d72b6f4c399",
+        "design": 0
+    },
+    "/learn/motion/number-flip/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "920415e9b31d52301051e3b9ed578a426fdfdf1529bd4c07aa56cb182c1923b6",
+        "design": 0
+    },
+    "/learn/motion/scroll-scale-in/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "c9b5e046c72a274a4fd82880999102881738051607556b431e96125c17a12d8e",
+        "design": 0
+    },
+    "/learn/motion/scroll-snap-cards/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "8084276e948ea00adcaf0fc0e7993690fe44005cbe91f6551ee634df2af38d0b",
+        "design": 0
+    },
+    "/learn/motion/scroll-driven-bar/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "73eb691a8d98d11db3aeee128494e68d6fbddd6a16fae7854a2b3811c23769f3",
+        "design": 0
+    },
+    "/learn/motion/reveal-lines/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "2186dfae0c6587953f5e0dda61ef8095c24f75dd25a5e7d6c4df81f27e2e5d35",
+        "design": 0
+    },
+    "/learn/motion/back-to-top/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "0ae7bf58969fe23d87073eda83f0c07d70602b9ebb812f03cb46858d64e4d27c",
+        "design": 0
+    },
+    "/learn/motion/section-pin/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "d1716a87f4795f6cff5737c9f42a2541ed0cfc89aa85cd507d8169d95a4bfa93",
+        "design": 0
+    },
+    "/learn/motion/tilt-card/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "4202a60ad2c5445759a599b6b04a47690028ee91379f362f408b36449b2a90ac",
+        "design": 0
+    },
+    "/learn/motion/flip-card/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "789ab4d49d62e4decbba7988b0cba39146b16b5f1db4d1d515d37d6853504777",
+        "design": 0
+    },
+    "/learn/motion/accordion/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "e5a4ed60173e42356e95708057f754c0df3ab9d3017daf93cc35716563366ffa",
+        "design": 0
+    },
+    "/learn/motion/tabs-indicator/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "fc689bcff875e4b1c4c166db241e01afd424ed1fd3d8c25732e572a50bd012d0",
+        "design": 0
+    },
+    "/learn/motion/drawer-menu/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "c4b6d59e77cdfac4c8cbf5bc022ce8d580253de61138972f65c744d66eda8154",
+        "design": 0
+    },
+    "/learn/motion/check-draw/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "9136ebb08900a9f8bb2fabd809ae7f883dab9c4b09839fff0597b1751993b140",
+        "design": 0
+    },
+    "/learn/motion/dot-grid-wave/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "45672729ca2299945a5370a981fb2a3e7e4b3763685fc4b6035bd7431dfeab48",
+        "design": 0
+    },
+    "/learn/motion/ripple-rings/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "c172f727e25081907523432a7e57ad0e634eb3d0e873f1b977206f8323796c80",
+        "design": 0
+    },
+    "/learn/motion/spinner-ring/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "bb1115ae1522b98119b09d496a85968aac692bc00697fcea4da92ae1b5b397bb",
+        "design": 0
+    },
+    "/learn/motion/dots-bounce/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "da68843fb357e8a5feacc3d3cac39226b4b3a9edfab08e54871f3998b10d86e5",
+        "design": 0
+    },
+    "/learn/motion/progress-stripes/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "59d5eca343f38c414edb319d1a7c63d988d30f058a5ae3796f85f9666e1d8a22",
+        "design": 0
+    },
+    "/learn/motion/liquid-fill/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "d58e9bb8c362327037f52efe86c6db8c15e53172e5f2450d690b2e926cda5b9b",
+        "design": 0
+    },
+    "/labs/json-formatter/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8",
+            "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://s.w.org https://secure.gravatar.com https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+        },
+        "sha256": "a749ad15a04a514213c9cf0948f5aa47c2fa292608fa14d4c1b3cebaa841d99c",
+        "design": 0
+    },
+    "/labs/text-diff/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8",
+            "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://s.w.org https://secure.gravatar.com https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+        },
+        "sha256": "77218f5f55b93ad62eab1849005efc93ca8905e7abdb5e97653bfc0cc163c333",
+        "design": 0
+    },
+    "/labs/robots-txt-generator/": {
+        "status": 200,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8",
+            "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://s.w.org https://secure.gravatar.com https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+        },
+        "sha256": "ed620e7eb18ef74f0b812599f8fc503030e570e9579642104da62a606f053f48",
+        "design": 0
+    },
+    "/labs/token-cost-calculator/": {
+        "status": 404,
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "sha256": "4772d288b870575be99429745c87fbafd4f95775997a1c4d28530a04dd530a15",
+        "design": 0
+    }
+}

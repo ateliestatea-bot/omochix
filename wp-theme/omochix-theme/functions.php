@@ -26,6 +26,8 @@ require_once get_theme_file_path('/inc/shell.php');
 require_once get_theme_file_path('/inc/article-v2.php');
 require_once get_theme_file_path('/inc/labs.php');
 require_once get_theme_file_path('/inc/omochix-loader.php'); // Logo Assembly loader; the page overlay is OFF unless the omochix_loader_page_overlay filter returns true
+require_once get_theme_file_path('/inc/design-library.php');
+require_once get_theme_file_path('/inc/design-library-demo.php');
 
 function omochix_setup() {
     add_theme_support('title-tag');

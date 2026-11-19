@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- Design Library video work "data-chart-explainer" (original; all numbers fictional). 1920x1080, 8 s.
+     Rendered frame by frame by tools/design-library/render-video.js. Not shipped with the theme. -->
+<html lang="ja"><head><meta charset="utf-8"><title>data-chart-explainer</title>
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#f6f5f1;font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:#15171c}
+.kicker{position:absolute;left:120px;top:96px;font-size:28px;letter-spacing:.24em;color:#0f766e;font-weight:700;opacity:0;animation:fade .6s ease .1s both}
+h1{position:absolute;left:120px;top:140px;font-size:76px;font-weight:800;line-height:1.15;opacity:0;animation:up .8s cubic-bezier(.2,.8,.2,1) .25s both}
+.sub{position:absolute;left:120px;top:250px;font-size:30px;color:#5b5f6b;opacity:0;animation:fade .7s ease .7s both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes up{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+.chart{position:absolute;left:120px;top:360px;width:980px;height:600px}
+.axis{stroke:#c9c6bd;stroke-width:2}
+.grid{stroke:#e4e1d8;stroke-width:2;stroke-dasharray:6 8}
+.bar{fill:#2f6fde;transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);animation:grow 1s cubic-bezier(.2,.8,.2,1) both}
+.bar.hi{fill:#e0592a}
+@keyframes grow{to{transform:scaleY(1)}}
+.lab{font-size:26px;fill:#5b5f6b;text-anchor:middle}
+.val{font-size:30px;font-weight:800;fill:#15171c;text-anchor:middle;opacity:0;animation:fade .4s ease both}
+.trend{fill:none;stroke:#0f766e;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:dash 1.4s cubic-bezier(.6,0,.2,1) 3.2s both}
+@keyframes dash{to{stroke-dashoffset:0}}
+.dot{fill:#0f766e;opacity:0;animation:fade .3s ease 4.5s both}
+.card{position:absolute;left:1180px;width:620px;padding:36px 40px;border-radius:28px;background:#fff;box-shadow:0 30px 60px -30px rgba(20,20,30,.35);opacity:0;animation:card .7s cubic-bezier(.2,.8,.2,1) both}
+.c1{top:380px;animation-delay:4.6s}.c2{top:640px;animation-delay:5.3s}
+@keyframes card{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
+.card b{display:block;font-size:84px;line-height:1;letter-spacing:-.02em}
+.c1 b{color:#e0592a}.c2 b{color:#0f766e}
+.card span{display:block;margin-top:14px;font-size:28px;color:#5b5f6b}
+.foot{position:absolute;left:120px;bottom:44px;font-size:22px;color:#8a8d96;opacity:0;animation:fade .6s ease 6s both}
+</style></head><body>
+<p class="kicker">MONTHLY REPORT</p>
+<h1>問い合わせは、半年で 2.4 倍に</h1>
+<p class="sub">チャット窓口を入れた架空の店舗の、月ごとの件数</p>
+<svg class="chart" viewBox="0 0 980 600" aria-hidden="true">
+  <line class="grid" x1="60" y1="140" x2="960" y2="140"/><line class="grid" x1="60" y1="300" x2="960" y2="300"/><line class="grid" x1="60" y1="460" x2="960" y2="460"/>
+  <line class="axis" x1="60" y1="540" x2="960" y2="540"/>
+  <rect class="bar" x="110" y="400" width="90" height="140" style="animation-delay:1.0s"/>
+  <rect class="bar" x="255" y="370" width="90" height="170" style="animation-delay:1.18s"/>
+  <rect class="bar" x="400" y="330" width="90" height="210" style="animation-delay:1.36s"/>
+  <rect class="bar" x="545" y="270" width="90" height="270" style="animation-delay:1.54s"/>
+  <rect class="bar" x="690" y="210" width="90" height="330" style="animation-delay:1.72s"/>
+  <rect class="bar hi" x="835" y="204" width="90" height="336" style="animation-delay:1.9s"/>
+  <text class="val" x="155" y="385" style="animation-delay:2.1s">140</text><text class="val" x="300" y="355" style="animation-delay:2.25s">170</text>
+  <text class="val" x="445" y="315" style="animation-delay:2.4s">210</text><text class="val" x="590" y="255" style="animation-delay:2.55s">270</text>
+  <text class="val" x="735" y="195" style="animation-delay:2.7s">330</text><text class="val" x="880" y="189" style="animation-delay:2.85s">336</text>
+  <text class="lab" x="155" y="580">1月</text><text class="lab" x="300" y="580">2月</text><text class="lab" x="445" y="580">3月</text><text class="lab" x="590" y="580">4月</text><text class="lab" x="735" y="580">5月</text><text class="lab" x="880" y="580">6月</text>
+  <path class="trend" pathLength="1" d="M155 335 L300 305 L445 262 L590 205 L735 140 L880 118"/>
+  <circle class="dot" cx="880" cy="118" r="12"/>
+</svg>
+<div class="card c1"><b>×2.4</b><span>1月 → 6月の件数</span></div>
+<div class="card c2"><b>−31%</b><span>最初の返答までの時間</span></div>
+<p class="foot">数値はすべて架空の見本です — OmochiX Design Library</p>
+</body></html>

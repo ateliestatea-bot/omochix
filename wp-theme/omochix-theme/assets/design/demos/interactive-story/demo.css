@@ -1,0 +1,166 @@
+/* Interactive Storytelling (fictional washi workshop "紙季廊 / SHIKIRO"). Light only: the story is set on paper.
+   Static layout first (no JS, reduced motion, short landscape screens): every paragraph shows its own finished
+   illustration. With JS: one illustration stays fixed beside (PC) or above (phone) the text and follows it. */
+:root{--washi:#f4efe4;--ink:#22201c;--mute:#5a554c;--indigo:#1f3a5f;--accent:#a8432f;--line:#ddd3c1;--ch1:#e8edf1;--ch2:#e9eee6;--ch3:#f4efe4;--ch4:#f6ecdc;color-scheme:light}
+*{box-sizing:border-box}
+.sk-intro,.sk-ch,.sk-end{scroll-margin-top:64px}
+html,body{margin:0;background:var(--washi);color:var(--ink)}
+body{font:16px/1.8 "Hiragino Sans","Yu Gothic",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--indigo)}
+:focus-visible{outline:3px solid var(--indigo);outline-offset:3px}
+[hidden]{display:none!important}
+.sk-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sk-defs{position:absolute;width:0;height:0;overflow:hidden}
+
+/* header bar with chapter and reading progress */
+.sk-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;height:56px;padding:0 clamp(14px,3vw,32px);background:var(--washi);border-bottom:1px solid var(--line)}
+.sk-brand{display:flex;align-items:center;gap:8px;min-height:44px;color:var(--ink);font:700 16px/1 "Hiragino Mincho ProN","Yu Mincho",serif;letter-spacing:.12em;text-decoration:none;white-space:nowrap}
+.sk-brand__mark{width:16px;height:20px;border:2px solid var(--indigo);border-radius:2px;background:linear-gradient(var(--washi) 60%,var(--indigo) 60% 70%,var(--washi) 70%)}
+.sk-brand__en{font:600 11px/1 system-ui,sans-serif;letter-spacing:.2em;color:var(--mute)}
+.sk-bar__ch{margin:0 auto 0 8px;font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk-bar__toc{min-height:44px;padding:0 16px;border:1.5px solid var(--indigo);border-radius:999px;background:transparent;color:var(--indigo);font:700 14px/1 inherit;cursor:pointer}
+.sk-bar__toc:hover{background:var(--indigo);color:var(--washi)}
+.sk-progress{position:absolute;left:0;right:0;bottom:-1px;height:3px}
+.sk-progress i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0)}
+html:not(.js) .sk-progress{display:none}
+
+/* opening */
+.sk-intro{max-width:760px;margin:0 auto;padding:clamp(48px,10vh,110px) clamp(18px,4vw,32px) 56px}
+.sk-kicker{margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:.2em;color:var(--accent)}
+.sk-intro h1{margin:0;font:600 clamp(40px,8vw,76px)/1.2 "Hiragino Mincho ProN","Yu Mincho",serif;letter-spacing:.06em}
+.sk-lead{margin:22px 0 6px;font:500 18px/2 "Hiragino Mincho ProN","Yu Mincho",serif}
+.sk-meta{margin:0 0 28px;font-size:13px;color:var(--mute)}
+.sk-voice{margin:0 0 28px;padding:0;border:0}
+.sk-voice legend{padding:0;margin-bottom:10px;font-weight:700}
+.sk-voice__opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:520px}
+.sk-voice input{position:absolute;opacity:0;width:1px;height:1px}
+.sk-voice label{display:grid;gap:2px;min-height:64px;padding:12px 16px;border:1.5px solid var(--line);border-radius:14px;background:#fffdf8;cursor:pointer;transition:border-color .2s ease,box-shadow .2s ease}
+.sk-voice label b{font:700 17px/1.4 "Hiragino Mincho ProN","Yu Mincho",serif}
+.sk-voice label small{font-size:12px;color:var(--mute)}
+.sk-voice input:checked+label{border-color:var(--indigo);box-shadow:inset 0 0 0 1.5px var(--indigo)}
+.sk-voice input:checked+label b::before{content:"● ";color:var(--indigo)}
+.sk-voice input:focus-visible+label{outline:3px solid var(--indigo);outline-offset:3px}
+.sk-voice__note{margin:8px 0 0;font-size:13px;color:var(--mute)}
+.sk-toc__h{margin:0 0 6px;font-size:14px;letter-spacing:.12em;color:var(--mute)}
+.sk-toc ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.sk-toc a{display:flex;gap:12px;align-items:center;min-height:44px;color:var(--ink);text-decoration:none;font:600 17px/1.4 "Hiragino Mincho ProN","Yu Mincho",serif}
+.sk-toc a span,.sk-ch__h span,.sk-sheet button span{font:700 12px/1 system-ui,sans-serif;letter-spacing:.12em;color:var(--accent)}
+.sk-toc a:hover{color:var(--indigo);text-decoration:underline;text-underline-offset:5px}
+
+/* the story: static layout (each paragraph with its own illustration) */
+.sk-stage{display:none}
+.sk-text{max-width:760px;margin:0 auto}
+.sk-ch{padding:40px clamp(18px,4vw,32px) 24px;border-top:1px solid var(--line)}
+.sk-ch--1{background:var(--ch1)}.sk-ch--2{background:var(--ch2)}.sk-ch--3{background:var(--ch3)}.sk-ch--4{background:var(--ch4)}
+.sk-ch__h{display:grid;gap:8px;margin:0 0 8px;font:600 clamp(26px,4vw,34px)/1.3 "Hiragino Mincho ProN","Yu Mincho",serif;letter-spacing:.06em}
+.sk-ch__h:focus{outline:none}
+.sk-ch__h:focus-visible{outline:3px solid var(--indigo)}
+.sk-step{padding:26px 0}
+.sk-fig{display:block;width:100%;max-height:240px;margin:0 0 14px;border-radius:16px;background:#ffffff80}
+.sk-p{margin:0;font:500 17px/2 "Hiragino Mincho ProN","Yu Mincho",serif;letter-spacing:.02em}
+.sk-p--paper{display:none}
+.sk:has(#sk-v-paper:checked) .sk-p--paper{display:block}
+.sk:has(#sk-v-paper:checked) .sk-p--craft{display:none}
+.sk.is-paper .sk-p--paper{display:block}
+.sk.is-paper .sk-p--craft{display:none}
+.sk-next{margin:8px 0 0}
+.sk-next a{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;font-weight:700;text-underline-offset:5px}
+
+/* closing */
+.sk-end{max-width:760px;margin:0 auto;padding:64px clamp(18px,4vw,32px) 96px}
+.sk-end h2{margin:0 0 18px;font:600 30px/1.3 "Hiragino Mincho ProN","Yu Mincho",serif;letter-spacing:.06em}
+.sk-end h2:focus{outline:none}
+.sk-year{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:10px;border-left:3px solid var(--indigo);padding-left:18px}
+.sk-year b{display:inline-block;min-width:7em;color:var(--indigo)}
+.sk-end__note{margin:0 0 20px;font-size:13px;color:var(--mute)}
+.sk-visit{min-height:48px;padding:0 22px;border:0;border-radius:999px;background:var(--indigo);color:#fffdf8;font-weight:700;cursor:pointer}
+.sk-visit__msg{min-height:28px;margin:10px 0 0;font-size:14px;color:var(--mute)}
+
+/* contents sheet (JS) */
+.sk-sheet{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:16px;background:#22201c66}
+.sk-sheet__box{width:min(440px,100%);padding:22px;border-radius:18px;background:var(--washi);box-shadow:0 24px 60px -20px #22201c88;animation:sk-pop .2s ease both}
+@keyframes sk-pop{from{opacity:0;transform:translateY(12px)}}
+.sk-sheet h2{margin:0 0 10px;font:600 22px/1.3 "Hiragino Mincho ProN","Yu Mincho",serif}
+.sk-sheet ol{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:4px}
+.sk-sheet button{display:flex;gap:12px;align-items:center;width:100%;min-height:48px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:var(--ink);font:600 17px/1.3 "Hiragino Mincho ProN","Yu Mincho",serif;text-align:left;cursor:pointer}
+.sk-sheet button:hover,.sk-sheet button.is-here{background:#fffdf8}
+.sk-sheet button.is-here::after{content:"読んでいる章";margin-left:auto;font:600 11px/1 system-ui,sans-serif;color:var(--mute)}
+.sk-sheet .sk-sheet__close{justify-content:center;border:1.5px solid var(--line);font:700 14px/1 system-ui,sans-serif}
+
+/* with JS: the illustration stays and follows the paragraphs (not for reduced motion) */
+html.js:not(.reduced) .sk-fig{display:none}
+html.js:not(.reduced) .sk-stage{display:block}
+html.js:not(.reduced) .sk-p{border-left:3px solid transparent;padding-left:18px;margin-left:-21px;transition:border-color .4s ease}
+html.js:not(.reduced) .sk-step.is-active .sk-p{border-left-color:var(--accent)}
+.sk-stage__svg{display:block;width:100%;height:100%;border-radius:24px;background:var(--stage-bg,var(--ch1));transition:background-color .8s ease}
+.sk[data-ch="2"] .sk-stage__svg{--stage-bg:#dbe5dc}.sk[data-ch="3"] .sk-stage__svg{--stage-bg:#ece4d3}.sk[data-ch="4"] .sk-stage__svg{--stage-bg:#f1dfc6}
+.sk[data-ch="0"] .sk-stage__svg,.sk[data-ch="1"] .sk-stage__svg{--stage-bg:#dbe4ec}
+.sk-stage__cap{margin:10px 0 0;font-size:13px;color:var(--mute);text-align:center}
+.sk-sun{fill:#fbfdff;transform:translate(calc(var(--s,1) * -8px),calc(var(--s,1) * -3px));transition:transform .9s ease,fill .8s ease}
+.sk[data-ch="3"] .sk-sun{fill:#fbe7cf}.sk[data-ch="4"] .sk-sun{fill:#f3b48c}
+.sk-mtn{transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.sk-mtn--far{fill:#1f3a5f22;transform:translateX(calc(var(--s,1) * -3px))}
+.sk-mtn--near{fill:#1f3a5f38;transform:translateX(calc(var(--s,1) * -7px))}
+.sk-u{opacity:0;transform:translateY(12px);transition:opacity .6s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
+.sk-u.is-on{opacity:1;transform:none}
+.sk-thread{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--p,0));transition:stroke-dashoffset .9s ease}
+@media (min-width:900px){
+  html.js:not(.reduced) .sk-story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,4vw,56px);max-width:1200px;margin:0 auto;padding:0 clamp(18px,3vw,40px)}
+  html.js:not(.reduced) .sk-stage{grid-column:2;grid-row:1;position:sticky;top:76px;align-self:start;height:calc(100vh - 100px);display:flex;flex-direction:column;justify-content:center}
+  html.js:not(.reduced) .sk-stage__svg{height:auto;max-height:calc(100vh - 150px)}
+  html.js:not(.reduced) .sk-text{grid-column:1;grid-row:1;max-width:none;margin:0}
+  html.js:not(.reduced) .sk-ch{background:none;padding-left:21px;padding-right:0}
+  html.js:not(.reduced) .sk-step{min-height:68vh;display:flex;flex-direction:column;justify-content:center}
+}
+@media (max-width:899px){
+  html.js:not(.reduced) .sk-ch,html.js:not(.reduced) .sk-end{scroll-margin-top:calc(64px + 38vh)}
+  html.js:not(.reduced) .sk-stage{position:sticky;top:56px;z-index:2;height:38vh;padding:8px 16px;background:var(--washi);border-bottom:1px solid var(--line)}
+  html.js:not(.reduced) .sk-stage__cap{display:none}
+  html.js:not(.reduced) .sk-stage__svg{height:100%;width:auto;max-width:100%;margin:0 auto}
+  html.js:not(.reduced) .sk-step{min-height:54vh;padding-top:6vh}
+}
+/* short landscape screens: no room for a fixed illustration */
+@media (max-height:500px) and (orientation:landscape){
+  html.js .sk-stage{display:none!important}
+  html.js .sk-fig{display:block!important}
+  html.js .sk-step{min-height:0!important}
+  html.js .sk-p{border-left:0!important;margin-left:0!important;padding-left:0!important}
+}
+/* Save-Data: same layout, changes are immediate */
+html.sk-instant *,html.sk-instant *::before,html.sk-instant *::after{transition:none!important;animation:none!important}
+html.reduced *,html.reduced *::before,html.reduced *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+
+/* illustration parts (shared by the fixed stage and the static figures) */
+.f-snow{fill:#fbfdff}
+.f-flake{fill:#fff;stroke:#9fb8cc;stroke-width:1.2}
+.l-bark{fill:none;stroke:#7a5a3c;stroke-width:5;stroke-linecap:round}
+.f-rope,.f-fire,.f-persimmon{fill:#c8553d}
+.l-ink{fill:none;stroke:#22201c;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.l-wood{fill:none;stroke:#8a6a4a;stroke-width:7;stroke-linecap:round}
+.f-ground{fill:#d9cdb8}
+.f-indigo{fill:#1f3a5f}
+.f-ink{fill:#22201c}
+.l-steam{fill:none;stroke:#fff;stroke-width:5;stroke-linecap:round}
+.f-water{fill:#a9c1d3}
+.l-wave{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round}
+.l-fiber{fill:none;stroke:#fffdf6;stroke-width:6;stroke-linecap:round}
+.f-stone{fill:#8f8a80}
+.f-fiberfill{fill:#fffdf6;stroke:#d9cdb8;stroke-width:2}
+.f-wood{fill:#a07a52}
+.l-neri{fill:none;stroke:#5f7f4a;stroke-width:4;stroke-linecap:round}
+.l-indigo{stroke:#1f3a5f}
+.l-screen{fill:none;stroke:#a07a52;stroke-width:2.5}
+.l-drop{fill:none;stroke:#5f7f99;stroke-width:3;stroke-linecap:round}
+.f-sheetwet{fill:#e6eef3}
+.l-sheetedge{fill:none;stroke:#b9c6cf;stroke-width:2}
+.f-paper{fill:#fffdf6;stroke:#d9cdb8;stroke-width:2}
+.f-paper--lit{fill:#fff8ec}
+.l-wind{fill:none;stroke:#9fb8cc;stroke-width:3;stroke-linecap:round}
+.f-glow{fill:#f3c9a8;opacity:.75}
+.l-cloud{fill:none;stroke:#e6d6bb;stroke-width:5;stroke-linecap:round}
+.l-brush{fill:none;stroke:#22201c;stroke-width:4;stroke-linecap:round}
+
+@media (max-width:520px){
+  .sk-voice__opts{grid-template-columns:1fr}
+  .sk-brand__en{display:none}
+}

@@ -1,0 +1,80 @@
+{
+  "id": "dl-web-0999",
+  "slug": "isolation-probe",
+  "medium": "web",
+  "status": "published",
+  "title": "Isolation probe (test only)",
+  "summary": "隔離の受け入れ試験（B3〜B9）専用のプローブ。本番のパッケージには入らない。",
+  "description": "テスト専用。デモの中から Cookie・親 DOM・REST API・遷移・postMessage を試し、結果を記録する。",
+  "use_cases": [
+    "lp"
+  ],
+  "motion_types": [
+    "ui"
+  ],
+  "technologies": [
+    "html",
+    "js"
+  ],
+  "styles": [
+    "minimal"
+  ],
+  "motions": [
+    "stagger"
+  ],
+  "industries": [],
+  "level": "advanced",
+  "palette": [
+    {
+      "name": "Ink",
+      "value": "#000000"
+    }
+  ],
+  "fonts": [
+    "system-ui"
+  ],
+  "poster": "posters/isolation-probe.avif",
+  "preview": {
+    "type": "browser",
+    "entry": "demos/isolation-probe/",
+    "viewports": [
+      "desktop"
+    ],
+    "scroll": false,
+    "webgl": false
+  },
+  "materials": [],
+  "customization": [],
+  "deliverables": {
+    "html": {
+      "file": "demos/isolation-probe/",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "showCode": false
+  },
+  "credits": {
+    "author": "OmochiX",
+    "source": "original",
+    "license": "original"
+  },
+  "verification": {
+    "state": "verified-local",
+    "checked": "2026-11-16",
+    "environments": [
+      "chromium"
+    ],
+    "limitations": [
+      "テスト専用"
+    ]
+  },
+  "related": {
+    "designs": [],
+    "motion": [],
+    "learn": [],
+    "prompts": []
+  },
+  "audit": {
+    "reviewed": "2026-11-16",
+    "perf": {}
+  }
+}
