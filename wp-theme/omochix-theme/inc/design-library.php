@@ -1416,6 +1416,20 @@ add_action('template_redirect', static function () {
     exit;
 }, 0);
 
+/**
+ * With nothing to list, "/design-sitemap.xml" must be the same 404 as any unknown URL. Its rewrite rule carries
+ * only the internal query var, so the main query would otherwise run as the posts listing: posts found, several
+ * pages, and an SEO plugin that prints rel="next" from max_num_pages adds it to the 404 page. No posts are
+ * queried for it instead (found_posts and max_num_pages stay 0, as on a normal 404).
+ */
+add_filter('posts_pre_query', static function ($posts, $query) {
+    if ($query instanceof WP_Query && $query->is_main_query()
+        && '1' === (string) $query->get(OMOCHIX_DESIGN_SITEMAP_VAR, '') && !omochix_design_sitemap_entries()) {
+        return [];
+    }
+    return $posts;
+}, 10, 2);
+
 /** Announce the sitemap in robots.txt (after Slim SEO), only while it exists and the site is public. */
 add_filter('robots_txt', static function ($output, $public) {
     $url = $public ? omochix_design_sitemap_url() : '';

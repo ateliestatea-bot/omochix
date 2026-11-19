@@ -123,9 +123,12 @@ class ReleaseExpectations(unittest.TestCase):
                     self.assertEqual(want['baseline_sha256'], rl.sha256_file(os.path.join(ROOT, cfg['packages'][key]['baseline'])), key)
                 self.assertEqual(exp['gates'], list(plan['gates']))
                 self.assertEqual(exp['rollback']['count'], len(plan['rollback_order']))
-                if 'release.json' == name:
+                if 'theme-1.31.0.json' == name:
                     self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
                     self.assertTrue(any('draft' in n for n in plan['after_rollback']), 'rollback closes the publish gate before the files')
+                if 'release.json' == name:
+                    self.assertTrue(any('101 URLs' in n for n in plan['after_rollback']), 'rollback checks the existing URLs')
+                    self.assertFalse(any('Permalinks' in n for n in plan['after_rollback']), '1.31.1 adds no rewrite rule')
                 if BOTH_PACKAGES == name:
                     self.assertEqual(['plugins/omochix-core/omochix-core.php'], [s['target'] for s in plan['steps'] if s['n'] == 14])
                     self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
