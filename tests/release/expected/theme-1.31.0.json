@@ -1,0 +1,53 @@
+{
+  "release": "Theme 1.31.0 (Design Library, deployed with its publish gate closed)",
+  "commit": "c9ae6e25e4173ced9255f631ae54c9e9a2b52590",
+  "note": "Archived with the 1.31.0 release (main c9ae6e2, deployed 2026-11-20); checked by CI on that commit. Independent expectations for tools/release/release.json. Recorded by hand from the git tree of the 1.31.0 release candidate against the production 1.30.0 manifest (releases/theme-1.30.0-7f0d4d9, sha256 027648c4...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
+  "versions": {
+    "core": "1.10.0",
+    "theme": "1.31.0"
+  },
+  "packages": {
+    "theme": {
+      "baseline_sha256": "027648c4737afe648b11c3f4d3632c0cd5a5a525260478de54d6822d09b74ad4",
+      "files": 287,
+      "add": 93,
+      "replace": 2
+    }
+  },
+  "unchanged": {
+    "core": {
+      "dir": "wp-plugin/omochix-core",
+      "baseline": "tools/release/baseline/omochix-core-1.10.0.sha256",
+      "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
+    }
+  },
+  "steps": 95,
+  "changed_paths_sha256": "10b7525ac9ea69e4078c48472e70df9a4113da720d4f1c62a9ba661e9dac3bdd",
+  "forbidden": {
+    "pattern": "#labs|svg-motion|logo-motion#i",
+    "allowed": []
+  },
+  "order_rules": [
+    {
+      "path": "theme:functions.php",
+      "after_every": "add",
+      "before_every": "replace",
+      "except": [
+        "theme:style.css"
+      ],
+      "why": "functions.php loads the new Design Library inc files"
+    }
+  ],
+  "switches": [
+    "theme:style.css"
+  ],
+  "gates": [
+    "B"
+  ],
+  "rollback": {
+    "first": "theme:style.css",
+    "last": "theme:functions.php",
+    "count": 2
+  },
+  "core_version_markers": 11
+}

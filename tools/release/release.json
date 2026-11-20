@@ -1,391 +1,19 @@
 {
-  "release": "Theme 1.31.0 (Design Library, deployed with its publish gate closed)",
-  "note": "Theme only, on production 1.30.0 (release commit 7f0d4d9, main 6fce426). Baseline: the 1.30.0 release manifest (194 files, sha256 027648c4...). Core stays 1.10.0. 95 files: the 93 new Design Library files, then functions.php (it loads inc/design-library.php and inc/design-library-demo.php), style.css last. Nothing else changes: the navigation, search suggest, loader, Industry Hub, Labs, SVG Motion Studio and Learn files stay byte-identical to 1.30.0. Deployed with no published page with the slug design, so every Design Library URL answers 404 until a separately approved publish.",
+  "release": "Theme 1.31.1 (design sitemap: same 404 as an unknown URL while the gate is closed)",
+  "note": "Theme only, on production 1.31.0 (release commit c9ae6e2, deployed 2026-11-20 with the publish gate closed). Baseline: the 1.31.0 release manifest (287 files, sha256 e5f537d5...). Core stays 1.10.0. 2 files: inc/design-library.php (no posts are queried for /design-sitemap.xml while it has nothing to list, so Slim SEO no longer prints rel=\"next\" on that 404), then style.css (version 1.31.1, switch file). No new rewrite rule and no database change.",
   "packages": {
     "theme": {
       "name": "omochix-theme",
       "dir": "wp-theme/omochix-theme",
       "target": "themes/omochix-theme",
-      "baseline": "tools/release/baseline/omochix-theme-1.30.0.sha256",
-      "baseline_version": "1.30.0"
+      "baseline": "tools/release/baseline/omochix-theme-1.31.0.sha256",
+      "baseline_version": "1.31.0"
     }
   },
   "order": [
     [
       "theme",
-      "assets/css/design-library.css"
-    ],
-    [
-      "theme",
-      "assets/data/design/catalog.json"
-    ],
-    [
-      "theme",
-      "assets/data/design/catalog.schema.json"
-    ],
-    [
-      "theme",
-      "assets/design/demos/3d-interactive/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/3d-interactive/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/3d-interactive/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/demos/ai-workspace/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/ai-workspace/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/ai-workspace/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/demos/aurora-gradient/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/aurora-gradient/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/aurora-gradient/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/demos/bento-saas/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/bento-saas/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/bento-saas/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/demos/dark-luxury/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/dark-luxury/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/dark-luxury/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/demos/interactive-story/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/interactive-story/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/interactive-story/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/demos/liquid-glass/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/liquid-glass/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/liquid-glass/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/demos/micro-interactions/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/micro-interactions/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/micro-interactions/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/demos/minimal-editorial/demo.css"
-    ],
-    [
-      "theme",
-      "assets/design/demos/minimal-editorial/demo.js"
-    ],
-    [
-      "theme",
-      "assets/design/demos/minimal-editorial/demo.php"
-    ],
-    [
-      "theme",
-      "assets/design/loops/3d-interactive.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/3d-interactive.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/ai-workspace.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/ai-workspace.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/aurora-gradient.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/aurora-gradient.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/bento-saas.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/bento-saas.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/brand-typography.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/brand-typography.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/dark-luxury.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/dark-luxury.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/data-chart-explainer.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/data-chart-explainer.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/interactive-story.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/interactive-story.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/liquid-glass.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/liquid-glass.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/logo-reveal-short.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/logo-reveal-short.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/micro-interactions.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/micro-interactions.webm"
-    ],
-    [
-      "theme",
-      "assets/design/loops/minimal-editorial.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/loops/minimal-editorial.webm"
-    ],
-    [
-      "theme",
-      "assets/design/posters/3d-interactive.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/3d-interactive.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/ai-workspace.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/ai-workspace.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/aurora-gradient.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/aurora-gradient.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/bento-saas.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/bento-saas.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/brand-typography.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/brand-typography.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/dark-luxury.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/dark-luxury.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/data-chart-explainer.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/data-chart-explainer.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/interactive-story.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/interactive-story.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/liquid-glass.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/liquid-glass.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/logo-reveal-short.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/logo-reveal-short.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/micro-interactions.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/micro-interactions.webp"
-    ],
-    [
-      "theme",
-      "assets/design/posters/minimal-editorial.avif"
-    ],
-    [
-      "theme",
-      "assets/design/posters/minimal-editorial.webp"
-    ],
-    [
-      "theme",
-      "assets/design/runtime/demo-runtime.js"
-    ],
-    [
-      "theme",
-      "assets/design/videos/brand-typography.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/videos/brand-typography.webm"
-    ],
-    [
-      "theme",
-      "assets/design/videos/data-chart-explainer.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/videos/data-chart-explainer.webm"
-    ],
-    [
-      "theme",
-      "assets/design/videos/logo-reveal-short.mp4"
-    ],
-    [
-      "theme",
-      "assets/design/videos/logo-reveal-short.webm"
-    ],
-    [
-      "theme",
-      "assets/js/design-library-preview.js"
-    ],
-    [
-      "theme",
-      "assets/js/design-library.js"
-    ],
-    [
-      "theme",
-      "inc/design-library-demo.php"
-    ],
-    [
-      "theme",
       "inc/design-library.php"
-    ],
-    [
-      "theme",
-      "page-design.php"
-    ],
-    [
-      "theme",
-      "template-parts/design-library/card.php"
-    ],
-    [
-      "theme",
-      "template-parts/design-library/detail.php"
-    ],
-    [
-      "theme",
-      "template-parts/design-library/filter-bar.php"
-    ],
-    [
-      "theme",
-      "functions.php"
     ],
     [
       "theme",
@@ -404,7 +32,7 @@
         "theme",
         "style.css"
       ],
-      "check": "Existing 31 URLs unchanged from 1.30.0 (navigation, search with suggestions, loader off, canonical and robots, sitemaps); /design/, /design/web/, /design/video/, a work detail, a demo URL and /design-sitemap.xml all answer 404 while no page with the slug design is published; Industry Hub hubs still 404 while private; Labs, SVG Motion Studio and the Learn card unchanged; all 95 files match the manifest."
+      "check": "Existing 101 URLs unchanged from the 1.31.0 baseline; /design-sitemap.xml is a 404 with no rel=\"next\" link and the same head as an unknown URL; /design/, /design/web/, /design/video/, a work detail and a demo URL still answer 404 (the demo 404 keeps its sandbox CSP, no-store and noindex); robots.txt and the sitemaps unchanged; style.css?ver=1.31.1; both files match the manifest."
     }
   },
   "rollback_order": [
@@ -414,19 +42,14 @@
     ],
     [
       "theme",
-      "functions.php"
+      "inc/design-library.php"
     ]
   ],
   "after_apply": [
-    "Reset PHP opcache (LiteSpeed Cache: Toolbox > Purge All - Opcode Cache).",
-    "Purge all LiteSpeed caches.",
-    "Run gate B checks."
+    "Do not reset OPcache or purge caches unless separately approved: 1.31.0 showed new files are picked up without a reset.",
+    "Run gate B checks (public GETs)."
   ],
   "after_rollback": [
-    "Before the files: if the page with the slug design was published, set it back to draft first (otherwise /design/... answers 200 with the plain page template once functions.php is restored).",
-    "Reset PHP opcache and purge all LiteSpeed caches.",
-    "Without --remove-added the 93 added files stay on the server: nothing loads them once functions.php is restored, but the posters, loops and videos stay reachable by their URLs; use --remove-added to remove them.",
-    "The 4 Design Library rewrite rules stay in the database until Settings > Permalinks > Save regenerates them (a database change: needs its own approval). While no page with the slug design is published they lead to 404, except /design-sitemap.xml which answers 301 to a 404.",
-    "Check the 31 existing URLs match the 1.30.0 state."
+    "Check the 101 URLs match the 1.31.0 state (rel=\"next\" comes back on the /design-sitemap.xml 404; harmless). Cache purge and OPcache reset only with separate approval."
   ]
 }

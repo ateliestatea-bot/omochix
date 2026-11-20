@@ -1,16 +1,16 @@
 {
-  "release": "Theme 1.31.0 (Design Library, deployed with its publish gate closed)",
+  "release": "Theme 1.31.1 (design sitemap: same 404 as an unknown URL while the gate is closed)",
   "commit": "HEAD",
-  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the git tree of the 1.31.0 release candidate against the production 1.30.0 manifest (releases/theme-1.30.0-7f0d4d9, sha256 027648c4...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
+  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.31.1 tree against the production 1.31.0 manifest (releases/theme-1.31.0-c9ae6e2, sha256 e5f537d5...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
   "versions": {
     "core": "1.10.0",
-    "theme": "1.31.0"
+    "theme": "1.31.1"
   },
   "packages": {
     "theme": {
-      "baseline_sha256": "027648c4737afe648b11c3f4d3632c0cd5a5a525260478de54d6822d09b74ad4",
+      "baseline_sha256": "e5f537d5d8d21a2b3ac5cb8dc56b135790cba737933fc22e7e71305790ed766b",
       "files": 287,
-      "add": 93,
+      "add": 0,
       "replace": 2
     }
   },
@@ -21,23 +21,13 @@
       "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
     }
   },
-  "steps": 95,
-  "changed_paths_sha256": "10b7525ac9ea69e4078c48472e70df9a4113da720d4f1c62a9ba661e9dac3bdd",
+  "steps": 2,
+  "changed_paths_sha256": "04a7035574575adc692c6d03834046d2d0b2dcc94eaed3e6ca9c282884a34bdf",
   "forbidden": {
     "pattern": "#labs|svg-motion|logo-motion#i",
     "allowed": []
   },
-  "order_rules": [
-    {
-      "path": "theme:functions.php",
-      "after_every": "add",
-      "before_every": "replace",
-      "except": [
-        "theme:style.css"
-      ],
-      "why": "functions.php loads the new Design Library inc files"
-    }
-  ],
+  "order_rules": [],
   "switches": [
     "theme:style.css"
   ],
@@ -46,7 +36,7 @@
   ],
   "rollback": {
     "first": "theme:style.css",
-    "last": "theme:functions.php",
+    "last": "theme:inc/design-library.php",
     "count": 2
   },
   "core_version_markers": 11

@@ -225,6 +225,13 @@ check('site not public: robots.txt does not announce the design sitemap', false 
 $pid = (int) wp_php('echo get_page_by_path("design")->ID;');
 wp_php("wp_update_post(['ID' => $pid, 'post_status' => 'draft']);");
 check('design page draft: /design-sitemap.xml is a 404', 404 === req('/design-sitemap.xml')['code']);
+// Same 404 as an unknown URL: the main query finds no posts (with one post per page the local site has several pages),
+// so an SEO plugin that prints rel="next" from max_num_pages (Slim SEO in production) prints nothing.
+$mq = static function ($uri) {
+    return wp_php('add_filter("pre_option_posts_per_page", static function () { return 1; }); $_SERVER["REQUEST_URI"] = ' . var_export($uri, true) . '; wp(); global $wp_query; echo (int) $wp_query->found_posts, "/", (int) $wp_query->max_num_pages, "/", count($wp_query->posts);');
+};
+check('design page draft: /design-sitemap.xml queries no posts, like an unknown URL (no rel="next")', '0/0/0' === $mq('/design-sitemap.xml') && '0/0/0' === $mq('/no-such-page-xyz/'), $mq('/design-sitemap.xml'));
+check('design page draft: the posts listing still paginates (control)', '0/0/0' !== $mq('/page/2/'), $mq('/page/2/'));
 wp_php("wp_update_post(['ID' => $pid, 'post_status' => 'publish']);");
 check('design page published again: sitemap is back', 200 === req('/design-sitemap.xml')['code']);
 touch($flag);
