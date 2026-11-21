@@ -97,6 +97,25 @@ GitHub の Ruleset は運営者が別に承認してから設定します。こ�
    - **レビュー後に CI のファイルを変える commit が積まれると、ダイジェストが変わって再び失敗します。** ラベルは GitHub に残りますが、承認は引き継がれません。
    - CI 以外のファイルだけの commit や、タイトルの編集による再実行では、承認はそのままです。
 
+### push のとき（merge の後）
+
+- **何を確認するか:** CI のファイルの変更と「要レビュー」の違反（新しいリリース検査など）は、次の3つをすべて満たすときだけ通ります。
+  1. その push が、承認された PR の merge commit である
+  2. その PR に、**この内容と同じダイジェスト**の承認（ラベルとダイジェストの行）が付いている
+  3. 新しいステップが、push された commit 自身の `pinned_steps` で固定されている（要レビューの違反の場合）
+- **PR の読み取り:** PR の情報は、直前のステップ「Merged pull request of this push」が GitHub API（`commits/{sha}/pulls`、読み取りのみ。ジョブの権限は `pull-requests: read`）から `$RUNNER_TEMP/ci-merged-pulls.json` に保存したものを使います。
+- **FAIL になる場合:**
+  - 直接 push
+  - squash・rebase での merge
+  - 複数の commit をまとめた push
+  - API が読めない
+  - 承認の無い PR の merge
+  - ダイジェストが違う
+- **弱める変更とセキュリティ違反:** push では承認があっても FAIL です。
+- **以前の誤判定:** 以前は push で要レビューの違反を承認する手段がなく、承認済みの PR を merge しても必ず FAIL していました（run 44665403771）。
+- **Ruleset との関係:** この確認は Ruleset に依存しません。Ruleset が無効になっても、承認の無い CI の変更が main に入れば、push のときに FAIL として出ます。
+  - ただし push では、push された commit の workflow が実行されます。悪意のある直接 push（ガードの workflow ごと書き換えるもの）を止めたり検知したりできるのは、Ruleset（PR 必須・必須チェック・バイパスなし）だけです。
+
 ### CI policy
 
 `ci-policy.yml`（`pull_request`）で、この commit 自身の一覧に対してポリシーを確認し、自己テスト `python3 -m unittest discover -s tests/ci` を実行します。PR のコードを実行するので、`pull_request_target` にはしません。PR 側で書き換えられるので、整合性の確認であって、変更を判定するのは CI change guard です。
