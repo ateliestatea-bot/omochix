@@ -20,7 +20,17 @@ a YAML reader); nothing from the pull request runs.
   3. Protected paths changed (workflows, CI scripts and tests, the ownership file, the
      Release gate and release tool code):
        pull request -> FAIL unless APPROVED with 'ci-change-reviewed' (or the weakening label).
-       push         -> NOTE only (a push cannot be stopped afterwards; the ruleset does that).
+
+  Push (after the merge): protected path changes and REVIEW findings pass only when the
+  push is the merge commit of a merged pull request that carries the approval for this
+  exact content (the label and the digest line, read from the GitHub API into
+  $RUNNER_TEMP/ci-merged-pulls.json by the previous step), and, for REVIEW findings, the
+  pushed commit's own inventory pins the new steps. A direct push, a squash or rebase
+  merge, a moved base, a missing or unreadable API answer, or a pull request merged
+  without the approval all FAIL. This does not depend on the ruleset: with the ruleset
+  disabled or changed, such a push is still reported as a failure. (A push can only be
+  reported, not stopped, and runs the pushed commit's own workflow; the ruleset is what
+  makes every push a reviewed merge.) Weakening and security findings FAIL on a push.
 
 APPROVED means both: the label is set, AND the pull request description has the line
 '<label>: <digest>', where <digest> is printed by a failing run. The digest covers the
@@ -67,7 +77,21 @@ def approved_in(body, label, full):
     return False
 
 
-def guard(base, head, event, labels, inventory=None, cwd=None, body=""):
+MERGED_PULLS = "ci-merged-pulls.json"
+
+
+def merged_pull(head, pulls):
+    """The merged pull request whose merge commit is head, from the 'commits/{sha}/pulls' answer."""
+    if not isinstance(pulls, list):
+        return None
+    for p in pulls:
+        if isinstance(p, dict) and p.get("merged_at") and p.get("merge_commit_sha") == head:
+            return p
+    return None
+
+
+def guard(base, head, event, labels, inventory=None, cwd=None, body="", merged_pulls=None):
+    """Return (ok, lines). merged_pulls: the parsed API answer for a push (None = unavailable)."""
     """Return (ok, lines)."""
     lines, ok = [], True
     if event == "pull_request_target":
@@ -102,9 +126,35 @@ def guard(base, head, event, labels, inventory=None, cwd=None, body=""):
         return False, ["FAIL git could not read the changed files: %s" % exc]
     short = full[:16]
     pr = event == "pull_request"
+    merged = None   # the verified pull request for a push, or the reason there is none
+    if not pr and (hits or review):
+        try:
+            head_sha, base_sha = cilib.rev(head, cwd=cwd), cilib.rev(base, cwd=cwd)
+            ps = cilib.parents(head_sha, cwd=cwd)
+        except cilib.GitError as exc:
+            ps, head_sha, base_sha = [], "", ""
+            merged = "git could not read the pushed commit: %s" % exc
+        if merged is None:
+            if len(ps) != 2 or ps[0] != base_sha:
+                merged = "the push is not a single merge commit on top of %s (a direct push, a squash or rebase merge, or several commits)" % base_sha[:12]
+            elif merged_pulls is None:
+                merged = "the merged pull request could not be read from the GitHub API"
+            else:
+                p = merged_pull(head_sha, merged_pulls)
+                if p is None:
+                    merged = "no merged pull request has %s as its merge commit" % head_sha[:12]
+                else:
+                    merged = p
+    push_ok = isinstance(merged, dict)
+    if push_ok:
+        labels = [str((x or {}).get("name", "")) for x in merged.get("labels") or [] if isinstance(x, dict)]
+        body = merged.get("body") or ""
 
     def approved(label):
-        return pr and label in labels and approved_in(body, label, full)
+        return (pr or push_ok) and label in labels and approved_in(body, label, full)
+
+    def who():
+        return "pull request #%s" % merged.get("number") if push_ok else "this pull request"
 
     def how(label):
         if label in labels:
@@ -118,7 +168,7 @@ def guard(base, head, event, labels, inventory=None, cwd=None, body=""):
         lines.append("FAIL workflow policy: %d security findings (no label accepts these; change the policy first in its own reviewed pull request):" % len(security))
         lines += ["FAIL   " + x for x in security]
     if weak:
-        if approved(weakening):
+        if pr and approved(weakening):
             lines.append("WARN workflow policy: %d findings, accepted with the '%s' label for digest %s:" % (len(weak), weakening, short))
             lines += ["WARN   " + x for x in weak]
         else:
@@ -128,6 +178,25 @@ def guard(base, head, event, labels, inventory=None, cwd=None, body=""):
             if pr:
                 lines.append("NOTE if this is intended, change the ruleset in the same step.")
                 lines.append(how(weakening))
+    if review and not pr:
+        own = []
+        if push_ok and (approved(reviewed) or approved(weakening)):
+            # The new steps must be pinned by the pushed commit's own inventory as well.
+            try:
+                own = workflow_policy.check(rev=head, cwd=cwd)
+            except (cilib.GitError, ValueError, KeyError) as exc:
+                own = ["the pushed commit's own policy could not run: %s" % exc]
+            if not own:
+                lines.append("NOTE workflow policy: %d new steps not pinned on the base, approved on %s for digest %s and pinned by the pushed commit:" % (len(review), who(), short))
+                lines += ["NOTE   " + x for x in review]
+                review = []
+        if review:
+            ok = False
+            why = ("the pushed commit's own inventory does not pin them: " + "; ".join(own)) if own else (
+                merged if not push_ok else "%s does not carry the approval for digest %s" % (who(), short))
+            lines.append("FAIL workflow policy: %d new steps not pinned on the base, and %s:" % (len(review), why))
+            lines += ["FAIL   " + x for x in review]
+            review = []
     if review:
         if approved(reviewed) or approved(weakening):
             lines.append("WARN workflow policy: %d new steps not pinned on the base, reviewed for digest %s:" % (len(review), short))
@@ -144,8 +213,14 @@ def guard(base, head, event, labels, inventory=None, cwd=None, body=""):
     if not hits:
         lines.append("PASS no CI or gate file changes (%d changed files)" % len(paths))
     elif not pr:
-        lines.append("NOTE %d CI or gate files changed by a push (cannot be stopped afterwards; the ruleset must require pull requests):" % len(hits))
-        lines += ["NOTE   " + p for p in hits]
+        if push_ok and (approved(reviewed) or approved(weakening)):
+            lines.append("NOTE %d CI or gate files changed by the merge of %s, approved there for digest %s:" % (len(hits), who(), short))
+            lines += ["NOTE   " + p for p in hits]
+        else:
+            ok = False
+            why = merged if not push_ok else "%s does not carry the approval for digest %s" % (who(), short)
+            lines.append("FAIL %d CI or gate files changed by a push, and %s (the ruleset must require reviewed pull requests):" % (len(hits), why))
+            lines += ["FAIL   " + p for p in hits]
     elif approved(reviewed) or approved(weakening):
         lines.append("WARN %d CI or gate files changed; reviewed for digest %s:" % (len(hits), short))
         lines += ["WARN   " + p for p in hits]
@@ -175,7 +250,15 @@ def main(argv=None):
             base = cilib.git("merge-base", "origin/main", a.head).decode().strip()
         except cilib.GitError:
             base = a.head + "^"
-    ok, lines = guard(base, a.head, a.event, labels, body=a.body)
+    pulls = None
+    if a.event == "push":
+        path = os.path.join(os.environ.get("RUNNER_TEMP", ""), MERGED_PULLS)
+        try:
+            with open(path, encoding="utf-8") as fh:
+                pulls = json.load(fh)
+        except (OSError, ValueError):
+            pulls = None   # guard() fails closed if it needs them
+    ok, lines = guard(base, a.head, a.event, labels, body=a.body, merged_pulls=pulls)
     print("\n".join(lines))
     print("\nCI change guard: %s" % ("PASS" if ok else "FAIL"))
     cilib.write_summary("**CI change guard: %s**\n\n%s" % ("PASS" if ok else "FAIL", "\n".join("- " + l.replace("`", "'") for l in lines)))

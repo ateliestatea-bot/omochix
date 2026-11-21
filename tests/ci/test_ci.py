@@ -442,8 +442,15 @@ class Guard(RepoCase):
     def base_inventory(self):
         return json.loads(self.r.git("show", "HEAD^1:tools/ci/required-checks.json"))
 
-    def guard(self, labels=(), event="pull_request", body=""):
-        return ci_guard.guard("HEAD^1", "HEAD", event, list(labels), inventory=self.base_inventory(), cwd=self.r.dir, body=body)
+    def guard(self, labels=(), event="pull_request", body="", merged_pulls=None):
+        return ci_guard.guard("HEAD^1", "HEAD", event, list(labels), inventory=self.base_inventory(), cwd=self.r.dir, body=body,
+                              merged_pulls=merged_pulls)
+
+    def merged(self, labels=(), body="", number=99, sha=None, merged=True):
+        """The 'commits/{sha}/pulls' API answer for the merge at HEAD."""
+        return [{"number": number, "merged_at": "2026-11-22T00:00:00Z" if merged else None,
+                 "merge_commit_sha": sha or self.r.git("rev-parse", "HEAD"),
+                 "labels": [{"name": n} for n in labels], "body": body}]
 
     def approval(self, label):
         """The description line a failing run asks for (what an owner pastes after reading the diff)."""
@@ -517,11 +524,89 @@ class Guard(RepoCase):
             with self.subTest(body):
                 self.assertFalse(self.guard(labels=["ci-change-reviewed"], body=body)[0])
 
-    def test_push_with_ci_changes_is_reported_not_failed(self):
+    def test_push_with_ci_changes_passes_only_as_an_approved_merge(self):
         self.r.pr("ci", {".github/workflows/tests.yml": lambda s: s + "\n# comment\n"})
-        ok, lines = self.guard(event="push")
+        line = self.approval("ci-change-reviewed")
+        ok, lines = self.guard(event="push", merged_pulls=self.merged(["ci-change-reviewed"], "LGTM\r\n" + line))
         self.assertTrue(ok, "\n".join(lines))
-        self.assertTrue(any(l.startswith("NOTE") and "push" in l for l in lines))
+        self.assertTrue(any(l.startswith("NOTE") and "approved there" in l for l in lines))
+        for name, pulls, text in (
+            ("no API answer", None, "could not be read from the GitHub API"),
+            ("no pull request", [], "no merged pull request"),
+            ("merged without approval (like #69)", self.merged(), "does not carry the approval"),
+            ("label only", self.merged(["ci-change-reviewed"]), "does not carry the approval"),
+            ("digest only", self.merged([], line), "does not carry the approval"),
+            ("digest of other content", self.merged(["ci-change-reviewed"], "ci-change-reviewed: " + "0" * 16), "does not carry the approval"),
+            ("closed, not merged", self.merged(["ci-change-reviewed"], line, merged=False), "no merged pull request"),
+            ("another merge commit", self.merged(["ci-change-reviewed"], line, sha="1" * 40), "no merged pull request"),
+            ("garbage answer", {"message": "Not Found"}, "no merged pull request"),
+        ):
+            with self.subTest(name):
+                self.assertFailsWith(self.guard(event="push", merged_pulls=pulls), text)
+
+    def test_push_without_ci_changes_needs_no_api(self):
+        self.r.pr("docs", {"docs/readme.md": "x\n"})
+        self.assertTrue(self.guard(event="push", merged_pulls=None)[0])
+
+    # With the ruleset disabled or changed, these pushes reach main; the guard reports them.
+    def test_direct_push_fails_even_with_an_approved_pull_request_elsewhere(self):
+        self.r.git("checkout", "-q", "main")
+        self.r.write(".github/workflows/tests.yml", self.r.read(".github/workflows/tests.yml") + "# direct\n")
+        self.r.commit("direct push, no pull request")
+        sha = self.r.git("rev-parse", "HEAD")
+        ok, lines = self.guard(event="push", merged_pulls=self.merged(["ci-change-reviewed"], "ci-change-reviewed: " + "a" * 16, sha=sha))
+        self.assertFailsWith((ok, lines), "not a single merge commit")
+
+    def test_forged_merge_commit_without_a_pull_request_fails(self):
+        self.r.pr("forged", {".github/workflows/tests.yml": lambda s: s + "# forged\n"})   # a merge, but nothing on GitHub
+        self.assertFailsWith(self.guard(event="push", merged_pulls=[]), "no merged pull request")
+
+    def test_several_commits_in_one_push_fail(self):
+        self.r.pr("one", {"docs/readme.md": "x\n"})
+        first = self.r.git("rev-parse", "HEAD")
+        self.r.git("checkout", "-q", "-B", "two", "main")
+        self.r.write(".github/workflows/tests.yml", self.r.read(".github/workflows/tests.yml") + "# two\n")
+        self.r.commit("two")
+        self.r.git("checkout", "-q", "--detach", first)
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", "two")
+        head = self.r.git("rev-parse", "HEAD")
+        res = ci_guard.guard("main", "HEAD", "push", [], inventory=self.base_inventory(), cwd=self.r.dir,
+                             merged_pulls=self.merged(["ci-change-reviewed"], "x", sha=head))
+        self.assertFailsWith(res, "not a single merge commit")
+
+    def test_push_of_a_new_release_check_needs_the_approval_and_the_pin(self):
+        def change(pin):
+            self.r.git("checkout", "-q", "main")
+            self.r.git("checkout", "-q", "-B", "rel-%s" % pin, "main")
+            self.r.write(".github/workflows/release.yml", add_release_step(self.r.read(".github/workflows/release.yml")))
+            if pin:
+                self.r.write("tools/ci/required-checks.json", pin_steps(self.r.dir, self.r.read("tools/ci/required-checks.json")))
+            self.r.commit("release check")
+            self.r.git("checkout", "-q", "--detach", "main")
+            self.r.git("merge", "-q", "--no-ff", "--no-edit", "rel-%s" % pin)
+        change(True)
+        line = self.approval("ci-change-reviewed")
+        self.assertTrue(self.guard(labels=["ci-change-reviewed"], body=line)[0])            # the pull request
+        ok, lines = self.guard(event="push", merged_pulls=self.merged(["ci-change-reviewed"], line))
+        self.assertTrue(ok, "\n".join(lines))                                               # the push after the merge (run 44665403771)
+        self.assertTrue(any("approved on pull request #99" in l and "pinned by the pushed commit" in l for l in lines), "\n".join(lines))
+        self.assertFailsWith(self.guard(event="push", merged_pulls=self.merged()), "does not carry the approval")
+        self.assertFailsWith(self.guard(event="push", merged_pulls=None), "could not be read")
+        change(False)                                                                      # approved, but not pinned by its own inventory
+        line = self.approval("ci-change-reviewed")
+        self.assertFailsWith(self.guard(event="push", merged_pulls=self.merged(["ci-change-reviewed"], line)),
+                             "the pushed commit's own inventory does not pin them")
+
+    def test_push_weakening_and_security_fail_even_when_approved(self):
+        for name in ("release-no-push-main", "write-permission"):
+            path, fn, text = self.WEAKENINGS[name]
+            with self.subTest(name):
+                self.r.git("checkout", "-q", "main")
+                self.r.pr("pw-" + name, {path: fn})
+                ok, lines = self.guard()
+                body = "\n".join(l.split("description: ", 1)[1] for l in lines if "description: " in l)
+                pulls = self.merged(["ci-change-reviewed", "ci-weakening-approved"], body)
+                self.assertFailsWith(self.guard(event="push", merged_pulls=pulls), text)
 
     WEAKENINGS = {
         "release-no-push-main": (".github/workflows/release.yml", lambda s: drop_line(s, "  push:\n    branches: [main]\n"), "push.branches lacks main"),
@@ -850,7 +935,7 @@ class Policy(unittest.TestCase):
         self.assertNotIn("pull_request", guard["on"])
         self.assertIn(guard["permissions"], ({}, "{}"))
         for jid, job in guard["jobs"].items():
-            self.assertEqual(job["permissions"], {"contents": "read"})
+            self.assertEqual(job["permissions"], {"contents": "read", "pull-requests": "read"})
             for st in job["steps"]:
                 if "uses" in st:
                     self.assertTrue(st["uses"].startswith("actions/checkout@"))
@@ -925,12 +1010,15 @@ class Policy(unittest.TestCase):
 class WorkflowSteps(RepoCase):
     """Runs the shell of the real workflow steps (from the YAML) in a throwaway repository."""
 
-    def run_step(self, workflow, job, step, **env):
+    def run_step(self, workflow, job, step, pre=None, **env):
         doc = workflow_policy.load_yaml(slurp(os.path.join(REPO, ".github/workflows", workflow)))
         st = [x for x in doc["jobs"][job]["steps"] if x.get("name") == step][0]
         self.assertNotIn("${{", st["run"], "event data must reach the script through env")
         rt = tempfile.mkdtemp(prefix="omx-ci-rt-")
         self.addCleanup(shutil.rmtree, rt, True)
+        for name, content in (pre or {}).items():
+            with open(os.path.join(rt, name), "w", encoding="utf-8") as fh:
+                fh.write(content)
         out = os.path.join(rt, "output")
         e = dict(os.environ, RUNNER_TEMP=rt, GITHUB_OUTPUT=out, GITHUB_STEP_SUMMARY=os.path.join(rt, "summary"))
         e.update(env)
@@ -1087,14 +1175,59 @@ class WorkflowSteps(RepoCase):
         self.assertEqual(code, 1, log)
         self.assertIn("unexpected event", log)
 
-    def test_guard_step_after_a_push(self):
+    def test_guard_step_after_a_direct_push_fails(self):
         before = self.r.git("rev-parse", "main")
         self.r.git("checkout", "-q", "main")
         self.r.write(".github/workflows/labs.yml", self.r.read(".github/workflows/labs.yml") + "\n# x\n")
         self.r.commit("push")
         code, log, _ = self.run_step(*self.GUARD, EVENT="push", BEFORE=before, PR_LABELS="", PR_BODY="", PR_HEAD_SHA="", GITHUB_SHA="")
+        self.assertEqual(code, 1, log)
+        self.assertIn("not a single merge commit", log)
+
+    def test_guard_step_after_an_approved_merge(self):
+        before = self.r.git("rev-parse", "main")
+        self.r.pr("ci", {".github/workflows/labs.yml": lambda s: s + "\n# x\n"})
+        head = self.r.git("rev-parse", "HEAD")
+        self.r.git("update-ref", "refs/heads/main", head)                   # main after the merge
+        inv = json.loads(self.r.git("show", before + ":tools/ci/required-checks.json"))
+        ok, lines = ci_guard.guard(before, head, "pull_request", [], inventory=inv, cwd=self.r.dir)
+        line = [l.split("description: ", 1)[1] for l in lines if "description: ci-change-reviewed:" in l][0]
+        pulls = json.dumps([{"number": 7, "merged_at": "x", "merge_commit_sha": head, "labels": [{"name": "ci-change-reviewed"}], "body": line}])
+        env = dict(EVENT="push", BEFORE=before, PR_LABELS="", PR_BODY="", PR_HEAD_SHA="", GITHUB_SHA="")
+        code, log, _ = self.run_step(*self.GUARD, pre={"ci-merged-pulls.json": pulls}, **env)
         self.assertEqual(code, 0, log)
-        self.assertIn("cannot be stopped afterwards", log)
+        self.assertIn("approved there", log)
+        code, log, _ = self.run_step(*self.GUARD, **env)                    # no API answer
+        self.assertEqual(code, 1, log)
+        code, log, _ = self.run_step(*self.GUARD, pre={"ci-merged-pulls.json": "not json"}, **env)
+        self.assertEqual(code, 1, log)
+
+    FETCH = ("ci-guard.yml", "guard", "Merged pull request of this push (read-only API)")
+
+    def fake_gh(self, script):
+        d = tempfile.mkdtemp(prefix="omx-ci-gh-")
+        self.addCleanup(shutil.rmtree, d, True)
+        with open(os.path.join(d, "gh"), "w", encoding="utf-8") as fh:
+            fh.write("#!/usr/bin/env bash\n" + script)
+        os.chmod(os.path.join(d, "gh"), 0o755)
+        return d + os.pathsep + os.environ["PATH"]
+
+    def test_fetch_step_writes_the_api_answer_or_nothing(self):
+        doc = workflow_policy.load_yaml(slurp(os.path.join(REPO, ".github/workflows/ci-guard.yml")))
+        st = [x for x in doc["jobs"]["guard"]["steps"] if x.get("name") == self.FETCH[2]][0]
+        self.assertEqual(st["if"], "github.event_name == 'push'")
+        self.assertEqual(set(st["env"]), {"GH_TOKEN", "REPO", "SHA"})
+        rt = tempfile.mkdtemp(prefix="omx-ci-rt-")
+        self.addCleanup(shutil.rmtree, rt, True)
+        for name, gh, want in (("ok", 'echo "[{\\"number\\": 1}]"\n', True), ("api error", "echo boom >&2; exit 1\n", False)):
+            with self.subTest(name):
+                f = os.path.join(rt, "ci-merged-pulls.json")
+                if os.path.exists(f):
+                    os.remove(f)
+                e = dict(os.environ, RUNNER_TEMP=rt, PATH=self.fake_gh(gh), REPO="o/r", SHA="a" * 40, GH_TOKEN="x")
+                res = subprocess.run(["bash", "-e", "-c", st["run"]], cwd=self.r.dir, env=e, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                self.assertEqual(res.returncode, 0, res.stderr)
+                self.assertEqual(os.path.exists(f), want)
 
     def test_guard_step_after_a_push_that_weakens_fails(self):
         before = self.r.git("rev-parse", "main")

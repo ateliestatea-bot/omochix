@@ -315,6 +315,16 @@
             }
           },
           {
+            "name": "Merged pull request of this push (read-only API)",
+            "if": "github.event_name == 'push'",
+            "env": {
+              "GH_TOKEN": "${{ github.token }}",
+              "REPO": "${{ github.repository }}",
+              "SHA": "${{ github.sha }}"
+            },
+            "run": "set -euo pipefail\ngh api \"repos/$REPO/commits/$SHA/pulls\" > \"$RUNNER_TEMP/ci-merged-pulls.json\" || rm -f \"$RUNNER_TEMP/ci-merged-pulls.json\"\n"
+          },
+          {
             "name": "CI change guard (base rules against this change)",
             "env": {
               "EVENT": "${{ github.event_name }}",
