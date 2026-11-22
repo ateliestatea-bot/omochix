@@ -1348,7 +1348,6 @@ def export_packages(cwd, rev, dest):
             tar.extractall(dest)
 
 
-@unittest.skipUnless(shutil.which("php"), "php not installed (the Release workflow runs this gate itself)")
 def log_release_selftest(target, stream=None):
     """One line in the job log: which tree the positive control judges, and why."""
     line = "\nrelease self-test: mode=%s event=%r target=%r head=%s fork-point=%s\n  %s\n" % (
@@ -1367,6 +1366,7 @@ def release_control_tree(testcase, target, cwd=REPO):
     return tree
 
 
+@unittest.skipUnless(shutil.which("php"), "php not installed (the Release workflow runs this gate itself)")
 class ReleaseGateStillStrict(unittest.TestCase):
     """The Release gate script is unchanged and still fails on an unapproved package change."""
 
@@ -1519,6 +1519,16 @@ class ReleaseSelftestTarget(RepoCase):
         src = slurp(os.path.join(REPO, "tests/ci/test_ci.py"))
         body = src[src.index("    def test_gate_passes_on_the_release_tree(self):"):src.index("    def test_gate_fails_on_an_unapproved_theme_change(self):")]
         self.assertIn("log_release_selftest(t)", body)
+
+    def test_only_the_php_tests_are_skipped_without_php(self):
+        # The skip belongs to the class that runs PHP; the helpers must stay plain functions,
+        # or a runner without PHP would skip unrelated tests and error in the gate tests.
+        src = slurp(os.path.join(REPO, "tests/ci/test_ci.py"))
+        dec = '@unittest.skipUnless(shutil.which("php"), "php not installed (the Release workflow runs this gate itself)")\n'
+        self.assertEqual(src.count(dec), 1)
+        self.assertIn(dec + "class ReleaseGateStillStrict(unittest.TestCase):", src)
+        for fn in (release_selftest_target, export_packages, log_release_selftest, release_control_tree):
+            self.assertEqual(fn.__code__.co_name, fn.__name__, fn.__name__)
 
     def test_the_test_itself_fails_on_error_mode(self):
         # The positive control asserts mode != error before running anything.
