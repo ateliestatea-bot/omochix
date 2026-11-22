@@ -1,8 +1,10 @@
 <?php
 /**
  * SEO: Slim SEO sitemap exclusion of posts whose Slim SEO canonical names another URL
- * (omochix_sitemap_ignore_non_self_canonical() in inc/seo.php), run through the registered
- * 'slim_seo_sitemap_post_ignore' callback exactly as Slim SEO calls it: ($ignore, WP_Post).
+ * (omochix_sitemap_ignore_non_self_canonical() in inc/seo.php) and of retired posts pinned by ID and slug
+ * (omochix_sitemap_ignore_retired_post()), run through the registered 'slim_seo_sitemap_post_ignore'
+ * callbacks exactly as Slim SEO calls them: ($ignore, WP_Post). Also checks that the theme 1.32.1
+ * release plan (tools/release/release.json and its expectations) matches the rule.
  * Run: php tests/seo/sitemap-ignore.php
  */
 define('ABSPATH', __DIR__ . '/');
@@ -70,6 +72,61 @@ check('T-U6 meta not an array: unchanged', false === $odd(false, post(51, 'str-m
 check('T-U6 canonical not a string: unchanged', false === $odd(false, post(52, 'arr-canon', ['canonical' => ['https://x/']])));
 check('T-U6 canonical not a URL: unchanged', false === $odd(false, post(53, 'bad-canon', ['canonical' => 'not a url'])));
 check('T-U6 canonical "/" (home) on a post: left out', true === $odd(false, post(54, 'to-home', ['canonical' => '/'])));
+
+// ------------------------------------------------------------------- retired posts (301 outside WordPress' data)
+$RTX = 'nvidia-rtx-spark-launch-announcement';
+$typed = static function ($id, $slug, $type = 'post') { return $GLOBALS['posts'][$id] = new WP_Post(['ID' => $id, 'post_name' => $slug, 'post_type' => $type]); };
+check('T-R0 hooked on slim_seo_sitemap_post_ignore', in_array('omochix_sitemap_ignore_retired_post', $GLOBALS['filters']['slim_seo_sitemap_post_ignore'] ?? [], true));
+check('T-R0 the list is exactly post 1184 with its slug', [1184 => $RTX] === omochix_sitemap_retired_posts());
+$src = (string) file_get_contents($THEME . '/inc/seo.php');
+check('T-R0 the list cannot be changed at run time (no filter, no option, no request input)',
+    false === strpos($src, "'omochix_sitemap_retired_posts'") && false === strpos($src, '"omochix_sitemap_retired_posts"')
+    && 1 === preg_match('/function omochix_sitemap_retired_posts\(\) \{\s*return \[[^\]]*\];\s*\}/', $src)
+    && !preg_match('/function omochix_sitemap_retired_posts\(\)[\s\S]{0,400}?(get_option|\$_(GET|POST|REQUEST|COOKIE|SERVER)|apply_filters)/', $src));
+// T-R1/R2: canonical empty, noindex off (no slim_seo meta), ID 1184 and the slug -> left out, as a post object or an id.
+check('T-R1 post 1184 with the slug, no canonical: left out', true === apply_sitemap_ignore(false, $typed(1184, $RTX)));
+check('T-R2 the same by int id: left out', true === apply_sitemap_ignore(false, 1184));
+check('T-R2 the same by numeric string id: left out', true === apply_sitemap_ignore(false, '1184'));
+// T-R3..R5: only some of the three conditions -> listed.
+check('T-R3 ID 1184 with another slug: listed', false === apply_sitemap_ignore(false, $typed(1184, $RTX . '-2')));
+check('T-R4 the slug on another ID: listed', false === apply_sitemap_ignore(false, $typed(1185, $RTX)));
+check('T-R5 ID 1184 and the slug as a page: listed', false === apply_sitemap_ignore(false, $typed(1184, $RTX, 'page')));
+check('T-R5 ID 1184 and the slug as an ai_tool: listed', false === apply_sitemap_ignore(false, $typed(1184, $RTX, 'ai_tool')));
+check('T-R5 slug compared exactly (case, trailing space)', false === apply_sitemap_ignore(false, $typed(1184, strtoupper($RTX))) && false === apply_sitemap_ignore(false, $typed(1184, $RTX . ' ')));
+// T-R6: another filter's decision is kept.
+check('T-R6 ignore=true kept for an unrelated post', true === apply_sitemap_ignore(true, $typed(60, 'unrelated')));
+// T-R7: the pure rule with odd lists never matches by accident and never warns.
+$p = new WP_Post(['ID' => 1184, 'post_name' => $RTX]);
+check('T-R7 empty list', false === omochix_sitemap_is_retired_post($p, []));
+check('T-R7 empty / non-string slug in the list', false === omochix_sitemap_is_retired_post($p, [1184 => '']) && false === omochix_sitemap_is_retired_post($p, [1184 => 0]) && false === omochix_sitemap_is_retired_post($p, [1184 => null]));
+check('T-R7 post_name not a string', false === omochix_sitemap_is_retired_post(new WP_Post(['ID' => 1184, 'post_name' => null]), [1184 => $RTX]));
+check('T-R7 ID 0 / negative', false === omochix_sitemap_is_retired_post(new WP_Post(['ID' => 0, 'post_name' => 'x']), [0 => 'x']) && false === omochix_sitemap_is_retired_post(new WP_Post(['ID' => -1, 'post_name' => 'x']), [-1 => 'x']));
+check('T-R8 another list entry works through the pure rule', true === omochix_sitemap_is_retired_post(new WP_Post(['ID' => 7, 'post_name' => 'gone']), [7 => 'gone']));
+// T-R9: odd arguments -> unchanged.
+check('T-R9 null / 0 / garbage / unknown id: unchanged', false === $odd(false, null) && false === $odd(false, 0) && false === $odd(false, 'abc') && false === $odd(false, 4242));
+// The canonical rule is unchanged for post 1184's neighbours (T-U3 above still left out by canonical).
+check('T-R10 canonical rule still applies on its own', true === apply_sitemap_ignore(false, post(70, 'old-dup', ['canonical' => '/new/'])));
+
+// ------------------------------------------------------------------- the 1.32.1 release plan matches this rule
+$ROOT = realpath(__DIR__ . '/../..');
+$cfg  = json_decode((string) file_get_contents($ROOT . '/tools/release/release.json'), true);
+$exp  = json_decode((string) file_get_contents($ROOT . '/tests/release/expected/release.json'), true);
+preg_match('/^Version:\s*(\S+)/m', (string) file_get_contents($THEME . '/style.css'), $ver);
+$pair = static fn($l) => array_map(static fn($s) => $s[0] . ':' . $s[1], (array) $l);
+check('REL theme version 1.32.1 = expectations', '1.32.1' === ($ver[1] ?? '') && '1.32.1' === ($exp['versions']['theme'] ?? ''));
+check('REL theme only, on the production 1.32.0 baseline', ['theme'] === array_keys($cfg['packages'] ?? []) && '1.32.0' === ($cfg['packages']['theme']['baseline_version'] ?? '')
+    && 'tools/release/baseline/omochix-theme-1.32.0.sha256' === ($cfg['packages']['theme']['baseline'] ?? ''));
+check('REL order: learn-composer, seo, style.css last', ['theme:inc/learn-composer.php', 'theme:inc/seo.php', 'theme:style.css'] === $pair($cfg['order'] ?? []));
+check('REL every step file exists in the theme', !array_filter((array) ($cfg['order'] ?? []), static fn($s) => !is_file($THEME . '/' . $s[1])));
+check('REL switch style.css; rollback restores the 3 files in reverse', ['theme:style.css'] === $pair($cfg['switches'] ?? []) && ['theme:style.css', 'theme:inc/seo.php', 'theme:inc/learn-composer.php'] === $pair($cfg['rollback_order'] ?? []));
+check('REL expectations: 0 added, 3 replaced, 3 steps, same release name', 0 === ($exp['packages']['theme']['add'] ?? null) && 3 === ($exp['packages']['theme']['replace'] ?? null) && 3 === ($exp['steps'] ?? null) && ($exp['release'] ?? '') === ($cfg['release'] ?? '-'));
+$gb = (string) ($cfg['gates']['B']['check'] ?? '');
+check('REL gate B follows style.css', ['theme', 'style.css'] === ($cfg['gates']['B']['after'] ?? null));
+check('REL gate B names the retired post by the ID and slug the code uses', false !== strpos($gb, 'post ' . array_key_first(omochix_sitemap_retired_posts())) && false !== strpos($gb, '/' . array_values(omochix_sitemap_retired_posts())[0] . '/'));
+check('REL gate B: 301 to the newer article kept, 594 -> 592, compose 200 noindex', false !== strpos($gb, '301') && false !== strpos($gb, '/microsoft-nvidia-rtx-spark-local-ai-windows-2026/')
+    && false !== strpos($gb, '594') && false !== strpos($gb, '592') && false !== strpos($gb, '/learn/motion/compose/') && false !== strpos($gb, 'noindex, follow') && false !== strpos($gb, 'style.css?ver=1.32.1'));
+check('REL gate B no longer expects the old article to answer 200', false === strpos($gb, 'both pages still answer 200'));
+check('REL rollback note: 594 again, 301 stays', 1 === count(array_filter((array) ($cfg['after_rollback'] ?? []), static fn($n) => false !== strpos($n, '594') && false !== strpos($n, '301'))));
 
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

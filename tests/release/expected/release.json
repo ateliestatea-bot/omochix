@@ -1,5 +1,5 @@
 {
-  "release": "Theme 1.32.1 (sitemap: leave out posts whose canonical points elsewhere and the noindex Composer page)",
+  "release": "Theme 1.32.1 (sitemap: leave out the noindex Composer page, the retired RTX article that answers 301, and posts whose canonical points elsewhere)",
   "commit": "HEAD",
   "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.32.1 tree against the production 1.32.0 manifest (releases/theme-1.32.0-112dd02, sha256 b282a689...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
   "versions": {
