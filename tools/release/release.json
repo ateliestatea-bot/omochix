@@ -36,7 +36,7 @@
         "theme",
         "style.css"
       ],
-      "check": "Existing 101 URLs unchanged from the 1.32.0 state (/sitemap.xml and /learn/motion/compose/ included); /sitemap-post-type-post.xml loses exactly the old RTX article (post 1184, /nvidia-rtx-spark-launch-announcement/, which keeps answering 301 to /microsoft-nvidia-rtx-spark-local-ai-windows-2026/ through the Redirection rule; that article still answers 200) and /sitemap-post-type-page.xml exactly /learn/motion/compose/ (594 sitemap URLs become 592, none added, the other sitemaps keep their counts); /learn/motion/compose/ answers 200 with noindex, follow; an unknown URL answers 404; /labs/code-studio/ and /design/ still 404; style.css?ver=1.32.1; all 3 files match the manifest."
+      "check": "HTTP: /nvidia-rtx-spark-launch-announcement/ (the old RTX article, post 1184) answers 301 to /microsoft-nvidia-rtx-spark-local-ai-windows-2026/ through the Redirection rule; /microsoft-nvidia-rtx-spark-local-ai-windows-2026/ (the newer article it redirects to) answers 200; /learn/motion/compose/ answers 200 with noindex, follow; an unknown URL answers 404; /labs/code-studio/ answers 404; /design/ answers 404. Sitemap: exactly 2 URLs leave it - /nvidia-rtx-spark-launch-announcement/ from /sitemap-post-type-post.xml and /learn/motion/compose/ from /sitemap-post-type-page.xml; 594 sitemap URLs become 592, none added, the other sitemaps keep their counts. Existing 101 URLs unchanged from the 1.32.0 state apart from that intended sitemap difference. Versions: style.css?ver=1.32.1 (theme 1.32.1); Core stays 1.10.0; all 3 files match the manifest."
     }
   },
   "rollback_order": [

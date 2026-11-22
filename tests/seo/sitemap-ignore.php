@@ -128,5 +128,61 @@ check('REL gate B: 301 to the newer article kept, 594 -> 592, compose 200 noinde
 check('REL gate B no longer expects the old article to answer 200', false === strpos($gb, 'both pages still answer 200'));
 check('REL rollback note: 594 again, 301 stays', 1 === count(array_filter((array) ($cfg['after_rollback'] ?? []), static fn($n) => false !== strpos($n, '594') && false !== strpos($n, '301'))));
 
+// ------------------------------------------------------------------- gate B, read as claims (not substrings)
+// Every "X answers NNN" in gate B must name its subject as a path ("/a/b/", optionally followed by a parenthesis) or
+// "an unknown URL"; a pronoun ("that article", "it", "both pages") is refused, so no status can be claimed for an
+// unnamed page. The claims per path, the sitemap removals and the counts are then checked against the code.
+$rtxPath     = '/' . array_values(omochix_sitemap_retired_posts())[0] . '/';
+$newerPath   = '/microsoft-nvidia-rtx-spark-local-ai-windows-2026/';
+preg_match("/const OMOCHIX_LEARN_COMPOSER_PATH\s*=\s*'([^']+)'/", (string) file_get_contents($THEME . '/inc/learn-composer.php'), $cp);
+$composePath = '/' . ($cp[1] ?? '?') . '/';
+function gate_b_claims($text) {
+    preg_match_all('/(\S+)(?:\s+\([^()]*\))?\s+(?:still\s+)?answers?\s+(\d{3})\b/', $text, $m, PREG_SET_ORDER);
+    $claims = []; $unnamed = [];
+    foreach ($m as $c) {
+        $subject = $c[1];
+        if (preg_match('#^/[A-Za-z0-9/._-]*$#', $subject)) { $claims[$subject][] = (int) $c[2]; }
+        elseif ('URL' === $subject && preg_match('/\ban unknown URL\s+answers?\s+' . $c[2] . '/', $text)) { $claims['(unknown)'][] = (int) $c[2]; }
+        else { $unnamed[] = $c[0]; }
+    }
+    return [$claims, $unnamed];
+}
+function gate_b_removals($text) {
+    preg_match_all('#(/[A-Za-z0-9/_-]+/) from (/sitemap-[a-z_-]+\.xml)#', $text, $m, PREG_SET_ORDER);
+    $out = array_map(static fn($r) => $r[1] . ' ' . $r[2], $m); sort($out); return $out;
+}
+[$claims, $unnamed] = gate_b_claims($gb);
+check('GB every status claim names its page (no "that article answers 200")', [] === $unnamed);
+check('GB the old RTX article must answer 301, and nothing else', [301] === ($claims[$rtxPath] ?? null));
+check('GB the 301 goes to the newer article', 1 === preg_match('#' . preg_quote($rtxPath, '#') . '(?:\s+\([^()]*\))?\s+answers\s+301\s+to\s+' . preg_quote($newerPath, '#') . '#', $gb));
+check('GB the newer article must answer 200, and nothing else', [200] === ($claims[$newerPath] ?? null));
+check('GB the old RTX article is never expected to answer 200', !in_array(200, $claims[$rtxPath] ?? [], true));
+check('GB compose must answer 200 with noindex, follow', [200] === ($claims[$composePath] ?? null)
+    && 1 === preg_match('#' . preg_quote($composePath, '#') . '\s+answers\s+200\s+with\s+noindex, follow#', $gb));
+check('GB unknown URL 404; Code Studio and /design/ 404', [404] === ($claims['(unknown)'] ?? null) && [404] === ($claims['/labs/code-studio/'] ?? null) && [404] === ($claims['/design/'] ?? null));
+$removals = gate_b_removals($gb);
+check('GB exactly RTX (post sitemap) and compose (page sitemap) leave the sitemap',
+    [$rtxPath . ' /sitemap-post-type-post.xml', $composePath . ' /sitemap-post-type-page.xml'] === $removals || [$composePath . ' /sitemap-post-type-page.xml', $rtxPath . ' /sitemap-post-type-post.xml'] === $removals);
+check('GB "exactly 2 URLs leave", 594 -> 592, and 594 - 592 equals the removals',
+    1 === preg_match('/exactly (\d+) URLs leave/', $gb, $ex) && 1 === preg_match('/(\d+) sitemap URLs become (\d+)/', $gb, $cnt)
+    && '594' === $cnt[1] && '592' === $cnt[2] && (int) $ex[1] === count($removals) && (int) $cnt[1] - (int) $cnt[2] === count($removals) && 2 === count($removals));
+check('GB the two removals are exactly what the code leaves out (retired list + composer path)', 1 === count(omochix_sitemap_retired_posts()) && 'learn/motion/compose' === ($cp[1] ?? ''));
+check('GB 101 URLs unchanged apart from the intended sitemap difference', 1 === preg_match('/Existing 101 URLs unchanged from the 1\.32\.0 state apart from that intended sitemap difference/', $gb));
+preg_match('/^\s*\*\s*Version:\s*(\S+)/m', (string) file_get_contents($ROOT . '/wp-plugin/omochix-core/omochix-core.php'), $coreVer);
+check('GB theme 1.32.1 and Core stays 1.10.0 (gate, expectations, plugin header, untouched baseline)',
+    1 === preg_match('/style\.css\?ver=1\.32\.1\b/', $gb) && 1 === preg_match('/Core stays 1\.10\.0\b/', $gb)
+    && '1.10.0' === ($exp['versions']['core'] ?? '') && '1.10.0' === ($coreVer[1] ?? '')
+    && 'tools/release/baseline/omochix-core-1.10.0.sha256' === ($exp['unchanged']['core']['baseline'] ?? '') && !isset($cfg['packages']['core']));
+// The parser itself: the wording found in review is refused, and a 200 claimed for the old article is caught.
+[, $u1] = gate_b_claims('/old/ answers 301 to /new/; that article still answers 200');
+[$c2]   = gate_b_claims('/old/ answers 200; /new/ answers 200');
+check('GB parser refuses a pronoun subject and records a named 200', 1 === count($u1) && [200] === ($c2['/old/'] ?? null));
+
+// ------------------------------------------------------------------- the canonical rule from #76 is unchanged
+$fnHash = static function ($name) use ($src) { return preg_match('/^function ' . $name . '\(.*?^\}\n/ms', $src, $m) ? hash('sha256', $m[0]) : ''; };
+check('CANON omochix_sitemap_comparable_url() byte-identical to #76 (af91dcc)', '8742a8cac0729e831cdf0b370051d4e97b1786d2992f8f7cd4ba1660a0ff790b' === $fnHash('omochix_sitemap_comparable_url'));
+check('CANON omochix_sitemap_ignore_non_self_canonical() byte-identical to #76 (af91dcc)', '1faa6eec30189422751e81f78b8339ba5ec5e4c7fe7d0efcf328cb7ea998548a' === $fnHash('omochix_sitemap_ignore_non_self_canonical'));
+check('CANON still hooked once at 10, 2', 1 === substr_count($src, "add_filter('slim_seo_sitemap_post_ignore', 'omochix_sitemap_ignore_non_self_canonical', 10, 2);"));
+
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
