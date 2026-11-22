@@ -237,3 +237,15 @@ function omochix_core_deactivate() {
 	flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'omochix_core_deactivate' );
+
+// Web 2.0 modules (docs/web2/hooks/README.md). Loaded last and guarded: with
+// the loader missing or broken the plugin works as before. The loader loads
+// only modules on its fixed list (empty, default off) and checks each file
+// before loading it; OMOCHIX_WEB2_DISABLED in wp-config.php stops them all.
+if ( is_readable( OMOCHIX_CORE_DIR . 'includes/web2-loader.php' ) ) {
+	try {
+		require_once OMOCHIX_CORE_DIR . 'includes/web2-loader.php';
+	} catch ( Throwable $omochix_core_error ) {
+		unset( $omochix_core_error );
+	}
+}
