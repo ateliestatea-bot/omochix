@@ -25,14 +25,14 @@ function catalog_errors(callable $mutate) { $d = raw_catalog(); $mutate($d); ret
 function render(callable $fn) { ob_start(); $fn(); return (string) ob_get_clean(); }
 function filter_value($hook, $value) { return apply_filters($hook, $value, 0); }
 
-check('stub: inc/labs.php statics are resettable (4 caches)', 4 === $GLOBALS['labs_static_wraps']);
+check('stub: inc/labs.php statics are resettable (5 caches)', 5 === $GLOBALS['labs_static_wraps']);
 
 // --------------------------------------------------------------- catalog
 labs_request();
 $loaded = omochix_labs_load_catalog_from_file(omochix_labs_data_file('catalog'));
 check('catalog: shipped catalog is valid', $loaded['ok'] && [] === $loaded['errors']);
-check('catalog: the four C1 tools, in order', ['json-formatter', 'text-diff', 'robots-txt-generator', 'token-cost-calculator'] === array_keys(omochix_labs_get_tools()));
-check('catalog: three categories with counts', ['ai' => 1, 'dev' => 2, 'web' => 1] === array_column(omochix_labs_get_categories(), 'count', 'slug'));
+check('catalog: the five tools, in order', ['json-formatter', 'text-diff', 'robots-txt-generator', 'token-cost-calculator', 'code-studio'] === array_keys(omochix_labs_get_tools()));
+check('catalog: three categories with counts', ['ai' => 1, 'dev' => 3, 'web' => 1] === array_column(omochix_labs_get_categories(), 'count', 'slug'));
 check('catalog: every tool has 3+ FAQ entries and 3+ features', !array_filter(omochix_labs_get_tools(), static fn($t) => count($t['faq']) < 3 || count($t['features']) < 3));
 check('catalog: missing file degrades to empty', !omochix_labs_load_catalog_from_file('/nonexistent.json')['ok'] && [] === omochix_labs_load_catalog_from_file('/nonexistent.json')['catalog']['tools']);
 $tmp = tempnam(sys_get_temp_dir(), 'omx'); file_put_contents($tmp, '{bad');
@@ -54,19 +54,19 @@ check('validate: a valid mutation stays valid', [] === catalog_errors(static fun
 
 $draft = raw_catalog(); $draft['tools'][1]['status'] = 'draft';
 $norm = omochix_labs_normalize_catalog($draft);
-check('catalog: drafts stay out of category counts', 1 === $norm['categories']['dev']['count']);
+check('catalog: drafts stay out of category counts', 2 === $norm['categories']['dev']['count']);
 
 // --------------------------------------------------------- list filtering
 labs_request();
 check('filter: keyword (case-insensitive)', ['json-formatter'] === array_keys(omochix_labs_filter_tools(['q' => 'JSON 整形'])));
 check('filter: keyword ANDed', [] === omochix_labs_filter_tools(['q' => 'json robots']));
-check('filter: category', ['json-formatter', 'text-diff'] === array_keys(omochix_labs_filter_tools(['cat' => 'dev'])));
+check('filter: category', ['json-formatter', 'text-diff', 'code-studio'] === array_keys(omochix_labs_filter_tools(['cat' => 'dev'])));
 check('filter: keyword matches English keyword', ['token-cost-calculator'] === array_keys(omochix_labs_filter_tools(['q' => 'anthropic'])) && ['robots-txt-generator', 'token-cost-calculator'] === array_keys(omochix_labs_filter_tools(['q' => 'claude'])));
 check('filter: sanitize drops unknown category and trims query', ['cat' => '', 'q' => 'x'] === omochix_labs_sanitize_filters(['cat' => 'nope', 'q' => " <b>x</b> "]));
 check('filter: query capped at 60 characters', 60 === mb_strlen(omochix_labs_sanitize_filters(['q' => str_repeat('あ', 100)])['q']));
 check('filter: non-string query ignored', ['cat' => '', 'q' => ''] === omochix_labs_sanitize_filters(['cat' => ['ai'], 'q' => ['x']]));
 $rel = array_column(omochix_labs_related_tools(omochix_labs_get_tool('json-formatter')), 'slug');
-check('related: curated first, never self, at most 4', ['text-diff', 'token-cost-calculator', 'robots-txt-generator'] === $rel);
+check('related: curated first, never self, at most 4', ['text-diff', 'token-cost-calculator', 'code-studio', 'robots-txt-generator'] === $rel);
 
 // ---------------------------------------------------------------- routing
 do_action('init');
@@ -124,9 +124,9 @@ foreach (array_keys(omochix_labs_get_tools()) as $slug) {
     check("seo: $slug og:type is website", 'website' === filter_value('slim_seo_open_graph_type', 'article'));
     check("seo: $slug og:url / og:title", "https://example.test/labs/$slug/" === filter_value('slim_seo_open_graph_url', 'X') && end($titles) === filter_value('slim_seo_open_graph_title', 'X'));
 }
-check('seo: five unique titles', 5 === count(array_unique($titles)) && !in_array('X', $titles, true));
-check('seo: five unique descriptions of 60-160 characters', 5 === count(array_unique($descriptions)) && !array_filter($descriptions, static fn($d) => mb_strlen($d) < 60 || mb_strlen($d) > 160));
-check('seo: tool titles end with the brand', 4 === count(array_filter($titles, static fn($t) => str_ends_with($t, ' | OmochiX Labs'))));
+check('seo: six unique titles', 6 === count(array_unique($titles)) && !in_array('X', $titles, true));
+check('seo: six unique descriptions of 60-160 characters', 6 === count(array_unique($descriptions)) && !array_filter($descriptions, static fn($d) => mb_strlen($d) < 60 || mb_strlen($d) > 160));
+check('seo: tool titles end with the brand', 5 === count(array_filter($titles, static fn($t) => str_ends_with($t, ' | OmochiX Labs'))));
 labs_request(null, ['cat' => 'ai']);
 check('seo: filtered list is noindex, follow and canonical to the list', false === filter_value('slim_seo_robots_index', true) && 'https://example.test/labs/' === filter_value('slim_seo_canonical_url', 'X') && ['noindex' => true, 'follow' => true] === filter_value('wp_robots', []));
 labs_request(null, ['cat' => 'bogus']);
@@ -160,7 +160,7 @@ labs_request();
 $g = apply_filters('slim_seo_schema_graph', slim_graph('https://example.test/labs/'));
 $byType = array_column($g, null, '@type');
 check('schema list: CollectionPage + ItemList + one BreadcrumbList, no WebPage, no app types', ['WebSite', 'BreadcrumbList', 'CollectionPage', 'ReadAction', 'Organization', 'ItemList'] === types($g));
-check('schema list: ItemList has the four tools in order', 4 === $byType['ItemList']['numberOfItems'] && 'https://example.test/labs/json-formatter/' === $byType['ItemList']['itemListElement'][0]['url'] && 4 === $byType['ItemList']['itemListElement'][3]['position']);
+check('schema list: ItemList has the five tools in order', 5 === $byType['ItemList']['numberOfItems'] && 'https://example.test/labs/json-formatter/' === $byType['ItemList']['itemListElement'][0]['url'] && 4 === $byType['ItemList']['itemListElement'][3]['position']);
 check('schema list: CollectionPage points at the ItemList', 'https://example.test/labs/#itemlist' === $byType['CollectionPage']['mainEntity']['@id'] && 'https://example.test/labs/#webpage' === $byType['CollectionPage']['@id']);
 labs_request('json-formatter');
 // Slim SEO builds its ids from the canonical URL (already the tool URL), but also handle the list URL.
@@ -214,12 +214,12 @@ check('headers: an enforced CSP already present suppresses the Report-Only one',
 check('headers: a stricter existing referrer policy is kept', !isset(omochix_labs_headers_to_send(['Referrer-Policy: no-referrer'])['Referrer-Policy']));
 
 // ------------------------------------------------------------------ assets
-foreach (['json-formatter' => ['json'], 'text-diff' => ['diff'], 'robots-txt-generator' => ['robots'], 'token-cost-calculator' => ['tokens', 'cost']] as $slug => $mods) {
+foreach (['json-formatter' => ['json'], 'text-diff' => ['diff'], 'robots-txt-generator' => ['robots'], 'token-cost-calculator' => ['tokens', 'cost'], 'code-studio' => ['diff', 'codestudio']] as $slug => $mods) {
     labs_request($slug);
     $GLOBALS['enqueued'] = ['styles' => [], 'scripts' => [], 'inline' => []];
     do_action('wp_enqueue_scripts');
     $scripts = array_keys($GLOBALS['enqueued']['scripts']);
-    $expect = array_merge(['omochix-labs-text', 'omochix-labs-events', 'omochix-labs-shared'], array_map(static fn($m) => 'omochix-labs-' . $m, $mods), ['omochix-labs-ops', 'omochix-labs-tool']);
+    $expect = array_merge(['omochix-labs-text', 'omochix-labs-events', 'omochix-labs-shared'], array_map(static fn($m) => 'omochix-labs-' . $m, $mods), 'code-studio' === $slug ? ['omochix-labs-ops', 'omochix-labs-purify', 'omochix-labs-tool'] : ['omochix-labs-ops', 'omochix-labs-tool']);
     check("assets: $slug loads only its modules", $expect === $scripts && isset($GLOBALS['enqueued']['styles']['omochix-labs']));
     $inline = implode('', $GLOBALS['enqueued']['inline']['omochix-labs-shared'] ?? []);
     $cfg = json_decode(substr($inline, strlen('window.omochixLabs = '), -1), true);
@@ -230,6 +230,11 @@ foreach (['json-formatter' => ['json'], 'text-diff' => ['diff'], 'robots-txt-gen
     }
     if ('robots-txt-generator' === $slug) {
         check('assets: crawlers only on the robots tool', isset($cfg['crawlers']['crawlers']) && !isset($cfg['pricing']));
+    }
+    check("assets: $slug " . ('code-studio' === $slug ? 'gets the lesson data' : 'gets no lesson data'), ('code-studio' === $slug) === isset($cfg['studio']));
+    if ('code-studio' === $slug) {
+        check('assets: Code Studio reuses the DOMPurify file the SVG Motion Studio ships', str_ends_with(explode('?', $GLOBALS['enqueued']['scripts']['omochix-labs-purify']['src'])[0], '/assets/js/svg-motion/lib/purify.min.js'));
+        check('assets: Code Studio limits are public (50KB / 50KB / 1,500 elements)', ['html' => 51200, 'css' => 51200, 'nodes' => 1500, 'worker' => 0] === $cfg['limits']['code-studio']);
     }
 }
 labs_request(null, [], true, false);
@@ -360,7 +365,7 @@ $xml = omochix_labs_sitemap_xml($entries);
 $doc = new DOMDocument();
 check('sitemap: well-formed XML', $doc->loadXML($xml, LIBXML_NONET));
 $sx = simplexml_load_string($xml);
-check('sitemap: urlset in the sitemaps.org 0.9 namespace with 4 urls', 'urlset' === $sx->getName() && 'http://www.sitemaps.org/schemas/sitemap/0.9' === $doc->documentElement->namespaceURI && 4 === count($sx->url));
+check('sitemap: urlset in the sitemaps.org 0.9 namespace with 5 urls', 'urlset' === $sx->getName() && 'http://www.sitemaps.org/schemas/sitemap/0.9' === $doc->documentElement->namespaceURI && 5 === count($sx->url));
 check('sitemap: absolute https-or-http loc and W3C dates only', !array_filter(iterator_to_array($sx->url, false), static fn($u) => !preg_match('#^https?://[^/]+/labs/[a-z0-9-]+/$#', (string) $u->loc) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $u->lastmod)));
 $esc = omochix_labs_sitemap_xml([['loc' => 'https://example.test/labs/x/?a=1&b="2"<3>\'', 'lastmod' => 'not-a-date']]);
 check('sitemap: XML escaping round-trips and bad dates are dropped', str_contains($esc, '&amp;b=&quot;2&quot;&lt;3&gt;&apos;') && 'https://example.test/labs/x/?a=1&b="2"<3>\'' === (string) simplexml_load_string($esc)->url->loc && !str_contains($esc, 'lastmod'));
@@ -379,10 +384,10 @@ check('sitemap: other requests untouched', ['pagename' => 'about'] === apply_fil
 check('sitemap: URL', 'https://example.test/labs-sitemap.xml' === omochix_labs_sitemap_url());
 $GLOBALS['pages']['labs/text-diff'] = new WP_Post(['ID' => 501, 'post_name' => 'text-diff', 'post_title' => 'A real page', 'post_parent' => 77]);
 labs_reset_statics();
-check('sitemap: a tool path that is also a real page (listed by Slim SEO) is left out', !in_array('https://example.test/labs/text-diff/', array_column(omochix_labs_sitemap_entries(), 'loc'), true) && 3 === count(omochix_labs_sitemap_entries()));
+check('sitemap: a tool path that is also a real page (listed by Slim SEO) is left out', !in_array('https://example.test/labs/text-diff/', array_column(omochix_labs_sitemap_entries(), 'loc'), true) && 4 === count(omochix_labs_sitemap_entries()));
 unset($GLOBALS['pages']['labs/text-diff']);
 labs_reset_statics();
-check('sitemap: every entry is a virtual tool URL one level under /labs/', 4 === count(array_filter(array_column(omochix_labs_sitemap_entries(), 'loc'), static fn($u) => 1 === preg_match('#^https://example\.test/labs/[a-z0-9-]+/$#', $u))));
+check('sitemap: every entry is a virtual tool URL one level under /labs/', 5 === count(array_filter(array_column(omochix_labs_sitemap_entries(), 'loc'), static fn($u) => 1 === preg_match('#^https://example\.test/labs/[a-z0-9-]+/$#', $u))));
 labs_request(null, [], false);
 check('sitemap: 404 while the labs page is unpublished', ['error' => '404'] === apply_filters('request', ['omx_labs_sitemap' => '1']) && '' === omochix_labs_sitemap_url());
 // A draft tool never appears: run against a copy of the theme data with one tool in draft.
@@ -392,7 +397,7 @@ $draftCatalog = raw_catalog(); $draftCatalog['tools'][1]['status'] = 'draft';
 file_put_contents($tmpTheme . '/assets/data/labs/catalog.json', json_encode($draftCatalog));
 $realTheme = $GLOBALS['THEME']; $GLOBALS['THEME'] = $tmpTheme;
 labs_request();
-check('sitemap: draft tools are left out', ['json-formatter', 'robots-txt-generator', 'token-cost-calculator'] === array_map(static fn($e) => basename($e['loc']), omochix_labs_sitemap_entries()));
+check('sitemap: draft tools are left out', ['json-formatter', 'robots-txt-generator', 'token-cost-calculator', 'code-studio'] === array_map(static fn($e) => basename($e['loc']), omochix_labs_sitemap_entries()));
 labs_request('text-diff');
 do_action('template_redirect');
 check('sitemap: and a draft tool URL is a 404', is_404());
@@ -497,12 +502,12 @@ labs_request();
 $GLOBALS['posts'] = [];
 labs_request();
 $html = render(static function () { get_template_part('template-parts/labs/index'); });
-check('render list: h1, search, categories, 4 cards, count', str_contains($html, '<h1>OmochiX Labs</h1>') && str_contains($html, 'role="search"') && 4 === substr_count($html, 'data-labs-card ') && 4 === substr_count($html, 'data-labs-cat=') && str_contains($html, '4件のツール'));
+check('render list: h1, search, categories, 5 cards, count', str_contains($html, '<h1>OmochiX Labs</h1>') && str_contains($html, 'role="search"') && 5 === substr_count($html, 'data-labs-card ') && 4 === substr_count($html, 'data-labs-cat=') && str_contains($html, '5件のツール'));
 check('render list: search form is JavaScript-only and category links carry no search words', str_contains($html, 'data-labs-search hidden>') && !str_contains($html, '?q=') && !str_contains($html, '&amp;q='));
 check('render list: card headings are h2 and link to the tool', str_contains($html, '<h2 class="labs-card__title">') && str_contains($html, 'href="https://example.test/labs/json-formatter/"'));
 labs_request(null, ['cat' => 'dev', 'q' => '<script>alert(1)</script>']);
 $html = render(static function () { get_template_part('template-parts/labs/index'); });
-check('render list: server-side filter hides non-matching cards and shows the empty state', 4 === substr_count($html, 'data-labs-card ') && 4 === substr_count($html, '" hidden>') && str_contains($html, 'data-labs-empty>') && str_contains($html, '0件のツール'));
+check('render list: server-side filter hides non-matching cards and shows the empty state', 5 === substr_count($html, 'data-labs-card ') && 5 === substr_count($html, '" hidden>') && str_contains($html, 'data-labs-empty>') && str_contains($html, '0件のツール'));
 check('render list: query is escaped', !str_contains($html, '<script>alert') && str_contains($html, 'alert(1)'));
 foreach (array_keys(omochix_labs_get_tools()) as $slug) {
     labs_request($slug);
@@ -542,12 +547,49 @@ labs_reset_statics();
 $learn = file_get_contents(get_theme_file_path('/page-learn.php'));
 check('learn hub: Labs link only when the labs page is published', str_contains($learn, "function_exists('omochix_labs_url') ? omochix_labs_url() : ''") && str_contains($learn, '<?php if ($omochix_labs_url) : ?>'));
 
+// ------------------------------------------------------------ Code Studio
+$studioRaw = json_decode(file_get_contents(omochix_labs_data_file('code-studio')), true);
+$sv = omochix_labs_studio_view($studioRaw);
+check('studio: three beginner lessons with unique ids and slugs', ['cs-html-001', 'cs-css-001', 'cs-responsive-001'] === array_column($sv['lessons'], 'id') && 3 === count(array_unique(array_column($sv['lessons'], 'slug'))));
+check('studio: every shipped lesson, exercise and glossary entry passes validation', count($studioRaw['lessons']) === count($sv['lessons']) && array_map(static fn($l) => count($l['exercises']), $studioRaw['lessons']) === array_map(static fn($l) => count($l['exercises']), $sv['lessons']) && count($studioRaw['glossary']['tags']) === count($sv['glossary']['tags']) && count($studioRaw['glossary']['properties']) === count($sv['glossary']['properties']));
+check('studio: each lesson has steps, exercises with checks, starter code and a lesson-id slot', !array_filter($sv['lessons'], static fn($l) => !$l['steps'] || !$l['exercises'] || '' === $l['files']['html'] || '' === $l['files']['css'] || !array_key_exists('lesson_id', $l['learn']) || array_filter($l['exercises'], static fn($e) => !$e['checks'])));
+check('studio: Learn link is a URL of this site (published page) or empty', !array_filter($sv['lessons'], static fn($l) => '' !== $l['learn']['url'] && !str_starts_with($l['learn']['url'], 'https://example.test/')));
+check('studio: wrong schema version, non-array -> empty view', [] === omochix_labs_studio_view(['schema_version' => 2] + $studioRaw)['lessons'] && [] === omochix_labs_studio_view('x')['lessons'] && [] === omochix_labs_studio_view(null)['glossary']['tags']);
+$sm = static function (callable $mutate) use ($studioRaw) { $d = $studioRaw; $mutate($d); return omochix_labs_studio_view($d); };
+check('studio: unknown check type drops the lesson', 2 === count($sm(static function (&$d) { $d['lessons'][0]['exercises'][0]['checks'][0]['type'] = 'script'; })['lessons']));
+check('studio: a selector with quotes or markup drops the lesson', 2 === count($sm(static function (&$d) { $d['lessons'][0]['exercises'][0]['checks'][0]['selector'] = 'a[href="x"]<script>'; })['lessons']));
+check('studio: a regular expression in data is never passed on', !array_key_exists('pattern', omochix_labs_studio_check(['type' => 'attribute', 'selector' => 'img', 'name' => 'alt', 'pattern' => '(a+)+$'])));
+check('studio: unknown keys of a check are dropped', ['type' => 'css', 'selector' => '.card', 'property' => 'padding'] === omochix_labs_studio_check(['type' => 'css', 'selector' => '.card', 'property' => 'padding', 'run' => 'x', 'url' => 'https://evil.example/']));
+check('studio: css-media feature is max-width or min-width only', 'max-width' === omochix_labs_studio_check(['type' => 'css-media', 'selector' => '.a', 'property' => 'width', 'feature' => 'x) or (1'])['feature'] && 'min-width' === omochix_labs_studio_check(['type' => 'css-media', 'selector' => '.a', 'property' => 'width', 'feature' => 'min-width'])['feature']);
+check('studio: bad property name, missing attribute name -> invalid', null === omochix_labs_studio_check(['type' => 'css', 'selector' => '.a', 'property' => 'x;y']) && null === omochix_labs_studio_check(['type' => 'attribute', 'selector' => 'img']));
+check('studio: starter code over the limit drops the lesson', 2 === count($sm(static function (&$d) { $d['lessons'][1]['files']['html'] = str_repeat('a', 51201); })['lessons']));
+check('studio: a lesson of another language is not shown by the HTML/CSS adapter', 2 === count($sm(static function (&$d) { $d['lessons'][2]['language'] = 'javascript'; })['lessons']));
+check('studio: duplicate slug and bad id are dropped', 1 === count($sm(static function (&$d) { $d['lessons'][1]['slug'] = $d['lessons'][0]['slug']; $d['lessons'][2]['id'] = 'x<y'; })['lessons']));
+check('studio: a Learn path outside learn/ gives no link', '' === $sm(static function (&$d) { $d['lessons'][0]['learn']['path'] = '//evil.example/x'; })['lessons'][0]['learn']['url']);
+check('studio: glossary keys must be tag / property names', !isset($sm(static function (&$d) { $d['glossary']['tags']['<img onerror=x>'] = ['label' => 'x', 'text' => 'y']; })['glossary']['tags']['<img onerror=x>']));
+// Review 2026-11-21 (L6, ported): "$" without D accepted a final newline in keys, slugs and ids.
+$nl = $sm(static function (&$d) { $d['glossary']['properties']["padding\n"] = ['label' => 'x', 'text' => 'y']; $d['lessons'][0]['slug'] = "first-page\n"; });
+check('studio: a key or slug with a final newline is refused', !isset($nl['glossary']['properties']["padding\n"]) && 2 === count($nl['lessons']) && false === omochix_labs_is_slug("text-diff\n"));
+labs_request('code-studio');
+$html = render(static function () { get_template_part('template-parts/labs/tool', null, ['tool' => omochix_labs_get_tool('code-studio')]); });
+check('studio render: three lessons in the select, empty editors, no frame and no learner code in the HTML', 3 === preg_match_all('/<option value="[a-z0-9-]+">/', $html) && 2 === substr_count($html, '></textarea>') && !str_contains($html, '<iframe') && !str_contains($html, 'srcdoc'));
+check('studio render: width switch is a labelled radio group; the page adds no form that posts code', 3 === substr_count($html, 'name="labs-studio-width"') && !str_contains($html, '<form'));
+foreach (glob(get_theme_file_path('/assets/js/labs/ui/code-studio.js')) as $f) {
+    $src = (string) file_get_contents($f);
+    check('studio source: the preview frame gets sandbox="" and no allow-* token anywhere', str_contains($src, "f.setAttribute('sandbox', '')") && !preg_match('/allow-(?:scripts|same-origin|forms|popups|top-navigation|modals)/', $src));
+}
+
 // ----------------------------------------------------------- release state
 $GLOBALS['THEME'] = $REAL_THEME;
 labs_reset_statics();
 $shippedCatalog = json_decode(file_get_contents($REAL_THEME . '/assets/data/labs/catalog.json'), true);
 check('release state: the shipped catalog keeps the cost calculator in draft (prices not reviewed)', 'draft' === array_column($shippedCatalog['tools'], 'status', 'slug')[LABS_COST_SLUG]);
-check('release state: the other three tools are published', ['json-formatter' => 'published', 'text-diff' => 'published', 'robots-txt-generator' => 'published'] === array_diff_key(array_column($shippedCatalog['tools'], 'status', 'slug'), [LABS_COST_SLUG => 1]));
+check('release state: three tools are published, Code Studio is a draft', ['json-formatter' => 'published', 'text-diff' => 'published', 'robots-txt-generator' => 'published', 'code-studio' => 'draft'] === array_diff_key(array_column($shippedCatalog['tools'], 'status', 'slug'), [LABS_COST_SLUG => 1]));
+labs_request('code-studio');
+do_action('template_redirect');
+check('release state: /labs/code-studio/ is a 404 while it is a draft', is_404() && 404 === $GLOBALS['status']);
+labs_request();
+check('release state: the draft Code Studio is not in the list, the search or the sitemap', !isset(omochix_labs_get_tools()['code-studio']) && !in_array('code-studio', array_keys(omochix_labs_filter_tools(['q' => 'html'])), true) && !in_array('https://example.test/labs/code-studio/', array_column(omochix_labs_sitemap_entries(), 'loc'), true) && !str_contains(render(static function () { get_template_part('template-parts/labs/index'); }), 'Code Studio'));
 $shipped = labs_release_state_problems($REAL_THEME);
 check('release state: shipped theme passes the gate (calculator unreachable, nothing leaks, no unapproved price)', [] === $shipped);
 foreach ($shipped as $problem) { echo "  - $problem\n"; }
