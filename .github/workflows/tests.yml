@@ -75,7 +75,8 @@ jobs:
             tests/nav/run.php \
             tests/article-v2/run.php \
             tests/editorial-home/run.php \
-            tests/svg-motion/shortcode.php
+            tests/svg-motion/shortcode.php \
+            tests/seo/sitemap-ignore.php
           do
             echo "::group::$test"
             php "$test" || status=1

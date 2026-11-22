@@ -14,9 +14,10 @@ import unittest
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 GATE = os.path.join(ROOT, 'tests', 'release', 'release-gate.php')
 HUB = 'industry-hub-core-1.10.0-theme-1.29.0.json'
-PREV = 'theme-1.31.1.json'
-OLDER = 'theme-1.31.0.json'
-OLDEST = 'theme-1.30.0.json'
+PREV = 'theme-1.32.0.json'
+OLDER = 'theme-1.31.1.json'
+OLDEST = 'theme-1.31.0.json'
+V1300 = 'theme-1.30.0.json'
 THEME = 'wp-theme/omochix-theme'
 CORE = 'wp-plugin/omochix-core'
 
@@ -88,8 +89,12 @@ class ReleaseGate(unittest.TestCase):
         code, fails = self.gate(self.tree(expected(OLDER)['commit']), OLDER)
         self.assertEqual((0, []), (code, fails))
 
-    def test_the_1_30_0_release_still_passes_on_its_commit(self):
+    def test_the_1_31_0_release_still_passes_on_its_commit(self):
         code, fails = self.gate(self.tree(expected(OLDEST)['commit']), OLDEST)
+        self.assertEqual((0, []), (code, fails))
+
+    def test_the_1_30_0_release_still_passes_on_its_commit(self):
+        code, fails = self.gate(self.tree(expected(V1300)['commit']), V1300)
         self.assertEqual((0, []), (code, fails))
 
     def test_the_current_config_does_not_pass_on_the_previous_release_tree(self):
@@ -107,9 +112,16 @@ class ReleaseGate(unittest.TestCase):
 
     def test_a_missing_release_file_fails(self):
         tree = self.tree('HEAD')
-        os.remove(os.path.join(tree, THEME, 'assets', 'data', 'labs', 'code-studio.json'))
-        self.assertFails(self.gate(tree), 'planned but unchanged: theme:assets/data/labs/code-studio.json', 'omochix-theme: 291 files',
-                         'exactly the expected set', 'every named Labs exception is really part of this release')
+        os.remove(os.path.join(tree, THEME, 'inc', 'seo.php'))
+        self.assertFails(self.gate(tree), 'planned but unchanged: theme:inc/seo.php', 'nothing that production has is deleted',
+                         'omochix-theme: 291 files', 'exactly the expected set')
+
+    def test_a_release_file_left_at_the_production_version_fails(self):
+        # 1.32.1 only replaces files: one that is not really changed is a planned step that does not change.
+        tree = self.tree('HEAD')
+        prod = self.tree(expected(PREV)['commit'])
+        shutil.copy(os.path.join(prod, THEME, 'inc', 'learn-composer.php'), os.path.join(tree, THEME, 'inc', 'learn-composer.php'))
+        self.assertFails(self.gate(tree), 'planned but unchanged: theme:inc/learn-composer.php', '0 added and 3 replaced', 'exactly the expected set')
 
     def test_an_extra_file_fails(self):
         tree = self.tree('HEAD')
@@ -133,17 +145,27 @@ class ReleaseGate(unittest.TestCase):
         with open(os.path.join(tree, THEME, 'page-labs.php'), 'a', encoding='utf-8') as fh:
             fh.write('\n')
         self.edit_config(lambda c: c['order'].insert(0, ['theme', 'page-labs.php']))
-        self.assertFails(self.gate(tree), 'no Labs or SVG Motion file except', 'exactly the expected set', '8 steps')
+        self.assertFails(self.gate(tree), 'no Labs or SVG Motion file except', 'exactly the expected set', '3 steps')
 
     def test_a_labs_file_dropped_from_the_expectations_fails(self):
-        # The 7 Labs files are named one by one; one missing from the list is caught even with the tree and config intact.
-        path = os.path.join(self.repo, 'tests', 'release', 'expected', 'release.json')
+        # 1.32.0 names its 7 Labs files one by one; one missing from the list is caught even with the tree and config intact.
+        path = os.path.join(self.repo, 'tests', 'release', 'expected', PREV)
         with open(path, encoding='utf-8') as fh:
             exp = json.load(fh)
         exp['forbidden']['allowed'].remove('theme:inc/labs.php')
         with open(path, 'w', encoding='utf-8') as fh:
             json.dump(exp, fh)
-        self.assertFails(self.gate(self.tree('HEAD')), 'no Labs or SVG Motion file except the ones the expectations name')
+        self.assertFails(self.gate(self.tree(expected(PREV)['commit']), PREV), 'no Labs or SVG Motion file except the ones the expectations name')
+
+    def test_a_labs_exception_named_in_the_current_release_fails(self):
+        # 1.32.1 changes no Labs file, so naming one as an exception is refused.
+        path = os.path.join(self.repo, 'tests', 'release', 'expected', 'release.json')
+        with open(path, encoding='utf-8') as fh:
+            exp = json.load(fh)
+        exp['forbidden']['allowed'].append('theme:inc/labs.php')
+        with open(path, 'w', encoding='utf-8') as fh:
+            json.dump(exp, fh)
+        self.assertFails(self.gate(self.tree('HEAD')), 'every named Labs exception is really part of this release')
 
 
     def test_a_symlink_in_the_package_fails(self):
@@ -157,40 +179,40 @@ class ReleaseGate(unittest.TestCase):
         with open(os.path.join(tree, THEME, 'extra.php'), 'w', encoding='utf-8') as fh:
             fh.write('<?php\n')
         self.edit_config(lambda c: c['order'].insert(0, ['theme', 'extra.php']))
-        self.assertFails(self.gate(tree), '4 added and 4 replaced', '8 steps', 'exactly the expected set')
+        self.assertFails(self.gate(tree), '0 added and 3 replaced', '3 steps', 'exactly the expected set')
 
     # ------------------------------------------------------------------ faults in the config or the baseline
-    # The functions.php order rule belongs to the 1.31.0 release, so it is checked on that archived config and its own
-    # release tree. 1.32.0 has its own rule: inc/labs.php after the new Code Studio files it reads.
+    # The functions.php order rule belongs to the 1.31.0 release and the inc/labs.php rule to 1.32.0 (after the new Code
+    # Studio files it reads), so each is checked on its archived config and its own release tree. 1.32.1 adds no file.
     def test_functions_php_before_the_last_new_file_fails(self):
         # 1.31.0 replaces only functions.php and style.css, so functions.php already sits just before style.css;
         # one step earlier puts it before a new inc file it loads.
         def late(c):
             c['order'].remove(['theme', 'functions.php'])
             c['order'].insert(len(c['order']) - 2, ['theme', 'functions.php'])
-        self.edit_config(late, OLDER)
-        self.assertFails(self.gate(self.tree(expected(OLDER)['commit']), OLDER), 'theme:functions.php after every add and before every replace')
+        self.edit_config(late, OLDEST)
+        self.assertFails(self.gate(self.tree(expected(OLDEST)['commit']), OLDEST), 'theme:functions.php after every add and before every replace')
 
     def test_functions_php_before_a_new_file_fails(self):
         def early(c):
             c['order'].remove(['theme', 'functions.php'])
             c['order'].insert(0, ['theme', 'functions.php'])
-        self.edit_config(early, OLDER)
-        self.assertFails(self.gate(self.tree(expected(OLDER)['commit']), OLDER), 'theme:functions.php after every add and before every replace')
+        self.edit_config(early, OLDEST)
+        self.assertFails(self.gate(self.tree(expected(OLDEST)['commit']), OLDEST), 'theme:functions.php after every add and before every replace')
 
     def test_inc_labs_php_before_a_new_code_studio_file_fails(self):
         def early(c):
             c['order'].remove(['theme', 'inc/labs.php'])
             c['order'].insert(0, ['theme', 'inc/labs.php'])
-        self.edit_config(early)
-        self.assertFails(self.gate(self.tree('HEAD')), 'theme:inc/labs.php after every add and before every replace')
+        self.edit_config(early, PREV)
+        self.assertFails(self.gate(self.tree(expected(PREV)['commit']), PREV), 'theme:inc/labs.php after every add and before every replace')
 
     def test_inc_labs_php_after_the_catalog_fails(self):
         def late(c):
             c['order'].remove(['theme', 'inc/labs.php'])
             c['order'].insert(c['order'].index(['theme', 'assets/data/labs/catalog.json']) + 1, ['theme', 'inc/labs.php'])
-        self.edit_config(late)
-        self.assertFails(self.gate(self.tree('HEAD')), 'theme:inc/labs.php after every add and before every replace')
+        self.edit_config(late, PREV)
+        self.assertFails(self.gate(self.tree(expected(PREV)['commit']), PREV), 'theme:inc/labs.php after every add and before every replace')
 
     def test_a_switch_file_that_is_not_last_fails(self):
         def moved(c):
@@ -211,7 +233,7 @@ class ReleaseGate(unittest.TestCase):
         self.assertFails(self.gate(self.tree('HEAD')), 'scope: the release ships exactly the expected packages', 'core: not part of this release')
 
     def test_a_tampered_baseline_hash_fails(self):
-        path = os.path.join(self.repo, 'tools', 'release', 'baseline', 'omochix-theme-1.31.1.sha256')
+        path = os.path.join(self.repo, 'tools', 'release', 'baseline', 'omochix-theme-1.32.0.sha256')
         with open(path, encoding='utf-8') as fh:
             lines = fh.readlines()
         lines[0] = ('0' * 64) + lines[0][64:]
