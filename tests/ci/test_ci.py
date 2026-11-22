@@ -7,11 +7,14 @@ Normal and failure cases for every gate. Standard library only; Python 3.9+.
 
 Run: python3 -m unittest discover -s tests/ci -v
 """
+import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 
@@ -1272,20 +1275,115 @@ class WorkflowSteps(RepoCase):
                 self.assertEqual(outputs.strip(), "target=true")
 
 
+# ----------------------------------------------- Release gate positive control (integrate/*)
+
+# The integration branches cannot change the release settings (release_only in
+# docs/web2/ownership.json), so on a pull request into integrate/* the tree under test is
+# not a release candidate and the Release gate would reject any package change. The
+# positive control then runs on the tree the settings were written for: the fork point
+# with main. Everything else (main, pushes to main, manual or local runs, unknown targets)
+# keeps the strict check on this tree. The Release gate itself is unchanged, and on main
+# it still runs on every pull request and push as a required check (release.yml).
+# Git branch name segments only: no "..", no segment starting with "." (git refuses both).
+INTEGRATE_TARGET_RE = re.compile(r"(?!.*\.\.)integrate(?:/(?!\.)[A-Za-z0-9._-]+)+")
+RELEASE_SETTING_PATHS = ("tools/release", "tests/release")
+PACKAGE_DIRS = ("wp-plugin", "wp-theme")
+
+
+def release_selftest_target(env=None, cwd=REPO, main_ref="origin/main"):
+    """Which tree the Release gate positive control runs on.
+
+    Returns a dict: mode ("this-tree", "fork-point" or "error"), target, head, base, reason.
+    "error" (integrate target without a usable fork point) must fail the test: fail closed.
+    """
+    env = os.environ if env is None else env
+    event = env.get("GITHUB_EVENT_NAME", "")
+    if event in ("pull_request", "pull_request_target"):
+        target = env.get("GITHUB_BASE_REF", "")
+    elif event == "push":
+        target = env.get("GITHUB_REF_NAME", "")
+    else:
+        target = ""
+    out = {"mode": "this-tree", "target": target, "event": event, "head": "", "base": ""}
+
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=cwd, check=True, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE).stdout.decode().strip()
+
+    try:
+        out["head"] = git("rev-parse", "--verify", "HEAD^{commit}")
+    except (subprocess.CalledProcessError, OSError):
+        out["head"] = "?"
+    if not INTEGRATE_TARGET_RE.fullmatch(target):
+        out["reason"] = "target %r (event %r) is not integrate/*: strict check on this tree" % (target, event)
+        return out
+    try:
+        base = git("merge-base", "HEAD", main_ref)
+        git("cat-file", "-e", base + "^{commit}")
+    except (subprocess.CalledProcessError, OSError):
+        out.update(mode="error", reason="target %r is integrate/* but the fork point with %s cannot be found: fail closed" % (target, main_ref))
+        return out
+    out["base"] = base
+    changed = subprocess.run(["git", "diff", "--quiet", base, "HEAD", "--", *RELEASE_SETTING_PATHS], cwd=cwd,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
+    if changed != 0:
+        out["reason"] = "target %r is integrate/* but %s differ from the fork point %s (or git failed): strict check on this tree" % (
+            target, " or ".join(RELEASE_SETTING_PATHS), base[:12])
+        return out
+    out.update(mode="fork-point", reason="target %r is integrate/*: the release settings are the fork point's (%s), so the gate's positive control runs on that tree" % (target, base[:12]))
+    return out
+
+
+def export_packages(cwd, rev, dest):
+    """Write the package folders of rev (wp-plugin, wp-theme) into dest (git archive, nothing runs)."""
+    data = subprocess.run(["git", "archive", "--format=tar", rev, *PACKAGE_DIRS], cwd=cwd, check=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+    with tarfile.open(fileobj=io.BytesIO(data)) as tar:
+        if hasattr(tarfile, "data_filter"):
+            tar.extractall(dest, filter="data")
+        else:  # Python < 3.12: our own archive, members checked by hand
+            for m in tar.getmembers():
+                if m.name.startswith("/") or ".." in m.name.split("/") or not (m.isfile() or m.isdir()):
+                    raise ValueError("unexpected archive member %r" % m.name)
+            tar.extractall(dest)
+
+
 @unittest.skipUnless(shutil.which("php"), "php not installed (the Release workflow runs this gate itself)")
+def log_release_selftest(target, stream=None):
+    """One line in the job log: which tree the positive control judges, and why."""
+    line = "\nrelease self-test: mode=%s event=%r target=%r head=%s fork-point=%s\n  %s\n" % (
+        target["mode"], target["event"], target["target"], target["head"][:12], (target["base"] or "-")[:12], target["reason"])
+    (stream or sys.stderr).write(line)
+    return line
+
+
+def release_control_tree(testcase, target, cwd=REPO):
+    """The tree the positive control runs on: None (this tree) or a temporary export of the fork point."""
+    if target["mode"] != "fork-point":
+        return None
+    tree = tempfile.mkdtemp(prefix="omx-ci-release-tree-")
+    testcase.addCleanup(shutil.rmtree, tree, True)
+    export_packages(cwd, target["base"], tree)
+    return tree
+
+
 class ReleaseGateStillStrict(unittest.TestCase):
     """The Release gate script is unchanged and still fails on an unapproved package change."""
 
     def run_gate(self, tree=None):
         env = dict(os.environ)
+        env.pop("OMOCHIX_RELEASE_TREE", None)
         if tree:
             env["OMOCHIX_RELEASE_TREE"] = tree
         return subprocess.run(["php", os.path.join(REPO, "tests/release/release-gate.php")], cwd=REPO, env=env,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    def test_gate_passes_on_this_tree(self):
-        res = self.run_gate()
-        self.assertEqual(res.returncode, 0, res.stdout.decode()[-2000:])
+    def test_gate_passes_on_the_release_tree(self):
+        t = release_selftest_target()
+        log_release_selftest(t)  # the run shows which tree was judged and why
+        self.assertNotEqual(t["mode"], "error", t["reason"])
+        res = self.run_gate(release_control_tree(self, t))
+        self.assertEqual(res.returncode, 0, t["reason"] + "\n" + res.stdout.decode()[-2000:])
 
     def test_gate_fails_on_an_unapproved_theme_change(self):
         tree = tempfile.mkdtemp(prefix="omx-ci-tree-")
@@ -1298,6 +1396,136 @@ class ReleaseGateStillStrict(unittest.TestCase):
         res = self.run_gate(tree)
         self.assertEqual(res.returncode, 1)
         self.assertIn("FAIL scope: the files that differ from production are exactly the approved steps", res.stdout.decode())
+
+    def test_integrate_mode_still_rejects_unapproved_package_changes(self):
+        # The fork-point tree passes, and the same tree with an unapproved Core and theme
+        # change still fails: the switch changes which tree is the control, not the gate.
+        t = release_selftest_target({"GITHUB_EVENT_NAME": "pull_request", "GITHUB_BASE_REF": "integrate/web2"})
+        self.assertEqual(t["mode"], "fork-point", t["reason"])
+        tree = release_control_tree(self, t)
+        self.assertEqual(self.run_gate(tree).returncode, 0)
+        with open(os.path.join(tree, "wp-plugin/omochix-core/includes/unapproved-module.php"), "w", encoding="utf-8") as fh:
+            fh.write("<?php // unapproved Core file\n")
+        with open(os.path.join(tree, "wp-theme/omochix-theme/functions.php"), "a", encoding="utf-8") as fh:
+            fh.write("\n// unapproved theme change\n")
+        res = self.run_gate(tree)
+        out = res.stdout.decode()
+        self.assertEqual(res.returncode, 1, out[-2000:])
+        self.assertIn("FAIL core: byte-identical to production", out)
+        self.assertIn("includes/unapproved-module.php", out)
+        self.assertIn("FAIL scope: the files that differ from production are exactly the approved steps", out)
+        self.assertIn("theme:functions.php", out)
+
+
+class ReleaseSelftestTarget(RepoCase):
+    """Counterexamples for the tree choice (throwaway repositories, no PHP)."""
+
+    PR = {"GITHUB_EVENT_NAME": "pull_request"}
+
+    def integrate_pr(self, changes):
+        """integrate/web2 forked from main, then a stream pull request merged like refs/pull/N/merge."""
+        self.fork = self.r.git("rev-parse", "main")
+        self.r.git("branch", "integrate/web2", "main")
+        self.r.write("docs/readme.md", "main moved on\n")
+        self.r.commit("main after the fork")
+        self.r.git("update-ref", "refs/remotes/origin/main", "main")
+        return self.r.pr("web2/hooks/x", changes, base="integrate/web2")
+
+    def target(self, env, main_ref="origin/main"):
+        return release_selftest_target(env, cwd=self.r.dir, main_ref=main_ref)
+
+    def test_pull_request_into_integrate_uses_the_fork_point(self):
+        self.integrate_pr({"wp-plugin/omochix-core/includes/web2-loader.php": "<?php\n"})
+        t = self.target(dict(self.PR, GITHUB_BASE_REF="integrate/web2"))
+        self.assertEqual((t["mode"], t["base"]), ("fork-point", self.fork), t["reason"])
+        self.assertIn(self.fork[:12], t["reason"])
+
+    def test_push_to_integrate_uses_the_fork_point(self):
+        self.integrate_pr({"wp-theme/omochix-theme/inc/web2-loader.php": "<?php\n"})
+        t = self.target({"GITHUB_EVENT_NAME": "push", "GITHUB_REF_NAME": "integrate/web2"})
+        self.assertEqual((t["mode"], t["base"]), ("fork-point", self.fork))
+
+    def test_the_exported_tree_is_the_fork_point_not_the_pull_request(self):
+        self.integrate_pr({"wp-theme/omochix-theme/functions.php": "<?php\n// changed by the stream\n",
+                           "wp-plugin/omochix-core/includes/new.php": "<?php\n"})
+        t = self.target(dict(self.PR, GITHUB_BASE_REF="integrate/web2"))
+        self.assertNotEqual(self.r.git("rev-parse", "HEAD"), t["base"])
+        dest = release_control_tree(self, t, cwd=self.r.dir)
+        self.assertEqual(slurp(os.path.join(dest, "wp-theme/omochix-theme/functions.php")), "<?php\n")
+        self.assertFalse(os.path.exists(os.path.join(dest, "wp-plugin/omochix-core/includes/new.php")))
+        self.assertFalse(os.path.exists(os.path.join(dest, "tools")))
+        # Strict modes get no export: the gate then runs on this tree.
+        self.assertIsNone(release_control_tree(self, dict(t, mode="this-tree"), cwd=self.r.dir))
+
+    def test_main_and_other_targets_keep_the_strict_check(self):
+        self.integrate_pr({"wp-plugin/omochix-core/includes/web2-loader.php": "<?php\n"})
+        for env in (dict(self.PR, GITHUB_BASE_REF="main"),
+                    {"GITHUB_EVENT_NAME": "push", "GITHUB_REF_NAME": "main"},
+                    {"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF_NAME": "integrate/web2"},
+                    {"GITHUB_EVENT_NAME": "schedule", "GITHUB_BASE_REF": "integrate/web2"}):
+            self.assertEqual(self.target(env)["mode"], "this-tree", env)
+
+    def test_bad_branch_names_keep_the_strict_check(self):
+        self.integrate_pr({"wp-plugin/omochix-core/includes/web2-loader.php": "<?php\n"})
+        for name in ("integrate", "integrate/", "integrate-web2", "xintegrate/web2", "refs/heads/integrate/web2",
+                     "integrate//web2", "integrate/web2/", " integrate/web2", "integrate/web2\n", "Integrate/web2",
+                     "integrate/web 2", "main/integrate/web2", "integrate/../main", "integrate/.hidden", "integrate/web2/../x", "integrate/a..b", "integrate/web2.."):
+            self.assertEqual(self.target(dict(self.PR, GITHUB_BASE_REF=name))["mode"], "this-tree", repr(name))
+        # push: the base ref of a pull request is not used.
+        self.assertEqual(self.target({"GITHUB_EVENT_NAME": "push", "GITHUB_BASE_REF": "integrate/web2", "GITHUB_REF_NAME": "main"})["mode"], "this-tree")
+        # pull request: the pushed ref name is not used.
+        self.assertEqual(self.target(dict(self.PR, GITHUB_BASE_REF="main", GITHUB_REF_NAME="integrate/web2"))["mode"], "this-tree")
+
+    def test_missing_environment_keeps_the_strict_check(self):
+        self.integrate_pr({"wp-plugin/omochix-core/includes/web2-loader.php": "<?php\n"})
+        for env in ({}, {"GITHUB_BASE_REF": "integrate/web2"}, {"GITHUB_EVENT_NAME": "pull_request"},
+                    {"GITHUB_EVENT_NAME": "", "GITHUB_BASE_REF": "integrate/web2"}, {"GITHUB_REF_NAME": "integrate/web2"},
+                    {"GITHUB_EVENT_NAME": "pull_request", "GITHUB_BASE_REF": "", "GITHUB_REF_NAME": "integrate/web2"},
+                    {"GITHUB_EVENT_NAME": "push", "GITHUB_REF_NAME": ""}):
+            self.assertEqual(self.target(env)["mode"], "this-tree", env)
+
+    def test_no_fork_point_fails_closed(self):
+        self.integrate_pr({"wp-plugin/omochix-core/includes/web2-loader.php": "<?php\n"})
+        env = dict(self.PR, GITHUB_BASE_REF="integrate/web2")
+        self.assertEqual(self.target(env, main_ref="origin/no-such-branch")["mode"], "error")
+        self.r.git("update-ref", "-d", "refs/remotes/origin/main")
+        t = self.target(env)
+        self.assertEqual(t["mode"], "error")
+        self.assertIn("fail closed", t["reason"])
+        # Unrelated history: no common ancestor with main.
+        self.r.git("checkout", "-q", "--orphan", "lonely")
+        self.r.commit("unrelated")
+        self.r.git("update-ref", "refs/remotes/origin/main", "main")
+        self.assertEqual(self.target(env)["mode"], "error")
+
+    def test_changed_release_settings_keep_the_strict_check(self):
+        for path in ("tools/release/release.json", "tests/release/expected/release.json", "tests/release/release-gate.php"):
+            with self.subTest(path=path):
+                self.r.cleanup()
+                self.r = Repo()
+                self.integrate_pr({path: "{\"changed\": true}\n"})
+                t = self.target(dict(self.PR, GITHUB_BASE_REF="integrate/web2"))
+                self.assertEqual(t["mode"], "this-tree", path)
+                self.assertIn("differ from the fork point", t["reason"])
+
+    def test_the_choice_is_logged_with_both_shas(self):
+        self.integrate_pr({"wp-plugin/omochix-core/includes/web2-loader.php": "<?php\n"})
+        t = self.target(dict(self.PR, GITHUB_BASE_REF="integrate/web2"))
+        buf = io.StringIO()
+        line = log_release_selftest(t, buf)
+        self.assertEqual(buf.getvalue(), line)
+        for part in ("mode=fork-point", "target='integrate/web2'", "head=" + t["head"][:12], "fork-point=" + self.fork[:12], t["reason"]):
+            self.assertIn(part, line)
+        src = slurp(os.path.join(REPO, "tests/ci/test_ci.py"))
+        body = src[src.index("    def test_gate_passes_on_the_release_tree(self):"):src.index("    def test_gate_fails_on_an_unapproved_theme_change(self):")]
+        self.assertIn("log_release_selftest(t)", body)
+
+    def test_the_test_itself_fails_on_error_mode(self):
+        # The positive control asserts mode != error before running anything.
+        src = slurp(os.path.join(REPO, "tests/ci/test_ci.py"))
+        body = src[src.index("    def test_gate_passes_on_the_release_tree(self):"):src.index("    def test_gate_fails_on_an_unapproved_theme_change(self):")]
+        self.assertIn('self.assertNotEqual(t["mode"], "error", t["reason"])', body)
+        self.assertLess(body.index('assertNotEqual(t["mode"], "error"'), body.index("self.run_gate("))
 
 
 if __name__ == "__main__":

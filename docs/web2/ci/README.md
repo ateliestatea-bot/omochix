@@ -120,6 +120,58 @@ GitHub の Ruleset は運営者が別に承認してから設定します。こ�
 
 `ci-policy.yml`（`pull_request`）で、この commit 自身の一覧に対してポリシーを確認し、自己テスト `python3 -m unittest discover -s tests/ci` を実行します。PR のコードを実行するので、`pull_request_target` にはしません。PR 側で書き換えられるので、整合性の確認であって、変更を判定するのは CI change guard です。
 
+#### Release gate の自己テスト（`ReleaseGateStillStrict`）
+
+自己テストは、`tests/release/release-gate.php`（本体は変えない）が厳格なままであることを、2つの面から確かめます。
+
+- **合格側**：リリースとして正しいファイル一式なら合格する。
+- **拒否側**：承認されていない変更があれば失敗する。
+
+**合格側を確かめるファイル一式は、送り先によって変わります。**
+
+| 送り先 | 合格側を確かめるファイル一式 |
+|---|---|
+| main 向けの PR、main への push、手動・ローカルでの実行、送り先が分からない場合 | **この commit**（以前と同じ） |
+| `integrate/<名前>` 向けの PR、または `integrate/<名前>` への push | **main との分岐点**（`git merge-base HEAD origin/main`）の `wp-plugin`・`wp-theme` |
+
+統合ブランチを分岐点で確かめる理由：
+
+- 統合ブランチでは、リリースの設定（`tools/release/**`・`tests/release/**`）を変えられません（ownership の `release_only`）。
+- そのため、統合ブランチ上のファイル一式はリリース候補ではなく、製品ファイルを1つでも変えた PR は、内容に関係なく Release gate で失敗していました（PR #75）。
+
+送り先の判定：
+
+- PR は `GITHUB_EVENT_NAME` と `GITHUB_BASE_REF`、push は `GITHUB_REF_NAME` で判定します。どちらも GitHub Actions が設定する値です。
+- 名前は `integrate/` で始まるブランチ名と完全に一致する必要があります。`..` を含むもの、`.` で始まる区切りがあるもの、空の区切りがあるものは対象外です。
+
+分岐点を使うのは、次の条件をすべて満たすときだけです。
+
+1. 送り先が上の判定に合う。
+2. 分岐点が取れる。取れないとき（`origin/main` が無い、共通の祖先が無い）は、**テストが失敗します**（fail-closed）。
+3. `tools/release`・`tests/release` が分岐点と同じである。違うときは、この commit で厳格に確かめます。
+
+判定した結果は、実行ログに1行で出ます。
+
+```text
+release self-test: mode=fork-point event='pull_request' target='integrate/web2' head=… fork-point=…
+```
+
+拒否側のテストは、今までどおりです。統合ブランチ向けのときは、さらに「分岐点のファイル一式に Core と theme の承認されていない変更を加えると失敗する」ことも確かめます（`test_integrate_mode_still_rejects_unapproved_package_changes`）。
+
+**本番の保護は変わりません。**
+
+- main へのすべての PR と push では、`release.yml` の Release gate が、そのファイル一式に対して実行されます。これは必須チェックです。
+- 統合ブランチの変更がリリースとして正しいかは、統合ブランチを main に入れる PR の Release gate が、新しいリリース設定とあわせて確かめます。
+
+判定の反例テストは `ReleaseSelftestTarget` にあり、使い捨てのリポジトリで動きます。
+
+- main 向けの PR、ほかのイベント
+- 不正な名前、環境変数の不足
+- 分岐点が無い場合
+- リリース設定が変わった場合
+- 取り出すファイルが PR 側ではなく分岐点のものであること
+- 判定が `error` のときに、Release gate を実行する前に失敗すること
+
 ### 最小権限
 
 全 workflow で次のようにしています。
