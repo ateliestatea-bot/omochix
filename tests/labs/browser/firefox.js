@@ -186,14 +186,14 @@ async function run() {
     }
     // --- list --------------------------------------------------------------
     await open('/labs/', 375);
-    check('list: 4 tool cards', (await js(visible)) === 4);
+    check('list: 5 tool cards', (await js(visible)) === 5);
     await setValue('#labs-search-q', 'json');
     check('list: search "json" → 1 card and count', (await js(visible)) === 1 && /1件のツール/.test(await js(q('[data-labs-count]') + '.textContent')));
     await setValue('#labs-search-q', '');
     await click('[data-labs-cat="dev"]');
-    check('list: category "dev" → 2 cards, aria-current, ?cat=dev', (await js(visible)) === 2 && (await js(q('[data-labs-cat="dev"]') + '.getAttribute("aria-current")')) === 'true' && /cat=dev/.test(await js('location.href')));
+    check('list: category "dev" → 3 cards, aria-current, ?cat=dev', (await js(visible)) === 3 && (await js(q('[data-labs-cat="dev"]') + '.getAttribute("aria-current")')) === 'true' && /cat=dev/.test(await js('location.href')));
     await click('[data-labs-cat=""]');
-    check('list: all → 4 cards', (await js(visible)) === 4);
+    check('list: all → 5 cards', (await js(visible)) === 5);
     await consoleCheck('list');
     // --- JSON --------------------------------------------------------------
     await open('/labs/json-formatter/', 1440);

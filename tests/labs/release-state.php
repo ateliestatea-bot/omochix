@@ -349,7 +349,11 @@ function labs_release_state_script_problems(array $tools) {
                     continue; // a key, class name, slug or URL: code, not copy
                 }
                 foreach ($list as $name) {
-                    if (false !== mb_stripos($s, $name)) {
+                    // A one-word ASCII name ("Code") counts as a word, not as part of an identifier ("labs-code").
+                    $hit = 1 === preg_match('/^[A-Za-z0-9]+$/', $name)
+                        ? 1 === preg_match('/(?<![A-Za-z0-9_-])' . preg_quote($name, '/') . '(?![A-Za-z0-9_-])/i', $s)
+                        : false !== mb_stripos($s, $name);
+                    if ($hit) {
                         $what = preg_match(LABS_PUBLISH_CLAIM, $s) ? 'presents draft tool "' . $slug . '" as published' : 'names draft tool "' . $slug . '"';
                         $problems[] = "$file:$line $what (\"$name\")";
                         break;

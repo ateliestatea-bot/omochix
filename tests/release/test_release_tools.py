@@ -126,9 +126,15 @@ class ReleaseExpectations(unittest.TestCase):
                 if 'theme-1.31.0.json' == name:
                     self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
                     self.assertTrue(any('draft' in n for n in plan['after_rollback']), 'rollback closes the publish gate before the files')
-                if 'release.json' == name:
+                if 'theme-1.31.1.json' == name:
                     self.assertTrue(any('101 URLs' in n for n in plan['after_rollback']), 'rollback checks the existing URLs')
                     self.assertFalse(any('Permalinks' in n for n in plan['after_rollback']), '1.31.1 adds no rewrite rule')
+                if 'release.json' == name:
+                    self.assertTrue(any('101 URLs' in n for n in plan['after_rollback']), 'rollback checks the existing URLs')
+                    self.assertFalse(any('Permalinks' in n for n in plan['after_rollback']), '1.32.0 adds no rewrite rule')
+                    self.assertTrue(any('/labs/code-studio/ 404' in n for n in plan['after_rollback']), 'rollback checks Code Studio is closed again')
+                    self.assertIn('/labs/code-studio/', plan['gates']['B']['check'], 'gate B checks the draft stays closed')
+                    self.assertEqual(['themes/omochix-theme/style.css'], [s['target'] for s in plan['steps'] if s['n'] == len(plan['steps'])])
                 if BOTH_PACKAGES == name:
                     self.assertEqual(['plugins/omochix-core/omochix-core.php'], [s['target'] for s in plan['steps'] if s['n'] == 14])
                     self.assertTrue(any('Permalinks' in n for n in plan['after_rollback']), 'rollback requires regenerating the rewrite rules')
@@ -164,9 +170,9 @@ class ReleaseExpectations(unittest.TestCase):
     def test_plan_refuses_a_step_missing_from_the_order_and_a_step_that_does_not_change(self):
         with release_config('release.json'):
             cfg = rl.load_config()
-        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'inc/design-library.php']])
+        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'inc/labs.php']])
         extra = dict(cfg, order=[['theme', '404.php']] + cfg['order'])
-        for bad, needle in ((dropped, 'inc/design-library.php differs from production but is not in the approved order'),
+        for bad, needle in ((dropped, 'inc/labs.php differs from production but is not in the approved order'),
                             (extra, '404.php is in the order but does not change')):
             with self.subTest(needle=needle):
                 orig = rl.load_config
