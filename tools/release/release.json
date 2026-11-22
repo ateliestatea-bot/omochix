@@ -1,6 +1,6 @@
 {
-  "release": "Theme 1.32.1 (sitemap: leave out posts whose canonical points elsewhere and the noindex Composer page)",
-  "note": "Theme only, on production 1.32.0 (release commit 112dd02, main 112dd02). Baseline: the 1.32.0 release manifest (291 files, sha256 b282a689...). Core stays 1.10.0. 3 files, all replaced: inc/learn-composer.php (the /learn/motion/compose/ page, already noindex, is left out of the Slim SEO sitemap), inc/seo.php (a post whose Slim SEO canonical points to another URL is left out of the sitemap; an empty or self canonical changes nothing), and style.css last (version 1.32.1, switch file). Both use the existing slim_seo_sitemap_post_ignore filter (Slim SEO 4.9.11 on production). Only the sitemap changes: no canonical, robots, redirect or page output changes, no new rewrite rule and no database change. Expected on production: 594 sitemap URLs become 592 (the old RTX article in the post sitemap and /learn/motion/compose/ in the page sitemap); every other URL stays. Labs (Code Studio still a draft), Design Library (gate closed), Industry Hub, SVG Motion Studio and Learn stay byte-identical to 1.32.0.",
+  "release": "Theme 1.32.1 (sitemap: leave out the noindex Composer page, the retired RTX article that answers 301, and posts whose canonical points elsewhere)",
+  "note": "Theme only, on production 1.32.0 (release commit 112dd02, main 112dd02). Baseline: the 1.32.0 release manifest (291 files, sha256 b282a689...). Core stays 1.10.0. 3 files, all replaced: inc/learn-composer.php (the /learn/motion/compose/ page, already noindex, is left out of the Slim SEO sitemap), inc/seo.php (the retired old RTX article - post 1184, slug nvidia-rtx-spark-launch-announcement, which a Redirection rule answers with a 301 to /microsoft-nvidia-rtx-spark-local-ai-windows-2026/ while its Slim SEO canonical is empty and it is not noindex - is left out by its post type, ID and slug, fixed in code; a post whose Slim SEO canonical points to another URL is also left out; an empty or self canonical changes nothing), and style.css last (version 1.32.1, switch file). All use the existing slim_seo_sitemap_post_ignore filter (Slim SEO 4.9.11 on production). Only the sitemap changes: no canonical, robots, redirect or page output changes, no new rewrite rule and no database change. Expected on production: 594 sitemap URLs become 592 (the old RTX article in the post sitemap and /learn/motion/compose/ in the page sitemap); every other URL stays. The 1.32.1 build of af91dcc was never deployed (its plan expected the RTX canonical, which production no longer has); this release is rebuilt from its own release commit. Labs (Code Studio still a draft), Design Library (gate closed), Industry Hub, SVG Motion Studio and Learn stay byte-identical to 1.32.0.",
   "packages": {
     "theme": {
       "name": "omochix-theme",
@@ -36,7 +36,7 @@
         "theme",
         "style.css"
       ],
-      "check": "Existing 101 URLs unchanged from the 1.32.0 state (/sitemap.xml, the page itself and /learn/motion/compose/ included); /sitemap-post-type-post.xml loses exactly the old RTX article and /sitemap-post-type-page.xml exactly /learn/motion/compose/ (594 sitemap URLs become 592, none added, the other sitemaps keep their counts); both pages still answer 200 with the same canonical and robots (compose stays noindex, follow); an unknown URL answers 404; /labs/code-studio/ and /design/ still 404; style.css?ver=1.32.1; all 3 files match the manifest."
+      "check": "HTTP: /nvidia-rtx-spark-launch-announcement/ (the old RTX article, post 1184) answers 301 to /microsoft-nvidia-rtx-spark-local-ai-windows-2026/ through the Redirection rule; /microsoft-nvidia-rtx-spark-local-ai-windows-2026/ (the newer article it redirects to) answers 200; /learn/motion/compose/ answers 200 with noindex, follow; an unknown URL answers 404; /labs/code-studio/ answers 404; /design/ answers 404. Sitemap: exactly 2 URLs leave it - /nvidia-rtx-spark-launch-announcement/ from /sitemap-post-type-post.xml and /learn/motion/compose/ from /sitemap-post-type-page.xml; 594 sitemap URLs become 592, none added, the other sitemaps keep their counts. Existing 101 URLs unchanged from the 1.32.0 state apart from that intended sitemap difference. Versions: style.css?ver=1.32.1 (theme 1.32.1); Core stays 1.10.0; all 3 files match the manifest."
     }
   },
   "rollback_order": [
@@ -59,6 +59,6 @@
   ],
   "after_rollback": [
     "No rewrite rule or database change to undo.",
-    "Check the 101 URLs match the 1.32.0 state, style.css?ver=1.32.0 and the sitemaps list the two URLs again (594). Cache purge and OPcache reset only with separate approval."
+    "Check the 101 URLs match the 1.32.0 state, style.css?ver=1.32.0 and the sitemaps list the two URLs again (594); the old RTX article keeps its 301 (the Redirection rule is not part of the release). Cache purge and OPcache reset only with separate approval."
   ]
 }
