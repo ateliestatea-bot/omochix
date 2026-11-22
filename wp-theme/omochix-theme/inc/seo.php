@@ -490,6 +490,59 @@ function omochix_filter_slim_seo_sitemap_taxonomies($taxonomies) {
 add_filter('slim_seo_sitemap_taxonomies', 'omochix_filter_slim_seo_sitemap_taxonomies');
 
 /**
+ * Comparable form of a URL for the canonical check below: host lower-cased, scheme and fragment ignored, path without
+ * its trailing slash, query kept. Relative URLs are resolved against home_url(). '' for anything that is not a URL.
+ *
+ * @param mixed $url URL.
+ * @return string
+ */
+function omochix_sitemap_comparable_url($url) {
+    if (!is_string($url) || '' === trim($url)) {
+        return '';
+    }
+    $url = trim($url);
+    if ('/' === $url[0] && (strlen($url) < 2 || '/' !== $url[1])) {
+        $url = home_url($url);
+    }
+    $parts = wp_parse_url($url);
+    if (!is_array($parts) || empty($parts['host'])) {
+        return '';
+    }
+    $path  = isset($parts['path']) ? untrailingslashit((string) $parts['path']) : '';
+    $query = isset($parts['query']) && '' !== $parts['query'] ? '?' . $parts['query'] : '';
+    $port  = isset($parts['port']) ? ':' . (int) $parts['port'] : '';
+    return strtolower((string) $parts['host']) . $port . $path . $query;
+}
+
+/**
+ * Keep a post out of the Slim SEO sitemap when its Slim SEO canonical (post meta slim_seo['canonical'], the value Slim
+ * SEO prints as <link rel="canonical">) names another URL. Slim SEO's sitemap only checks noindex, so such a post was
+ * listed although it points search engines elsewhere (e.g. an older duplicate article). Posts without a manual
+ * canonical, or whose canonical is their own permalink, are left as they are; another filter's "ignore" is kept.
+ *
+ * @param bool        $ignore Whether Slim SEO already leaves the post out.
+ * @param WP_Post|int $post   Post being listed.
+ * @return bool
+ */
+function omochix_sitemap_ignore_non_self_canonical($ignore, $post = null) {
+    if ($ignore) {
+        return $ignore;
+    }
+    $post = $post instanceof WP_Post ? $post : (is_numeric($post) && (int) $post > 0 ? get_post((int) $post) : null);
+    if (!$post instanceof WP_Post) {
+        return $ignore;
+    }
+    $data      = get_post_meta($post->ID, 'slim_seo', true);
+    $canonical = is_array($data) && isset($data['canonical']) ? omochix_sitemap_comparable_url($data['canonical']) : '';
+    if ('' === $canonical) {
+        return $ignore;
+    }
+    $permalink = omochix_sitemap_comparable_url(get_permalink($post));
+    return '' !== $permalink && $canonical !== $permalink;
+}
+add_filter('slim_seo_sitemap_post_ignore', 'omochix_sitemap_ignore_non_self_canonical', 10, 2);
+
+/**
  * Exclude thin term archives, and the AI News category, from taxonomy sitemap output.
  *
  * The "ai-news" category is excluded unconditionally (regardless of its post

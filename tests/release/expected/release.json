@@ -1,17 +1,17 @@
 {
-  "release": "Theme 1.32.0 (Labs Code Studio, shipped as a draft)",
+  "release": "Theme 1.32.1 (sitemap: leave out posts whose canonical points elsewhere and the noindex Composer page)",
   "commit": "HEAD",
-  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.32.0 tree against the production 1.31.1 manifest (releases/theme-1.31.1-68d81af, sha256 29d3d926...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
+  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.32.1 tree against the production 1.32.0 manifest (releases/theme-1.32.0-112dd02, sha256 b282a689...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
   "versions": {
     "core": "1.10.0",
-    "theme": "1.32.0"
+    "theme": "1.32.1"
   },
   "packages": {
     "theme": {
-      "baseline_sha256": "29d3d926634fc59f502d4b947f8be3ff137c1f0f81bca5744f01cb96060146a2",
+      "baseline_sha256": "b282a689c14f0842853571383e387cd9c653c8b639d4ee5c40bf8da58b3d0260",
       "files": 291,
-      "add": 4,
-      "replace": 4
+      "add": 0,
+      "replace": 3
     }
   },
   "unchanged": {
@@ -21,31 +21,13 @@
       "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
     }
   },
-  "steps": 8,
-  "changed_paths_sha256": "2c04320d57ac3ee97baadf21185926805ad5e0de34a217302422567828079bcf",
+  "steps": 3,
+  "changed_paths_sha256": "22a43abfa92790a8fe7df15ead9c47d5f88250f35292dcb41a4ebf49717e469e",
   "forbidden": {
     "pattern": "#labs|svg-motion|logo-motion#i",
-    "allowed": [
-      "theme:assets/css/labs.css",
-      "theme:assets/data/labs/catalog.json",
-      "theme:assets/data/labs/code-studio.json",
-      "theme:assets/js/labs/core/codestudio.js",
-      "theme:assets/js/labs/ui/code-studio.js",
-      "theme:inc/labs.php",
-      "theme:template-parts/labs/content/code-studio.php"
-    ]
+    "allowed": []
   },
-  "order_rules": [
-    {
-      "path": "theme:inc/labs.php",
-      "after_every": "add",
-      "before_every": "replace",
-      "except": [
-        "theme:style.css"
-      ],
-      "why": "inc/labs.php reads the new Code Studio lesson data and template part"
-    }
-  ],
+  "order_rules": [],
   "switches": [
     "theme:style.css"
   ],
@@ -54,8 +36,8 @@
   ],
   "rollback": {
     "first": "theme:style.css",
-    "last": "theme:inc/labs.php",
-    "count": 4
+    "last": "theme:inc/learn-composer.php",
+    "count": 3
   },
   "core_version_markers": 11
 }
