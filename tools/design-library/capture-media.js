@@ -6,7 +6,11 @@
  * Needs a LOCAL site serving the demos (DL_BASE=http://127.0.0.1:PORT, isolation test flag on),
  * Playwright (NODE_PATH) with its Chromium, and ffmpeg / avifenc / cwebp on PATH.
  *
- *   DL_BASE=http://127.0.0.1:8961 node tools/design-library/capture-media.js [slug ...]
+ *   DL_BASE=http://127.0.0.1:8961 DL_OUT=/abs/folder/outside/repo node tools/design-library/capture-media.js [slug ...]
+ *
+ * R-7: media are written ONLY to DL_OUT (outside the repository; see render-guard.js), text is drawn
+ * with the OFL fonts in fonts/fonts.lock.json (swapped in at capture time; the demo files keep naming
+ * system fonts), and every poster and loop is font-audited (audit/{slug}.json). A failed audit stops.
  */
 'use strict';
 var path = require('path');
@@ -14,10 +18,13 @@ var fs = require('fs');
 var os = require('os');
 var cp = require('child_process');
 var { chromium } = require('playwright');
+var guard = require('./render-guard');
 
 var BASE = String(process.env.DL_BASE || '').replace(/\/$/, '');
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(BASE)) { console.error('DL_BASE must be http://127.0.0.1:PORT'); process.exit(2); }
-var OUT = path.resolve(__dirname, '../../wp-theme/omochix-theme/assets/design');
+var OUT;
+try { OUT = guard.outDir(); console.log('fonts: ' + guard.checkFonts().join(', ') + '\nout: ' + OUT); } catch (e) { console.error('STOP: ' + e.message); process.exit(2); }
+var AUDIT = {};
 var TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'omx-dl-media-'));
 var W = 1280, H = 800, POSTER_MAX = 60 * 1024, LOOP_MAX = 600 * 1024, SKIP = 1.2, LEN = 8;
 var GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
@@ -139,8 +146,14 @@ var SCRIPTS = {
 
 async function poster(browser, slug) {
     var page = await browser.newPage({ viewport: { width: W, height: H } });
+    await page.addInitScript(guard.FONT_SWAP);
     await page.goto(BASE + '/design/demo/web/' + slug + '/');
+    await page.evaluate(function () { return document.fonts.ready; });
     await SCRIPTS[slug].poster(page);
+    var a = await guard.auditFonts(page, slug + ' poster');
+    AUDIT[slug] = [a];
+    fs.writeFileSync(path.join(OUT, 'audit', slug + '.json'), JSON.stringify(AUDIT[slug], null, 1));
+    if (!a.pass) throw new Error('font audit failed (' + slug + ' poster): ' + JSON.stringify(a.fonts));
     var png = path.join(TMP, slug + '.png');
     await page.screenshot({ path: png });
     await page.close();
@@ -152,11 +165,16 @@ async function poster(browser, slug) {
 async function loop(browser, slug) {
     var dir = path.join(TMP, slug + '-rec');
     var ctx = await browser.newContext({ viewport: { width: W, height: H }, recordVideo: { dir: dir, size: { width: W, height: H } } });
+    await ctx.addInitScript(guard.FONT_SWAP);
     var page = await ctx.newPage();
     var t0 = Date.now();
     await page.goto(BASE + '/design/demo/web/' + slug + '/');
     await SCRIPTS[slug].loop(page);
     var elapsed = (Date.now() - t0) / 1000;
+    var a = await guard.auditFonts(page, slug + ' loop end');
+    AUDIT[slug].push(a);
+    fs.writeFileSync(path.join(OUT, 'audit', slug + '.json'), JSON.stringify(AUDIT[slug], null, 1));
+    if (!a.pass) throw new Error('font audit failed (' + slug + ' loop): ' + JSON.stringify(a.fonts));
     var raw = await page.video().path();
     await ctx.close();
     var start = Math.max(0, Math.min(SKIP, elapsed - LEN));
@@ -172,6 +190,7 @@ async function loop(browser, slug) {
 (async function () {
     var slugs = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(SCRIPTS);
     var browser = await chromium.launch({ args: GL_ARGS });
+    await guard.waitForFonts(browser);
     for (var s of slugs) {
         var p = await poster(browser, s);
         var l = await loop(browser, s);

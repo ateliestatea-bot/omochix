@@ -8,7 +8,7 @@ defined('ABSPATH') || exit;
 ?>
 <div class="bn">
     <header class="bn-nav">
-        <span class="bn-logo"><span class="bn-logo__grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Tilely</span>
+        <span class="bn-logo"><span class="bn-logo__grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Grivio</span>
         <nav aria-label="ページ内"><a href="#bn-grid">機能</a><a href="#bn-price">料金</a></nav>
         <button class="bn-btn bn-btn--primary" type="button">無料で始める</button>
     </header>

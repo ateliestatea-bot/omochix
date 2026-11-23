@@ -1,4 +1,4 @@
-/* Liquid Glass — translucent layers, light and blur. Motion runs only with JS (html.js) and without reduced motion. */
+/* Frosted Glass UI — translucent layers, light and blur. Motion runs only with JS (html.js) and without reduced motion. */
 *,*::before,*::after{box-sizing:border-box}
 html{color-scheme:dark;scroll-behavior:smooth;--mx:50vw;--my:30vh}
 .lg{--blur:12px}

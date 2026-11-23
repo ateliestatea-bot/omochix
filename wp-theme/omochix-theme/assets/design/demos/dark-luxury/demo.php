@@ -9,7 +9,7 @@ defined('ABSPATH') || exit;
 ?>
 <div class="dk">
     <header class="dk-nav">
-        <span class="dk-mark" aria-label="SUMIKAGE ARCHITECTS">SUMIKAGE<span class="dk-mark__sub">ARCHITECTS</span></span>
+        <span class="dk-mark" aria-label="KAGEMURO ARCHITECTS">KAGEMURO<span class="dk-mark__sub">ARCHITECTS</span></span>
         <nav aria-label="ページ内">
             <a href="#dk-philosophy">思想</a>
             <a href="#dk-works">作品</a>

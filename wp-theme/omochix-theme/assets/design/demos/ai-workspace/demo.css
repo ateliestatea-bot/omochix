@@ -1,4 +1,4 @@
-/* AI Workspace UI (fictional "NOKURA"): a research app screen. Light and dark; 3 columns ≥ 1200 px,
+/* AI Workspace UI (fictional "TOIMORI"): a research app screen. Light and dark; 3 columns ≥ 1200 px,
    side drawer + 2 columns on tablets, one view at a time on phones. Without JS everything is stacked and readable. */
 :root{--bg:#f6f5f2;--surface:#fff;--sunk:#efede8;--ink:#17181c;--mute:#5c5f66;--line:#dedbd3;--accent:#3f6a0a;--accent-ink:#fff;--accent-soft:#ecf3df;--danger:#b42318;--shadow:0 18px 48px -18px #17181c40;color-scheme:light}
 html[data-theme="dark"]{--bg:#121316;--surface:#1a1b1f;--sunk:#0d0e10;--ink:#e8e6e1;--mute:#a3a39d;--line:#2c2e33;--accent:#a3e635;--accent-ink:#14200a;--accent-soft:#22301a;--danger:#ff8a7a;--shadow:0 18px 48px -18px #000c;color-scheme:dark}

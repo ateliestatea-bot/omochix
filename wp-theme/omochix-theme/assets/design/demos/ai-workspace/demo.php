@@ -1,7 +1,7 @@
 <?php
 /**
  * Design Library demo: AI Workspace UI. Markup only; rendered by the isolated demo endpoint.
- * A fictional research app ("NOKURA"); the city, documents and numbers are fictional.
+ * A fictional research app ("TOIMORI"); the city, documents and numbers are fictional.
  * No AI is called and nothing typed here leaves the page: replies are prepared text.
  * The whole conversation is in the markup, so it reads without JavaScript.
  */
@@ -12,7 +12,7 @@ defined('ABSPATH') || exit;
         <button class="aw-icon aw-only-tablet" type="button" data-aw-nav aria-controls="aw-side" aria-expanded="false" aria-label="スレッド一覧を開く">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
         </button>
-        <span class="aw-brand"><span class="aw-brand__mark" aria-hidden="true"></span>NOKURA<span class="aw-brand__note">架空の AI リサーチ</span></span>
+        <span class="aw-brand"><span class="aw-brand__mark" aria-hidden="true"></span>TOIMORI<span class="aw-brand__note">架空の AI リサーチ</span></span>
         <button class="aw-search" type="button" data-aw-open-palette aria-haspopup="dialog">
             <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>
             <span>コマンドを検索</span><kbd aria-hidden="true">⌘K</kbd>
@@ -54,8 +54,8 @@ defined('ABSPATH') || exit;
                 <p class="aw-who">あなた</p>
                 <p>みなと市立図書館（架空）の来館者が 2025 年に増えた理由を、手元の資料から整理して。</p>
             </div>
-            <article class="aw-msg aw-msg--ai" aria-label="NOKURA の回答">
-                <p class="aw-who"><span class="aw-brand__mark" aria-hidden="true"></span>NOKURA</p>
+            <article class="aw-msg aw-msg--ai" aria-label="TOIMORI の回答">
+                <p class="aw-who"><span class="aw-brand__mark" aria-hidden="true"></span>TOIMORI</p>
                 <p>資料からは、主な理由が 2 つ読み取れます。</p>
                 <p><strong>1. 平日の開館時間を 20 時まで延ばした。</strong>延長後の 4〜12 月は、18 時以降の来館が前年の同じ時期より 41% 多くなっています。<button class="aw-cite" type="button" data-aw-cite="1" aria-label="出典 1：来館者統計 2025">1</button></p>
                 <p><strong>2. 学習室を予約制にした。</strong>アンケートでは「席が確実に取れる」を理由に挙げた人が最も多く、回答者の 38% でした。<button class="aw-cite" type="button" data-aw-cite="2" aria-label="出典 2：利用者アンケート">2</button></p>

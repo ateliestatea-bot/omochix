@@ -144,7 +144,7 @@ async function listChecks(type, browser) {
     await px.goto(BASE + '/design/web/');
     function vis() { return px.evaluate(function () { return Array.prototype.filter.call(document.querySelectorAll('[data-dl-card]'), function (c) { return !c.hidden; }).map(function (c) { return c.querySelector('.dl-card__title').textContent.trim(); }); }); }
     await px.selectOption('#dl-motion_type', 'ambient'); await L.wait(200);
-    check(type + ' filter motion_type=ambient -> Liquid Glass and Aurora Gradient, URL synced', JSON.stringify(await vis()) === '["Liquid Glass","Aurora Gradient"]' && px.url().indexOf('motion_type=ambient') !== -1);
+    check(type + ' filter motion_type=ambient -> Frosted Glass UI and Aurora Gradient, URL synced', JSON.stringify(await vis()) === '["Frosted Glass UI","Aurora Gradient"]' && px.url().indexOf('motion_type=ambient') !== -1);
     await px.selectOption('#dl-motion_type', ''); await px.selectOption('#dl-technology', 'webgl'); await L.wait(200);
     check(type + ' filter technology=webgl -> 3D Interactive', JSON.stringify(await vis()) === '["3D Interactive"]');
     await px.selectOption('#dl-technology', ''); await px.selectOption('#dl-use_case', 'saas'); await L.wait(200);
@@ -269,7 +269,7 @@ async function demoChecks(type, browser) {
     var cr = await newCtx(browser, { reduce: true, vp: { width: 1280, height: 800 } });
     var pr = await cr.newPage();
     await pr.goto(BASE + '/design/demo/web/liquid-glass/'); await L.wait(800);
-    check(type + ' reduced: Liquid Glass background and highlight are still', await pr.evaluate(function () { return getComputedStyle(document.querySelector('.lg-blob--1')).animationName === 'none' && getComputedStyle(document.querySelector('.lg-spot')).opacity === '0' && getComputedStyle(document.querySelector('.lg-float')).animationName === 'none'; }));
+    check(type + ' reduced: Frosted Glass UI (liquid-glass) background and highlight are still', await pr.evaluate(function () { return getComputedStyle(document.querySelector('.lg-blob--1')).animationName === 'none' && getComputedStyle(document.querySelector('.lg-spot')).opacity === '0' && getComputedStyle(document.querySelector('.lg-float')).animationName === 'none'; }));
     await pr.goto(BASE + '/design/demo/web/minimal-editorial/'); await L.wait(300);
     check(type + ' reduced: Editorial headline shown at once, lines fully drawn', await pr.evaluate(function () { return Array.prototype.every.call(document.querySelectorAll('.ed-line'), function (e) { return getComputedStyle(e).opacity === '1'; }) && document.querySelector('.ed-rule').style.getPropertyValue('--p') === '1'; }));
     await pr.click('[data-ed-next]');

@@ -129,7 +129,7 @@ $it['related']['learn'] = ['learn/development', 'learn/hidden', 'learn/missing']
 $it['related']['designs'] = ['liquid-glass', 'bento-saas', 'no-such-item'];
 $rel = omochix_design_related($it);
 check('related: only published Learn pages are linked', 1 === count($rel['learn']) && 'AI開発' === $rel['learn'][0]['title']);
-check('related: other public works only (not itself, not unknown)', 1 === count($rel['designs']) && 'Liquid Glass' === $rel['designs'][0]['title']);
+check('related: other public works only (not itself, not unknown)', 1 === count($rel['designs']) && 'Frosted Glass UI' === $rel['designs'][0]['title']);
 check('related: Motion Gallery links need the gallery (not loaded here) -> none', [] === $rel['motion']);
 $it['motionStudio'] = ['templateId' => 'rag-intro', 'status' => 'verified'];
 check('Motion Studio: no URL even for a verified mapping (no editor exists)', '' === omochix_design_motion_studio_url($it));

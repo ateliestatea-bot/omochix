@@ -1,4 +1,4 @@
-/* Liquid Glass: pointer-following highlight, scroll-linked blur. Stops when hidden; nothing moves with reduced motion. */
+/* Frosted Glass UI: pointer-following highlight, scroll-linked blur. Stops when hidden; nothing moves with reduced motion. */
 (function () {
     'use strict';
     var demo = window.omxDemo;
