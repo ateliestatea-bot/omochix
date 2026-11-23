@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "omochix-glossary/1",
+  "title": "OmochiX AI glossary term (content/glossary/terms/{slug}.json)",
+  "description": "For people and editors. The rules that decide are in wp-plugin/omochix-core/includes/web2/glossary-validate.php (used by tests/glossary/validate-content.php, the importer and the publish guard); when they differ, the PHP rules win. Also enforced there and not expressible here: character counts in UTF-8 characters, real calendar dates not after today, verified_on not before any checked_on, at least one source of kind official/paper/standard/docs, no IP/localhost/internal hosts, no user:pass, port 443 only, no credential-like query keys, the HTML allow-list (p h2 h3 h4 ul ol li strong em b i code pre blockquote a br dl dt dd table thead tbody tr th td sup sub; only a[href] with an https URL), no credential-like strings anywhere, aliases unique and different from the title, related.glossary not the term itself and present in the set.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "slug", "title", "reading", "category", "summary", "content_html", "sources", "verified_on", "ai_assisted"],
+  "properties": {
+    "schema": { "const": "omochix-glossary/1" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "minLength": 2, "maxLength": 60, "not": { "enum": ["category", "page", "feed", "rss", "rss2", "rdf", "atom", "embed", "trackback", "comments", "amp", "search", "index", "glossary", "wp-admin", "wp-json"] } },
+    "title": { "type": "string", "minLength": 1, "maxLength": 40 },
+    "reading": { "type": "string", "pattern": "^[ぁ-ゖー]+$", "minLength": 1, "maxLength": 60 },
+    "en": { "type": "string", "pattern": "^[ -~]+$", "minLength": 1, "maxLength": 80 },
+    "aliases": { "type": "array", "maxItems": 10, "items": { "type": "string", "minLength": 1, "maxLength": 40 } },
+    "category": { "type": "string", "description": "One slug from content/glossary/categories.json" },
+    "level": { "enum": ["beginner", "intermediate", "advanced"] },
+    "summary": { "type": "string", "minLength": 40, "maxLength": 120, "description": "One-sentence definition, plain text. Used as meta description and DefinedTerm description." },
+    "content_html": { "type": "string", "description": "Explanation, 400-2,000 characters of text recommended (warning), 6,000 at most (error)." },
+    "sources": {
+      "type": "array", "minItems": 1, "maxItems": 8,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["url", "title", "publisher", "kind", "checked_on"],
+        "properties": {
+          "url": { "type": "string", "pattern": "^https://", "maxLength": 2048 },
+          "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "publisher": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "kind": { "enum": ["official", "paper", "standard", "docs", "media"] },
+          "checked_on": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+        }
+      }
+    },
+    "verified_on": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "review_days": { "type": "integer", "minimum": 30, "maximum": 365, "default": 180 },
+    "ai_assisted": { "type": "boolean" },
+    "related": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "glossary": { "type": "array", "maxItems": 8, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" } },
+        "tools": { "type": "array", "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" } },
+        "learn_pages": { "type": "array", "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "pattern": "^learn(?:/[a-z0-9]+(?:-[a-z0-9]+)*){1,4}$" } },
+        "practice": { "type": "array", "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" } },
+        "industries": { "type": "array", "maxItems": 4, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" } }
+      }
+    }
+  }
+}
