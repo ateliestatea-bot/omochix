@@ -14,9 +14,58 @@
  * and the loader deleted; the test fails if that block is not exactly the
  * appended one. Each load runs in its own PHP process.
  *
+ * Module folders (includes/web2/, inc/web2/) may hold modules before they are
+ * listed: the list decides what loads, never the folder. The end of this file
+ * checks that nothing in a folder runs, that its files already follow the
+ * loader's rules, that listed modules breaking a rule are refused, and that
+ * enabling the shipped modules opens nothing public.
+ *
  * Run: php tests/web2/hooks/regression.php
  */
 $REPO = realpath(__DIR__ . '/../../..');
+
+/**
+ * What the loader sees in a module folder ($dir/$sub): every PHP file read
+ * with the loader's own tokenizer check ($declarations), and every entry
+ * file (marker on line 2) with the loader's own file check ($check). Nothing
+ * in the folder is run.
+ */
+function rg_module_report($dir, $sub, $check, $declarations) {
+    $out = ['entries' => [], 'files' => []];
+    $root = "$dir/$sub";
+    if (!is_dir($root) || !function_exists($check) || !function_exists($declarations)) {
+        return $out;
+    }
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
+    foreach ($it as $f) {
+        if ('php' !== strtolower($f->getExtension())) {
+            continue;
+        }
+        $rel  = $sub . str_replace(DIRECTORY_SEPARATOR, '/', substr($f->getPathname(), strlen($root)));
+        $code = (string) file_get_contents($f->getPathname());
+        $d    = $declarations($code);
+        $out['files'][$rel] = is_array($d) ? $d : ['error' => $d];
+        if (preg_match('#^<\?php\r?\n// omochix-web2-module: (\S+) api=#', $code, $m)) {
+            $out['entries'][$rel] = ['id' => $m[1], 'check' => $check($m[1], $rel, $dir)];
+        }
+    }
+    ksort($out['files']);
+    ksort($out['entries']);
+    return $out;
+}
+
+/** For each loaded module, what its public gate function (if it has one) returns. */
+function rg_gates(?array $state, $format, $arg) {
+    $gates = [];
+    foreach ((array) ($state['modules'] ?? []) as $id => $m) {
+        if ('loaded' !== $m['state']) {
+            continue;
+        }
+        $fn = sprintf($format, str_replace('-', '_', (string) $id));
+        $gates[$id] = function_exists($fn) ? var_export(null === $arg ? $fn() : $fn($arg), true) : 'none';
+    }
+    return $gates;
+}
 
 if ('--core' === ($argv[1] ?? '')) {
     // IH_PLUGIN_DIR (read by the stub) points at the copy to load.
@@ -28,7 +77,11 @@ if ('--core' === ($argv[1] ?? '')) {
     $snap = ih_registration_snapshot();
     $GLOBALS['caps'] = ['*' => true, 'activate_plugins' => true];
     ob_start(); do_action('admin_notices'); $notice = (string) ob_get_clean();
-    echo "\n@@JSON@@" . json_encode(['out' => $load_out, 'errors' => $GLOBALS['fail'], 'snap' => $snap, 'functions' => $fns, 'ih' => omochix_core_industry_hub_loaded(), 'notice' => $notice, 'web2' => function_exists('omochix_core_web2_state') ? omochix_core_web2_state() : null]);
+    $web2 = function_exists('omochix_core_web2_state') ? omochix_core_web2_state() : null;
+    echo "\n@@JSON@@" . json_encode(['out' => $load_out, 'errors' => $GLOBALS['fail'], 'snap' => $snap, 'functions' => $fns, 'ih' => omochix_core_industry_hub_loaded(), 'notice' => $notice, 'web2' => $web2,
+        'list' => function_exists('omochix_core_web2_modules') ? omochix_core_web2_modules() : null,
+        'report' => rg_module_report(getenv('IH_PLUGIN_DIR'), 'includes/web2', 'omochix_core_web2_check', 'omochix_core_web2_declarations'),
+        'gates' => rg_gates($web2, 'omochix_core_%s_public', null)]);
     exit(0);
 }
 if ('--theme' === ($argv[1] ?? '')) {
@@ -47,7 +100,11 @@ if ('--theme' === ($argv[1] ?? '')) {
     $out = (string) ob_get_clean();
     $fns = array_values(array_filter(array_diff(get_defined_functions()['user'], $before), static function ($f) { return 0 !== strpos($f, 'omochix_web2_'); }));
     sort($fns);
-    echo "\n@@JSON@@" . json_encode(['out' => $out, 'errors' => $GLOBALS['errors'], 'hooks' => $GLOBALS['hooks'], 'functions' => $fns, 'web2' => function_exists('omochix_web2_state') ? omochix_web2_state() : null, 'globals' => array_values(array_filter(array_keys($GLOBALS), static function ($k) { return 0 === strpos($k, 'omochix_web2'); }))]);
+    $web2 = function_exists('omochix_web2_state') ? omochix_web2_state() : null;
+    echo "\n@@JSON@@" . json_encode(['out' => $out, 'errors' => $GLOBALS['errors'], 'hooks' => $GLOBALS['hooks'], 'functions' => $fns, 'web2' => $web2, 'globals' => array_values(array_filter(array_keys($GLOBALS), static function ($k) { return 0 === strpos($k, 'omochix_web2'); })),
+        'list' => function_exists('omochix_web2_modules') ? omochix_web2_modules() : null,
+        'report' => rg_module_report($T, 'inc/web2', 'omochix_web2_check', 'omochix_web2_declarations'),
+        'gates' => rg_gates($web2, 'omochix_%s_public_switch', true)]);
     exit(0);
 }
 
@@ -138,7 +195,134 @@ rg_check('theme: at least the known feature hooks are present (sanity)', count($
 // What the hooks stream may change; the rest of each file stays byte-for-byte.
 rg_check('versions: Core header and constant are untouched by the loader block', 1 === preg_match("/^ \\* Version: (\\S+)/m", $main, $a) && false !== strpos($main, "define( 'OMOCHIX_CORE_VERSION', '{$a[1]}' );"));
 rg_check('markers: the loaders carry no Industry Hub version marker (Release gate counts them)', false === strpos((string) file_get_contents("$plugin/includes/web2-loader.php"), 'omochix-industry-hub-version') && false === strpos((string) file_get_contents("$theme/inc/web2-loader.php"), 'omochix-industry-hub-version'));
-rg_check('modules: no Web 2.0 module folder ships yet', !is_dir("$plugin/includes/web2") && !is_dir("$theme/inc/web2"));
+
+// ========================================================= module files
+// Module files may ship before they are listed (each module stream adds its
+// own folder files). The fixed list decides what loads, never the folder:
+// while the list is empty nothing in it runs, every file in it already
+// follows the loader's rules, and a listed module still has to pass them.
+/** Replace the fixed list in a copy of a loader (exactly one, else the test stops). */
+function rg_set_list($file, $fn, array $list) {
+    $n = 0;
+    $c = preg_replace('/(function ' . preg_quote($fn, '/') . '\(\) \{\s*return )array\(\);/', '${1}' . str_replace(['\\', '$'], ['\\\\', '\\$'], var_export($list, true)) . ';', (string) file_get_contents($file), -1, $n);
+    if (1 !== $n) {
+        fwrite(STDERR, "cannot find the list in $file\n");
+        exit(2);
+    }
+    file_put_contents($file, $c);
+}
+/** A module file: marker, body, end marker (each part can be broken on purpose). */
+function rg_module($id, $body, $api = 1, $end = true) {
+    return "<?php\n// omochix-web2-module: $id api=$api\n$body\n" . ($end ? "// omochix-web2-module: $id api=$api (end)\n" : '');
+}
+$sides = [
+    'core'  => ['dir' => $plugin, 'sub' => 'includes/web2', 'loader' => 'includes/web2-loader.php', 'list_fn' => 'omochix_core_web2_modules', 'p' => 'omochix_core_', 'now' => $now, 'notice' => static function ($r) { return '' !== $r['notice']; },
+                'child' => static function ($d) { return rg_child(['--core'], ['IH_PLUGIN_DIR' => $d]); }],
+    'theme' => ['dir' => $theme, 'sub' => 'inc/web2', 'loader' => 'inc/web2-loader.php', 'list_fn' => 'omochix_web2_modules', 'p' => 'omochix_', 'now' => $tnow, 'notice' => static function ($r) { return [] !== preg_grep('/^admin_notices@10\/1:omochix_web2_notice$/', $r['hooks']); },
+                'child' => static function ($d) { return rg_child(['--theme', $d]); }],
+];
+foreach ($sides as $side => $s) {
+    $n = $s['now'];
+    $src = (string) file_get_contents("{$s['dir']}/{$s['loader']}");
+    rg_check("$side: the fixed module list is empty in the source (one list, returns array())", 1 === preg_match_all('/function ' . $s['list_fn'] . '\(\) \{\s*return array\(\);\s*\}/', $src) && 1 === substr_count($src, 'function ' . $s['list_fn'] . '('));
+    rg_check("$side (this tree): the module list is empty at run time and nothing was tried", is_array($n) && [] === $n['list'] && [] === $n['web2']['modules']);
+
+    $rep = is_array($n) ? $n['report'] : ['files' => [], 'entries' => []];
+    $declared = [];
+    foreach ($rep['files'] as $info) { $declared = array_merge($declared, $info['functions'] ?? []); }
+    $bad_files = array_keys(array_filter($rep['files'], static function ($i) { return isset($i['error']); }));
+    $bad_entries = array_filter($rep['entries'], static function ($e) { return '' !== $e['check']; });
+    $ids = array_column($rep['entries'], 'id');
+    $count = count($rep['files']) . ' files, ' . count($rep['entries']) . ' entries';
+    rg_check("$side: no function of the module folder exists after loading ($count): nothing in it ran", [] === array_intersect($declared, $n['functions']), implode(',', array_intersect($declared, $n['functions'])));
+    rg_check("$side: every module folder file follows the loader rules (syntax, no namespace or output, omochix_ prefix)", [] === $bad_files, json_encode(array_intersect_key($rep['files'], array_flip($bad_files))));
+    rg_check("$side: every module entry passes the loader check (marker, API version, prefix, no redeclare)", [] === $bad_entries, json_encode($bad_entries));
+    rg_check("$side: module ids are unique", count($ids) === count(array_unique($ids)));
+
+    // An unlisted module with side effects in the folder: still nothing runs.
+    $d = "$TMP/$side-unlisted";
+    rg_copy_tree($s['dir'], $d);
+    @mkdir("$d/{$s['sub']}", 0700, true);
+    $flag = "$TMP/$side-unlisted-ran";
+    file_put_contents("$d/{$s['sub']}/zz-canary.php", rg_module('zz-canary', "file_put_contents(" . var_export($flag, true) . ", 'ran');\nfunction {$s['p']}zz_canary() { return 1; }\nadd_action('init', '{$s['p']}zz_canary');"));
+    [$code, $r, $raw] = $s['child']($d);
+    rg_check("$side (unlisted module in the folder): loads with no PHP error and no output", 0 === $code && is_array($r) && in_array($r['errors'], [0, []], true) && '' === $r['out'], $raw);
+    rg_check("$side (unlisted module in the folder): it did not run (no side effect, no function, no hook)", is_array($r) && !file_exists($flag) && !in_array("{$s['p']}zz_canary", $r['functions'], true) && [] === $r['web2']['modules']
+        && ('core' === $side ? $r['snap'] === $n['snap'] : $r['hooks'] === $n['hooks']));
+
+    // Listed modules that break a rule are refused; one that is listed but off is not loaded.
+    $d = "$TMP/$side-listed";
+    rg_copy_tree($s['dir'], $d);
+    @mkdir("$d/{$s['sub']}", 0700, true);
+    $p = $s['p'];
+    $existing = current(array_filter($n['functions'], static function ($f) use ($p) { return 0 === strpos($f, $p) && 0 !== strpos($f, $p . 'web2_'); }));
+    $fixtures = [
+        'zz-ok'         => [rg_module('zz-ok', "function {$p}zz_ok() { return 1; }"), 'loaded'],
+        'zz-off'        => [rg_module('zz-off', "function {$p}zz_off_ran() { return 1; }"), 'off', false],
+        'zz-bad-marker' => [rg_module('zz-bad-marker', "function {$p}zz_bad_marker_ran() { return 1; }", 1, false), 'bad-marker'],
+        'zz-api'        => [rg_module('zz-api', "function {$p}zz_api_ran() { return 1; }", 999), 'api-mismatch'],
+        'zz-prefix'     => [rg_module('zz-prefix', "function zz_prefix_ran() { return 1; }"), 'prefix'],
+        'zz-redeclare'  => [rg_module('zz-redeclare', "function $existing() { return 1; }"), 'redeclare'],
+        'zz-namespace'  => [rg_module('zz-namespace', "namespace Zz;\nfunction {$p}zz_namespace_ran() { return 1; }"), 'namespace'],
+        'zz-html'       => [rg_module('zz-html', "function {$p}zz_html_ran() { return 1; }\n?>\n<p>leak</p>\n<?php"), 'output'],
+        // Refused only while it runs (the loader cannot tell from the tokens):
+        // its output is thrown away and its hooks are taken out again.
+        'zz-echo'       => [rg_module('zz-echo', "function {$p}zz_echo_loaded() { return 1; }\nadd_action('init', '{$p}zz_echo_loaded');\necho 'leak';"), 'output'],
+    ];
+    $list = [];
+    foreach ($fixtures as $id => $f) {
+        file_put_contents("$d/{$s['sub']}/$id.php", $f[0]);
+        $list[$id] = ['file' => "{$s['sub']}/$id.php", 'enabled' => $f[2] ?? true];
+    }
+    $list['zz-path'] = ['file' => "{$s['sub']}/../" . basename($s['loader']), 'enabled' => true];
+    $fixtures['zz-path'] = ['', 'bad-path'];
+    rg_set_list("$d/{$s['loader']}", $s['list_fn'], $list);
+    [$code, $r, $raw] = $s['child']($d);
+    $states = is_array($r) ? array_map(static function ($m) { return $m['state']; }, $r['web2']['modules']) : [];
+    $want = array_map(static function ($f) { return $f[1]; }, $fixtures);
+    ksort($states); ksort($want);
+    rg_check("$side (listed modules that break the rules): loads with no PHP error and no output", 0 === $code && is_array($r) && in_array($r['errors'], [0, []], true) && '' === $r['out'], $raw);
+    rg_check("$side (listed modules that break the rules): each is refused for its reason; only the valid one loads", $states === $want, json_encode(array_diff_assoc($states, $want)));
+    $ran = array_values(array_filter(is_array($r) ? $r['functions'] : [], static function ($f) { return (bool) preg_match('/zz_[a-z_]+_ran$/', $f); }));
+    rg_check("$side (listed modules that break the rules): no module refused before running, or switched off, ran", is_array($r) && [] === $ran && in_array("{$p}zz_ok", $r['functions'], true), implode(',', $ran));
+    if ('core' === $side) {
+        // The theme harness has no remove_filter (tests/web2/hooks/run.php covers the theme's unhooking).
+        $echo_hooks = is_array($r) ? array_filter($r['snap']['hooks'], static function ($l) use ($p) { return [] !== preg_grep('/zz_echo_loaded$/', $l); }) : [1];
+        rg_check('core (listed modules that break the rules): the module that printed while loading has no hook left and printed nothing', is_array($r) && [] === $echo_hooks && '' === $r['out']);
+    }
+    rg_check("$side (listed modules that break the rules): administrators are told", is_array($r) && $s['notice']($r));
+    if ('core' === $side) {
+        rg_check('core (listed modules that break the rules): Industry Hub module still loaded', is_array($r) && true === $r['ih']);
+    }
+
+    // The modules this tree ships, listed and enabled: they load, and nothing public opens.
+    $entries = $rep['entries'];
+    if ([] === $entries) {
+        rg_check("$side: no module entry ships in this tree (nothing to enable)", [] === $rep['files']);
+        continue;
+    }
+    $d = "$TMP/$side-enabled";
+    rg_copy_tree($s['dir'], $d);
+    $list = [];
+    foreach ($entries as $rel => $e) { $list[$e['id']] = ['file' => $rel, 'enabled' => true]; }
+    rg_set_list("$d/{$s['loader']}", $s['list_fn'], $list);
+    [$code, $r, $raw] = $s['child']($d);
+    $states = is_array($r) ? array_map(static function ($m) { return $m['state']; }, $r['web2']['modules']) : [];
+    rg_check("$side (shipped modules enabled): loads with no PHP error and no output", 0 === $code && is_array($r) && in_array($r['errors'], [0, []], true) && '' === $r['out'], $raw);
+    rg_check("$side (shipped modules enabled): every module loads (" . implode(',', array_keys($list)) . ')', count($states) === count($list) && [] === array_diff($states, ['loaded']), json_encode($states));
+    rg_check("$side (shipped modules enabled): each public gate a module has stays closed", is_array($r) && [] === array_diff($r['gates'], ['false', 'none']), is_array($r) ? json_encode($r['gates']) : '');
+    if ('core' === $side) {
+        $new_pt = is_array($r) ? array_diff_key($r['snap']['post_types'], $n['snap']['post_types']) : [];
+        $new_tx = is_array($r) ? array_diff_key($r['snap']['taxonomies'], $n['snap']['taxonomies']) : [];
+        $open = [];
+        foreach ($new_pt as $k => $a) { if (!empty($a['public']) || !empty($a['publicly_queryable']) || !empty($a['rewrite']) || !empty($a['has_archive'])) { $open[] = "post type $k"; } }
+        foreach ($new_tx as $k => $t) { $a = $t['args']; if (!empty($a['public']) || !empty($a['publicly_queryable']) || !empty($a['rewrite'])) { $open[] = "taxonomy $k"; } }
+        rg_check('core (shipped modules enabled): no rewrite rule added, every new post type and taxonomy is closed', is_array($r) && $r['snap']['rewrite'] === $n['snap']['rewrite'] && [] === $open, implode(',', $open));
+        rg_check('core (shipped modules enabled): existing registrations unchanged, Industry Hub still loaded, no notice', is_array($r) && array_intersect_key($r['snap']['post_types'], $n['snap']['post_types']) === $n['snap']['post_types'] && array_intersect_key($r['snap']['taxonomies'], $n['snap']['taxonomies']) === $n['snap']['taxonomies'] && true === $r['ih'] && '' === $r['notice']);
+    } else {
+        rg_check('theme (shipped modules enabled): the existing hooks are all still there, in order', is_array($r) && array_values(array_intersect($r['hooks'], $n['hooks'])) === $n['hooks']);
+    }
+}
 
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
