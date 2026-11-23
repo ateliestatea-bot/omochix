@@ -100,3 +100,24 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
+
+      - name: Web 2.0 tests
+        # The Web 2.0 hooks loader and the Knowledge Hub module (docs/web2/). Like the Node
+        # tests, it still reports when an earlier step failed (the job stays failed), but not
+        # when the run was cancelled. The loader reads module files with the tokenizer, so a
+        # PHP without it must fail here rather than pass with every module refused.
+        if: ${{ !cancelled() }}
+        run: |
+          php -r 'exit(function_exists("token_get_all") ? 0 : 1);' || { echo "::error::PHP has no tokenizer extension"; exit 1; }
+          status=0
+          for test in \
+            tests/web2/hooks/run.php \
+            tests/web2/hooks/regression.php \
+            tests/glossary/run.php \
+            tests/glossary/theme.php
+          do
+            echo "::group::$test"
+            php "$test" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
