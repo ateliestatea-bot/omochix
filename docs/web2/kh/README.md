@@ -110,7 +110,8 @@ php tests/glossary/theme.php
 
 - `run.php` は Core 側の198件です。
 - `theme.php` は64件です：判定、SEO、構造化データ、テンプレートの漏えい、XSS、関連、Core 無しのとき、静的検査。
-- 実際の WordPress での確認は `wp-test-plan.md`、リリースの案は `release-design.md` にあります。
+- 実際の WordPress での確認は `wp-test-plan.md` にあります。
+- リリースの手順は、このリポジトリにはまだありません。公開を決めるときに、main のリリース設定と Release gate に合わせて用意します。
 
 ## まだのこと（Phase 1 の残り）
 - 管理画面：メタボックス、一覧の列（要再確認・出典数）、JSON インポーター（常に下書き）。
