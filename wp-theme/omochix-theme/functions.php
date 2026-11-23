@@ -586,3 +586,15 @@ function omochix_theme_header_script_url() {
 if (is_readable(get_theme_file_path('/inc/learn-industries.php'))) {
     require_once get_theme_file_path('/inc/learn-industries.php');
 }
+
+// Web 2.0 modules (docs/web2/hooks/README.md). Loaded last and guarded, like
+// the Core plugin's loader: with the loader missing or broken the theme works
+// as before. Only modules on its fixed list (empty, default off) are loaded;
+// OMOCHIX_WEB2_DISABLED in wp-config.php stops them all.
+if (is_readable(get_theme_file_path('/inc/web2-loader.php'))) {
+    try {
+        require_once get_theme_file_path('/inc/web2-loader.php');
+    } catch (Throwable $omochix_web2_error) {
+        unset($omochix_web2_error);
+    }
+}
