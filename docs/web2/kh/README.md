@@ -16,11 +16,11 @@
 |---|---|
 | `includes/web2/glossary-loader.php` | 入口。Web 2.0 ローダー用の版マーカー（`glossary api=1`）を持つ。下の6ファイルを、版マーカー（`omochix-glossary-version: 1`）を確かめてから全部か無しで読む。失敗したら、そのファイルのフックを外し、管理者に通知する |
 | `includes/web2/glossary-validate.php` | データの規則（WordPress なしで動く）。インポーター・公開ガード・CI のコンテンツ検査が、同じ規則を使う |
-| `includes/web2/glossary-post-type.php` | post type `omx_glossary`、タクソノミー `omx_glossary_category`。スイッチが OFF のときは非公開で登録する（URL・アーカイブ・クエリ変数・検索・rewrite なし）。flush は、スイッチが変わったときに1回だけ |
+| `includes/web2/glossary-post-type.php` | post type `omx_glossary`、タクソノミー `omx_glossary_category`。スイッチが OFF のときは非公開で登録する（URL・アーカイブ・クエリ変数・検索・rewrite なし）。flush は、スイッチが変わったときに1回だけ。`custom-fields` に対応する（REST でメタを保存・取得するために WordPress が求める）。汎用の「カスタムフィールド」欄は出さない |
 | `includes/web2/glossary-caps.php` | 権限。DB のロールには書かず、実行時に `edit_others_posts` を持つ人（編集者・管理者）にだけ与える。それ以外の人には、ロールに付いていても外す |
 | `includes/web2/glossary-meta.php` | 14個のメタ。型・消毒・`auth_callback`（`edit_post`）付き。拒否される URL は保存しない |
 | `includes/web2/glossary-visibility.php` | G-B（用語ごとの表示・index の判定）と、漏えい対策（下記） |
-| `includes/web2/glossary-guard.php` | 公開ガード。規則を満たさない用語は、クラシックエディター・Quick Edit・Bulk Edit・XML-RPC・REST・cron の予約公開のどれからも公開・予約できない。公開中の用語は降格しない（G-B で隠す） |
+| `includes/web2/glossary-guard.php` | 公開ガード。規則を満たさない用語は、クラシックエディター・Quick Edit・Bulk Edit・XML-RPC・REST・cron の予約公開のどれからも公開・予約できない。公開中の用語は降格しない（G-B で隠す）。REST では、同じリクエストで送られたメタとカテゴリを含めて判定する（下の「REST での公開」） |
 
 ## 公開範囲と漏えい対策（スイッチ OFF のとき）
 - **URL**：`/glossary/…` は rewrite が無いので、通常の 404 になります。`?omx_glossary=` と `?post_type=omx_glossary` も、`publicly_queryable=false` のため効きません。
@@ -30,7 +30,12 @@
   - 一覧の `/wp/v2/types`・`/wp/v2/taxonomies` と、`/wp/v2/search` からも外します。
 - **oEmbed**：用語は埋め込めません。
 - **sitemap**：WordPress 本体と Slim SEO の両方で、post type・タクソノミーごと外します。
-  - ON にした後は、index できる用語だけを載せます。
+  - ON にした後は、index されるページだけを載せます。noindex や 404 のページは載せません。
+    - 用語：index できる用語だけ。
+    - 一覧（`/glossary/`）：index できる用語が10語以上のときだけ。
+    - カテゴリ：index できる用語が3語以上のカテゴリだけ。
+  - 10 と 3 の値は Core の定数（`OMOCHIX_CORE_GLOSSARY_INDEX_MIN`・`OMOCHIX_CORE_GLOSSARY_CATEGORY_INDEX_MIN`）が持ち、テーマはそれに従います。robots・canonical・構造化データ・sitemap が同じ答えになります。
+  - Slim SEO は、カテゴリの sitemap ファイルを一覧（sitemap index）に載せるかどうかを決めるとき、タクソノミー名を渡しません。そのため、載せるカテゴリが無いときも、空のファイルが一覧に残ることがあります（noindex の URL は入りません）。
 - **index の期限**：最終確認日に `review_days`（既定180日）を足した日を過ぎると「要再確認」になります。
   - さらに30日（`OMOCHIX_CORE_GLOSSARY_NOINDEX_GRACE_DAYS`）を過ぎると noindex になり、sitemap からも外れます。
   - これは Phase 0 の D-3 の推奨値です。運営者の決定が必要です。
@@ -43,11 +48,44 @@
 - **summary**：40〜120文字のプレーンテキスト。
 - **本文**：使えるタグは許可リストのものだけで、リンクは https の `<a href>` だけです。script・style・on〜 属性・`javascript:` は拒否します。
   - 文字数は 400〜2,000 が目安で、外れると警告です。6,000 を超えるとエラーです。
+  - **ブロックエディター**：次のものだけを、検査と表示の前に取り除きます（`omochix_core_glossary_normalize_content()`）。残ったものは、手書きの HTML と同じ規則で検査します。
+    - 使えるブロックのコメント：段落・見出し（レベル2〜4）・リスト・リスト項目・引用・コード・整形済みテキスト・表。設定は、見出しのレベル、番号付きリスト、表の固定幅だけ。
+    - エディターがそのブロックのタグに付ける class（`wp-block-heading` など、タグごとの固定の一覧）。
+    - 表を包む `<figure class="wp-block-table">`。
+  - それ以外は拒否します：ほかのブロック（カスタム HTML・画像・埋め込み・ショートコードなど）、色・配置・追加 CSS クラス・アンカー・ブロックバインディングなどの設定、一覧に無い class、表のキャプション、「新しいタブで開く」リンク（`target`・`rel`）。
+  - ページは、ブロックとして描画しません。同じ処理で取り除いた HTML を、同じ許可リストの `wp_kses` に通して出します。
+  - 本文のデータが 200,000 バイトを超えるものは、中身を読まずに拒否します。正規表現の処理が途中で止まったときも、「問題なし」ではなく拒否にします。
 - **出典**：1〜8件。一次情報（official・paper・standard・docs）を最低1件含める必要があります。
-  - URL は https だけです。IP アドレス・内部のホスト名・ユーザー名とパスワード・443 以外のポート・認証情報らしいクエリは拒否します。
+  - URL は https だけです。IP アドレス・内部のホスト名・ユーザー名とパスワード・443 以外のポートは拒否します。
+  - 認証情報らしいものを含む URL も拒否します。URL 全体を、そのままと URL デコードした形（3回まで）で調べます。
+    - 項目名：クエリ（`a[token]=` のような入れ子も）、パス（`;jsessionid=`）、フラグメント（`#access_token=`）。`access-token`・`Access_Token`・`accessToken` は同じ名前として扱います。
+      - 一覧にある名前そのもの（`token`・`key`・`code` など）、決まった語で終わる名前（`…token`・`…secret`・`…signature` など）、決まった語を含む名前（`apikey` など）が対象です。
+      - `secretary=` や `credentials=include` は通します。
+    - 値：API キー・JWT・Webhook の URL などの形の文字列（パス・クエリ・フラグメントのどこでも）。
+    - エラーの文には、一覧にある語か、それと同じ名前だけを出します。値が入りうる文字列は出しません。
+    - 既知の限界：`key=`・`code=`・`session=` は、認証情報でなくても拒否します。パスの一部として書かれた秘密（`/token/…`）や、`download_key=` のような一覧に無い名前は検出しません。
+    - `#api-key` のような、見出しへのアンカーだけのフラグメントは通します。
+  - `127.0.0.1.nip.io` のように、内部アドレスに解決される公開のホスト名は、今は通ります（P3。サーバーから取得はせず、DNS の問い合わせもしません）。
 - **日付**：未来の日付は使えません。最終確認日は、出典の確認日より前にはできません。
+  - 「今日」は、WordPress のタイムゾーン設定の日付です（`omochix_core_glossary_today()`）。WordPress が無いとき（CLI・CI）は日本時間です。UTC の日付は使いません。
 - **ai_assisted**：必ず入れます。
 - **秘密情報**：API キー・トークン・秘密鍵らしい文字列は、どの項目にあっても拒否します。報告には種類だけを出し、値は出しません。
+  - ほかのエラーの文に値が入るとき（重複した別名など）も、その文を「内容は表示しません」に置き換えます。
+  - 本文のリンクのエラーには、URL を出さず、ホスト名だけを出します（URL にはユーザー名・パスワード・鍵が入りうるため）。
+  - 検査の正規表現が実行できなかったときは、「見つからなかった」ではなく、検出として扱います。
+
+## REST での公開（ブロックエディター）
+- WordPress の REST は、投稿を先に保存し、同じリクエストのメタとカテゴリをその後に保存します。
+- REST 側のガードは、リクエスト全体（本文・メタ・カテゴリ）で判定します。通ったときは、これから保存されるメタとカテゴリを、投稿保存側のガードに渡します。
+- 投稿保存側のガードは、保存される本文・タイトル・slug と、渡された値を合わせて、全部の規則をもう一度確かめます。規則は省きません。
+- 渡した値は、その用語の、その REST 呼び出しの間だけ有効で、1回使うと消えます。拒否したリクエストの値は渡しません。
+- 公開・予約のリクエストでは、メタの値が「保存する型そのまま」でないと、保存の前に 400 で拒否します（文字列・配列・整数・true/false。出典は5つの項目だけのオブジェクト）。
+  - WordPress は、メタの型の変換と検査を、投稿を保存した後に行います（`"a,b"` を配列にする、未知の項目があるとエラーにする、など）。そのままだと、判定した値と保存される値が食い違います。
+- 保存が全部終わった後に、保存された用語を読み直します。このリクエストで公開した用語が規則を満たしていなければ、下書きに戻します。以前から公開中の用語は戻しません。
+  - WordPress が、投稿を保存した後のエラー（カテゴリやメタの保存の失敗）で処理を止めたときも、REST 呼び出しの終わりに同じ読み直しをします。
+  - 下書きに戻したときは、REST の応答の状態も draft にします。
+- slug が未設定の新しい用語は、タイトルから WordPress が作る slug で判定します。日本語だけのタイトルは slug を作れないので、slug を入力する必要があります。
+- メタの入力画面はまだありません（別の工程）。REST 以外の経路では、保存済みのメタで判定します。
 
 ## コンテンツの検査（seo stream の原稿）
 ```bash
@@ -83,7 +121,12 @@ php tests/glossary/run.php
 - **判定**：
   - 見えない用語（下書き・パスワード付き・規則に合わない）は、存在しないページと同じ 404 になり、noindex と no-cache を付ける。
   - 編集者には、noindex・nofollow のプレビューを出す。
-  - `/page/2/`・feed・embed は 404、一覧での `?s=` は 400。
+  - `/page/2/`・feed・embed・trackback は 404、一覧での `?s=` は 400。
+  - `?post_type[]=omx_glossary` のように、3つの画面（一覧・カテゴリ・詳細）以外で用語集の post type を指定した要求は 404。ほかの post type と混ぜた場合、feed・検索の場合も同じ。
+  - こうした 404 では、メインクエリを空にする（feed のフラグと、見つかった投稿を消す）。WordPress の `set_404()` だけでは、404 の状態コードのまま feed に用語が出てしまうため。
+  - 見えない用語へは誘導しない。`/?p=ID` は、WordPress が ID を調べる前にその ID を忘れさせ、存在しない ID と同じ扱いにする。古い slug からのリダイレクトもしない。
+  - 残っていること（P3）：`/wp-trackback.php/{ID}` を直接開くと、WordPress 本体がその投稿の URL へリダイレクトする。テーマからは止めていない。公開の前に、サーバー側でこのファイルを止めるか、別の修正が必要。
+  - 前提：post type の `exclude_from_search` は true のままにする。WordPress が slug の先頭から用語を推測してリダイレクトしないのも、`?s=` に用語が出ないのも、この設定による。サイト内検索に用語を出すときは、先に別の対策が必要。
   - 閉じている間の `/glossary/…` にも noindex を付ける。
 - **index**：一覧は index できる用語が10語以上、カテゴリは3語以上のときだけ index する（G-C）。
 - **SEO**：title、description、canonical（index できるページだけ）、robots、パンくず。
@@ -108,8 +151,10 @@ php tests/glossary/run.php
 php tests/glossary/theme.php
 ```
 
-- `run.php` は Core 側の198件です。
-- `theme.php` は64件です：判定、SEO、構造化データ、テンプレートの漏えい、XSS、関連、Core 無しのとき、静的検査。
+- `run.php` は Core 側の407件です。
+- `theme.php` は123件です：判定、SEO、構造化データ、テンプレートの漏えい、XSS、関連、Core 無しのとき、静的検査。
+- どちらにも、PR #79 のセキュリティレビューで見つかった7件（P1-1〜P1-5、P2-1、P2-2）の再現テストが入っています（テスト名が `P1-1` などで始まります）。
+- WordPress なしのテストでは、REST の保存順・`WP_Query`・sitemap は「モデル」で確かめています。実物での確認は `wp-test-plan.md` の W-22〜W-38 です。
 - 実際の WordPress での確認は `wp-test-plan.md` にあります。
 - リリースの手順は、このリポジトリにはまだありません。公開を決めるときに、main のリリース設定と Release gate に合わせて用意します。
 

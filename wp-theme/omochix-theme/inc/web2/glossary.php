@@ -10,7 +10,13 @@
  * - /glossary/ (all terms), /glossary/category/{slug}/, /glossary/{slug}/;
  * - hidden, draft, password-protected and failing terms answer exactly like
  *   a missing page (404, noindex, no cache), editors get a noindex preview;
- * - paging (/page/2/), feeds and embeds are 404, ?s= on a glossary list is 400;
+ * - paging (/page/2/), feeds, embeds and trackbacks are 404, ?s= on a glossary
+ *   list is 400;
+ * - a query that asks for the glossary post type any other way
+ *   (?post_type[]=omx_glossary, alone or mixed with other types, with a feed
+ *   or a search) is 404: terms are only ever shown by the three views above;
+ * - every such 404 is emptied (no feed, no posts), and nothing redirects a
+ *   visitor to a hidden term (/?p=ID, an old slug);
  * - title, description, canonical (indexable pages only), robots,
  *   breadcrumbs and DefinedTerm / DefinedTermSet structured data.
  *
@@ -25,12 +31,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/** Index thresholds (gate G-C, Phase 0 D-4): the list needs 10 indexable terms, a category 3. */
+/**
+ * Index thresholds (gate G-C, Phase 0 D-4): the list needs 10 indexable terms, a category 3.
+ * Core owns the numbers (its sitemaps use them); the theme follows, so robots, canonical,
+ * structured data and sitemaps cannot disagree. The literals are for a Core without them.
+ */
 if (!defined('OMOCHIX_GLOSSARY_INDEX_MIN')) {
-    define('OMOCHIX_GLOSSARY_INDEX_MIN', 10);
+    define('OMOCHIX_GLOSSARY_INDEX_MIN', defined('OMOCHIX_CORE_GLOSSARY_INDEX_MIN') ? (int) OMOCHIX_CORE_GLOSSARY_INDEX_MIN : 10);
 }
 if (!defined('OMOCHIX_GLOSSARY_CATEGORY_INDEX_MIN')) {
-    define('OMOCHIX_GLOSSARY_CATEGORY_INDEX_MIN', 3);
+    define('OMOCHIX_GLOSSARY_CATEGORY_INDEX_MIN', defined('OMOCHIX_CORE_GLOSSARY_CATEGORY_INDEX_MIN') ? (int) OMOCHIX_CORE_GLOSSARY_CATEGORY_INDEX_MIN : 3);
 }
 
 /**
@@ -62,6 +72,22 @@ function omochix_glossary_path_matches() {
 /** Whether this request is one of the glossary views (archive, category, single). */
 function omochix_glossary_is_request() {
     return omochix_glossary_enabled() && (is_post_type_archive('omx_glossary') || is_singular('omx_glossary') || is_tax('omx_glossary_category'));
+}
+
+/**
+ * Whether the main query asks for the glossary post type by name. WordPress
+ * takes ?post_type[]=omx_glossary (an array) as a plain list of posts: not a
+ * post type archive, so none of the three views, and it would print every
+ * published term (also hidden ones) through the blog, feed or search template.
+ */
+function omochix_glossary_query_names_glossary() {
+    $types = get_query_var('post_type');
+    foreach (is_array($types) ? $types : [$types] as $type) {
+        if (is_string($type) && 'omx_glossary' === strtolower(trim($type))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -127,16 +153,22 @@ function omochix_glossary_decide($reset = false) {
     if ($reset) {
         $d = null;
         omochix_glossary_visible_terms('', true);
+        if (function_exists('omochix_core_glossary_index_state')) {
+            omochix_core_glossary_index_state(true);
+        }
     }
     if (null !== $d) {
         return $d;
     }
     $d = ['action' => 'none', 'kind' => '', 'post' => null, 'term' => null, 'index' => false, 'preview' => false];
     if (!omochix_glossary_is_request()) {
+        if (omochix_glossary_enabled() && omochix_glossary_query_names_glossary()) {
+            $d['action'] = 'not_found'; // The post type asked for outside its own views.
+        }
         return $d;
     }
     $d['action'] = 'ok';
-    if (is_feed() || is_embed() || (int) get_query_var('paged') > 1 || (int) get_query_var('page') > 1) {
+    if (is_feed() || is_embed() || is_trackback() || (int) get_query_var('paged') > 1 || (int) get_query_var('page') > 1) {
         $d['action'] = 'not_found';
         return $d;
     }
@@ -168,11 +200,16 @@ function omochix_glossary_decide($reset = false) {
             $d['action'] = 'not_found';
             return $d;
         }
-        $d['index'] = omochix_glossary_indexable_count($posts) >= OMOCHIX_GLOSSARY_CATEGORY_INDEX_MIN;
+        // Core's answer when it has one: its sitemaps list a category exactly when this is true.
+        $d['index'] = function_exists('omochix_core_glossary_category_indexable')
+            ? omochix_core_glossary_category_indexable($d['term'])
+            : omochix_glossary_indexable_count($posts) >= OMOCHIX_GLOSSARY_CATEGORY_INDEX_MIN;
         return $d;
     }
     $d['kind']  = 'archive';
-    $d['index'] = omochix_glossary_indexable_count(omochix_glossary_visible_terms()) >= OMOCHIX_GLOSSARY_INDEX_MIN;
+    $d['index'] = function_exists('omochix_core_glossary_list_indexable')
+        ? omochix_core_glossary_list_indexable()
+        : omochix_glossary_indexable_count(omochix_glossary_visible_terms()) >= OMOCHIX_GLOSSARY_INDEX_MIN;
     return $d;
 }
 
@@ -184,6 +221,38 @@ function omochix_glossary_private_headers($robots = 'noindex, follow') {
     }
 }
 
+/**
+ * Make the main query a 404 with nothing in it. set_404() alone keeps is_feed
+ * and the posts it found, and WordPress would then still print them as a feed
+ * (titles, links and content of every published term, hidden ones included)
+ * under the 404 status.
+ *
+ * @param mixed $wp_query Main query.
+ * @return void
+ */
+function omochix_glossary_empty_404($wp_query) {
+    if (!is_object($wp_query) || !method_exists($wp_query, 'set_404')) {
+        return;
+    }
+    $wp_query->set_404();
+    $wp_query->is_feed         = false;
+    $wp_query->is_comment_feed = false;
+    $wp_query->is_trackback    = false;
+    $wp_query->is_embed        = false;
+    $wp_query->posts           = [];
+    $wp_query->post_count      = 0;
+    $wp_query->found_posts     = 0;
+    $wp_query->current_post    = -1;
+    $wp_query->post            = null;
+    $wp_query->queried_object    = null;
+    $wp_query->queried_object_id = 0;
+    $wp_query->comments          = [];
+    $wp_query->comment_count     = 0;
+    if ($wp_query->is_main_query()) {
+        $GLOBALS['post'] = null; // WordPress may have copied the term there already.
+    }
+}
+
 /** pre_handle_404: hidden terms become a 404 like any missing page. */
 function omochix_glossary_pre_handle_404($preempt, $wp_query) {
     if ($preempt || !$wp_query instanceof WP_Query || !$wp_query->is_main_query()) {
@@ -191,7 +260,7 @@ function omochix_glossary_pre_handle_404($preempt, $wp_query) {
     }
     $d = omochix_glossary_decide();
     if ('not_found' === $d['action']) {
-        $wp_query->set_404();
+        omochix_glossary_empty_404($wp_query);
         status_header(404);
         omochix_glossary_private_headers();
         return true;
@@ -203,10 +272,11 @@ add_filter('pre_handle_404', 'omochix_glossary_pre_handle_404', 10, 2);
 /** template_redirect 0: apply the decision before canonical redirects. */
 function omochix_glossary_template_redirect() {
     $d = omochix_glossary_decide();
+    omochix_glossary_forget_hidden_id();
     if ('not_found' === $d['action']) {
         global $wp_query;
-        if ($wp_query instanceof WP_Query && !$wp_query->is_404()) {
-            $wp_query->set_404();
+        if ($wp_query instanceof WP_Query) {
+            omochix_glossary_empty_404($wp_query); // Again: also when pre_handle_404 did not run.
         }
         status_header(404);
         omochix_glossary_private_headers();
@@ -227,6 +297,43 @@ function omochix_glossary_no_guess($guess) {
     return omochix_glossary_path_matches() ? false : $guess;
 }
 add_filter('do_redirect_guess_404_permalink', 'omochix_glossary_no_guess');
+
+/** Whether a post is a glossary term this visitor may not see (hidden and not theirs to edit). */
+function omochix_glossary_is_hidden_term($post) {
+    $post = $post ? get_post($post) : null;
+    return $post instanceof WP_Post && 'omx_glossary' === $post->post_type && function_exists('omochix_core_glossary_visibility')
+        && !omochix_core_glossary_visibility($post)['visible'] && !current_user_can('edit_post', $post->ID);
+}
+
+/**
+ * /?p=ID of a hidden term must answer exactly like /?p=ID of a missing post.
+ * On a 404 WordPress looks the ID up and redirects to that post's address
+ * (its slug). Stopping the redirect would be a difference of its own (a
+ * missing ID still gets its address tidied), so the ID is forgotten instead,
+ * before WordPress looks: it then treats the request as it treats a missing ID.
+ *
+ * @return void
+ */
+function omochix_glossary_forget_hidden_id() {
+    foreach (['p', 'page_id', 'attachment_id'] as $var) {
+        $id = (int) get_query_var($var);
+        if ($id > 0 && omochix_glossary_is_hidden_term($id)) {
+            set_query_var($var, 0);
+        }
+    }
+}
+
+/**
+ * No redirect from an old slug to a hidden term (it would show that the term
+ * exists, and its current slug).
+ *
+ * @param mixed $id Post ID WordPress found for the old slug.
+ * @return mixed
+ */
+function omochix_glossary_old_slug_redirect($id) {
+    return $id && omochix_glossary_is_hidden_term((int) $id) ? 0 : $id;
+}
+add_filter('old_slug_redirect_post_id', 'omochix_glossary_old_slug_redirect');
 
 /** The 400 page uses the theme's 404 template with a 400 status. */
 function omochix_glossary_template_include($template) {
@@ -254,7 +361,9 @@ function omochix_glossary_content_html($html) {
         $allowed[$tag] = [];
     }
     $allowed['a'] = ['href' => true];
-    $out = wp_kses((string) $html, $allowed, ['https']);
+    // The block editor's comments and its own class names come off first (the same step the rules use).
+    $html = function_exists('omochix_core_glossary_normalize_content') ? omochix_core_glossary_normalize_content((string) $html) : (string) $html;
+    $out  = wp_kses($html, $allowed, ['https']);
     // External links never get to read the opener or the referrer.
     return (string) preg_replace('#<a href="#', '<a rel="noopener noreferrer external" href="', $out);
 }

@@ -131,6 +131,52 @@ function omochix_core_glossary_sanitize_meta( $value, $key ) {
 }
 
 /**
+ * Whether a value sent over REST has exactly the type its field is stored
+ * with: text as a string, lists as lists, numbers as integers, true/false as
+ * a boolean, a source as an object of text with no other property.
+ *
+ * WordPress checks and converts the meta of a REST request only after the
+ * post is saved, with its own rules ("a,b" becomes a list, "1" becomes true,
+ * an unknown property is an error). A value of exactly the stored type is
+ * accepted by those rules unchanged, so what the publish guard judges is
+ * what gets stored. Anything else is refused before the post is saved.
+ *
+ * @param string $key   Meta key.
+ * @param mixed  $value Value as sent.
+ * @return bool
+ */
+function omochix_core_glossary_meta_shape_ok( $key, $value ) {
+	$is_list = static function ( $v ) {
+		return is_array( $v ) && array_values( $v ) === $v;
+	};
+	switch ( omochix_core_glossary_meta_fields()[ $key ] ?? '' ) {
+		case 'string':
+		case 'date':
+		case 'level':
+			return is_string( $value );
+		case 'int':
+			return is_int( $value );
+		case 'bool':
+			return is_bool( $value );
+		case 'array':
+			return $is_list( $value ) && array_filter( $value, 'is_string' ) === $value;
+		case 'ids':
+			return $is_list( $value ) && array_filter( $value, 'is_int' ) === $value;
+		case 'sources':
+			if ( ! $is_list( $value ) ) {
+				return false;
+			}
+			foreach ( $value as $s ) {
+				if ( ! is_array( $s ) || ( $s && array_values( $s ) === $s ) || array_diff( array_keys( $s ), array( 'url', 'title', 'publisher', 'kind', 'checked_on' ) ) || array_filter( $s, 'is_string' ) !== $s ) {
+					return false;
+				}
+			}
+			return true;
+	}
+	return false;
+}
+
+/**
  * REST schema of one meta key (editors only; visitors are refused).
  *
  * @param string $type Field type.
