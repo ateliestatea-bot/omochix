@@ -184,6 +184,81 @@ release self-test: mode=fork-point event='pull_request' target='integrate/web2' 
 
 `workflow_policy.py` がこれらを全 workflow について検査します。
 
+## Web 2.0 のテスト（ci-2）
+
+`tests.yml` の job `test`（必須チェック `Tests (PHP 8.1)`・`Tests (PHP 8.3)`）の最後のステップ「Web 2.0 tests」で、次の4つを実行します。チェック名も Ruleset も変わりません。
+
+| テスト | 内容 |
+|---|---|
+| `tests/web2/hooks/run.php` | Web 2.0 ローダー単体（Core・テーマ） |
+| `tests/web2/hooks/regression.php` | ローダーがあっても既存の機能が変わらないこと、モジュールのフォルダの安全条件 |
+| `tests/glossary/run.php` | Knowledge Hub の Core 側 |
+| `tests/glossary/theme.php` | Knowledge Hub のテーマ側 |
+
+- **追加した理由:** hooks ローダー（#75・#81）と Knowledge Hub（#79）は integrate/web2 に入っていますが、これまで CI は Lint PHP しか実行していませんでした。公開スイッチと許可リストの安全条件を、PR ごとに PHP 8.1 と 8.3 で確かめるためです。
+- **動き:**
+  - 最初に tokenizer があることを確かめます。無ければ `::error::` を出して失敗します。
+    - `run.php` などは `token_get_all` を直接呼ぶので、tokenizer が無ければそれ自体が失敗します。
+    - ただし、ローダーは tokenizer の失敗を「読み込まない」理由として扱うので、無いまま進むと、テストによっては「全部拒否されて合格」に見えるおそれがあります（`regression.php` など）。原因をはっきりさせるため、最初に確かめます。
+  - 4つを順に実行します。1つが失敗しても残りを実行し、最後にステップを失敗させます。
+  - Node tests と同じく `if: ${{ !cancelled() }}` で、前のステップが失敗しても結果を出します（ジョブは失敗のまま）。
+- **場所:** 既存の「PHP tests」の一覧には足していません。main が同じ箇所に `tests/seo/sitemap-ignore.php` を足していて、同期のときに衝突するためです。job の末尾に足すと、main と衝突しません。
+- **登録しないもの:** `tests/glossary/validate-content.php` は、原稿のフォルダ（`content/glossary`）がまだ無いので登録しません（今は終了コード 2 になります）。
+
+### 固定のしかた
+
+`tools/ci/required-checks.json` の `workflows[".github/workflows/tests.yml"].must_run.test` に、次を足しました。
+
+- 4つのテストのパス（部分一致。どれかのステップの `run` に含まれていること）
+- `=` で始まる、このステップの **`run` のスクリプト全体**（前後の空白を除いて完全一致）
+
+部分一致だけでは、`theme.php` を `theme.php.off` に変えても通るため、完全一致も足しました。
+
+**完全一致が固定するのは `run` のスクリプトだけで、ステップ全体ではありません。** `workflow_policy.py` の `_runs()` は、ステップの `run` の文字列だけを比べます。ステップのほかのキーについては、次のとおりです。
+
+| ステップのキー | 検査 |
+|---|---|
+| `run` | 完全一致（`=`）と部分一致で固定 |
+| `if` | `allowed_step_if`（`${{ !cancelled() }}` だけ）以外は失敗 |
+| `continue-on-error` | どのステップでも失敗 |
+| `run` の中の `\|\| true`・`\|\| exit 0` | 必須のコマンドがあるステップでは失敗 |
+| `run` の中の `\|\| :` | 後ろに英数字が続くときだけ失敗。行末・空白・`;` が続く `\|\| :` は **検出しない**（正規表現の `\b` のため。新しいステップは `=` で検出される） |
+| job・workflow の `env`・`defaults`・`container`・`services` | 失敗 |
+| job の `strategy.matrix`（チェック名が変わる場合） | 失敗 |
+| ステップの `env`・`shell`・`working-directory`・`timeout-minutes` | **検査しない** |
+| 前のステップが `$GITHUB_ENV`・`$GITHUB_PATH` に書くこと、テストのファイルや `php` を書き換えること | **検査しない** |
+| 必須のコマンドが無いステップ（Check out・Set up PHP など）の `if`・`with`（`ini-values`、`php-version` の固定など）・`uses` の差し替え | **検査しない** |
+| job の `runs-on`・`timeout-minutes` | **検査しない** |
+| 同じスクリプトのステップを残したまま、別のステップを足すこと | **検査しない** |
+
+ステップ全体（名前・`if`・`env`・`run`・`uses`・`with` …）を固定するには、Release gate と同じ `pinned_steps` を使います。ただし `pinned_steps` は job の全ステップを固定する仕組みで、1つのステップだけを固定することはできません。tests.yml に入れるかどうかは、下の「残るリスク」に書きました。
+
+### 承認の手順
+
+`.github/` と `tools/ci/` は保護パスなので、この変更の PR は CI change guard の承認が必要です。
+
+1. CI change guard が、変更したファイルと digest を出して失敗します（`ci-change-reviewed: <digest>`）。
+2. 運営者が差分を読みます。特に、tests.yml の新しいステップの全文と、`required-checks.json` の `=` の行が同じであることを確かめます。
+3. 運営者が `ci-change-reviewed` のラベルを付け、説明文にその行を書きます。エージェントはラベルも行も付けません。
+4. CI change guard が PASS し、必須の9件がそろったら、運営者が merge を判断します。
+
+コミットを足すと digest が変わるので、手順2からやり直しです。
+
+### この変更の残るリスク
+
+- **ステップの `env`・`shell` と前のステップ:** 上の表の「検査しない」項目は、tests.yml の既存のステップすべてに共通する穴です。
+  - 例：ステップに `env: BASH_ENV: <リポジトリのファイル>` を足すと、bash が最初にそのファイルを読むので、`php` を差し替えられます。前のステップが `$GITHUB_ENV` に `BASH_ENV` を書いても同じです。
+  - tests.yml と `tools/ci/` は保護パスなので、こうした変更にも CI change guard の承認（人が差分を読むこと）が必要です。自動では「弱める変更」と判定されないので、レビューで見落とさないことが前提です。
+  - 自動で検出するには、tests.yml の job `test` を `pinned_steps` で固定するか、`workflow_policy.py` を直して、必須のコマンドがあるジョブでステップの `env`・`shell` と `$GITHUB_ENV`・`$GITHUB_PATH` への書き込みを禁止します。どちらも別の PR（ci-3）で検討します。
+  - `\|\| :` の検出漏れ（上の表）と、`run: >`（折りたたみ）を `\|` と同じに読むこと（実行すると構文エラーで失敗側に倒れる）も、ci-3 で直します。
+  - `workflow_policy.py` の修正は、main に入るまで PR の CI change guard には効きません（guard は main の `tools/ci/` で判定するため）。
+- **テストのファイル自体は保護パスではない:** `tests/web2/**`・`tests/glossary/**`・`tests/industry-hub/stub.php` は保護パスではありません。
+  - たとえば `tests/glossary/run.php` を `<?php exit(0);` に変える PR は、承認なしで必須チェックを通ります。`must_run` が保証するのは「そのパスを実行すること」だけです。
+  - 既存の `tests/nav` などのテストも同じです。テストの差分は、通常のコードレビューで確かめます。保護パスに入れるかどうかは後の PR で検討します（main の `required-checks.json` に入ってから有効になります）。
+- **main と同期するまで:** PR の CI change guard は main の `required-checks.json` で判定します。main にはまだこの `must_run` が無いので、同期するまでは integrate/web2 でこのステップを外しても、「弱める変更」ではなく「CI ファイルの変更（要承認）」として扱われます。
+  - CI policy は PR 側の `required-checks.json` で判定するので、ステップだけを外すと失敗します。
+- **PHP 8.1・8.3:** 4つのテストを実際の 8.1・8.3 で実行するのは、この PR の CI が最初です。ローカルは PHP 8.5 だけで、静的には 8.2 以降の構文・関数を使っていないことを確かめました。
+
 ## 残るリスク
 
 - **承認する人:** 共同作業者は1名で、AI エージェントも同じアカウントで操作します。ラベルと説明文の行は「運営者が読んだ」記録で、GitHub 上ではエージェントが付けたものと区別できません。エージェントは承認用のラベル・行を付けない、という運用ルールが前提です。
