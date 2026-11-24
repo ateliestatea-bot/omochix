@@ -145,6 +145,17 @@ class ReleaseExpectations(unittest.TestCase):
                     self.assertEqual(['themes/omochix-theme/style.css'], [s['target'] for s in plan['steps'] if s['n'] == len(plan['steps'])])
                 if 'release.json' == name:
                     self.assertTrue(any('101 URLs' in n for n in plan['after_rollback']), 'rollback checks the existing URLs')
+                    self.assertFalse(any('Permalinks' in n for n in plan['after_rollback']), '1.33.0 adds no rewrite rule')
+                    check = plan['gates']['B']['check']
+                    for needle in ('catalog.json', 'catalog.schema.json', '403 or 404', 'cache-busting', 'second request', '/design/', 'design-sitemap.xml',
+                                   '/design-library-terms/ answers 404', 'style.css?ver=1.33.0'):
+                        self.assertIn(needle, check, 'gate B checks ' + needle)
+                    self.assertEqual({'add': 0, 'replace': 7}, {a: sum(1 for s in plan['steps'] if s['action'] == a) for a in ('add', 'replace')})
+                    self.assertEqual(['themes/omochix-theme/inc/design-library.php'], [s['target'] for s in plan['steps'] if s['n'] == 1])
+                    self.assertEqual(['themes/omochix-theme/style.css'], [s['target'] for s in plan['steps'] if s['n'] == len(plan['steps'])])
+                    self.assertEqual(['themes/omochix-theme/assets/data/design/catalog.json'], [s['target'] for s in plan['steps'] if s['n'] == len(plan['steps']) - 1])
+                if 'theme-1.32.2.json' == name:
+                    self.assertTrue(any('101 URLs' in n for n in plan['after_rollback']), 'rollback checks the existing URLs')
                     self.assertFalse(any('Permalinks' in n for n in plan['after_rollback']), '1.32.2 adds no rewrite rule')
                     self.assertTrue(any('--remove-added' in n and '.htaccess' in n for n in plan['after_rollback']), 'rollback keeps the catalog guard')
                     check = plan['gates']['B']['check']
@@ -189,9 +200,9 @@ class ReleaseExpectations(unittest.TestCase):
     def test_plan_refuses_a_step_missing_from_the_order_and_a_step_that_does_not_change(self):
         with release_config('release.json'):
             cfg = rl.load_config()
-        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'assets/design/demos/3d-interactive/demo.php']])
+        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'template-parts/design-library/detail.php']])
         extra = dict(cfg, order=[['theme', '404.php']] + cfg['order'])
-        for bad, needle in ((dropped, 'assets/design/demos/3d-interactive/demo.php differs from production but is not in the approved order'),
+        for bad, needle in ((dropped, 'template-parts/design-library/detail.php differs from production but is not in the approved order'),
                             (extra, '404.php is in the order but does not change')):
             with self.subTest(needle=needle):
                 orig = rl.load_config
