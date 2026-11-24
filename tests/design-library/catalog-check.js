@@ -26,6 +26,7 @@ var path = require('path');
 var os = require('os');
 var cp = require('child_process');
 var hash = require('../../tools/design-library/demo-hash.js');
+var d5 = require('../../tools/design-library/d5-pins.js');
 
 var THEME = hash.THEME;
 var ASSETS = path.join(THEME, 'assets/design');
@@ -142,7 +143,10 @@ var pub = function (m) { return catalog.items.filter(function (i) { return i.med
 check('catalog: 9 published Web works (4 from D1, 2 from D2-B, 2 from D2-D, 1 from D2-E) and 3 published video works (1 from D2-D)', pub('web') === 9 && pub('video') === 3);
 check('catalog: the D2-D works keep their ids and slugs', ['dl-video-0003:brand-typography', 'dl-web-0007:ai-workspace', 'dl-web-0008:micro-interactions', 'dl-web-0009:interactive-story'].every(function (p) { var a = p.split(':'); return catalog.items.some(function (i) { return i.id === a[0] && i.slug === a[1]; }); }));
 check('catalog: the D2-B works keep their ids and slugs', ['dl-web-0005:dark-luxury', 'dl-web-0006:aurora-gradient'].every(function (p) { var a = p.split(':'); return catalog.items.some(function (i) { return i.id === a[0] && i.slug === a[1]; }); }));
-check('catalog: no work claims verified-production (production checks are not done)', catalog.items.every(function (i) { return i.verification.state !== 'verified-production'; }));
+var evidence = d5.loadEvidence();
+var prodErrs = d5.productionErrors(catalog, evidence);
+check('verified-production: every claim has its own complete D5 evidence pinned to the current files; no staging fixture ships', prodErrs.length === 0, prodErrs);
+check('RC before D5: with no D5 evidence, all 12 works stay verified-local', evidence.items.length > 0 || (catalog.items.length === 12 && catalog.items.every(function (i) { return i.verification.state === 'verified-local'; })));
 check('catalog: the 4 D1 works keep their ids and slugs', ['dl-web-0001:liquid-glass', 'dl-web-0002:minimal-editorial', 'dl-web-0003:3d-interactive', 'dl-web-0004:bento-saas'].every(function (p) { var a = p.split(':'); return catalog.items.some(function (i) { return i.id === a[0] && i.slug === a[1]; }); }));
 check('catalog: no work maps to a Motion Studio template (no verified template exists)', catalog.items.every(function (i) { return !i.motionStudio; }));
 check('catalog: every work is original (credits.source / license = original)', catalog.items.every(function (i) { return i.credits.source === 'original' && i.credits.license === 'original'; }));
@@ -201,7 +205,12 @@ var MUT = [
     ['motionStudio settings with HTML', function (d) { d.items[W].motionStudio = { templateId: 'rag-intro', status: 'unverified', settings: { title: '<script>' } }; }],
     ['motionStudio settings with an object value', function (d) { d.items[W].motionStudio = { templateId: 'rag-intro', status: 'unverified', settings: { code: { run: 1 } } }; }],
     ['unknown perf key', function (d) { d.items[W].audit.perf = { bogus: 1 }; }],
-    ['negative perf value', function (d) { d.items[W].audit.perf = { lcpMs: -1 }; }]
+    ['negative perf value', function (d) { d.items[W].audit.perf = { lcpMs: -1 }; }],
+    ['html in fictionalBrand', function (d) { d.items[W].fictionalBrand = '<b>x</b>'; }],
+    ['empty fictionalBrand', function (d) { d.items[W].fictionalBrand = ''; }],
+    ['fictionalBrand over 40 characters', function (d) { d.items[W].fictionalBrand = 'x'.repeat(41); }],
+    ['fictionalBrand not a string', function (d) { d.items[W].fictionalBrand = 5; }],
+    ['control character in fictionalBrand', function (d) { d.items[W].fictionalBrand = 'IKIMA\n'; }]
 ];
 MUT.forEach(function (m) {
     var d = clone(catalog); m[1](d);
@@ -221,6 +230,72 @@ MUT.forEach(function (m) {
 var dup = clone(catalog); dup.items[1].slug = dup.items[0].slug;
 var pd = phpResult(dup);
 check('php: duplicate slug keeps the first item, drops the second', pd.items.indexOf(catalog.items[0].slug) !== -1 && pd.items.indexOf(catalog.items[1].slug) === -1);
+
+/* ---------- 3b. fictionalBrand: only names the works' own content shows ---------- */
+var BRANDS = { 'liquid-glass': 'Quillmere', 'minimal-editorial': 'IKIMA', '3d-interactive': 'WAKUREI-01', 'bento-saas': 'Grivio', 'dark-luxury': 'KAGEMURO',
+    'aurora-gradient': 'NAGIWA', 'ai-workspace': 'TOIMORI', 'micro-interactions': 'TEMOCHO', 'interactive-story': '楮雪舎（KOZOYUKI）',
+    'logo-reveal-short': 'TSUKIAMI', 'brand-typography': 'HONYOI' }; // data-chart-explainer shows no brand name: none is invented
+check('fictionalBrand: exactly the 11 works whose content shows a brand name carry it, with that name', catalog.items.every(function (i) { return (BRANDS[i.slug] || null) === (i.fictionalBrand || null); }), catalog.items.map(function (i) { return i.slug + '=' + (i.fictionalBrand || '-'); }));
+catalog.items.filter(function (i) { return i.medium === 'web' && i.fictionalBrand; }).forEach(function (i) {
+    var src = fs.readFileSync(path.join(ASSETS, 'demos', i.slug, 'demo.php'), 'utf8');
+    var parts = i.fictionalBrand.split(/[（）]/).filter(Boolean);
+    check('fictionalBrand: ' + i.slug + ' demo shows "' + i.fictionalBrand + '"', parts.every(function (p) { return src.indexOf(p) !== -1; }));
+});
+check('fictionalBrand: HONYOI is the brand in brand-typography\'s own text', JSON.stringify(catalog.items.filter(function (i) { return i.slug === 'brand-typography'; })[0].customization).indexOf('HONYOI') !== -1);
+
+/* ---------- 3c. verified-production needs D5 evidence (faults made on purpose) ---------- */
+(function () {
+    var DATE = '2099-01-02';
+    var real = {}; var shaOf = function (f) { if (!(f in real)) real[f] = d5.fileSha(f); return real[f]; };
+    function entry(c, slug, over) {
+        var it = c.items.filter(function (i) { return i.slug === slug; })[0];
+        var e = { id: it.id, slug: it.slug, checked: DATE, staging: { p1: 'PASS', p2: 'PASS', record: 'docs/design-library/D5-Production-Isolation.md' },
+            promotion: { p3: 'G12-P3-TEST' }, production: { p4: 'PENDING' }, item_sha: d5.itemSha(it), files: d5.pinsFor(it, shaOf).files };
+        return Object.assign(e, over || {});
+    }
+    var web = 'liquid-glass', vid = 'logo-reveal-short';
+    var cand = d5.releaseCandidate(catalog, DATE, [web, vid]);
+    var good = { version: 1, items: [entry(cand, web), entry(cand, vid)] };
+    var ok = d5.productionErrors(cand, good, shaOf);
+    check('d5 rule positive control: a Web and a video work with complete evidence are accepted', ok.length === 0, ok);
+    var all = d5.releaseCandidate(catalog, DATE);
+    var allEv = { version: 1, items: all.items.map(function (i) { return entry(all, i.slug); }) };
+    var okAll = d5.productionErrors(all, allEv, shaOf);
+    check('d5 rule positive control: the 12-work release candidate with evidence for all 12 is accepted', okAll.length === 0, okAll);
+    var p4 = JSON.parse(JSON.stringify(cand)); p4.items.forEach(function (i) { i.verification.limitations = i.verification.limitations.filter(function (l) { return l !== d5.PENDING_LINE; }); });
+    var p4ev = { version: 1, items: [entry(p4, web, { production: { p4: 'PASS' } }), entry(p4, vid, { production: { p4: 'PASS' } })] };
+    check('d5 rule positive control: after P4 PASS the pending line may go', d5.productionErrors(p4, p4ev, shaOf).length === 0);
+    check('d5 candidate and fixture catalogs stay schema- and PHP-valid (the D5 rule, not the schema, is the gate)',
+        schemaErrors(all).length === 0 && phpResult(all).errors.length === 0 && schemaErrors(d5.stagingFixture(catalog, [web])).length === 0);
+    function bad(name, cat, ev, sh) { var e = d5.productionErrors(cat, ev, sh || shaOf); check('d5 rule rejects: ' + name, e.length > 0, e.slice(0, 2)); }
+    var clone2 = function (x) { return JSON.parse(JSON.stringify(x)); };
+    bad('verified-production with no evidence at all', cand, { version: 1, items: [] });
+    bad('one work promoted, evidence only for another work', cand, { version: 1, items: [entry(cand, web)] });
+    bad('all 12 promoted, evidence for 11', all, { version: 1, items: allEv.items.slice(1) });
+    bad('evidence file of the wrong shape', cand, { items: good.items });
+    var ev;
+    ev = clone2(good); ev.items[0].slug = 'minimal-editorial'; bad('evidence slug of another work', cand, ev);
+    ev = clone2(good); ev.items[0].id = 'dl-web-0099'; bad('evidence id not in the catalog', cand, ev);
+    ev = clone2(good); ev.items.push(clone2(ev.items[0])); bad('duplicate evidence entries', cand, ev);
+    ev = clone2(good); ev.items[0].staging.p1 = 'FAIL'; bad('P1 staging isolation FAIL', cand, ev);
+    ev = clone2(good); delete ev.items[0].staging.p2; bad('P2 staging cache missing', cand, ev);
+    ev = clone2(good); ev.items[0].staging.p2 = 'UNVERIFIED'; bad('P2 staging cache UNVERIFIED', cand, ev);
+    ev = clone2(good); delete ev.items[0].promotion; bad('no P3 promotion approval', cand, ev);
+    ev = clone2(good); ev.items[0].checked = '2099-01-03'; bad('evidence date differs from the catalog', cand, ev);
+    var c2 = clone2(cand); c2.items[0].summary = c2.items[0].summary + ' 変更'; bad('catalog entry changed after D5', c2, good);
+    c2 = clone2(cand); c2.items.filter(function (i) { return i.slug === web; })[0].deliverables.html.sha256 = '0'.repeat(64); bad('demo hash in the catalog changed after D5', c2, good);
+    bad('demo endpoint (CSP) changed after D5', cand, good, function (f) { return f === 'inc/design-library-demo.php' ? '0'.repeat(64) : shaOf(f); });
+    bad('publish gate changed after D5', cand, good, function (f) { return f === 'inc/design-library.php' ? '0'.repeat(64) : shaOf(f); });
+    bad('catalog lock (.htaccess) changed after D5', cand, good, function (f) { return f === 'assets/data/design/.htaccess' ? '0'.repeat(64) : shaOf(f); });
+    bad('a demo source changed after D5', cand, good, function (f) { return f.indexOf('assets/design/demos/' + web + '/') === 0 ? '0'.repeat(64) : shaOf(f); });
+    bad('a video changed after D5', cand, good, function (f) { return /videos\/logo-reveal-short\.mp4$/.test(f) ? '0'.repeat(64) : shaOf(f); });
+    ev = clone2(good); delete ev.items[0].files['inc/design-library-demo.php']; bad('a pinned file left out of the evidence', cand, ev);
+    ev = clone2(good); ev.items[0].files['functions.php'] = shaOf('functions.php'); bad('an extra file in the pins', cand, ev);
+    c2 = clone2(cand); c2.items.forEach(function (i) { i.verification.limitations = i.verification.limitations.filter(function (l) { return l !== d5.PENDING_LINE; }); }); bad('pending line removed while P4 is PENDING', c2, good);
+    ev = clone2(good); ev.items[0].production.p4 = 'SKIPPED'; bad('P4 of an unknown value', cand, ev);
+    bad('a staging fixture catalog shipped (even with evidence)', d5.stagingFixture(cand, [web], DATE), good);
+    bad('a staging fixture with no evidence', d5.stagingFixture(catalog, [web]), { version: 1, items: [] });
+})();
 
 /* ---------- 4. static files ---------- */
 function walk(dir) { return fs.readdirSync(dir, { withFileTypes: true }).reduce(function (a, e) { var f = path.join(dir, e.name); return a.concat(e.isDirectory() ? walk(f) : [f]); }, []); }

@@ -8,6 +8,7 @@
       "medium": "web",
       "status": "published",
       "title": "Frosted Glass UI",
+      "fictionalBrand": "Quillmere",
       "summary": "半透明のガラス層と、ゆっくり動く光のグラデーション。ポインターを追うハイライトと、スクロールで変わるぼかしが特徴です。",
       "description": "ガラスのような半透明カードと光のグラデーションで構成した、AI・テック製品向けの LP の見本。ポインター追従のハイライト、カードの浮遊、スクロール連動のぼかし。",
       "use_cases": [
@@ -186,6 +187,7 @@
       "medium": "web",
       "status": "published",
       "title": "Minimal Editorial",
+      "fictionalBrand": "IKIMA",
       "summary": "色を一色に絞り、文字と余白で読ませる雑誌風のレイアウト。見出しの行ごとの出現と、スクロールで引かれる細い罫線。",
       "description": "12 カラムのグリッドと大きな余白、縦書きの引用を使った、メディア・ブランドストーリー向けの見本。見出しの行単位フェード、罫線の描画、ページ送り風の切り替え。",
       "use_cases": [
@@ -362,6 +364,7 @@
       "medium": "web",
       "status": "published",
       "title": "3D Interactive",
+      "fictionalBrand": "WAKUREI-01",
       "summary": "ドラッグで回せる 3D モデルが主役。読み込み時の組み立て演出、スクロールでのカメラ移動、部品のハイライト。",
       "description": "プログラムで生成した抽象的な 3D モジュールを WebGL で描く、製品紹介・製造業向けの見本。ドラッグ回転、スクロール連動のカメラ、ホバーで部品を強調、横スクロールの機能紹介。",
       "use_cases": [
@@ -538,6 +541,7 @@
       "medium": "web",
       "status": "published",
       "title": "Bento SaaS",
+      "fictionalBrand": "Grivio",
       "summary": "大きさの違うタイルに情報を詰めた SaaS のダッシュボード風 LP。タイルの順次出現、数値のカウントアップ、グラフの描画。",
       "description": "不揃いな Bento グリッドと料金表で構成した、SaaS・B2B ツール向けの見本。タイルの順次出現、ホバーで拡大と影、数値のカウントアップ、折れ線・棒グラフの描画。数値と価格は架空。",
       "use_cases": [
@@ -717,6 +721,7 @@
       "medium": "web",
       "status": "published",
       "title": "Dark Luxury",
+      "fictionalBrand": "KAGEMURO",
       "summary": "黒の階調と控えめなゴールド、明朝の文字組みで見せる建築ブランドのサイト。奥行きのある層のスクロール演出と、作品の横送り。",
       "description": "黒を基調に、明朝体の見出しと細い金の線で組んだ建築・不動産ブランド向けの見本。SVG で描いた建築を層で重ね、スクロールで奥行きを出し、作品は横に送る。",
       "use_cases": [
@@ -909,6 +914,7 @@
       "medium": "web",
       "status": "published",
       "title": "Aurora Gradient",
+      "fictionalBrand": "NAGIWA",
       "summary": "夜明けの空に流れるオーロラを Canvas 2D で描いた、SaaS の紹介サイト。ゆっくり流れる光の帯と、明るく静かな本文。",
       "description": "深い藍から淡い夜明け色へ移る空に、Canvas 2D で描いたオーロラの帯を重ねたファーストビュー。下は明るい SaaS の構成（機能・導入・料金・CTA）。描画は低解像度・最大 30fps・帯の数を端末に合わせて制御する。",
       "use_cases": [
@@ -1105,6 +1111,7 @@
       "medium": "web",
       "status": "published",
       "title": "AI Workspace UI",
+      "fictionalBrand": "TOIMORI",
       "summary": "架空の AI リサーチアプリの作業画面。スレッド・会話・出典の 3 カラムに、コマンドパレットと出典の参照、ライトとダークの切り替え。",
       "description": "製品を紹介するページではなく、AI リサーチアプリそのものの画面の見本。回答は用意した文章を段落ごとに表示し、出典の番号から参照パネルへ移る。AI には接続せず、入力内容はどこにも送らない。",
       "use_cases": [
@@ -1300,6 +1307,7 @@
       "medium": "web",
       "status": "published",
       "title": "Micro Interaction Collection",
+      "fictionalBrand": "TEMOCHO",
       "summary": "架空の家計・経費アプリの画面で見せる、小さな操作の手応え。設定の保存、入力の確認、送信の成功と失敗、精算の切り替えと元に戻す。",
       "description": "動きを 1 つずつ並べた見本帳ではなく、1 つのアプリの画面の中で状態の変化（保存・エラー・読み込み中・成功・失敗・取り消し）を一貫した小さな動きで伝える見本。状態は色だけでなく形・記号・文字でも示す。",
       "use_cases": [
@@ -1488,6 +1496,7 @@
       "medium": "web",
       "status": "published",
       "title": "Interactive Storytelling",
+      "fictionalBrand": "楮雪舎（KOZOYUKI）",
       "summary": "架空の手漉き和紙の工房の一年を、スクロールに合わせて挿絵が描き変わる物語で。職人の目と紙の目、2 つの語りを途中で切り替えられる。",
       "description": "4 章 13 場面の読み物。段落が画面の中ほどに来ると、横（スマホでは上）に固定した挿絵がその場面に変わる。語り手を職人と紙で切り替えても、読んでいる位置は保たれる。WebGL・画像は使わず、挿絵はすべて SVG で自作した。",
       "use_cases": [
@@ -1691,6 +1700,7 @@
       "medium": "video",
       "status": "published",
       "title": "Logo Reveal Short",
+      "fictionalBrand": "TSUKIAMI",
       "summary": "縦型 6 秒のロゴ登場。線で描かれるマーク、1 文字ずつ立ち上がるワードマーク、タグラインの順に現れる SNS 向けの見本。",
       "description": "架空のブランドのロゴを、線の描画と文字の順次出現で見せる縦型ショート動画の見本。HTML と CSS で組み、フレームごとに書き出した。",
       "use_cases": [
@@ -1988,6 +1998,7 @@
       "medium": "video",
       "status": "published",
       "title": "Brand Typography Motion",
+      "fictionalBrand": "HONYOI",
       "summary": "正方形 10 秒、文字だけで語るブランド動画。紙・明るい緑・黄色の面が切り替わり、和文の縦組みと欧文、直線と円弧で作ったワードマークで締める。",
       "description": "架空の書店兼カフェ「HONYOI（本宵）」の、ロゴを使わず文字だけで組んだ 1:1 の SNS 向け動画。4 つの場面で地の色と組み方を変え、最後はフォントを使わず直線と円弧で自作したワードマークで締める。HTML と CSS で組み、フレームごとに書き出した。",
       "use_cases": [

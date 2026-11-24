@@ -121,6 +121,17 @@
             }
           ]
         },
+        "fictionalBrand": {
+          "description": "The fictional brand name shown inside the work (detail notice N3, poster alt N6, structured data N7). Optional: only when the work's own content shows a brand name; never invented.",
+          "allOf": [
+            {
+              "$ref": "#/$defs/text"
+            },
+            {
+              "maxLength": 40
+            }
+          ]
+        },
         "summary": {
           "allOf": [
             {

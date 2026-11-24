@@ -64,6 +64,7 @@ $omx_webp     = omochix_design_asset_url($omx_item['posterFallback'] ?? $omx_ite
         <div class="dl-card__body">
             <p class="dl-card__meta">
                 <span class="dl-card__medium dl-card__medium--<?php echo esc_attr($omx_item['medium']); ?>"><?php echo esc_html($omx_mediums[$omx_item['medium']]['label']); ?></span>
+                <span class="dl-card__fact dl-card__fiction" data-dl-fiction><?php esc_html_e('架空ブランドの見本', 'omochix'); ?></span>
                 <?php foreach ($omx_facts as $omx_fact) : ?><span class="dl-card__fact"><?php echo esc_html($omx_fact); ?></span><?php endforeach; ?>
             </p>
             <h3 class="dl-card__title" id="<?php echo esc_attr($omx_title_id); ?>"><a href="<?php echo esc_url($omx_url); ?>"><?php echo esc_html($omx_item['title']); ?></a></h3>

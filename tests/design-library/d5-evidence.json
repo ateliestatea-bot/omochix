@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "note": "D5 evidence (docs/design-library/D5-Production-Isolation.md). One entry per work that passed P1 staging isolation and P2 staging cache, with the P3 promotion approval id and the pins from tools/design-library/d5-pins.js. Empty until D5 passes: every work stays verified-local.",
+  "items": []
+}
