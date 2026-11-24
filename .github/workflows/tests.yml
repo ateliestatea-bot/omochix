@@ -76,7 +76,8 @@ jobs:
             tests/article-v2/run.php \
             tests/editorial-home/run.php \
             tests/svg-motion/shortcode.php \
-            tests/seo/sitemap-ignore.php
+            tests/seo/sitemap-ignore.php \
+            tests/design-library/run.php
           do
             echo "::group::$test"
             php "$test" || status=1
@@ -94,7 +95,8 @@ jobs:
             tests/learn-composer/core-parity.js \
             tests/learn-gallery/params-parity.js \
             tests/editorial-home/menu-contrast.js \
-            tests/ai-tools-quick-edit.js
+            tests/ai-tools-quick-edit.js \
+            tests/design-library/catalog-check.js
           do
             echo "::group::$test"
             node "$test" || status=1

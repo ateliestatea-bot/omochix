@@ -65,7 +65,7 @@ $matrix = [
 foreach ($items as $s) { $matrix[] = ["/design/web/$s/", 200]; $matrix[] = ["/design/demo/web/$s/", 200]; }
 foreach ($videos as $s) { $matrix[] = ["/design/video/$s/", 200]; $matrix[] = ["/design/demo/video/$s/", 404]; $matrix[] = ["/design/demo/web/$s/", 404]; }
 $q = req('/?omx_design_kind=web&omx_design_slug=liquid-glass&omx_design_demo=1');
-check('route: query-string demo vars without the /design/demo/ path are not a demo', !isset($q['h']['content-security-policy']) && false === strpos($q['body'], 'Aerolume'));
+check('route: query-string demo vars without the /design/demo/ path are not a demo', !isset($q['h']['content-security-policy']) && false === strpos($q['body'], 'Quillmere'));
 foreach ($matrix as [$p, $want]) {
     $r = req($p);
     check("route $p -> $want", $r['code'] === $want, (string) $r['code']);

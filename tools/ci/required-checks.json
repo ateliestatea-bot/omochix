@@ -79,6 +79,7 @@
           "OMOCHIX_RELEASE_CONFIG=theme-1.31.0.json OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php",
           "OMOCHIX_RELEASE_CONFIG=theme-1.31.1.json OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php",
           "OMOCHIX_RELEASE_CONFIG=theme-1.32.0.json OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php",
+          "OMOCHIX_RELEASE_CONFIG=theme-1.32.1.json OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php",
           "=python3 -W error::ResourceWarning -m unittest discover -s tests/release -v",
           "python3 tools/release/build.py --commit HEAD",
           "python3 tools/release/verify.py --commit HEAD",
@@ -144,6 +145,11 @@
             "run": "set -e\ntree=\"$RUNNER_TEMP/theme-1.32.0-tree\"; mkdir -p \"$tree\"\ngit archive 112dd02701ce649128a016a9de36eae7bb403cd7 wp-plugin wp-theme | tar -x -C \"$tree\"\nOMOCHIX_RELEASE_CONFIG=theme-1.32.0.json OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php\n"
           },
           {
+            "name": "Release gate for the previous release on its own commit (theme 1.32.1, 1aa10bb)",
+            "if": "steps.scope.outputs.target == 'true'",
+            "run": "set -e\ntree=\"$RUNNER_TEMP/theme-1.32.1-tree\"; mkdir -p \"$tree\"\ngit archive 1aa10bbc47cec1ca72d29dd21f0001e08102024e wp-plugin wp-theme | tar -x -C \"$tree\"\nOMOCHIX_RELEASE_CONFIG=theme-1.32.1.json OMOCHIX_RELEASE_TREE=\"$tree\" php tests/release/release-gate.php\n"
+          },
+          {
             "name": "Release tools (reproducible build, verify, plan, staged replace rehearsal)",
             "if": "steps.scope.outputs.target == 'true'",
             "run": "python3 -W error::ResourceWarning -m unittest discover -s tests/release -v"
@@ -151,7 +157,7 @@
           {
             "name": "Build twice and verify (packages stay in the runner)",
             "if": "steps.scope.outputs.target == 'true'",
-            "run": "set -e\nout1=\"$RUNNER_TEMP/build1\"; out2=\"$RUNNER_TEMP/build2\"\npython3 tools/release/build.py --commit HEAD --out \"$out1\"\npython3 tools/release/build.py --commit HEAD --out \"$out2\"\nfor z in \"$out1\"/*.zip; do cmp \"$z\" \"$out2/$(basename \"$z\")\"; done\npython3 tools/release/verify.py --commit HEAD --dir \"$out1\"\npython3 tools/release/plan.py --commit HEAD --check\nOMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json python3 tools/release/plan.py --commit 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.30.0.json python3 tools/release/plan.py --commit 7f0d4d91138683ec825620a05ae7350eeb686994 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.31.0.json python3 tools/release/plan.py --commit c9ae6e25e4173ced9255f631ae54c9e9a2b52590 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.31.1.json python3 tools/release/plan.py --commit 68d81afe1372075d6b2f4871d5abd60a71f41a90 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.32.0.json python3 tools/release/plan.py --commit 112dd02701ce649128a016a9de36eae7bb403cd7 --check\n"
+            "run": "set -e\nout1=\"$RUNNER_TEMP/build1\"; out2=\"$RUNNER_TEMP/build2\"\npython3 tools/release/build.py --commit HEAD --out \"$out1\"\npython3 tools/release/build.py --commit HEAD --out \"$out2\"\nfor z in \"$out1\"/*.zip; do cmp \"$z\" \"$out2/$(basename \"$z\")\"; done\npython3 tools/release/verify.py --commit HEAD --dir \"$out1\"\npython3 tools/release/plan.py --commit HEAD --check\nOMOCHIX_RELEASE_CONFIG=industry-hub-core-1.10.0-theme-1.29.0.json python3 tools/release/plan.py --commit 2f800b2c2a7ed34f0e7d33616dbfafc9cb9f1008 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.30.0.json python3 tools/release/plan.py --commit 7f0d4d91138683ec825620a05ae7350eeb686994 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.31.0.json python3 tools/release/plan.py --commit c9ae6e25e4173ced9255f631ae54c9e9a2b52590 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.31.1.json python3 tools/release/plan.py --commit 68d81afe1372075d6b2f4871d5abd60a71f41a90 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.32.0.json python3 tools/release/plan.py --commit 112dd02701ce649128a016a9de36eae7bb403cd7 --check\nOMOCHIX_RELEASE_CONFIG=theme-1.32.1.json python3 tools/release/plan.py --commit 1aa10bbc47cec1ca72d29dd21f0001e08102024e --check\n"
           }
         ]
       },
@@ -184,7 +190,9 @@
         "test": [
           "git ls-files -z '*.php'",
           "tests/nav/run.php",
-          "tests/editorial-home/run.php"
+          "tests/editorial-home/run.php",
+          "tests/design-library/run.php",
+          "tests/design-library/catalog-check.js"
         ]
       },
       "allowed_step_if": [

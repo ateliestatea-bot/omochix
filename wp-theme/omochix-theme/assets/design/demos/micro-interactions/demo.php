@@ -1,7 +1,7 @@
 <?php
 /**
  * Design Library demo: Micro Interaction Collection. Markup only; rendered by the isolated demo endpoint.
- * A fictional household & expense app ("HAKARI"). Amounts and items are fictional; nothing typed here is
+ * A fictional household & expense app ("TEMOCHO"). Amounts and items are fictional; nothing typed here is
  * sent or stored. Native controls (checkbox switches, radios, range, inputs) work without JavaScript;
  * JavaScript adds feedback: saved marks, validation, submit states, undo.
  */
@@ -9,7 +9,7 @@ defined('ABSPATH') || exit;
 ?>
 <div class="mi" data-mi>
     <header class="mi-top">
-        <span class="mi-brand"><span class="mi-brand__mark" aria-hidden="true"><i></i><i></i></span>HAKARI</span>
+        <span class="mi-brand"><span class="mi-brand__mark" aria-hidden="true"><i></i><i></i></span>TEMOCHO</span>
         <span class="mi-top__note">家計と経費の記録（架空のアプリ）</span>
         <nav class="mi-nav" aria-label="画面">
             <a href="#mi-settings">設定</a><a href="#mi-entry">記録</a><a href="#mi-list">一覧</a>

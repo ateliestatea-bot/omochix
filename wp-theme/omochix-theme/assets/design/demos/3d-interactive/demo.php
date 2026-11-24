@@ -9,15 +9,15 @@ $omx_poster = isset($omx_demo['poster']) ? (string) $omx_demo['poster'] : '';
 ?>
 <div class="kd">
     <header class="kd-nav">
-        <span class="kd-logo">KORE<span>-01</span></span>
+        <span class="kd-logo">WAKUREI<span>-01</span></span>
         <span class="kd-tag">架空の製品</span>
     </header>
     <main>
         <section class="kd-hero">
             <div class="kd-stage">
-                <canvas class="kd-canvas" tabindex="0" role="img" aria-label="軌道モジュール KORE-01 の 3D モデル。ドラッグまたは矢印キーで回転できます。"></canvas>
+                <canvas class="kd-canvas" tabindex="0" role="img" aria-label="軌道モジュール WAKUREI-01 の 3D モデル。ドラッグまたは矢印キーで回転できます。"></canvas>
                 <div class="kd-fallback">
-                    <?php if ('' !== $omx_poster) : ?><img src="<?php echo htmlspecialchars($omx_poster, ENT_QUOTES, 'UTF-8'); ?>" width="1280" height="800" alt="KORE-01 の静止画：中心の多面体を 2 本のリングと 6 個の小さな立方体が囲んでいる"><?php endif; ?>
+                    <?php if ('' !== $omx_poster) : ?><img src="<?php echo htmlspecialchars($omx_poster, ENT_QUOTES, 'UTF-8'); ?>" width="1280" height="800" alt="WAKUREI-01 の静止画：中心の多面体を 2 本のリングと 6 個の小さな立方体が囲んでいる"><?php endif; ?>
                     <p>この環境では 3D 表示を使えないため、静止画を表示しています。</p>
                 </div>
                 <p class="kd-hint" aria-hidden="true">ドラッグで回転</p>

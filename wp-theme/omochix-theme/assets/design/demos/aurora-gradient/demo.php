@@ -9,7 +9,7 @@ defined('ABSPATH') || exit;
 ?>
 <div class="au">
     <header class="au-nav">
-        <span class="au-mark" aria-label="MIRYU"><span class="au-mark__dot" aria-hidden="true"></span>MIRYU</span>
+        <span class="au-mark" aria-label="NAGIWA"><span class="au-mark__dot" aria-hidden="true"></span>NAGIWA</span>
         <nav aria-label="ページ内">
             <a href="#au-features">機能</a>
             <a href="#au-flow">導入の流れ</a>
@@ -27,7 +27,7 @@ defined('ABSPATH') || exit;
         <div class="au-hero__copy">
             <p class="au-eyebrow">FOCUS WORKSPACE FOR TEAMS</p>
             <h1 class="au-title" id="au-title"><span class="au-line">集中できる時間を、</span><span class="au-line">チームの景色に。</span></h1>
-            <p class="au-lead">MIRYU は、会議・通知・作業時間の流れを一枚にまとめ、チーム全員の「深く考える時間」を守るワークスペースです。</p>
+            <p class="au-lead">NAGIWA は、会議・通知・作業時間の流れを一枚にまとめ、チーム全員の「深く考える時間」を守るワークスペースです。</p>
             <div class="au-hero__actions">
                 <button class="au-btn au-btn--light" type="button">14日間 無料で試す</button>
                 <a class="au-link" href="#au-flow">導入の流れを見る</a>
@@ -128,6 +128,6 @@ defined('ABSPATH') || exit;
     </section>
 
     <footer class="au-foot">
-        <p>MIRYU（架空のサービス）— OmochiX Design Library のデモです。製品・企業・数値はすべて架空で、オーロラは Canvas 2D で描画しています。</p>
+        <p>NAGIWA（架空のサービス）— OmochiX Design Library のデモです。製品・企業・数値はすべて架空で、オーロラは Canvas 2D で描画しています。</p>
     </footer>
 </div>
