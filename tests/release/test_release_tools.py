@@ -150,7 +150,7 @@ class ReleaseExpectations(unittest.TestCase):
                     for needle in ('catalog.json', 'catalog.schema.json', '403 or 404', 'cache-busting', 'second request', '/design/', 'design-sitemap.xml',
                                    '/design-library-terms/ answers 404', 'style.css?ver=1.33.0'):
                         self.assertIn(needle, check, 'gate B checks ' + needle)
-                    self.assertEqual({'add': 0, 'replace': 7}, {a: sum(1 for s in plan['steps'] if s['action'] == a) for a in ('add', 'replace')})
+                    self.assertEqual({'add': 0, 'replace': 8}, {a: sum(1 for s in plan['steps'] if s['action'] == a) for a in ('add', 'replace')})
                     self.assertEqual(['themes/omochix-theme/inc/design-library.php'], [s['target'] for s in plan['steps'] if s['n'] == 1])
                     self.assertEqual(['themes/omochix-theme/style.css'], [s['target'] for s in plan['steps'] if s['n'] == len(plan['steps'])])
                     self.assertEqual(['themes/omochix-theme/assets/data/design/catalog.json'], [s['target'] for s in plan['steps'] if s['n'] == len(plan['steps']) - 1])

@@ -1,6 +1,6 @@
 {
   "release": "Theme 1.33.0 (Design Library G12: fictional-brand notices N1-N4, N6, N7, catalog fictionalBrand, usage-terms link shown only once that page is published; every work stays verified-local; publish gate stays closed)",
-  "note": "Theme only, on production 1.32.2 (release commit a1c4dec = main, deployed 2026-11-24 18:02 JST). Baseline: the 1.32.2 release manifest (292 files, sha256 696a2abe..., rebuilt byte-identical from a1c4dec and identical to the deploy record). Core stays 1.10.0. 7 replaced files, no file added: inc/design-library.php first (the validator accepts the optional fictionalBrand; notice, poster alt, JSON-LD description and terms-link helpers), then catalog.schema.json, the list page, card and detail templates (N1, N2, N3, N4, N6), catalog.json (fictionalBrand for the 11 works whose content shows a brand; every verification state unchanged: verified-local), then style.css last (version 1.33.0, switch file). No new rewrite rule (design-library-terms is an ordinary page, created and published in G13), no database change, no verified-production, publish gate stays closed (/design/ 404).",
+  "note": "Theme only, on production 1.32.2 (release commit a1c4dec = main, deployed 2026-11-24 18:02 JST). Baseline: the 1.32.2 release manifest (292 files, sha256 696a2abe..., rebuilt byte-identical from a1c4dec and identical to the deploy record). Core stays 1.10.0. 8 replaced files, no file added: inc/design-library.php first (the validator accepts the optional fictionalBrand; notice, poster alt, JSON-LD description and terms-link helpers), then catalog.schema.json, design-library.css (N2 label style), the list page, card and detail templates (N1, N2, N3, N4, N6), catalog.json (fictionalBrand for the 11 works whose content shows a brand; every verification state unchanged: verified-local), then style.css last (version 1.33.0, switch file). No new rewrite rule (design-library-terms is an ordinary page, created and published in G13), no database change, no verified-production, publish gate stays closed (/design/ 404).",
   "packages": {
     "theme": {
       "name": "omochix-theme",
@@ -18,6 +18,10 @@
     [
       "theme",
       "assets/data/design/catalog.schema.json"
+    ],
+    [
+      "theme",
+      "assets/css/design-library.css"
     ],
     [
       "theme",
@@ -75,6 +79,10 @@
     [
       "theme",
       "page-design.php"
+    ],
+    [
+      "theme",
+      "assets/css/design-library.css"
     ],
     [
       "theme",

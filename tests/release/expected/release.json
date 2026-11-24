@@ -11,7 +11,7 @@
       "baseline_sha256": "696a2abeffcb357a3f9548cf8550ba9bce6678be67f066a96ec2a85ba7024486",
       "files": 292,
       "add": 0,
-      "replace": 7
+      "replace": 8
     }
   },
   "unchanged": {
@@ -21,8 +21,8 @@
       "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
     }
   },
-  "steps": 7,
-  "changed_paths_sha256": "d212575f422510b119c83a9c46cf4c670eeeb44b8f6c610aa4f168bcaafb68a8",
+  "steps": 8,
+  "changed_paths_sha256": "eaafb82f399362194a754910c625da3c7a55dd31cc4be0a710e8ac14743945a1",
   "forbidden": {
     "pattern": "#labs|svg-motion|logo-motion#i",
     "allowed": []
@@ -52,7 +52,7 @@
   "rollback": {
     "first": "theme:style.css",
     "last": "theme:inc/design-library.php",
-    "count": 7
+    "count": 8
   },
   "core_version_markers": 11
 }

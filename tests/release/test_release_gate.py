@@ -146,7 +146,7 @@ class ReleaseGate(unittest.TestCase):
         prod = self.tree(expected(PREV)['commit'])
         catalog = os.path.join('assets', 'data', 'design', 'catalog.json')
         shutil.copy(os.path.join(prod, THEME, catalog), os.path.join(tree, THEME, catalog))
-        self.assertFails(self.gate(tree), 'planned but unchanged: theme:assets/data/design/catalog.json', '0 added and 7 replaced', 'exactly the expected set')
+        self.assertFails(self.gate(tree), 'planned but unchanged: theme:assets/data/design/catalog.json', '0 added and 8 replaced', 'exactly the expected set')
 
     def test_an_extra_file_fails(self):
         tree = self.tree('HEAD')
@@ -170,7 +170,7 @@ class ReleaseGate(unittest.TestCase):
         with open(os.path.join(tree, THEME, 'page-labs.php'), 'a', encoding='utf-8') as fh:
             fh.write('\n')
         self.edit_config(lambda c: c['order'].insert(0, ['theme', 'page-labs.php']))
-        self.assertFails(self.gate(tree), 'no Labs or SVG Motion file except', 'exactly the expected set', '7 steps')
+        self.assertFails(self.gate(tree), 'no Labs or SVG Motion file except', 'exactly the expected set', '8 steps')
 
     def test_a_labs_file_dropped_from_the_expectations_fails(self):
         # 1.32.0 names its 7 Labs files one by one; one missing from the list is caught even with the tree and config intact.
@@ -204,7 +204,7 @@ class ReleaseGate(unittest.TestCase):
         with open(os.path.join(tree, THEME, 'extra.php'), 'w', encoding='utf-8') as fh:
             fh.write('<?php\n')
         self.edit_config(lambda c: c['order'].insert(0, ['theme', 'extra.php']))
-        self.assertFails(self.gate(tree), '0 added and 7 replaced', '7 steps', 'exactly the expected set')
+        self.assertFails(self.gate(tree), '0 added and 8 replaced', '8 steps', 'exactly the expected set')
 
     # ------------------------------------------------------------------ faults in the config or the baseline
     # The functions.php order rule belongs to the 1.31.0 release and the inc/labs.php rule to 1.32.0 (after the new Code
