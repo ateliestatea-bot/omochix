@@ -4,7 +4,7 @@
  * (omochix_sitemap_ignore_non_self_canonical() in inc/seo.php) and of retired posts pinned by ID and slug
  * (omochix_sitemap_ignore_retired_post()), run through the registered 'slim_seo_sitemap_post_ignore'
  * callbacks exactly as Slim SEO calls them: ($ignore, WP_Post). Also checks that the theme 1.32.1
- * release plan (tools/release/release.json and its expectations) matches the rule.
+ * release plan (archived: tools/release/configs/theme-1.32.1.json and tests/release/expected/theme-1.32.1.json) matches the rule.
  * Run: php tests/seo/sitemap-ignore.php
  */
 define('ABSPATH', __DIR__ . '/');
@@ -109,11 +109,12 @@ check('T-R10 canonical rule still applies on its own', true === apply_sitemap_ig
 
 // ------------------------------------------------------------------- the 1.32.1 release plan matches this rule
 $ROOT = realpath(__DIR__ . '/../..');
-$cfg  = json_decode((string) file_get_contents($ROOT . '/tools/release/release.json'), true);
-$exp  = json_decode((string) file_get_contents($ROOT . '/tests/release/expected/release.json'), true);
-preg_match('/^Version:\s*(\S+)/m', (string) file_get_contents($THEME . '/style.css'), $ver);
+// The 1.32.1 plan as archived with that release (the current release.json belongs to the next release; its theme version is
+// checked by tests/release/release-gate.php).
+$cfg  = json_decode((string) file_get_contents($ROOT . '/tools/release/configs/theme-1.32.1.json'), true);
+$exp  = json_decode((string) file_get_contents($ROOT . '/tests/release/expected/theme-1.32.1.json'), true);
 $pair = static fn($l) => array_map(static fn($s) => $s[0] . ':' . $s[1], (array) $l);
-check('REL theme version 1.32.1 = expectations', '1.32.1' === ($ver[1] ?? '') && '1.32.1' === ($exp['versions']['theme'] ?? ''));
+check('REL archived 1.32.1 expectations: theme 1.32.1 on its release commit 1aa10bb', '1.32.1' === ($exp['versions']['theme'] ?? '') && '1aa10bbc47cec1ca72d29dd21f0001e08102024e' === ($exp['commit'] ?? ''));
 check('REL theme only, on the production 1.32.0 baseline', ['theme'] === array_keys($cfg['packages'] ?? []) && '1.32.0' === ($cfg['packages']['theme']['baseline_version'] ?? '')
     && 'tools/release/baseline/omochix-theme-1.32.0.sha256' === ($cfg['packages']['theme']['baseline'] ?? ''));
 check('REL order: learn-composer, seo, style.css last', ['theme:inc/learn-composer.php', 'theme:inc/seo.php', 'theme:style.css'] === $pair($cfg['order'] ?? []));
