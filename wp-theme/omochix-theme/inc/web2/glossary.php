@@ -317,7 +317,13 @@ function omochix_glossary_is_hidden_term($post) {
 function omochix_glossary_forget_hidden_id() {
     foreach (['p', 'page_id', 'attachment_id'] as $var) {
         $id = (int) get_query_var($var);
-        if ($id > 0 && omochix_glossary_is_hidden_term($id)) {
+        if ($id <= 0) {
+            continue;
+        }
+        // A revision or an autosave stands for its parent: WordPress swaps the parent in before it redirects.
+        $post   = get_post($id);
+        $parent = $post instanceof WP_Post && 'revision' === $post->post_type && (int) $post->post_parent > 0 ? (int) $post->post_parent : 0;
+        if (omochix_glossary_is_hidden_term($id) || ($parent && omochix_glossary_is_hidden_term($parent))) {
             set_query_var($var, 0);
         }
     }

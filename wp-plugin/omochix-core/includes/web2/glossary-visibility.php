@@ -112,6 +112,7 @@ function omochix_core_glossary_review_due( array $data ) {
  * @return array{visible: bool, indexable: bool, review: bool, due: string, errors: string[]}
  */
 function omochix_core_glossary_visibility( $post, $today = null ) {
+	static $memo = array();
 	$post  = is_object( $post ) ? $post : get_post( (int) $post );
 	$today = null === $today ? omochix_core_glossary_today() : $today;
 	$none  = array(
@@ -125,13 +126,23 @@ function omochix_core_glossary_visibility( $post, $today = null ) {
 		return $none;
 	}
 	$data   = omochix_core_glossary_term_data( $post );
+	// One page asks about the same term several times (the list, the counts, each link, the sitemap).
+	// The answer depends on nothing but what is hashed here, so it is kept for the rest of the request;
+	// anything that changes (a meta value, the status, the gate, the date) is a different key.
+	$key = md5( serialize( array( $data, (string) ( $post->post_status ?? '' ), (string) ( $post->post_password ?? '' ), $today, omochix_core_glossary_public() ) ) );
+	if ( isset( $memo[ $key ] ) ) {
+		return $memo[ $key ];
+	}
+	if ( count( $memo ) >= 2000 ) {
+		$memo = array();
+	}
 	$check  = omochix_core_glossary_validate_term( $data, array( 'today' => $today ) );
 	$due    = omochix_core_glossary_review_due( $data );
 	$review = '' === $due || strcmp( $today, $due ) > 0;
 	$grace  = '' === $due ? '' : gmdate( 'Y-m-d', (int) strtotime( $due . ' 00:00:00 UTC' ) + OMOCHIX_CORE_GLOSSARY_NOINDEX_GRACE_DAYS * 86400 );
 	$open   = omochix_core_glossary_public() && 'publish' === ( $post->post_status ?? '' ) && '' === (string) ( $post->post_password ?? '' );
 	$ok     = $open && ! $check['errors'];
-	return array(
+	return $memo[ $key ] = array(
 		'visible'   => $ok,
 		'indexable' => $ok && '' !== $grace && strcmp( $today, $grace ) <= 0,
 		'review'    => $review,
@@ -139,6 +150,169 @@ function omochix_core_glossary_visibility( $post, $today = null ) {
 		'errors'    => $check['errors'],
 	);
 }
+
+/**
+ * A term a visitor may not see has no address for that visitor.
+ *
+ * WordPress hands out a post's address in places no theme hook can reach:
+ * wp-trackback.php/<ID> redirects to it, a 404 for a revision's ID redirects
+ * to the parent's. For a hidden term that tells a visitor that the ID is a
+ * glossary term, and for a published hidden one its slug. With no address
+ * WordPress answers as it does for an ID that does not exist. Only glossary
+ * posts are touched, trackbacks and redirects of everything else work as
+ * before; editors (who may edit the term) keep every address.
+ *
+ * @param mixed $link Address so far.
+ * @param mixed $post Post.
+ * @return mixed
+ */
+function omochix_core_glossary_post_link( $link, $post = null ) {
+	if ( ! is_object( $post ) || '' === (string) $link ) {
+		return $link;
+	}
+	return omochix_core_glossary_is_hidden_from_user( $post ) ? '' : $link;
+}
+add_filter( 'post_type_link', 'omochix_core_glossary_post_link', 9999, 2 );
+// Revisions are a built-in type: WordPress builds their address (/?p=<ID>) through post_link.
+add_filter( 'post_link', 'omochix_core_glossary_post_link', 9999, 2 );
+
+/**
+ * Whether a post is a glossary term the current user may neither see nor edit.
+ *
+ * @param mixed $post Post or ID.
+ * @return bool
+ */
+function omochix_core_glossary_is_hidden_from_user( $post ) {
+	$post = is_object( $post ) ? $post : ( $post ? get_post( (int) $post ) : null );
+	// A revision or an autosave stands for its term: WordPress answers for it with an address of its own.
+	if ( is_object( $post ) && 'revision' === ( $post->post_type ?? '' ) && (int) ( $post->post_parent ?? 0 ) > 0 ) {
+		$post = get_post( (int) $post->post_parent );
+	}
+	if ( ! is_object( $post ) || 'omx_glossary' !== ( $post->post_type ?? '' ) ) {
+		return false;
+	}
+	return ! omochix_core_glossary_visibility( $post )['visible'] && ! current_user_can( 'edit_post', (int) ( $post->ID ?? 0 ) );
+}
+
+/**
+ * A term takes no trackbacks, pingbacks or comments, whatever is stored for
+ * it. (A hidden term that accepted a trackback would answer differently
+ * from an ID that does not exist.) Only glossary posts are touched.
+ *
+ * @param mixed $open    Open so far.
+ * @param mixed $post_id Post ID.
+ * @return mixed
+ */
+function omochix_core_glossary_no_pings( $open, $post_id = 0 ) {
+	return $post_id && 'omx_glossary' === get_post_type( is_object( $post_id ) ? $post_id : (int) $post_id ) ? false : $open;
+}
+add_filter( 'pings_open', 'omochix_core_glossary_no_pings', 99, 2 );
+add_filter( 'comments_open', 'omochix_core_glossary_no_pings', 99, 2 );
+
+/**
+ * XML-RPC: pingback.extensions.getPingbacks answers "no such address" for
+ * the address of a hidden term, exactly as it does for an address nothing
+ * lives at. (Core looks the address up with its own query, which no theme
+ * guard sees, and answers an empty list for any post that exists.) The
+ * method keeps working for everything else.
+ *
+ * @param mixed $methods XML-RPC methods.
+ * @return mixed
+ */
+function omochix_core_glossary_xmlrpc_methods( $methods ) {
+	if ( is_array( $methods ) && isset( $methods['pingback.extensions.getPingbacks'] ) ) {
+		$methods['pingback.extensions.getPingbacks'] = 'omochix_core_glossary_xmlrpc_get_pingbacks';
+	}
+	return $methods;
+}
+add_filter( 'xmlrpc_methods', 'omochix_core_glossary_xmlrpc_methods', 99 );
+
+/**
+ * The method itself: core's, unless the address is a hidden term's.
+ *
+ * @param mixed $url Address asked about.
+ * @return mixed
+ */
+function omochix_core_glossary_xmlrpc_get_pingbacks( $url ) {
+	global $wp_xmlrpc_server;
+	$post_id = is_string( $url ) ? (int) url_to_postid( $url ) : 0;
+	if ( is_object( $wp_xmlrpc_server ) && ! ( $post_id && omochix_core_glossary_is_hidden_from_user( $post_id ) ) ) {
+		return $wp_xmlrpc_server->pingback_extensions_getPingbacks( $url );
+	}
+	// What core answers for an address nothing lives at, through the same filter (by default WordPress
+	// blanks pingback errors there), so the two answers are the same to the byte.
+	return apply_filters( 'xmlrpc_pingback_error', new IXR_Error( 32, __( 'The specified target URL does not exist.' ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain,WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core's own text and hook.
+}
+
+/**
+ * REST /wp/v2/search?type=term: no glossary category for anyone but editors
+ * (the category routes themselves are closed to them).
+ *
+ * @param mixed $args Term query arguments.
+ * @return mixed
+ */
+function omochix_core_glossary_rest_term_search_args( $args ) {
+	if ( ! is_array( $args ) || omochix_core_glossary_current_user_is_editor() ) {
+		return $args;
+	}
+	$taxonomies = isset( $args['taxonomy'] ) ? (array) $args['taxonomy'] : array();
+	if ( in_array( 'omx_glossary_category', $taxonomies, true ) ) {
+		$left = array_values( array_diff( $taxonomies, array( 'omx_glossary_category' ) ) );
+		if ( $left ) {
+			$args['taxonomy'] = $left;
+		} else {
+			$args['include'] = array( 0 ); // Nothing else was asked for: find nothing.
+		}
+	}
+	return $args;
+}
+add_filter( 'rest_term_search_query', 'omochix_core_glossary_rest_term_search_args' );
+
+/**
+ * REST /wp/v2/users: a glossary term does not make its author a public
+ * author. (Core lists everyone with a published post of a REST post type; a
+ * term can be published and hidden.)
+ *
+ * @param mixed $args User query arguments.
+ * @return mixed
+ */
+function omochix_core_glossary_rest_user_args( $args ) {
+	if ( is_array( $args ) && isset( $args['has_published_posts'] ) && is_array( $args['has_published_posts'] ) && ! omochix_core_glossary_current_user_is_editor() ) {
+		$left = array_values( array_diff( $args['has_published_posts'], array( 'omx_glossary' ) ) );
+		if ( $left ) {
+			$args['has_published_posts'] = $left; // Never empty: an empty list would mean "everyone".
+		} else {
+			$args['include'] = array( 0 ); // Only terms were asked about: nobody is listed (?has_published_posts=omx_glossary).
+		}
+	}
+	return $args;
+}
+add_filter( 'rest_user_query', 'omochix_core_glossary_rest_user_args' );
+
+/**
+ * The same for a single user (core counts the posts of every REST post type
+ * to decide whether /wp/v2/users/<id> may be shown).
+ *
+ * @param mixed $count       Count so far.
+ * @param mixed $user_id     User ID.
+ * @param mixed $post_type   Post type or types counted.
+ * @param mixed $public_only Whether only public posts were counted.
+ * @return mixed
+ */
+function omochix_core_glossary_user_post_count( $count, $user_id = 0, $post_type = 'post', $public_only = false ) {
+	if ( omochix_core_glossary_current_user_is_editor() ) {
+		return $count;
+	}
+	if ( 'omx_glossary' === $post_type ) {
+		return 0;
+	}
+	if ( is_array( $post_type ) && in_array( 'omx_glossary', $post_type, true ) ) {
+		$left = array_values( array_diff( $post_type, array( 'omx_glossary' ) ) );
+		return $left ? count_user_posts( (int) $user_id, $left, (bool) $public_only ) : 0;
+	}
+	return $count;
+}
+add_filter( 'get_usernumposts', 'omochix_core_glossary_user_post_count', 99, 4 );
 
 /**
  * REST: glossary routes answer only to editors (the block editor uses them).
