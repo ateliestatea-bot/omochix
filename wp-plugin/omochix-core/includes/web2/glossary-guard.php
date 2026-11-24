@@ -12,6 +12,21 @@
  * scheduled publishing by cron (publish_future_post). A term that is already
  * live is not demoted here; gate G-B hides it while it fails the rules.
  *
+ * REST saves in two steps: the post first (wp_insert_post_data runs here),
+ * then the meta and the categories of the same request. So the REST guard,
+ * which sees the whole request, hands the values that are about to be saved
+ * to the insert guard (omochix_core_glossary_pending), and the insert guard
+ * runs every rule on the post as it will be stored together with them.
+ * Without that hand-over the insert guard would judge a complete request by
+ * the old meta and silently put it back to draft. The hand-over is for one
+ * post and one REST call, is used once, and never skips a rule.
+ * Two things keep "judged" and "stored" the same: a REST request whose meta
+ * is not of exactly the stored type is refused before anything is saved
+ * (WordPress would convert or reject it only after the post is published),
+ * and once the request has been stored the term is read back and checked
+ * again; a term this request made live that fails as stored goes back to
+ * draft.
+ *
  * @package OmochiXCore
  */
 
@@ -55,6 +70,143 @@ function omochix_core_glossary_is_live( $post_id ) {
 }
 
 /**
+ * Values of a save in progress that are not stored yet (REST: the meta and
+ * the categories sent with the post). Kept for this PHP request only.
+ *
+ * @param int|null   $post_id Post ID (0: a new post); null forgets everything.
+ * @param array|null $over    Values to keep; null takes them out (use once).
+ * @return array|null The kept values when asked for, else null.
+ */
+function omochix_core_glossary_pending( $post_id, $over = null ) {
+	static $pending = array();
+	if ( null === $post_id ) {
+		$pending = array();
+		return null;
+	}
+	$post_id = (int) $post_id;
+	if ( is_array( $over ) ) {
+		$pending[ $post_id ] = $over;
+		return null;
+	}
+	$kept = $pending[ $post_id ] ?? null;
+	unset( $pending[ $post_id ] );
+	return $kept;
+}
+
+/**
+ * A REST call is over (also one of a batch): nothing is carried to the next.
+ *
+ * @param mixed $response Response.
+ * @return mixed
+ */
+function omochix_core_glossary_pending_clear( $response ) {
+	// A call that ended early (WordPress stops at the first error after the post is saved) never reached
+	// the read-back: do it now for every post this call was allowed to make live.
+	foreach ( omochix_core_glossary_rest_approved( 'list' ) as $post_id ) {
+		if ( $post_id > 0 ) {
+			omochix_core_glossary_rest_recheck( $post_id );
+		}
+	}
+	omochix_core_glossary_pending( null );
+	omochix_core_glossary_rest_approved( null );
+	return $response;
+}
+
+/**
+ * Posts this REST call was allowed to make live (0: a new post).
+ *
+ * @param int|string|null $post_id Post ID; null forgets everything; 'list' returns the IDs.
+ * @param bool            $set     True to note it; false to ask (and forget).
+ * @return bool|int[]
+ */
+function omochix_core_glossary_rest_approved( $post_id, $set = false ) {
+	static $ids = array();
+	if ( null === $post_id ) {
+		$ids = array();
+		return false;
+	}
+	if ( 'list' === $post_id ) {
+		return array_keys( $ids );
+	}
+	$post_id = (int) $post_id;
+	if ( $set ) {
+		$ids[ $post_id ] = true;
+		return true;
+	}
+	$was = isset( $ids[ $post_id ] );
+	unset( $ids[ $post_id ] );
+	return $was;
+}
+
+/**
+ * REST, after the post, its categories and its meta are stored: read the
+ * term back. If this request made it live and it fails the rules as stored
+ * (a value WordPress changed or did not store), it goes back to draft.
+ *
+ * @param WP_Post|object $post     Stored post.
+ * @param mixed          $request  Request.
+ * @param bool           $creating Whether the post was created.
+ * @return void
+ */
+function omochix_core_glossary_guard_rest_after( $post, $request = null, $creating = false ) {
+	$post_id = (int) ( is_object( $post ) ? ( $post->ID ?? 0 ) : 0 );
+	$created = $creating && omochix_core_glossary_rest_approved( 0 );
+	if ( ! $post_id || ! ( omochix_core_glossary_rest_approved( $post_id ) || $created ) ) {
+		return;
+	}
+	if ( omochix_core_glossary_rest_recheck( $post_id ) && is_object( $post ) ) {
+		$post->post_status = 'draft'; // The controller answers with this object: the response must say what is stored.
+	}
+}
+add_action( 'rest_after_insert_omx_glossary', 'omochix_core_glossary_guard_rest_after', 99, 3 );
+
+/**
+ * REST, right after the post row is saved: a new post has its ID now. The
+ * approval noted for "a new post" moves to it, so the read-back finds it
+ * also when WordPress stops before rest_after_insert.
+ *
+ * @param WP_Post|object $post     Saved post.
+ * @param mixed          $request  Request.
+ * @param bool           $creating Whether the post was created.
+ * @return void
+ */
+function omochix_core_glossary_guard_rest_inserted( $post, $request = null, $creating = false ) {
+	$post_id = (int) ( is_object( $post ) ? ( $post->ID ?? 0 ) : 0 );
+	if ( $creating && $post_id && omochix_core_glossary_rest_approved( 0 ) ) {
+		omochix_core_glossary_rest_approved( $post_id, true );
+	}
+}
+add_action( 'rest_insert_omx_glossary', 'omochix_core_glossary_guard_rest_inserted', 1, 3 );
+
+/**
+ * Read a stored term back; when it is live and fails the rules, set it back
+ * to draft and keep the reasons. Only called for posts a REST call of this
+ * request was allowed to make live.
+ *
+ * @param int $post_id Post ID.
+ * @return bool Whether it was set back to draft.
+ */
+function omochix_core_glossary_rest_recheck( $post_id ) {
+	$stored = get_post( (int) $post_id );
+	if ( ! $stored || 'omx_glossary' !== $stored->post_type || ! in_array( (string) $stored->post_status, array( 'publish', 'future' ), true ) ) {
+		return false;
+	}
+	$problems = omochix_core_glossary_publish_problems( $stored );
+	if ( ! $problems ) {
+		return false;
+	}
+	wp_update_post(
+		array(
+			'ID'          => (int) $post_id,
+			'post_status' => 'draft',
+		)
+	);
+	omochix_core_glossary_remember_hold( (int) $post_id, $problems );
+	return true;
+}
+add_filter( 'rest_request_after_callbacks', 'omochix_core_glossary_pending_clear', 1 );
+
+/**
  * Classic editor, Quick Edit, Bulk Edit, XML-RPC, wp_insert_post.
  *
  * @param array $data    Slashed post data.
@@ -76,7 +228,9 @@ function omochix_core_glossary_guard_insert_data( $data, $postarr ) {
 		'post_title'   => (string) wp_unslash( $data['post_title'] ?? '' ),
 		'post_content' => (string) wp_unslash( $data['post_content'] ?? '' ),
 	);
-	$over     = array();
+	// REST: the meta and categories of this request, which are stored right after the post.
+	$kept     = omochix_core_glossary_pending( $post_id );
+	$over     = is_array( $kept ) ? $kept : array();
 	$tax      = isset( $postarr['tax_input']['omx_glossary_category'] ) ? $postarr['tax_input']['omx_glossary_category'] : null;
 	if ( null !== $tax ) {
 		$over['category'] = omochix_core_glossary_category_slugs( $tax );
@@ -132,12 +286,36 @@ function omochix_core_glossary_guard_rest( $prepared, $request ) {
 		'post_title'   => (string) ( $prepared->post_title ?? ( $stored->post_title ?? '' ) ),
 		'post_content' => (string) ( $prepared->post_content ?? ( $stored->post_content ?? '' ) ),
 	);
+	if ( '' === $post->post_name ) {
+		// No slug sent or stored yet: WordPress makes it from the title while saving. The insert guard checks the real one.
+		$post->post_name = (string) sanitize_title( $post->post_title );
+	}
 	$over   = array();
+	$shape  = array();
 	$meta   = is_object( $request ) && method_exists( $request, 'get_param' ) ? $request->get_param( 'meta' ) : null;
 	foreach ( is_array( $meta ) ? $meta : array() as $k => $v ) {
-		if ( array_key_exists( $k, omochix_core_glossary_meta_fields() ) ) {
+		if ( ! array_key_exists( $k, omochix_core_glossary_meta_fields() ) ) {
+			continue;
+		}
+		if ( null === $v ) {
+			$over[ $k ] = omochix_core_glossary_sanitize_meta( null, $k ); // WordPress deletes the meta: judged as empty.
+		} elseif ( ! omochix_core_glossary_meta_shape_ok( $k, $v ) ) {
+			$shape[] = $k . '：値の型が正しくありません（文字列・配列・整数・true/false を、保存する形のまま送ってください）';
+		} else {
 			$over[ $k ] = omochix_core_glossary_sanitize_meta( $v, $k );
 		}
+	}
+	if ( $shape ) {
+		omochix_core_glossary_pending( $post_id );
+		omochix_core_glossary_rest_approved( $post_id );
+		return new WP_Error(
+			'omochix_glossary_not_ready',
+			__( 'この用語は公開の条件を満たしていないため、公開・予約できません。下書きとして保存し、内容を確認してください。', 'omochix-core' ),
+			array(
+				'status'   => 400,
+				'problems' => array_slice( $shape, 0, 20 ),
+			)
+		);
 	}
 	$cats = is_object( $request ) && method_exists( $request, 'get_param' ) ? $request->get_param( 'glossary-categories' ) : null;
 	if ( null !== $cats ) {
@@ -145,8 +323,12 @@ function omochix_core_glossary_guard_rest( $prepared, $request ) {
 	}
 	$problems = omochix_core_glossary_publish_problems( $post, $over );
 	if ( ! $problems ) {
+		omochix_core_glossary_pending( $post_id, $over );
+		omochix_core_glossary_rest_approved( $post_id, true );
 		return $prepared;
 	}
+	omochix_core_glossary_pending( $post_id ); // Refused: nothing is handed over.
+	omochix_core_glossary_rest_approved( $post_id );
 	return new WP_Error(
 		'omochix_glossary_not_ready',
 		__( 'この用語は公開の条件を満たしていないため、公開・予約できません。下書きとして保存し、内容を確認してください。', 'omochix-core' ),

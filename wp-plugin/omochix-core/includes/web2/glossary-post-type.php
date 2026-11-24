@@ -52,7 +52,9 @@ function omochix_core_glossary_post_type_args( $open ) {
 		'description'         => __( 'AI・テクノロジー用語の定義と解説', 'omochix-core' ),
 		'public'              => $open,
 		'publicly_queryable'  => $open,
-		'exclude_from_search' => true, // Site search is enabled later, after the search template supports terms.
+		// Keep true. It is also what keeps WordPress from guessing a term from the start of a slug (/abc -> /glossary/abc-term/)
+		// and from listing terms for ?s=: both would show hidden terms. Opening site search needs its own guard first.
+		'exclude_from_search' => true,
 		'show_ui'             => true,
 		'show_in_menu'        => true,
 		'show_in_nav_menus'   => false,
@@ -62,7 +64,8 @@ function omochix_core_glossary_post_type_args( $open ) {
 		'capability_type'     => array( 'omx_glossary', 'omx_glossaries' ),
 		'map_meta_cap'        => true,
 		'hierarchical'        => false,
-		'supports'            => array( 'title', 'editor', 'revisions', 'author' ),
+		// custom-fields: WordPress saves and returns registered meta over REST (the block editor) only with it.
+		'supports'            => array( 'title', 'editor', 'revisions', 'author', 'custom-fields' ),
 		'has_archive'         => $open ? 'glossary' : false,
 		'rewrite'             => $open ? array(
 			'slug'       => 'glossary',
@@ -124,6 +127,18 @@ function omochix_core_glossary_taxonomy_args( $open ) {
 function omochix_core_glossary_register_post_type() {
 	register_post_type( 'omx_glossary', omochix_core_glossary_post_type_args( omochix_core_glossary_public() ) );
 }
+
+/**
+ * The generic "Custom Fields" box is not the glossary's input screen: it
+ * would list every field as raw text, and a text typed over a list field
+ * empties it. custom-fields support is there for REST only.
+ *
+ * @return void
+ */
+function omochix_core_glossary_remove_custom_fields_box() {
+	remove_meta_box( 'postcustom', 'omx_glossary', 'normal' );
+}
+add_action( 'add_meta_boxes_omx_glossary', 'omochix_core_glossary_remove_custom_fields_box', 99 );
 
 /** Register the category taxonomy. */
 function omochix_core_glossary_register_taxonomy() {

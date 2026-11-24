@@ -9,7 +9,9 @@
  *   /wp/v2/search for everyone else.
  * - oEmbed: a term can never be embedded.
  * - Sitemaps (WordPress core and Slim SEO): left out while the glossary is
- *   closed; once open, only indexable terms.
+ *   closed; once open, only what is indexed: indexable terms, the list with
+ *   10 of them, a category with 3 (gate G-C). A noindex or 404 URL is never
+ *   listed.
  * Existence of a non-public term is never revealed: these all answer as if
  * it did not exist.
  *
@@ -23,6 +25,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** Days after the review date before a term stops being indexable (D-3). */
 if ( ! defined( 'OMOCHIX_CORE_GLOSSARY_NOINDEX_GRACE_DAYS' ) ) {
 	define( 'OMOCHIX_CORE_GLOSSARY_NOINDEX_GRACE_DAYS', 30 );
+}
+/**
+ * Gate G-C (Phase 0 D-4): the list is indexed with 10 indexable terms, a
+ * category with 3. One place for both numbers: the theme's robots and
+ * canonical and the sitemaps here must give the same answer.
+ */
+if ( ! defined( 'OMOCHIX_CORE_GLOSSARY_INDEX_MIN' ) ) {
+	define( 'OMOCHIX_CORE_GLOSSARY_INDEX_MIN', 10 );
+}
+if ( ! defined( 'OMOCHIX_CORE_GLOSSARY_CATEGORY_INDEX_MIN' ) ) {
+	define( 'OMOCHIX_CORE_GLOSSARY_CATEGORY_INDEX_MIN', 3 );
 }
 
 /**
@@ -100,7 +113,7 @@ function omochix_core_glossary_review_due( array $data ) {
  */
 function omochix_core_glossary_visibility( $post, $today = null ) {
 	$post  = is_object( $post ) ? $post : get_post( (int) $post );
-	$today = null === $today ? gmdate( 'Y-m-d' ) : $today;
+	$today = null === $today ? omochix_core_glossary_today() : $today;
 	$none  = array(
 		'visible'   => false,
 		'indexable' => false,
@@ -211,8 +224,79 @@ function omochix_core_glossary_oembed_post_id( $post_id ) {
 add_filter( 'oembed_request_post_id', 'omochix_core_glossary_oembed_post_id' );
 
 /**
+ * What is indexable right now (gate G-B per term, gate G-C for the lists).
+ *
+ * @param bool $reset Forget the cached answer (tests).
+ * @return array{ids: int[], categories: array<int, array{slug: string, count: int}>, list: bool, category_ids: int[]}
+ */
+function omochix_core_glossary_index_state( $reset = false ) {
+	static $state = null;
+	if ( $reset ) {
+		$state = null;
+	}
+	if ( null !== $state ) {
+		return $state;
+	}
+	$out = array(
+		'ids'          => array(),
+		'categories'   => array(),
+		'list'         => false,
+		'category_ids' => array(),
+	);
+	if ( ! omochix_core_glossary_public() ) {
+		return $out; // Not cached: the gate is decided late in the request.
+	}
+	foreach ( get_posts( array( 'post_type' => 'omx_glossary', 'post_status' => 'publish', 'posts_per_page' => 500, 'has_password' => false, 'fields' => 'all', 'no_found_rows' => true, 'suppress_filters' => true ) ) as $p ) {
+		if ( ! omochix_core_glossary_visibility( $p )['indexable'] ) {
+			continue;
+		}
+		$out['ids'][] = (int) $p->ID;
+		$terms        = get_the_terms( (int) $p->ID, 'omx_glossary_category' ); // From the cache get_posts() filled.
+		foreach ( is_array( $terms ) ? $terms : array() as $t ) {
+			$tid = (int) ( $t->term_id ?? 0 );
+			if ( $tid ) {
+				$out['categories'][ $tid ] = array(
+					'slug'  => (string) $t->slug,
+					'count' => 1 + ( $out['categories'][ $tid ]['count'] ?? 0 ),
+				);
+			}
+		}
+	}
+	$out['list'] = count( $out['ids'] ) >= OMOCHIX_CORE_GLOSSARY_INDEX_MIN;
+	foreach ( $out['categories'] as $tid => $c ) {
+		if ( $c['count'] >= OMOCHIX_CORE_GLOSSARY_CATEGORY_INDEX_MIN ) {
+			$out['category_ids'][] = (int) $tid;
+		}
+	}
+	$state = $out;
+	return $state;
+}
+
+/**
+ * Gate G-C: whether the list of all terms (/glossary/) is indexed.
+ *
+ * @return bool
+ */
+function omochix_core_glossary_list_indexable() {
+	return omochix_core_glossary_index_state()['list'];
+}
+
+/**
+ * Gate G-C: whether a category page is indexed.
+ *
+ * @param WP_Term|object|int $term Category term or its ID.
+ * @return bool
+ */
+function omochix_core_glossary_category_indexable( $term ) {
+	$id = is_object( $term ) ? (int) ( $term->term_id ?? 0 ) : (int) $term;
+	return $id > 0 && in_array( $id, omochix_core_glossary_index_state()['category_ids'], true );
+}
+
+/**
  * Sitemaps: no glossary post type while closed (core passes name => object,
- * Slim SEO a list of names; both are handled).
+ * Slim SEO a list of names; both are handled). Once open the type stays
+ * listed and the query filters below decide what is in it: Slim SEO asks
+ * for this list on every request, too early and too often to count terms.
  *
  * @param mixed $post_types Post types.
  * @return mixed
@@ -230,7 +314,8 @@ add_filter( 'wp_sitemaps_post_types', 'omochix_core_glossary_sitemap_post_types'
 add_filter( 'slim_seo_sitemap_post_types', 'omochix_core_glossary_sitemap_post_types' );
 
 /**
- * Sitemaps: no glossary category taxonomy while closed.
+ * Sitemaps: no glossary category taxonomy while closed. Once open, the term
+ * query filter below keeps only the indexed categories.
  *
  * @param mixed $taxonomies Taxonomies.
  * @return mixed
@@ -274,14 +359,71 @@ function omochix_core_glossary_sitemap_query_args( $args, $post_type = '' ) {
 	if ( 'omx_glossary' !== $post_type || ! is_array( $args ) ) {
 		return $args;
 	}
-	$ids = array();
-	foreach ( get_posts( array( 'post_type' => 'omx_glossary', 'post_status' => 'publish', 'posts_per_page' => 500, 'has_password' => false, 'fields' => 'all', 'no_found_rows' => true, 'suppress_filters' => true ) ) as $p ) {
-		if ( omochix_core_glossary_visibility( $p )['indexable'] ) {
-			$ids[] = (int) $p->ID;
-		}
-	}
+	$ids              = omochix_core_glossary_index_state()['ids'];
 	$args['post__in'] = $ids ? $ids : array( 0 );
 	return $args;
 }
 add_filter( 'wp_sitemaps_posts_query_args', 'omochix_core_glossary_sitemap_query_args', 10, 2 );
+
+/**
+ * Slim SEO sitemap (the index and each page): only indexable terms, so a
+ * glossary with none has no sitemap file at all.
+ *
+ * @param mixed $args  Query arguments.
+ * @param mixed $given Arguments the sitemap asked with (post_type).
+ * @return mixed
+ */
+function omochix_core_glossary_slim_sitemap_post_args( $args, $given = array() ) {
+	$type = is_array( $args ) ? ( $args['post_type'] ?? ( is_array( $given ) ? ( $given['post_type'] ?? '' ) : '' ) ) : '';
+	return 'omx_glossary' === $type ? omochix_core_glossary_sitemap_query_args( $args, 'omx_glossary' ) : $args;
+}
+add_filter( 'slim_seo_sitemap_post_type_query_args', 'omochix_core_glossary_slim_sitemap_post_args', 10, 2 );
+
+/**
+ * Sitemaps: only category pages that are indexed (3 indexable terms).
+ *
+ * @param mixed $args     Term query arguments.
+ * @param mixed $taxonomy Taxonomy name (WordPress core) or the arguments the sitemap asked with (Slim SEO).
+ * @return mixed
+ */
+function omochix_core_glossary_sitemap_term_args( $args, $taxonomy = '' ) {
+	$name = is_string( $taxonomy ) ? $taxonomy : ( is_array( $taxonomy ) ? ( $taxonomy['taxonomy'] ?? '' ) : '' );
+	if ( is_array( $args ) && '' === $name ) {
+		$name = $args['taxonomy'] ?? '';
+	}
+	if ( ! is_array( $args ) || 'omx_glossary_category' !== $name ) {
+		return $args;
+	}
+	$ids             = omochix_core_glossary_index_state()['category_ids'];
+	$args['include'] = $ids ? $ids : array( 0 );
+	return $args;
+}
+add_filter( 'wp_sitemaps_taxonomies_query_args', 'omochix_core_glossary_sitemap_term_args', 10, 2 );
+add_filter( 'slim_seo_taxonomy_query_args', 'omochix_core_glossary_sitemap_term_args', 10, 2 );
+
+/**
+ * Slim SEO lists a post type's archive URL (/glossary/) on the first page of
+ * its sitemap without asking. While the list is noindex (fewer than 10
+ * indexable terms) the archive has no link for the length of the sitemap
+ * request, which ends when the sitemap is printed.
+ *
+ * @return void
+ */
+function omochix_core_glossary_slim_sitemap_before_output() {
+	if ( ! omochix_core_glossary_list_indexable() ) {
+		add_filter( 'post_type_archive_link', 'omochix_core_glossary_sitemap_no_archive_link', 99, 2 );
+	}
+}
+add_action( 'slim_seo_sitemap_before_output', 'omochix_core_glossary_slim_sitemap_before_output' );
+
+/**
+ * No archive link for the glossary (only added while a sitemap is printed).
+ *
+ * @param mixed $link      Link.
+ * @param mixed $post_type Post type.
+ * @return mixed
+ */
+function omochix_core_glossary_sitemap_no_archive_link( $link, $post_type = '' ) {
+	return 'omx_glossary' === $post_type ? false : $link;
+}
 // omochix-glossary-version: 1 (end)

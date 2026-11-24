@@ -62,7 +62,39 @@ function omochix_core_glossary_rules() {
 		),
 		'reserved_slugs'    => array( 'category', 'page', 'feed', 'rss', 'rss2', 'rdf', 'atom', 'embed', 'trackback', 'comments', 'amp', 'search', 'index', 'glossary', 'wp-admin', 'wp-json' ),
 		'allowed_tags'      => array( 'p', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i', 'code', 'pre', 'blockquote', 'a', 'br', 'dl', 'dt', 'dd', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'sup', 'sub' ),
-		'secret_query_keys' => array( 'token', 'access_token', 'id_token', 'key', 'api_key', 'apikey', 'sig', 'signature', 'secret', 'password', 'passwd', 'auth', 'session', 'sessionid', 'x-amz-signature', 'x-amz-credential', 'code' ),
+		// Parameter names that carry a credential, compared after lowercasing and dropping every character but a-z and 0-9 (access-token, Access_Token and accessToken are the same name).
+		'secret_query_keys' => array( 'token', 'key', 'sig', 'auth', 'authorization', 'bearer', 'jwt', 'session', 'jsessionid', 'phpsessid', 'pass', 'pwd', 'pw', 'otp', 'hmac', 'code' ),
+		// A name that ends with one of these is a credential too (csrf_token, client-secret, X-Amz-Signature ...). Not "contains": secretary= and credentials=include are ordinary.
+		'secret_key_ends'   => array( 'token', 'secret', 'signature', 'password', 'passwd', 'credential', 'apikey', 'accesskey', 'secretkey', 'privatekey', 'sessionid' ),
+		// A name that contains one of these, anywhere, is one as well (x_api_key_v2, access_token_2 ...).
+		'secret_key_parts'  => array( 'apikey', 'accesstoken', 'refreshtoken', 'clientsecret', 'secretkey', 'privatekey' ),
+		// Raw content larger than this is refused unread (the visible text may be 6,000 characters).
+		'content_bytes_max' => 200000,
+		// Dates in a term are calendar dates of the site. Used only where WordPress is not loaded (CLI, CI).
+		'timezone'          => 'Asia/Tokyo',
+		// Block editor: the only blocks a term may use, with the only settings each may carry.
+		'blocks'            => array(
+			'paragraph'    => array(),
+			'heading'      => array( 'level' ),
+			'list'         => array( 'ordered' ),
+			'list-item'    => array(),
+			'quote'        => array(),
+			'code'         => array(),
+			'preformatted' => array(),
+			'table'        => array( 'hasFixedLayout' ),
+		),
+		// Block editor: the class names it writes on those blocks' own tags. Nothing else may carry a class.
+		'block_classes'     => array(
+			'h2'         => array( 'wp-block-heading' ),
+			'h3'         => array( 'wp-block-heading' ),
+			'h4'         => array( 'wp-block-heading' ),
+			'ul'         => array( 'wp-block-list' ),
+			'ol'         => array( 'wp-block-list' ),
+			'blockquote' => array( 'wp-block-quote' ),
+			'pre'        => array( 'wp-block-code', 'wp-block-preformatted' ),
+			'table'      => array( 'has-fixed-layout' ),
+			'figure'     => array( 'wp-block-table' ),
+		),
 		'term_keys'         => array( 'schema', 'slug', 'title', 'reading', 'en', 'aliases', 'category', 'level', 'summary', 'content_html', 'sources', 'verified_on', 'review_days', 'ai_assisted', 'related' ),
 	);
 }
@@ -103,6 +135,28 @@ function omochix_core_glossary_slug_problem( $slug ) {
 }
 
 /**
+ * Today's date (YYYY-MM-DD) where the site is: the WordPress timezone setting
+ * when WordPress is loaded, else the fixed timezone of the rules. Never UTC by
+ * accident: between 00:00 and 09:00 in Japan the UTC date is still yesterday,
+ * and a term checked "today" would count as checked in the future.
+ *
+ * @param int|null $now Unix time (tests); null for the current time.
+ * @return string
+ */
+function omochix_core_glossary_today( $now = null ) {
+	$now = null === $now ? time() : (int) $now;
+	try {
+		$zone = function_exists( 'wp_timezone' ) ? wp_timezone() : null;
+		if ( ! $zone instanceof DateTimeZone ) {
+			$zone = new DateTimeZone( omochix_core_glossary_rules()['timezone'] );
+		}
+		return ( new DateTimeImmutable( '@' . $now ) )->setTimezone( $zone )->format( 'Y-m-d' );
+	} catch ( Throwable $e ) {
+		return gmdate( 'Y-m-d', $now + 9 * 3600 ); // The fixed zone of the rules (UTC+9, no summer time).
+	}
+}
+
+/**
  * Whether a string is a real calendar date in YYYY-MM-DD, not after $today.
  *
  * @param mixed  $date  Date.
@@ -123,8 +177,8 @@ function omochix_core_glossary_date_problem( $date, $today ) {
  * Why a source URL is not acceptable, or '' when it is.
  *
  * https only, a real host name (no IP address, no localhost or internal
- * names), no user name or password, no fragment-only tricks, and no query
- * parameter that looks like a credential.
+ * names), no user name or password, and nothing that looks like a credential
+ * in the path, the query or the fragment (omochix_core_glossary_url_secret_problem).
  *
  * @param mixed $url URL.
  * @return string
@@ -157,15 +211,121 @@ function omochix_core_glossary_url_problem( $url ) {
 	if ( ! preg_match( '/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/D', $host ) ) {
 		return 'ホスト名の形式が正しくありません（日本語ドメインは punycode で書いてください）';
 	}
-	if ( isset( $p['query'] ) ) {
-		parse_str( (string) $p['query'], $q );
-		foreach ( array_keys( $q ) as $k ) {
-			if ( in_array( strtolower( (string) $k ), $rules['secret_query_keys'], true ) ) {
-				return 'URL のクエリに認証情報らしい項目（' . $k . '）があります';
+	return omochix_core_glossary_url_secret_problem( $url );
+}
+
+/**
+ * Whether a parameter name is one that carries a credential.
+ *
+ * @param string $name Name as written (any case, with - _ . or brackets).
+ * @return bool
+ */
+function omochix_core_glossary_is_secret_key( $name ) {
+	return '' !== omochix_core_glossary_secret_key_match( $name );
+}
+
+/**
+ * Which listed credential name a parameter name is, or '' when none.
+ *
+ * @param string $name Name as written.
+ * @return string An entry of the rules (never part of the input).
+ */
+function omochix_core_glossary_secret_key_match( $name ) {
+	$rules = omochix_core_glossary_rules();
+	$name  = (string) preg_replace( '/[^a-z0-9]+/', '', strtolower( (string) $name ) );
+	if ( '' === $name ) {
+		return '';
+	}
+	if ( in_array( $name, $rules['secret_query_keys'], true ) ) {
+		return $name;
+	}
+	foreach ( $rules['secret_key_ends'] as $end ) {
+		if ( strlen( $name ) >= strlen( $end ) && substr( $name, -strlen( $end ) ) === $end ) {
+			return $end;
+		}
+	}
+	foreach ( $rules['secret_key_parts'] as $part ) {
+		if ( false !== strpos( $name, $part ) ) {
+			return $part;
+		}
+	}
+	return '';
+}
+
+/**
+ * Why a URL looks like it carries a credential, or '' when it does not.
+ *
+ * Looks at the whole URL, as written and URL-decoded (up to three times, for
+ * double encoding): a string shaped like a key or a token anywhere (path,
+ * query, fragment), and a parameter whose name is a credential's, in the
+ * query (also nested: a[token]=), in the path (;jsessionid=) and in the
+ * fragment (#access_token=). A fragment that is only an anchor (#api-key) is
+ * fine. The answer names the parameter or the kind, never the value.
+ *
+ * @param mixed $url URL.
+ * @return string
+ */
+function omochix_core_glossary_url_secret_problem( $url ) {
+	if ( ! is_string( $url ) || '' === $url ) {
+		return '';
+	}
+	$forms = array( $url );
+	$form  = $url;
+	for ( $i = 0; $i < 3; $i++ ) {
+		$next = rawurldecode( $form );
+		if ( $next === $form ) {
+			break;
+		}
+		$form    = $next;
+		$forms[] = $form;
+	}
+	foreach ( $forms as $form ) {
+		$found = omochix_core_glossary_secret_findings( $form );
+		if ( $found ) {
+			return 'URL に秘密情報らしい文字列（' . implode( '・', $found ) . '）があります';
+		}
+		$hash   = strpos( $form, '#' );
+		$before = false === $hash ? $form : substr( $form, 0, $hash );
+		$after  = false === $hash ? '' : substr( $form, $hash + 1 );
+		// Before the fragment: everything after the first ? or ; is parameters.
+		$pieces = preg_split( '/[?&;]/', $before );
+		array_shift( $pieces );
+		// In the fragment only name=value counts: a bare word is an anchor.
+		foreach ( preg_split( '/[?&;#]/', $after ) as $piece ) {
+			if ( false !== strpos( $piece, '=' ) ) {
+				$pieces[] = $piece;
+			}
+		}
+		foreach ( $pieces as $piece ) {
+			$name = explode( '=', $piece, 2 )[0];
+			foreach ( preg_split( '/[\[\]]+/', $name ) as $part ) {
+				$match = omochix_core_glossary_secret_key_match( $part );
+				if ( '' === $match ) {
+					continue;
+				}
+				// The name as written only when it is nothing but the listed name (API_KEY, access-token):
+				// in ?apikey%3DVALUE or ?secretVALUE the "name" holds the value, so the listed name is shown.
+				$same = preg_replace( '/[^a-z0-9]+/', '', strtolower( $part ) ) === $match && 1 === preg_match( '/^[A-Za-z0-9_.-]{1,40}$/D', $part );
+				return 'URL に認証情報らしい項目（' . ( $same ? $part : $match ) . '）があります';
 			}
 		}
 	}
 	return '';
+}
+
+/**
+ * Take a credential out of a message before it is shown, stored or logged.
+ *
+ * @param string $message Message.
+ * @return string
+ */
+function omochix_core_glossary_redact( $message ) {
+	$message = (string) $message;
+	if ( ! omochix_core_glossary_secret_findings( $message ) && ! omochix_core_glossary_secret_findings( rawurldecode( $message ) ) ) {
+		return $message;
+	}
+	$at = explode( '：', $message, 2 )[0];
+	return ( strlen( $at ) <= 60 && $at !== $message ? $at . '：' : '' ) . '秘密情報らしい文字列を含むため、内容は表示しません';
 }
 
 /**
@@ -176,29 +336,116 @@ function omochix_core_glossary_url_problem( $url ) {
  */
 function omochix_core_glossary_secret_findings( $text ) {
 	$patterns = array(
-		'OpenAI 形式の API キー'      => '/\bsk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}/',
+		// A key has a long unbroken run somewhere; "sk-hynix-begins-volume-production" (a slug in a URL) has none.
+		'OpenAI 形式の API キー'      => '/(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{0,200}?[A-Za-z0-9_]{20,}/',
 		'AWS アクセスキー'           => '/\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/',
 		'GitHub トークン'            => '/\bgh[pousr]_[A-Za-z0-9]{30,}/',
 		'GitHub トークン（新形式）'  => '/\bgithub_pat_[A-Za-z0-9_]{40,}/',
 		'Slack トークン'             => '/\bxox[baprs]-[A-Za-z0-9-]{10,}/',
 		'Google API キー'            => '/\bAIza[0-9A-Za-z_-]{35}\b/',
+		'GitLab トークン'            => '/\bglpat-[A-Za-z0-9_-]{20,}/',
+		'Hugging Face トークン'      => '/\bhf_[A-Za-z0-9]{30,}/',
+		'Webhook の URL'             => '#(?:hooks\.slack\.com/services|discord(?:app)?\.com/api/webhooks)/[A-Za-z0-9/_-]{8,}#i',
 		'Stripe キー'                => '/\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{16,}/',
 		'秘密鍵'                     => '/-----BEGIN [A-Z ]*PRIVATE KEY-----/',
-		'JWT'                        => '/\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/',
+		'JWT'                        => '/\beyJ[A-Za-z0-9_-]{10,2000}\.eyJ[A-Za-z0-9_-]{10,4000}\.[A-Za-z0-9_-]{10}/',
 	);
 	$found = array();
 	foreach ( $patterns as $name => $re ) {
-		if ( preg_match( $re, (string) $text ) ) {
+		$hit = preg_match( $re, (string) $text );
+		if ( $hit ) {
 			$found[] = $name;
+		} elseif ( false === $hit ) {
+			$found[] = '検査できなかった文字列'; // The pattern could not run: a refusal, not "nothing found".
 		}
 	}
-	return $found;
+	return array_values( array_unique( $found ) );
+}
+
+/**
+ * The explanation without what the block editor adds around plain HTML.
+ *
+ * The block editor saves <p>, <h2>, <ul> ... wrapped in comments
+ * (<!-- wp:paragraph -->) and writes a few class names of its own
+ * (class="wp-block-heading"). Those, and only those, are taken off here, so
+ * that the rules below and the page see the same small HTML as a term written
+ * by hand:
+ * - a block comment of a listed block (rules: blocks), with no setting but
+ *   the listed ones (heading level 2-4, ordered list, fixed table layout);
+ * - a class attribute whose every name is listed for that tag (rules:
+ *   block_classes), written as the editor writes it (class="...");
+ * - the <figure class="wp-block-table"> around a table.
+ * Everything else is left exactly as it is, and the rules then refuse it:
+ * another block, another setting (style, className, anchor, bindings ...),
+ * another class, any other attribute, any other comment. Nothing is rendered
+ * as a block: the page prints this HTML through wp_kses.
+ *
+ * @param string $html Stored content.
+ * @return string
+ */
+function omochix_core_glossary_normalize_content( $html ) {
+	$rules = omochix_core_glossary_rules();
+	$html  = (string) $html;
+	$raw   = $html;
+	if ( strlen( $html ) > $rules['content_bytes_max'] ) {
+		return $html; // Not read: the rules refuse it by its size, the page prints it through wp_kses only.
+	}
+	$html  = preg_replace_callback(
+		'/<!--\s+(\/)?wp:((?:core\/)?[a-z][a-z0-9-]*)\s+(?:(\{[^<>]*?\})\s+)?(\/)?-->/',
+		static function ( $m ) use ( $rules ) {
+			$name = 0 === strpos( $m[2], 'core/' ) ? substr( $m[2], 5 ) : $m[2];
+			$json = (string) ( $m[3] ?? '' );
+			if ( ! isset( $rules['blocks'][ $name ] ) || '' !== (string) ( $m[4] ?? '' ) || ( '' !== $m[1] && '' !== $json ) ) {
+				return $m[0];
+			}
+			if ( '' !== $json ) {
+				$attrs = json_decode( $json, true );
+				if ( ! is_array( $attrs ) || ( $attrs && array_values( $attrs ) === $attrs ) ) {
+					return $m[0];
+				}
+				foreach ( $attrs as $k => $v ) {
+					$ok = in_array( $k, $rules['blocks'][ $name ], true ) && ( 'level' === $k ? in_array( $v, array( 2, 3, 4 ), true ) : is_bool( $v ) );
+					if ( ! $ok ) {
+						return $m[0];
+					}
+				}
+			}
+			return '';
+		},
+		$html
+	);
+	if ( ! is_string( $html ) ) {
+		return $raw; // The pattern engine gave up: nothing is taken off, and the rules refuse what is left.
+	}
+	$figures = 0;
+	$html    = preg_replace_callback(
+		'#<([a-zA-Z][a-zA-Z0-9]*)\s+class="([^"<>]*)"\s*>#',
+		static function ( $m ) use ( $rules, &$figures ) {
+			$tag     = strtolower( $m[1] );
+			$names   = preg_split( '/\s+/', trim( $m[2] ), -1, PREG_SPLIT_NO_EMPTY );
+			$allowed = $rules['block_classes'][ $tag ] ?? array();
+			if ( ! $names || array_diff( $names, $allowed ) ) {
+				return $m[0];
+			}
+			if ( 'figure' === $tag ) {
+				++$figures;
+				return '';
+			}
+			return '<' . $m[1] . '>';
+		},
+		$html
+	);
+	if ( is_string( $html ) && $figures ) {
+		$html = preg_replace( '#</figure\s*>#i', '', $html, $figures );
+	}
+	return is_string( $html ) ? $html : $raw;
 }
 
 /**
  * Problems in the explanation HTML: only a small set of tags, no scripts,
- * styles, event handlers or non-https links. Run before wp_kses_post, which
- * still filters on save.
+ * styles, event handlers or non-https links. What the block editor adds is
+ * taken off first (omochix_core_glossary_normalize_content); the page prints
+ * the same normalized HTML through wp_kses with the same small allow-list.
  *
  * @param string $html HTML.
  * @return string[]
@@ -206,22 +453,39 @@ function omochix_core_glossary_secret_findings( $text ) {
 function omochix_core_glossary_html_problems( $html ) {
 	$rules = omochix_core_glossary_rules();
 	$out   = array();
-	if ( preg_match( '/<\s*(script|style|iframe|object|embed|form|input|button|svg|math|link|meta|base|img|video|audio|source|frame|frameset|template)\b/i', $html, $m ) ) {
+	$html  = (string) $html;
+	if ( strlen( $html ) > $rules['content_bytes_max'] ) {
+		return array( sprintf( '本文のデータが大きすぎます（%d バイト、上限 %d）', strlen( $html ), $rules['content_bytes_max'] ) );
+	}
+	$html = omochix_core_glossary_normalize_content( $html );
+	// Every check below must have run: a pattern that could not be evaluated is a refusal, not "nothing found".
+	$ran = static function ( $result ) use ( &$out ) {
+		if ( false === $result ) {
+			$out[] = '本文を検査できませんでした（内容が複雑すぎます）';
+		}
+		return $result;
+	};
+	if ( $ran( preg_match( '/<\s*(script|style|iframe|object|embed|form|input|button|svg|math|link|meta|base|img|video|audio|source|frame|frameset|template)\b/i', $html, $m ) ) ) {
 		$out[] = '使えないタグ <' . strtolower( $m[1] ) . '> があります';
 	}
-	if ( preg_match( '/\son[a-z]+\s*=/i', $html ) ) {
+	if ( $ran( preg_match( '/\son[a-z]+\s*=/i', $html ) ) ) {
 		$out[] = 'on〜 属性（イベントハンドラー）は使えません';
 	}
-	if ( preg_match( '/\s(style|class|id|srcset|formaction|xlink:href|data-[a-z0-9-]+)\s*=/i', $html, $m ) ) {
+	if ( $ran( preg_match( '/\s(style|class|id|srcset|formaction|xlink:href|data-[a-z0-9-]+)\s*=/i', $html, $m ) ) ) {
 		$out[] = strtolower( $m[1] ) . ' 属性は使えません';
 	}
-	if ( preg_match( '/(?:javascript|vbscript|data)\s*:/i', $html ) ) {
+	if ( $ran( preg_match( '/(?:javascript|vbscript|data)\s*:/i', $html ) ) ) {
 		$out[] = 'javascript:・data: などの URL は使えません';
 	}
-	if ( false !== strpos( $html, '<!--' ) || false !== stripos( $html, '<![CDATA[' ) ) {
+	if ( $ran( preg_match( '/<!--\s*\/?wp:/', $html ) ) ) {
+		$out[] = '使えないブロック、またはブロックの設定があります（使えるのは、段落・見出し2〜4・リスト・引用・コード・整形済みテキスト・表で、色や配置などの設定なしのものだけです）';
+	} elseif ( false !== strpos( $html, '<!--' ) ) {
 		$out[] = 'コメント・CDATA は使えません';
 	}
-	if ( preg_match_all( '#<\s*/?\s*([a-zA-Z][a-zA-Z0-9]*)([^>]*)>#', $html, $tags, PREG_SET_ORDER ) ) {
+	if ( false !== stripos( $html, '<![CDATA[' ) ) {
+		$out[] = 'コメント・CDATA は使えません';
+	}
+	if ( $ran( preg_match_all( '#<\s*/?\s*([a-zA-Z][a-zA-Z0-9]*)([^>]*)>#', $html, $tags, PREG_SET_ORDER ) ) ) {
 		foreach ( $tags as $t ) {
 			$name = strtolower( $t[1] );
 			if ( ! in_array( $name, $rules['allowed_tags'], true ) ) {
@@ -240,9 +504,12 @@ function omochix_core_glossary_html_problems( $html ) {
 				$out[] = '<a> は href="…" だけにしてください';
 				continue;
 			}
-			$why = omochix_core_glossary_url_problem( html_entity_decode( $h[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+			$href = html_entity_decode( $h[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			$why  = omochix_core_glossary_url_problem( $href );
 			if ( '' !== $why ) {
-				$out[] = 'リンク ' . $h[1] . '：' . $why;
+				// The link itself is never repeated in the message (a user name, a password or a key may be in it): its host only.
+				$host  = strtolower( (string) parse_url( $href, PHP_URL_HOST ) );
+				$out[] = ( preg_match( '/^[a-z0-9.-]{1,80}$/D', $host ) ? 'リンク（' . $host . '）：' : 'リンク：' ) . $why;
 			}
 		}
 	}
@@ -257,7 +524,9 @@ function omochix_core_glossary_html_problems( $html ) {
  */
 function omochix_core_glossary_text( $html ) {
 	$text = html_entity_decode( strip_tags( (string) $html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-	return trim( (string) preg_replace( '/\s+/u', ' ', $text ) );
+	$text = preg_replace( '/\s+/u', ' ', $text );
+	// null: not valid UTF-8. Give back something that is not UTF-8 either, so the length check refuses it (not '' = "empty and fine").
+	return null === $text ? "\xff" : trim( $text );
 }
 
 /**
@@ -269,7 +538,7 @@ function omochix_core_glossary_text( $html ) {
  */
 function omochix_core_glossary_validate_term( $t, array $opts = array() ) {
 	$rules = omochix_core_glossary_rules();
-	$today = isset( $opts['today'] ) ? (string) $opts['today'] : gmdate( 'Y-m-d' );
+	$today = isset( $opts['today'] ) ? (string) $opts['today'] : omochix_core_glossary_today();
 	$cats  = isset( $opts['categories'] ) ? (array) $opts['categories'] : array();
 	$err   = array();
 	$warn  = array();
@@ -477,7 +746,7 @@ function omochix_core_glossary_validate_term( $t, array $opts = array() ) {
 		$err[] = '秘密情報らしい文字列があります（' . implode( '・', $found ) . '）。削除してください';
 	}
 	return array(
-		'errors'   => array_values( array_unique( $err ) ),
+		'errors'   => array_values( array_unique( array_map( 'omochix_core_glossary_redact', $err ) ) ),
 		'warnings' => $warn,
 	);
 }
@@ -553,7 +822,7 @@ function omochix_core_glossary_validate_collection( array $terms, $categories, a
 	$slugs   = array();
 	$titles  = array();
 	foreach ( $terms as $name => $t ) {
-		$res = omochix_core_glossary_validate_term( $t, array( 'today' => $opts['today'] ?? gmdate( 'Y-m-d' ), 'categories' => $cat['slugs'] ) );
+		$res = omochix_core_glossary_validate_term( $t, array( 'today' => $opts['today'] ?? omochix_core_glossary_today(), 'categories' => $cat['slugs'] ) );
 		foreach ( $res['errors'] as $e ) {
 			$err[] = $name . '：' . $e;
 		}
@@ -611,7 +880,7 @@ function omochix_core_glossary_validate_collection( array $terms, $categories, a
 		}
 	}
 	return array(
-		'errors'   => array_values( array_unique( $err ) ),
+		'errors'   => array_values( array_unique( array_map( 'omochix_core_glossary_redact', $err ) ) ),
 		'warnings' => $warn,
 		'counts'   => $counts,
 	);
