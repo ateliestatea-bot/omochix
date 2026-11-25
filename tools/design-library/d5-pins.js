@@ -1,26 +1,31 @@
 #!/usr/bin/env node
 /**
- * Design Library D5: what a "verified-production" work must be able to show, and the pins
- * (SHA-256 of the product files) that tie the D5 staging evidence to the exact implementation.
+ * Design Library D5: the G12 promotion rule ("g12-no-promotion") and the product-file pins.
  *
  * Production may serve a work's live demo and index it only when the catalog says
- * "verified-production" (inc/design-library.php, omochix_design_verified_here). That state is
- * allowed only with D5 evidence for that work (tests/design-library/d5-evidence.json):
- *   - one entry with the same id and slug;
- *   - P1 staging isolation PASS and P2 staging cache PASS, and the P3 promotion approval id;
- *   - the same verification date as the catalog;
- *   - item_sha = SHA-256 of the work's catalog entry without "verification" (so a changed
- *     entry, demo hash, asset path or video field invalidates the evidence);
- *   - files = exactly the pinned product files of the work, each with the SHA-256 it has now
- *     (so any change after D5 to the demo endpoint, the gate, the CSP, the templates, the
- *     demo sources or the media invalidates the evidence: re-run the affected D5 tests);
- *   - until P4 (production B1/B9 right after G14) is PASS, the catalog keeps PENDING_LINE in
- *     the work's limitations, so "verified-production" never reads as "production verified".
- * A staging fixture (FIXTURE_MARK in limitations) must never be shipped.
+ * "verified-production" (inc/design-library.php, omochix_design_verified_here). The D5 plan in force
+ * is D5 v3 (docs/design-library/D5-Production-Isolation.md): local L1 tests (B1-B10), a pre-tested
+ * kill switch, G14a with 0 promoted works, then one canary work verified in production (P4).
+ * There is no staging server: the earlier staging plan (P1 staging isolation, P2 staging cache) was
+ * cancelled, and its verdicts must never be filled in.
  *
- *   node tools/design-library/d5-pins.js pins [slug ...]                      # pins of the current tree (JSON)
- *   node tools/design-library/d5-pins.js fixture --promote a,b --out F        # staging-only fixture catalog
- *   node tools/design-library/d5-pins.js release-candidate --checked D --out F # 12-work release candidate (local only)
+ * Release 1.33.0 (G12) allows NO promotion. productionErrors() is fail-closed:
+ *   - any work in state "verified-production" is an error, whatever evidence is present;
+ *   - the evidence file must be exactly {version: 1, rule: "g12-no-promotion", items: []};
+ *   - a staging-fixture line in any work's limitations is an error (normalised match).
+ * When something does claim verified-production, the pins and the pending line are still checked,
+ * so the errors also say what else is wrong (the tests assert each expected cause).
+ * The canary rule (evidence rule v2) comes in its own pull request. It must bind each entry to the
+ * commit, the product-file pins, the test environment and the L1 / P4 records; a string such as
+ * "PASS" is never taken as proof on its own.
+ *
+ * Pins: the SHA-256 of the product files a work's delivery depends on (functions.php loads the
+ * Design Library; the gate, demo endpoint, CSP, catalog lock, runtime, schema, templates, scripts,
+ * styles; the work's own demo sources and media). Each pin must be 64 lowercase hex characters.
+ * hookErrors() refuses shipped code that registers the catalog / asset filters, touches the catalog
+ * cache global or writes the filter table, any of which could change a verification state at runtime.
+ *
+ *   node tools/design-library/d5-pins.js pins [slug ...]   # pins of the current tree (JSON)
  *
  * No dependencies. Used by tests/design-library/catalog-check.js.
  */
@@ -31,12 +36,15 @@ var crypto = require('crypto');
 var hash = require('./demo-hash.js');
 
 var THEME = hash.THEME;
+var REPO = path.resolve(THEME, '../..');
 var EVIDENCE = path.resolve(__dirname, '../../tests/design-library/d5-evidence.json');
+var RULE = 'g12-no-promotion';
 var PENDING_LINE = '本番のドメインでの B1/B9 は、公開の直後に確かめる（未完了）';
 var FIXTURE_MARK = 'STAGING FIXTURE: D5 staging only, not production evidence';
-/* Files every work depends on: the gate and publish decision, the demo endpoint and its CSP,
-   the catalog lock, the shared runtime, the schema and the templates, scripts and styles. */
+var SHA_RE = /^[0-9a-f]{64}$/;
+var HOOKS = ['omochix_design_catalog_data', 'omochix_design_catalog_raw', 'omochix_design_catalog_file', 'omochix_design_asset_file'];
 var COMMON = [
+    'functions.php',
     'inc/design-library.php',
     'inc/design-library-demo.php',
     'assets/data/design/.htaccess',
@@ -52,7 +60,7 @@ var COMMON = [
 ];
 
 function sha(buf) { return crypto.createHash('sha256').update(buf).digest('hex'); }
-function fileSha(rel) { var f = path.join(THEME, rel); return fs.existsSync(f) ? sha(fs.readFileSync(f)) : null; }
+function fileSha(rel) { var f = path.join(THEME, rel); return fs.existsSync(f) && fs.statSync(f).isFile() ? sha(fs.readFileSync(f)) : null; }
 function canonical(v) {
     if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
     if (v && typeof v === 'object') return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + canonical(v[k]); }).join(',') + '}';
@@ -72,7 +80,7 @@ function walk(dir, base, out) {
     });
     return out;
 }
-/** The product files a work's D5 evidence pins (theme-relative, sorted). */
+/** The product files a work's evidence pins (theme-relative, sorted). */
 function itemFiles(item) {
     var files = COMMON.slice();
     ['poster', 'posterFallback', 'loop', 'loopFallback'].forEach(function (k) { if (item[k]) files.push('assets/design/' + item[k]); });
@@ -86,102 +94,133 @@ function pinsFor(item, shaOf) {
     itemFiles(item).forEach(function (f) { files[f] = shaOf(f); });
     return { id: item.id, slug: item.slug, item_sha: itemSha(item), files: files };
 }
+/**
+ * Errors of a set of pins for one work: exactly the work's product files, each a 64-character
+ * lowercase hex SHA-256 equal to the file's current hash (a missing file never matches).
+ */
+function pinErrors(item, files, shaOf) {
+    shaOf = shaOf || fileSha;
+    var errs = [], at = item.id + ' (' + item.slug + ')';
+    var want = itemFiles(item), got = files && typeof files === 'object' && !Array.isArray(files) ? Object.keys(files).sort() : [];
+    if (JSON.stringify(want) !== JSON.stringify(got)) errs.push(at + ': pins are not exactly the work\'s product files');
+    want.forEach(function (f) {
+        var v = files && typeof files === 'object' ? files[f] : undefined, now = shaOf(f);
+        if (typeof v !== 'string' || !SHA_RE.test(v)) errs.push(at + ': pin for ' + f + ' is not a 64-character hex SHA-256');
+        else if (now === null || now === undefined) errs.push(at + ': ' + f + ' is missing from the tree');
+        else if (v !== now) errs.push(at + ': ' + f + ' changed after it was pinned');
+    });
+    return errs;
+}
+/**
+ * Staging-fixture marks: after compatibility decomposition, accents and every character that is not a
+ * letter are removed (case, width, separators, dashes, zero-width and invisible characters), and a line
+ * naming both "staging" and "fixture" is a mark. Look-alike letters from other scripts cannot be caught
+ * in general; the fixture-writing tool is gone, so a mark can only come from a deliberate edit.
+ */
+function isFixtureLine(line) {
+    if (typeof line !== 'string') return false;
+    var n = line.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}]/gu, '');
+    return n.indexOf('staging') !== -1 && n.indexOf('fixture') !== -1;
+}
+/** Every string in a value (keys included). */
+function strings(v, out) {
+    if (typeof v === 'string') out.push(v);
+    else if (Array.isArray(v)) v.forEach(function (x) { strings(x, out); });
+    else if (v && typeof v === 'object') Object.keys(v).forEach(function (k) { strings(k, out); strings(v[k], out); });
+    return out;
+}
 function loadEvidence(file) { return JSON.parse(fs.readFileSync(file || EVIDENCE, 'utf8')); }
 
-/**
- * Errors for "verified-production" claims and fixture leaks. Empty = the catalog is allowed.
- * shaOf(rel) gives the current SHA-256 of a theme file (tests pass a fake one).
- */
+/** Errors for the G12 rule (fail-closed). Empty = the catalog is allowed. */
 function productionErrors(catalog, evidence, shaOf) {
     shaOf = shaOf || fileSha;
     var errs = [];
-    var ev = evidence && Array.isArray(evidence.items) ? evidence.items : null;
-    if (!evidence || evidence.version !== 1 || !ev) return ['d5-evidence: must be {version: 1, items: [...]}'];
-    var ids = {};
-    ev.forEach(function (e, i) {
-        if (!e || typeof e.id !== 'string') { errs.push('d5-evidence.items[' + i + ']: no id'); return; }
-        if (ids[e.id]) errs.push('d5-evidence: duplicate entry for ' + e.id);
-        ids[e.id] = (ids[e.id] || 0) + 1;
-        if (!catalog.items.some(function (it) { return it.id === e.id; })) errs.push('d5-evidence: ' + e.id + ' is not in the catalog');
-    });
+    if (!evidence || evidence.version !== 1 || evidence.rule !== RULE || !Array.isArray(evidence.items)) {
+        errs.push('d5-evidence: must be {version: 1, rule: "' + RULE + '", items: []}');
+    } else if (evidence.items.length) {
+        errs.push('d5-evidence: rule ' + RULE + ' accepts no evidence entries (the canary rule v2 comes in its own pull request)');
+    }
+    var keys = evidence && typeof evidence === 'object' ? Object.keys(evidence).filter(function (k) { return ['version', 'rule', 'note', 'items'].indexOf(k) === -1; }) : [];
+    if (keys.length) errs.push('d5-evidence: unknown keys ' + keys.join(', '));
+    if (evidence && typeof evidence === 'object' && 'note' in evidence && typeof evidence.note !== 'string') errs.push('d5-evidence: note must be a string');
     catalog.items.forEach(function (it) {
         var ver = it.verification || {}, lim = Array.isArray(ver.limitations) ? ver.limitations : [];
         var at = it.id + ' (' + it.slug + ')';
-        if (lim.indexOf(FIXTURE_MARK) !== -1) errs.push(at + ': staging fixture catalog (must never ship)');
+        if (!Array.isArray(ver.limitations)) errs.push(at + ': verification.limitations must be a list');
+        if (strings(it, []).some(isFixtureLine)) errs.push(at + ': staging fixture line in the entry (must never ship)');
         if (ver.state !== 'verified-production') return;
-        var mine = ev.filter(function (e) { return e && e.id === it.id; });
-        if (mine.length !== 1) { errs.push(at + ': verified-production without exactly one D5 evidence entry'); return; }
-        var e = mine[0];
-        if (e.slug !== it.slug) errs.push(at + ': evidence slug ' + JSON.stringify(e.slug) + ' differs');
-        if (!e.staging || e.staging.p1 !== 'PASS') errs.push(at + ': P1 staging isolation is not PASS');
-        if (!e.staging || e.staging.p2 !== 'PASS') errs.push(at + ': P2 staging cache is not PASS');
-        if (!e.promotion || typeof e.promotion.p3 !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:#-]{2,63}$/.test(e.promotion.p3)) errs.push(at + ': no P3 promotion approval id');
-        if (typeof e.checked !== 'string' || e.checked !== ver.checked) errs.push(at + ': evidence date differs from verification.checked');
-        if (e.item_sha !== itemSha(it)) errs.push(at + ': catalog entry changed after D5 (item_sha)');
-        var want = itemFiles(it), got = e.files && typeof e.files === 'object' ? Object.keys(e.files).sort() : [];
-        if (JSON.stringify(want) !== JSON.stringify(got)) errs.push(at + ': evidence does not pin exactly the work\'s product files');
-        want.forEach(function (f) {
-            if (!e.files || e.files[f] !== shaOf(f)) errs.push(at + ': ' + f + ' changed after D5 (re-run the affected D5 tests)');
-        });
-        var p4 = e.production && e.production.p4;
-        if (p4 !== 'PENDING' && p4 !== 'PASS') errs.push(at + ': production.p4 must be PENDING or PASS');
-        if (p4 !== 'PASS' && lim.indexOf(PENDING_LINE) === -1) errs.push(at + ': limitations must say production B1/B9 is still pending');
+        errs.push(at + ': verified-production is not allowed in G12 (rule ' + RULE + '; promotion needs evidence rule v2)');
+        if (lim.indexOf(PENDING_LINE) === -1) errs.push(at + ': limitations must say production B1/B9 is still pending');
+        var entry = (evidence && Array.isArray(evidence.items) ? evidence.items : []).filter(function (e) { return e && e.id === it.id; })[0];
+        if (!entry) { errs.push(at + ': no evidence entry'); return; }
+        if (entry.slug !== it.slug) errs.push(at + ': evidence slug differs');
+        if (entry.item_sha !== itemSha(it)) errs.push(at + ': catalog entry changed after it was pinned (item_sha)');
+        pinErrors(it, entry.files, shaOf).forEach(function (e) { errs.push(e); });
     });
     return errs;
 }
 
-/** Staging-only fixture: the listed works become verified-production with FIXTURE_MARK. */
-function stagingFixture(catalog, slugs, checked) {
-    var c = JSON.parse(JSON.stringify(catalog));
-    slugs.forEach(function (s) { if (!c.items.some(function (it) { return it.slug === s; })) throw new Error('unknown slug ' + s); });
-    c.items.forEach(function (it) {
-        if (slugs.indexOf(it.slug) === -1) return;
-        it.verification.state = 'verified-production';
-        if (checked) it.verification.checked = checked;
-        it.verification.limitations = [FIXTURE_MARK].concat(it.verification.limitations.filter(function (l) { return l !== FIXTURE_MARK; })).slice(0, 8);
+/**
+ * Shipped code (theme and Core plugin) that could change a work's catalog entry at runtime:
+ *   - a quoted catalog / asset filter name, in any case, anywhere except the 4 lower-case
+ *     apply_filters() calls in inc/design-library.php (so add_filter in any spelling, named
+ *     arguments, call_user_func, comments between the parenthesis and the name);
+ *   - a reference to the catalog cache global ("omochix_design_catalog") outside that file;
+ *   - a write to the WordPress filter table ($wp_filter or $GLOBALS['wp_filter']); reading it is allowed.
+ * Hook names built at runtime (concatenation, variables) cannot be found statically: code review and
+ * the release diff stay the control for those.
+ * files: optional {relativePath: source} to scan instead of the tree (tests).
+ */
+var HOME_FILE = 'wp-theme/omochix-theme/inc/design-library.php';
+function hookErrors(files) {
+    if (!files) {
+        files = {};
+        ['wp-theme', 'wp-plugin'].forEach(function (top) {
+            walk(path.join(REPO, top), top, []).filter(function (f) { return /\.(php|inc|phtml)$/i.test(f); }).forEach(function (f) { files[f] = fs.readFileSync(path.join(REPO, f), 'utf8'); });
+        });
+    }
+    var errs = [], allowed = {};
+    var nameRe = new RegExp('([\'"])(' + HOOKS.join('|') + ')\\1', 'gi');
+    var cacheRe = /(['"])omochix_design_catalog\1|\$omochix_design_catalog\b/i;
+    var registerRe = /\b(add_filter|add_action|remove_filter|remove_all_filters|has_filter|call_user_func(_array)?)\s*\(/i;
+    var writeRe = /(\$wp_filter\b|\[\s*(['"])wp_filter\2\s*\])[^;=]*?((?<![!<>=])=(?![=>])|\?\?=)|\bunset\s*\(\s*\$(GLOBALS\s*\[\s*(['"])wp_filter\5|wp_filter)|(?<!&)&(?!&)\s*\$(GLOBALS\s*\[\s*(['"])wp_filter\7|wp_filter\b)|wp_filter\b.*(->\s*callbacks|->\s*add_filter\s*\()/i;
+    Object.keys(files).sort().forEach(function (f) {
+        String(files[f]).split('\n').forEach(function (line, i) {
+            var m, at = f + ':' + (i + 1), names = [];
+            nameRe.lastIndex = 0;
+            while ((m = nameRe.exec(line))) names.push(m[2]);
+            names.forEach(function (n) {
+                var ok = f === HOME_FILE && names.length === 1 && n === n.toLowerCase() && !registerRe.test(line)
+                    && new RegExp('\\bapply_filters\\s*\\(\\s*([\'"])' + n + '\\1').test(line);
+                if (ok) allowed[n] = (allowed[n] || 0) + 1;
+                else errs.push(at + ': filter name ' + n + ' outside the apply_filters() calls of inc/design-library.php');
+            });
+            if (f !== HOME_FILE && cacheRe.test(line)) errs.push(at + ': touches the catalog cache global omochix_design_catalog');
+            if (writeRe.test(line)) errs.push(at + ': writes the WordPress filter table');
+        });
     });
-    return c;
-}
-/** Release candidate (kept local until D5 PASS): every work verified-production, PENDING_LINE first. */
-function releaseCandidate(catalog, checked, slugs) {
-    var c = JSON.parse(JSON.stringify(catalog));
-    c.items.forEach(function (it) {
-        if (slugs && slugs.indexOf(it.slug) === -1) return;
-        it.verification.state = 'verified-production';
-        it.verification.checked = checked;
-        it.verification.limitations = [PENDING_LINE].concat(it.verification.limitations.filter(function (l) { return l !== PENDING_LINE && l !== FIXTURE_MARK; })).slice(0, 8);
-    });
-    return c;
+    if (files[HOME_FILE] !== undefined) {
+        HOOKS.forEach(function (h) {
+            if (allowed[h] !== 1) errs.push(HOME_FILE + ': expected exactly one apply_filters() call for ' + h + ', found ' + (allowed[h] || 0));
+        });
+    }
+    return errs;
 }
 
 module.exports = {
-    PENDING_LINE: PENDING_LINE, FIXTURE_MARK: FIXTURE_MARK, COMMON: COMMON, EVIDENCE: EVIDENCE,
-    itemSha: itemSha, itemFiles: itemFiles, pinsFor: pinsFor, fileSha: fileSha, loadEvidence: loadEvidence,
-    productionErrors: productionErrors, stagingFixture: stagingFixture, releaseCandidate: releaseCandidate
+    RULE: RULE, PENDING_LINE: PENDING_LINE, FIXTURE_MARK: FIXTURE_MARK, COMMON: COMMON, EVIDENCE: EVIDENCE, HOOKS: HOOKS,
+    itemSha: itemSha, itemFiles: itemFiles, pinsFor: pinsFor, pinErrors: pinErrors, fileSha: fileSha, loadEvidence: loadEvidence,
+    isFixtureLine: isFixtureLine, productionErrors: productionErrors, hookErrors: hookErrors
 };
 
 if (require.main === module) {
-    var argv = process.argv.slice(2), cmd = argv[0];
-    var opt = function (k) { var i = argv.indexOf(k); return i === -1 ? null : argv[i + 1]; };
-    var catalog = JSON.parse(fs.readFileSync(hash.CATALOG, 'utf8'));
-    var writeNew = function (f, data) {
-        if (!f) { console.error('--out is required'); process.exit(2); }
-        var fd = fs.openSync(f, 'wx', 0o600); // never overwrite
-        fs.writeSync(fd, JSON.stringify(data, null, 2) + '\n'); fs.closeSync(fd);
-        console.log(f + ' ' + sha(fs.readFileSync(f)));
-    };
-    if (cmd === 'pins') {
-        var want = argv.slice(1);
-        var out = catalog.items.filter(function (it) { return !want.length || want.indexOf(it.slug) !== -1; }).map(function (it) { return pinsFor(it); });
-        console.log(JSON.stringify({ common: COMMON, items: out }, null, 2));
-    } else if (cmd === 'fixture') {
-        writeNew(opt('--out'), stagingFixture(catalog, (opt('--promote') || '').split(',').filter(Boolean), opt('--checked')));
-    } else if (cmd === 'release-candidate') {
-        var d = opt('--checked');
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(d || '')) { console.error('--checked YYYY-MM-DD is required'); process.exit(2); }
-        writeNew(opt('--out'), releaseCandidate(catalog, d));
-    } else {
-        console.error('usage: d5-pins.js pins [slug ...] | fixture --promote a,b [--checked D] --out F | release-candidate --checked D --out F');
+    var argv = process.argv.slice(2);
+    if (argv[0] !== 'pins') {
+        console.error('usage: d5-pins.js pins [slug ...]   (G12 writes no promoted or fixture catalog)');
         process.exit(2);
     }
+    var catalog = JSON.parse(fs.readFileSync(hash.CATALOG, 'utf8'));
+    var want = argv.slice(1);
+    var out = catalog.items.filter(function (it) { return !want.length || want.indexOf(it.slug) !== -1; }).map(function (it) { return pinsFor(it); });
+    console.log(JSON.stringify({ rule: RULE, common: COMMON, items: out }, null, 2));
 }

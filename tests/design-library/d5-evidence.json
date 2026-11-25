@@ -1,5 +1,6 @@
 {
   "version": 1,
-  "note": "D5 evidence (docs/design-library/D5-Production-Isolation.md). One entry per work that passed P1 staging isolation and P2 staging cache, with the P3 promotion approval id and the pins from tools/design-library/d5-pins.js. Empty until D5 passes: every work stays verified-local.",
+  "rule": "g12-no-promotion",
+  "note": "Release 1.33.0 (G12) allows no promotion: every work stays verified-local and this file takes no entries. D5 v3 (docs/design-library/D5-Production-Isolation.md) has no staging server; the cancelled staging verdicts (P1, P2) must never be filled in. The canary rule (evidence rule v2) comes in its own pull request.",
   "items": []
 }
