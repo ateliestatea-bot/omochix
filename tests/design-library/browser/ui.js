@@ -22,6 +22,55 @@ var check = L.check, BASE = L.BASE;
 var SHOTS = L.qaOut('screenshots');
 fs.mkdirSync(SHOTS, { recursive: true });
 var AXE = L.axePath();
+/** Capture every part of a long page without exceeding a single GPU screenshot surface. */
+async function captureQaPage(page, output, fullPage) {
+    if (!fullPage) {
+        await page.screenshot({ path: output, fullPage: false });
+        return;
+    }
+    var size = await page.evaluate(function () {
+        return { height: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight), viewport: innerHeight };
+    });
+    // Keep a margin below the 8192 px SwiftShader surface reported by G12 QA.
+    if (size.height <= 7800) {
+        await page.screenshot({ path: output, fullPage: true });
+        return;
+    }
+    if (!(size.viewport > 120)) throw new Error('Invalid viewport height for tiled screenshot');
+    var end = Math.max(0, size.height - size.viewport);
+    var step = size.viewport - 120; // Overlap prevents gaps around sticky elements.
+    var offsets = [];
+    for (var y = 0; y < end; y += step) offsets.push(y);
+    offsets.push(end);
+    var before = await page.evaluate(function () {
+        return { y: scrollY, root: document.documentElement.style.scrollBehavior, body: document.body.style.scrollBehavior };
+    });
+    try {
+        await page.evaluate(function () {
+            document.documentElement.style.scrollBehavior = 'auto';
+            document.body.style.scrollBehavior = 'auto';
+        });
+        for (var i = 0; i < offsets.length; i++) {
+            await page.evaluate(function (top) { window.scrollTo(0, top); }, offsets[i]);
+            await page.waitForTimeout(80);
+            var actualY = await page.evaluate(function () { return scrollY; });
+            if (Math.abs(actualY - offsets[i]) > 2) throw new Error('Tiled screenshot scroll mismatch: ' + actualY + ' vs ' + offsets[i]);
+            await page.screenshot({
+                path: output.replace(/\.png$/, '-tile-' + String(i + 1).padStart(2, '0') + '.png'),
+                fullPage: false
+            });
+        }
+    } finally {
+        await page.evaluate(function (s) {
+            document.documentElement.style.scrollBehavior = 'auto';
+            document.body.style.scrollBehavior = 'auto';
+            window.scrollTo(0, s.y);
+            document.documentElement.style.scrollBehavior = s.root;
+            document.body.style.scrollBehavior = s.body;
+        }, before);
+    }
+    L.info('tiled screenshot: ' + output + ' (' + offsets.length + ' viewport images)');
+}
 
 function playing(page) { return page.evaluate(function () { return Array.prototype.filter.call(document.querySelectorAll('[data-dl-video]'), function (v) { return !v.paused; }).length; }); }
 async function newCtx(browser, o) {
@@ -56,7 +105,7 @@ async function listChecks(type, browser) {
             check(T + ': no horizontal scroll, theme ' + mode.scheme, st.sw <= st.iw + 1 && st.theme === mode.scheme, st);
             await axe(page, T);
             if (type === 'chromium' || mode.n === 'pc-light' || mode.n === 'phone-dark') {
-                await page.screenshot({ path: path.join(SHOTS, type + '-' + mode.n + url.replace(/\//g, '_').replace(/_$/, '') + '.png'), fullPage: url !== '/design/web/bento-saas/' });
+                await captureQaPage(page, path.join(SHOTS, type + '-' + mode.n + url.replace(/\//g, '_').replace(/_$/, '') + '.png'), url !== '/design/web/bento-saas/');
             }
         }
         check(type + ' ' + mode.n + ': no page errors', errors.length === 0, errors);

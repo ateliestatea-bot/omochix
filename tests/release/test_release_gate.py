@@ -14,7 +14,8 @@ import unittest
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 GATE = os.path.join(ROOT, 'tests', 'release', 'release-gate.php')
 HUB = 'industry-hub-core-1.10.0-theme-1.29.0.json'
-PREV = 'theme-1.32.1.json'
+PREV = 'theme-1.32.2.json'
+V1321 = 'theme-1.32.1.json'
 V1320 = 'theme-1.32.0.json'
 OLDER = 'theme-1.31.1.json'
 OLDEST = 'theme-1.31.0.json'
@@ -86,6 +87,10 @@ class ReleaseGate(unittest.TestCase):
         code, fails = self.gate(self.tree(expected(PREV)['commit']), PREV)
         self.assertEqual((0, []), (code, fails))
 
+    def test_the_1_32_1_release_still_passes_on_its_commit(self):
+        code, fails = self.gate(self.tree(expected(V1321)['commit']), V1321)
+        self.assertEqual((0, []), (code, fails))
+
     def test_the_1_32_0_release_still_passes_on_its_commit(self):
         code, fails = self.gate(self.tree(expected(V1320)['commit']), V1320)
         self.assertEqual((0, []), (code, fails))
@@ -117,25 +122,31 @@ class ReleaseGate(unittest.TestCase):
 
     def test_a_missing_release_file_fails(self):
         tree = self.tree('HEAD')
-        os.remove(os.path.join(tree, THEME, 'assets', 'design', 'demos', '3d-interactive', 'demo.php'))
-        self.assertFails(self.gate(tree), 'planned but unchanged: theme:assets/design/demos/3d-interactive/demo.php', 'nothing that production has is deleted',
+        os.remove(os.path.join(tree, THEME, 'template-parts', 'design-library', 'detail.php'))
+        self.assertFails(self.gate(tree), 'planned but unchanged: theme:template-parts/design-library/detail.php', 'nothing that production has is deleted',
                          'omochix-theme: 292 files', 'exactly the expected set')
 
     def test_the_catalog_guard_left_out_fails(self):
-        # The .htaccess is the only file 1.32.2 adds; without it the catalog would stay public over HTTP.
+        # Production has the catalog .htaccess since 1.32.2; a 1.33.0 tree without it would open the catalog to HTTP again.
         tree = self.tree('HEAD')
         os.remove(os.path.join(tree, THEME, 'assets', 'data', 'design', '.htaccess'))
-        self.assertFails(self.gate(tree), 'planned but unchanged: theme:assets/data/design/.htaccess', '1 added and 73 replaced',
+        self.assertFails(self.gate(tree), 'nothing that production has is deleted', 'omochix-theme: 292 files')
+
+    def test_the_catalog_guard_left_out_of_1_32_2_still_fails(self):
+        # The .htaccess is the only file 1.32.2 added; without it the catalog would have stayed public over HTTP.
+        tree = self.tree(expected(PREV)['commit'])
+        os.remove(os.path.join(tree, THEME, 'assets', 'data', 'design', '.htaccess'))
+        self.assertFails(self.gate(tree, PREV), 'planned but unchanged: theme:assets/data/design/.htaccess', '1 added and 73 replaced',
                          'omochix-theme: 292 files', 'exactly the expected set')
 
     def test_a_release_file_left_at_the_production_version_fails(self):
         # A file left at the production version is a planned step that does not change. The catalog left at
-        # the 1.32.1 names is the case that matters most.
+        # 1.32.2 (no fictionalBrand) is the case that matters most.
         tree = self.tree('HEAD')
         prod = self.tree(expected(PREV)['commit'])
         catalog = os.path.join('assets', 'data', 'design', 'catalog.json')
         shutil.copy(os.path.join(prod, THEME, catalog), os.path.join(tree, THEME, catalog))
-        self.assertFails(self.gate(tree), 'planned but unchanged: theme:assets/data/design/catalog.json', '1 added and 73 replaced', 'exactly the expected set')
+        self.assertFails(self.gate(tree), 'planned but unchanged: theme:assets/data/design/catalog.json', '0 added and 8 replaced', 'exactly the expected set')
 
     def test_an_extra_file_fails(self):
         tree = self.tree('HEAD')
@@ -159,7 +170,7 @@ class ReleaseGate(unittest.TestCase):
         with open(os.path.join(tree, THEME, 'page-labs.php'), 'a', encoding='utf-8') as fh:
             fh.write('\n')
         self.edit_config(lambda c: c['order'].insert(0, ['theme', 'page-labs.php']))
-        self.assertFails(self.gate(tree), 'no Labs or SVG Motion file except', 'exactly the expected set', '74 steps')
+        self.assertFails(self.gate(tree), 'no Labs or SVG Motion file except', 'exactly the expected set', '8 steps')
 
     def test_a_labs_file_dropped_from_the_expectations_fails(self):
         # 1.32.0 names its 7 Labs files one by one; one missing from the list is caught even with the tree and config intact.
@@ -172,7 +183,7 @@ class ReleaseGate(unittest.TestCase):
         self.assertFails(self.gate(self.tree(expected(V1320)['commit']), V1320), 'no Labs or SVG Motion file except the ones the expectations name')
 
     def test_a_labs_exception_named_in_the_current_release_fails(self):
-        # 1.32.2 changes no Labs file, so naming one as an exception is refused.
+        # 1.33.0 changes no Labs file, so naming one as an exception is refused.
         path = os.path.join(self.repo, 'tests', 'release', 'expected', 'release.json')
         with open(path, encoding='utf-8') as fh:
             exp = json.load(fh)
@@ -193,12 +204,14 @@ class ReleaseGate(unittest.TestCase):
         with open(os.path.join(tree, THEME, 'extra.php'), 'w', encoding='utf-8') as fh:
             fh.write('<?php\n')
         self.edit_config(lambda c: c['order'].insert(0, ['theme', 'extra.php']))
-        self.assertFails(self.gate(tree), '1 added and 73 replaced', '74 steps', 'exactly the expected set')
+        self.assertFails(self.gate(tree), '0 added and 8 replaced', '8 steps', 'exactly the expected set')
 
     # ------------------------------------------------------------------ faults in the config or the baseline
     # The functions.php order rule belongs to the 1.31.0 release and the inc/labs.php rule to 1.32.0 (after the new Code
     # Studio files it reads), so each is checked on its archived config and its own release tree. 1.32.2 has two rules
     # of its own: the catalog .htaccess (its only new file) before every replace, and catalog.json after every replace.
+    # 1.33.0 has two: inc/design-library.php (the validator that accepts fictionalBrand, and the helpers the templates
+    # call) before every replace, and catalog.json after every replace.
     def test_functions_php_before_the_last_new_file_fails(self):
         # 1.31.0 replaces only functions.php and style.css, so functions.php already sits just before style.css;
         # one step earlier puts it before a new inc file it loads.
@@ -230,12 +243,26 @@ class ReleaseGate(unittest.TestCase):
         self.assertFails(self.gate(self.tree(expected(V1320)['commit']), V1320), 'theme:inc/labs.php after every add and before every replace')
 
     def test_the_catalog_guard_after_a_replaced_file_fails(self):
-        # The new names would reach production before the catalog is closed to HTTP.
+        # 1.32.2: the new names would have reached production before the catalog was closed to HTTP.
         def late(c):
             c['order'].remove(['theme', 'assets/data/design/.htaccess'])
             c['order'].insert(5, ['theme', 'assets/data/design/.htaccess'])
+        self.edit_config(late, PREV)
+        self.assertFails(self.gate(self.tree(expected(PREV)['commit']), PREV), 'theme:assets/data/design/.htaccess after every add and before every replace')
+
+    def test_the_design_library_code_after_a_template_fails(self):
+        # The templates call omochix_design_fiction_notice() and friends: inc/design-library.php must be in place first.
+        def late(c):
+            c['order'].remove(['theme', 'inc/design-library.php'])
+            c['order'].insert(c['order'].index(['theme', 'template-parts/design-library/detail.php']) + 1, ['theme', 'inc/design-library.php'])
         self.edit_config(late)
-        self.assertFails(self.gate(self.tree('HEAD')), 'theme:assets/data/design/.htaccess after every add and before every replace')
+        self.assertFails(self.gate(self.tree('HEAD')), 'theme:inc/design-library.php after every add and before every replace')
+
+    def test_the_design_library_code_one_step_late_fails(self):
+        def swapped(c):
+            c['order'][0], c['order'][1] = c['order'][1], c['order'][0]
+        self.edit_config(swapped)
+        self.assertFails(self.gate(self.tree('HEAD')), 'theme:inc/design-library.php after every add and before every replace')
 
     def test_the_design_catalog_before_the_files_it_lists_fails(self):
         # catalog.json carries the demo SHA-256 values and the new names: it comes after every other replaced file.
@@ -271,7 +298,7 @@ class ReleaseGate(unittest.TestCase):
         self.assertFails(self.gate(self.tree('HEAD')), 'scope: the release ships exactly the expected packages', 'core: not part of this release')
 
     def test_a_tampered_baseline_hash_fails(self):
-        path = os.path.join(self.repo, 'tools', 'release', 'baseline', 'omochix-theme-1.32.1.sha256')
+        path = os.path.join(self.repo, 'tools', 'release', 'baseline', 'omochix-theme-1.32.2.sha256')
         with open(path, encoding='utf-8') as fh:
             lines = fh.readlines()
         lines[0] = ('0' * 64) + lines[0][64:]

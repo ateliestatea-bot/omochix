@@ -29,6 +29,7 @@ const OMOCHIX_DESIGN_SLUG_VAR         = 'omx_design_slug';
 const OMOCHIX_DESIGN_DEMO_VAR         = 'omx_design_demo';
 const OMOCHIX_DESIGN_SITEMAP_VAR      = 'omx_design_sitemap';
 const OMOCHIX_DESIGN_SITEMAP_PATH     = 'design-sitemap.xml';
+const OMOCHIX_DESIGN_TERMS_PATH       = 'design-library-terms'; // G13: the usage terms page (N4, N8); linked only once it is published
 const OMOCHIX_DESIGN_REWRITE_VERSION  = '3'; // 3: /design-sitemap.xml
 const OMOCHIX_DESIGN_CATALOG_VERSION  = 2;
 /** Cards that may play their loop at the same time (D0 §2.1). */
@@ -288,7 +289,7 @@ function omochix_design_validate_item($item, $where) {
     $e = [];
     $required = ['id', 'slug', 'medium', 'status', 'title', 'summary', 'description', 'use_cases', 'motion_types', 'technologies', 'styles', 'motions',
         'industries', 'level', 'palette', 'fonts', 'poster', 'preview', 'materials', 'customization', 'credits', 'verification', 'related', 'audit'];
-    $optional = ['posterFallback', 'loop', 'loopFallback', 'video', 'prompt', 'steps', 'deliverables', 'motionStudio'];
+    $optional = ['posterFallback', 'loop', 'loopFallback', 'video', 'prompt', 'steps', 'deliverables', 'motionStudio', 'fictionalBrand'];
     if (!omochix_design_has_keys($item, $required, $optional)) {
         return ["$where: unknown or missing keys"];
     }
@@ -313,6 +314,9 @@ function omochix_design_validate_item($item, $where) {
         if (!omochix_design_is_text($item[$k], $max)) {
             $e[] = "$where: $k must be 1-$max plain characters";
         }
+    }
+    if (array_key_exists('fictionalBrand', $item) && !omochix_design_is_text($item['fictionalBrand'], 40)) {
+        $e[] = "$where: fictionalBrand must be 1-40 plain characters";
     }
     $vocab = [
         'use_cases'    => [omochix_design_use_cases(), 4],
@@ -619,7 +623,45 @@ function omochix_design_get_catalog() {
 /** Reset the per-request caches (tests only). */
 function omochix_design_reset_cache() {
     $GLOBALS['omochix_design_page_id'] = null;
-    unset($GLOBALS['omochix_design_terms'], $GLOBALS['omochix_design_catalog'], $GLOBALS['omochix_design_current']);
+    unset($GLOBALS['omochix_design_terms'], $GLOBALS['omochix_design_terms_url'], $GLOBALS['omochix_design_catalog'], $GLOBALS['omochix_design_current']);
+}
+
+/**
+ * N4: the URL of the published usage terms page ("design-library-terms", G13), or ''.
+ * Same rule as the "design" page (C1): published and without a password. While it
+ * is a draft, missing or protected, callers print the notice without a link, so a
+ * Design Library page never links to a 404 or to an unpublished draft.
+ */
+function omochix_design_terms_url() {
+    if (isset($GLOBALS['omochix_design_terms_url'])) {
+        return $GLOBALS['omochix_design_terms_url'];
+    }
+    $page = get_page_by_path(OMOCHIX_DESIGN_TERMS_PATH, OBJECT, 'page');
+    $GLOBALS['omochix_design_terms_url'] = ($page instanceof WP_Post && 'publish' === $page->post_status && '' === (string) $page->post_password) ? (string) get_permalink($page) : '';
+    return $GLOBALS['omochix_design_terms_url'];
+}
+
+/** The fictional brand name the work's own content shows, or '' when it shows none (never invented). */
+function omochix_design_fictional_brand(array $item) {
+    return isset($item['fictionalBrand']) && is_string($item['fictionalBrand']) ? $item['fictionalBrand'] : '';
+}
+
+/** N3: the line under the detail title that says the work is a sample with a fictional brand. */
+function omochix_design_fiction_notice(array $item) {
+    $brand = omochix_design_fictional_brand($item);
+    return '' !== $brand
+        /* translators: %s: fictional brand name */
+        ? sprintf(__('架空のブランド「%s」を使った制作の見本です。実在の企業・商品とは関係ありません。', 'omochix'), $brand)
+        : __('架空の内容を使った制作の見本です。実在の企業・商品とは関係ありません。', 'omochix');
+}
+
+/** N6: the alternative text of the detail poster. */
+function omochix_design_poster_alt(array $item) {
+    $brand = omochix_design_fictional_brand($item);
+    return '' !== $brand
+        /* translators: 1: work title, 2: fictional brand name */
+        ? sprintf(__('%1$sの静止画（架空のブランド「%2$s」の見本）', 'omochix'), $item['title'], $brand)
+        : sprintf(__('%sの静止画（架空の内容の見本）', 'omochix'), $item['title']);
 }
 
 /* -------------------------------------------------------------------------
@@ -1462,6 +1504,11 @@ function omochix_design_schema_entity(array $item) {
     $date   = (string) ($item['verification']['checked'] ?? $item['audit']['reviewed']);
     $poster = omochix_design_asset_url($item['posterFallback'] ?? $item['poster']);
     $author = ['@type' => 'Organization', 'name' => $item['credits']['author']];
+    $brand  = omochix_design_fictional_brand($item);
+    /* N7: the description says it is a sample with a fictional brand; the author stays OmochiX. */
+    $desc   = $item['description'] . ' ' . ('' !== $brand
+        ? sprintf(__('（架空のブランド「%s」を使った制作の見本）', 'omochix'), $brand)
+        : __('（架空の内容を使った制作の見本）', 'omochix'));
     $tags   = [];
     foreach (['use_cases' => omochix_design_use_cases(), 'motion_types' => omochix_design_motion_types(), 'technologies' => omochix_design_technologies()] as $field => $labels) {
         foreach ($item[$field] as $v) {
@@ -1474,7 +1521,7 @@ function omochix_design_schema_entity(array $item) {
             '@type'        => 'VideoObject',
             '@id'          => $url . '#work',
             'name'         => $item['title'],
-            'description'  => $item['description'],
+            'description'  => $desc,
             'url'          => $url,
             'thumbnailUrl' => [$poster],
             'contentUrl'   => omochix_design_asset_url($v['mp4']),
@@ -1491,7 +1538,7 @@ function omochix_design_schema_entity(array $item) {
         '@type'               => 'CreativeWork',
         '@id'                 => $url . '#work',
         'name'                => $item['title'],
-        'description'         => $item['description'],
+        'description'         => $desc,
         'url'                 => $url,
         'image'               => $poster,
         'dateModified'        => $date,

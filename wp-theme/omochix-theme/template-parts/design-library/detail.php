@@ -35,6 +35,7 @@ $omx_related = omochix_design_related($omx_item);
 $omx_code    = ('web' === $omx_medium && !empty($omx_item['deliverables']['showCode'])) ? omochix_design_demo_sources($omx_item) : null;
 $omx_label   = static function (array $map, array $values) { return implode('・', array_map(static function ($v) use ($map) { return $map[$v]; }, $values)); };
 $omx_video   = $omx_item['video'] ?? null;
+$omx_terms   = omochix_design_terms_url(); // N4: '' until the terms page (G13) is published; then the notice links to it
 ?>
 <article class="dl-detail" data-dl-medium="<?php echo esc_attr($omx_medium); ?>">
     <div class="dl-container">
@@ -49,6 +50,7 @@ $omx_video   = $omx_item['video'] ?? null;
         <header class="dl-detail__head">
             <p class="dl-eyebrow"><?php echo esc_html($omx_mediums[$omx_medium]['label']); ?></p>
             <h1><?php echo esc_html($omx_item['title']); ?></h1>
+            <p class="dl-muted dl-fiction" data-dl-fiction><?php echo esc_html(omochix_design_fiction_notice($omx_item)); ?></p>
             <p class="dl-lead"><?php echo esc_html($omx_item['summary']); ?></p>
         </header>
 
@@ -95,7 +97,7 @@ $omx_video   = $omx_item['video'] ?? null;
                                 title="<?php echo esc_attr(sprintf(__('%sのライブデモ', 'omochix'), $omx_item['title'])); ?>"></iframe>
                         </div>
                     <?php else : ?>
-                        <img class="dl-stage__poster" src="<?php echo esc_url($omx_poster); ?>" width="1280" height="800" alt="<?php echo esc_attr(sprintf(__('%sの静止画', 'omochix'), $omx_item['title'])); ?>">
+                        <img class="dl-stage__poster" src="<?php echo esc_url($omx_poster); ?>" width="1280" height="800" alt="<?php echo esc_attr(omochix_design_poster_alt($omx_item)); ?>">
                     <?php endif; ?>
                 </div>
                 <?php if ('' !== $omx_demo) : ?>
@@ -164,6 +166,7 @@ $omx_video   = $omx_item['video'] ?? null;
                             <h2 id="dl-d-prompt"><?php esc_html_e('AI に頼むときのプロンプト', 'omochix'); ?></h2>
                             <button type="button" class="dl-btn" data-dl-copy="dl-prompt-text" hidden><?php esc_html_e('コピー', 'omochix'); ?></button>
                         </div>
+                        <p class="dl-muted dl-terms-note" data-dl-terms><?php esc_html_e('コードとプロンプトは、利用条件の範囲で自分の制作物に使えます。作品の中の架空のブランド名・ロゴ・画像・動画は使えません。自分の名前に置き換えてください。', 'omochix'); ?><?php if ('' !== $omx_terms) : ?> <a href="<?php echo esc_url($omx_terms); ?>" data-dl-terms-link><?php esc_html_e('利用条件を読む', 'omochix'); ?></a><?php endif; ?></p>
                         <pre class="dl-code dl-code--prose" id="dl-prompt-text"><?php echo esc_html($omx_item['prompt']['text']); ?></pre>
                     </section>
                 <?php endif; ?>
@@ -172,6 +175,7 @@ $omx_video   = $omx_item['video'] ?? null;
                     <section class="dl-block" aria-labelledby="dl-d-code">
                         <h2 id="dl-d-code"><?php esc_html_e('コード', 'omochix'); ?></h2>
                         <p class="dl-muted"><?php esc_html_e('ライブデモと同じソースです（OmochiX の自作。サイト側の共通ランタイムは含みません）。', 'omochix'); ?></p>
+                        <p class="dl-muted dl-terms-note" data-dl-terms><?php esc_html_e('コードとプロンプトは、利用条件の範囲で自分の制作物に使えます。作品の中の架空のブランド名・ロゴ・画像・動画は使えません。自分の名前に置き換えてください。', 'omochix'); ?><?php if ('' !== $omx_terms) : ?> <a href="<?php echo esc_url($omx_terms); ?>" data-dl-terms-link><?php esc_html_e('利用条件を読む', 'omochix'); ?></a><?php endif; ?></p>
                         <?php foreach (['html' => 'HTML', 'css' => 'CSS', 'js' => 'JavaScript'] as $omx_lang => $omx_name) : ?>
                             <?php if ('' === trim($omx_code[$omx_lang])) { continue; } ?>
                             <details class="dl-codebox">
