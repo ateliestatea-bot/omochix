@@ -68,8 +68,10 @@ function omochix_core_glossary_rules() {
 		'secret_key_ends'   => array( 'token', 'secret', 'signature', 'password', 'passwd', 'credential', 'apikey', 'accesskey', 'secretkey', 'privatekey', 'sessionid' ),
 		// A name that contains one of these, anywhere, is one as well (x_api_key_v2, access_token_2 ...).
 		'secret_key_parts'  => array( 'apikey', 'accesstoken', 'refreshtoken', 'clientsecret', 'secretkey', 'privatekey' ),
-		// Raw content larger than this is refused unread (the visible text may be 6,000 characters).
-		'content_bytes_max' => 200000,
+		// Raw content larger than this is refused unread. The visible text may be 6,000 characters (18 KB as
+		// Japanese text); with the block editor's markup a full term stays well below this. The limit also
+		// bounds what one term can cost: every page that lists terms checks each of them.
+		'content_bytes_max' => 60000,
 		// Dates in a term are calendar dates of the site. Used only where WordPress is not loaded (CLI, CI).
 		'timezone'          => 'Asia/Tokyo',
 		// Block editor: the only blocks a term may use, with the only settings each may carry.
@@ -144,7 +146,7 @@ function omochix_core_glossary_slug_problem( $slug ) {
  * @return string
  */
 function omochix_core_glossary_today( $now = null ) {
-	$now = null === $now ? time() : (int) $now;
+	$now = null === $now ? omochix_core_glossary_clock() : (int) $now;
 	try {
 		$zone = function_exists( 'wp_timezone' ) ? wp_timezone() : null;
 		if ( ! $zone instanceof DateTimeZone ) {
@@ -154,6 +156,24 @@ function omochix_core_glossary_today( $now = null ) {
 	} catch ( Throwable $e ) {
 		return gmdate( 'Y-m-d', $now + 9 * 3600 ); // The fixed zone of the rules (UTC+9, no summer time).
 	}
+}
+
+/**
+ * The time the rules take as "now". Always the real time, unless a test has
+ * set another one: tests fix it, so that they do not start failing when the
+ * dates in their fixtures grow old.
+ *
+ * @param int|false|null $set Unix time to use from now on (tests); false goes back to the real time; null only asks.
+ * @return int
+ */
+function omochix_core_glossary_clock( $set = null ) {
+	static $fixed = null;
+	if ( false === $set ) {
+		$fixed = null;
+	} elseif ( null !== $set ) {
+		$fixed = (int) $set;
+	}
+	return null === $fixed ? time() : $fixed;
 }
 
 /**

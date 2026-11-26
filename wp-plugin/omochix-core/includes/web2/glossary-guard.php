@@ -60,81 +60,187 @@ function omochix_core_glossary_remember_hold( $post_id, array $problems ) {
 }
 
 /**
- * Whether a post is live already (publish or future): never demoted here.
+ * Whether a post is live already: published. A live term is never demoted
+ * here (gate G-B hides it while it fails the rules).
+ *
+ * A scheduled term (future) is not live: nobody has seen it yet. Saving it,
+ * and above all publishing it now, is judged like any other move to
+ * publish or future. (Before, "future" counted as live, and a term that was
+ * emptied while it waited could be published at once without any check.)
  *
  * @param int $post_id Post ID.
  * @return bool
  */
 function omochix_core_glossary_is_live( $post_id ) {
-	return $post_id && in_array( (string) get_post_field( 'post_status', (int) $post_id ), array( 'publish', 'future' ), true );
+	return $post_id && 'publish' === (string) get_post_field( 'post_status', (int) $post_id );
+}
+
+/**
+ * The REST call a note belongs to: one number per request object, 0 when
+ * there is none. Notes are dropped when their own call ends, so a call made
+ * from inside another one (rest_do_request in a save hook) cannot drop or
+ * read back the outer call's notes.
+ *
+ * @param mixed $request Request.
+ * @return int
+ */
+function omochix_core_glossary_rest_owner( $request ) {
+	return is_object( $request ) ? spl_object_id( $request ) : 0;
 }
 
 /**
  * Values of a save in progress that are not stored yet (REST: the meta and
- * the categories sent with the post). Kept for this PHP request only.
+ * the categories sent with the post). Kept for this PHP request only, per
+ * post and per REST call: a call made from inside another one for the same
+ * term has its own note and cannot take or drop the outer one's.
  *
- * @param int|null   $post_id Post ID (0: a new post); null forgets everything.
- * @param array|null $over    Values to keep; null takes them out (use once).
+ * @param int|string|null $post_id Post ID (0: a new post); null forgets everything;
+ *                                 'drop' forgets every note of one call ($over: its owner number);
+ *                                 'forget' forgets one call's note for one post ($over: post ID, $owner).
+ * @param array|int|null  $over    Values to keep; null takes the newest note for the post out (use once).
+ * @param int             $owner   The REST call the values belong to.
  * @return array|null The kept values when asked for, else null.
  */
-function omochix_core_glossary_pending( $post_id, $over = null ) {
-	static $pending = array();
+function omochix_core_glossary_pending( $post_id, $over = null, $owner = 0 ) {
+	static $pending = array(); // Post ID => notes, newest last.
 	if ( null === $post_id ) {
 		$pending = array();
 		return null;
 	}
-	$post_id = (int) $post_id;
-	if ( is_array( $over ) ) {
-		$pending[ $post_id ] = $over;
+	if ( 'drop' === $post_id || 'forget' === $post_id ) {
+		$of = 'drop' === $post_id ? (int) $over : (int) $owner;
+		foreach ( $pending as $id => $notes ) {
+			if ( 'forget' === $post_id && (int) $over !== (int) $id ) {
+				continue;
+			}
+			$left = array();
+			foreach ( $notes as $note ) {
+				if ( $note['owner'] !== $of ) {
+					$left[] = $note;
+				}
+			}
+			if ( $left ) {
+				$pending[ $id ] = $left;
+			} else {
+				unset( $pending[ $id ] );
+			}
+		}
 		return null;
 	}
-	$kept = $pending[ $post_id ] ?? null;
-	unset( $pending[ $post_id ] );
-	return $kept;
+	$post_id = (int) $post_id;
+	if ( is_array( $over ) ) {
+		$pending[ $post_id ][] = array(
+			'over'  => $over,
+			'owner' => (int) $owner,
+		);
+		return null;
+	}
+	if ( empty( $pending[ $post_id ] ) ) {
+		return null;
+	}
+	// The newest: the save that runs now belongs to the innermost call.
+	$note = array_pop( $pending[ $post_id ] );
+	if ( ! $pending[ $post_id ] ) {
+		unset( $pending[ $post_id ] );
+	}
+	return $note['over'];
 }
 
 /**
- * A REST call is over (also one of a batch): nothing is carried to the next.
+ * A REST call is over (also one of a batch, also one made from inside
+ * another): its own notes are read back and dropped, nobody else's.
  *
  * @param mixed $response Response.
+ * @param mixed $handler  Handler.
+ * @param mixed $request  The request that ended; without one, every note is handled.
  * @return mixed
  */
-function omochix_core_glossary_pending_clear( $response ) {
+function omochix_core_glossary_pending_clear( $response, $handler = null, $request = null ) {
+	$owner = is_object( $request ) ? omochix_core_glossary_rest_owner( $request ) : null;
 	// A call that ended early (WordPress stops at the first error after the post is saved) never reached
 	// the read-back: do it now for every post this call was allowed to make live.
-	foreach ( omochix_core_glossary_rest_approved( 'list' ) as $post_id ) {
+	foreach ( omochix_core_glossary_rest_approved( 'list', false, $owner ) as $post_id ) {
 		if ( $post_id > 0 ) {
 			omochix_core_glossary_rest_recheck( $post_id );
 		}
+		omochix_core_glossary_rest_approved( $post_id, false, $owner );
 	}
-	omochix_core_glossary_pending( null );
-	omochix_core_glossary_rest_approved( null );
+	if ( null === $owner ) {
+		omochix_core_glossary_pending( null );
+	} else {
+		omochix_core_glossary_pending( 'drop', $owner );
+	}
 	return $response;
 }
 
 /**
- * Posts this REST call was allowed to make live (0: a new post).
+ * The end of the PHP request: a REST call that was cut short after the post
+ * row was saved (wp_die, exit, an uncaught error) never reaches the hooks
+ * above. Whatever is still noted is read back here.
  *
- * @param int|string|null $post_id Post ID; null forgets everything; 'list' returns the IDs.
- * @param bool            $set     True to note it; false to ask (and forget).
+ * @return void
+ */
+function omochix_core_glossary_guard_shutdown() {
+	try {
+		omochix_core_glossary_pending_clear( null );
+	} catch ( Throwable $e ) {
+		omochix_core_glossary_pending( null );
+		omochix_core_glossary_rest_approved( null );
+	}
+}
+
+/**
+ * Posts a REST call was allowed to make live (0: a new post), per post and
+ * per call.
+ *
+ * @param int|string|null $post_id Post ID; null forgets everything; 'list' returns the IDs (of one call when $owner is given);
+ *                                 'move' gives the notes for "a new post" to the post it became ($set: its ID).
+ * @param bool|int        $set     True to note it; false to ask (and forget).
+ * @param int|null        $owner   The REST call; null when asking means "any call".
  * @return bool|int[]
  */
-function omochix_core_glossary_rest_approved( $post_id, $set = false ) {
-	static $ids = array();
+function omochix_core_glossary_rest_approved( $post_id, $set = false, $owner = null ) {
+	static $ids = array(); // Post ID => owner number => true.
 	if ( null === $post_id ) {
 		$ids = array();
 		return false;
 	}
 	if ( 'list' === $post_id ) {
-		return array_keys( $ids );
+		$out = array();
+		foreach ( $ids as $id => $owners ) {
+			if ( null === $owner || isset( $owners[ (int) $owner ] ) ) {
+				$out[] = (int) $id;
+			}
+		}
+		return $out;
 	}
-	$post_id = (int) $post_id;
-	if ( $set ) {
-		$ids[ $post_id ] = true;
+	if ( 'move' === $post_id ) {
+		$to = (int) $set;
+		if ( $to <= 0 || empty( $ids[0] ) ) {
+			return false;
+		}
+		$ids[ $to ] = ( $ids[ $to ] ?? array() ) + $ids[0];
+		unset( $ids[0] );
 		return true;
 	}
-	$was = isset( $ids[ $post_id ] );
-	unset( $ids[ $post_id ] );
+	$post_id = (int) $post_id;
+	if ( true === $set ) {
+		$ids[ $post_id ][ (int) $owner ] = true;
+		if ( false === has_action( 'shutdown', 'omochix_core_glossary_guard_shutdown' ) ) {
+			add_action( 'shutdown', 'omochix_core_glossary_guard_shutdown', 0 );
+		}
+		return true;
+	}
+	if ( null === $owner ) {
+		$was = ! empty( $ids[ $post_id ] );
+		unset( $ids[ $post_id ] );
+		return $was;
+	}
+	$was = isset( $ids[ $post_id ][ (int) $owner ] );
+	unset( $ids[ $post_id ][ (int) $owner ] );
+	if ( empty( $ids[ $post_id ] ) ) {
+		unset( $ids[ $post_id ] );
+	}
 	return $was;
 }
 
@@ -150,9 +256,10 @@ function omochix_core_glossary_rest_approved( $post_id, $set = false ) {
  */
 function omochix_core_glossary_guard_rest_after( $post, $request = null, $creating = false ) {
 	$post_id = (int) ( is_object( $post ) ? ( $post->ID ?? 0 ) : 0 );
-	$created = $creating && omochix_core_glossary_rest_approved( 0 );
-	if ( ! $post_id || ! ( omochix_core_glossary_rest_approved( $post_id ) || $created ) ) {
-		return;
+	$owner   = omochix_core_glossary_rest_owner( $request );
+	$created = $creating && omochix_core_glossary_rest_approved( 0, false, $owner );
+	if ( ! $post_id || ! ( omochix_core_glossary_rest_approved( $post_id, false, $owner ) || $created ) ) {
+		return; // Not this call's to judge (another call's note stays for that call).
 	}
 	if ( omochix_core_glossary_rest_recheck( $post_id ) && is_object( $post ) ) {
 		$post->post_status = 'draft'; // The controller answers with this object: the response must say what is stored.
@@ -172,11 +279,29 @@ add_action( 'rest_after_insert_omx_glossary', 'omochix_core_glossary_guard_rest_
  */
 function omochix_core_glossary_guard_rest_inserted( $post, $request = null, $creating = false ) {
 	$post_id = (int) ( is_object( $post ) ? ( $post->ID ?? 0 ) : 0 );
-	if ( $creating && $post_id && omochix_core_glossary_rest_approved( 0 ) ) {
-		omochix_core_glossary_rest_approved( $post_id, true );
+	if ( $creating && $post_id ) {
+		omochix_core_glossary_rest_approved( 'move', $post_id );
 	}
 }
 add_action( 'rest_insert_omx_glossary', 'omochix_core_glossary_guard_rest_inserted', 1, 3 );
+
+/**
+ * The same, as early as the new row exists: WordPress may be stopped inside
+ * wp_insert_post() (a save_post hook that exits or fails), before
+ * rest_insert fires. Without the ID the read-back at the end of the request
+ * could not find the new term.
+ *
+ * @param string         $new  New status.
+ * @param string         $old  Old status ("new" for a post that is being created).
+ * @param WP_Post|object $post Post.
+ * @return void
+ */
+function omochix_core_glossary_guard_created( $new, $old, $post ) {
+	if ( 'new' === $old && is_object( $post ) && 'omx_glossary' === ( $post->post_type ?? '' ) && in_array( (string) $new, array( 'publish', 'future' ), true ) ) {
+		omochix_core_glossary_rest_approved( 'move', (int) ( $post->ID ?? 0 ) );
+	}
+}
+add_action( 'transition_post_status', 'omochix_core_glossary_guard_created', 0, 3 );
 
 /**
  * Read a stored term back; when it is live and fails the rules, set it back
@@ -202,9 +327,10 @@ function omochix_core_glossary_rest_recheck( $post_id ) {
 		)
 	);
 	omochix_core_glossary_remember_hold( (int) $post_id, $problems );
-	return true;
+	// Say "demoted" only when it is: the caller tells the editor what is stored.
+	return 'draft' === (string) get_post_field( 'post_status', (int) $post_id );
 }
-add_filter( 'rest_request_after_callbacks', 'omochix_core_glossary_pending_clear', 1 );
+add_filter( 'rest_request_after_callbacks', 'omochix_core_glossary_pending_clear', 1, 3 );
 
 /**
  * Classic editor, Quick Edit, Bulk Edit, XML-RPC, wp_insert_post.
@@ -271,14 +397,33 @@ function omochix_core_glossary_category_slugs( $value ) {
  * @return stdClass|WP_Error
  */
 function omochix_core_glossary_guard_rest( $prepared, $request ) {
-	if ( $prepared instanceof WP_Error || ! in_array( (string) ( $prepared->post_status ?? '' ), array( 'publish', 'future' ), true ) ) {
+	if ( $prepared instanceof WP_Error || ! is_object( $prepared ) ) {
 		return $prepared;
 	}
 	$post_id = (int) ( $prepared->ID ?? 0 );
+	$owner   = omochix_core_glossary_rest_owner( $request );
+	// The autosave route saves the post but never its meta or categories, and runs none of the hooks the
+	// read-back hangs on: it may keep a draft, it may never publish or schedule a term. The status is
+	// taken off the save, so it stays what it is. (An error here would not stop it: the autosave
+	// controller of WordPress does not look at what this filter returns before it saves.)
+	$route = is_object( $request ) && method_exists( $request, 'get_route' ) ? strtolower( rawurldecode( (string) $request->get_route() ) ) : '';
+	if ( 1 === preg_match( '#/autosaves(?:/|$)#', $route ) ) {
+		omochix_core_glossary_pending( 'forget', $post_id, $owner );
+		omochix_core_glossary_rest_approved( $post_id, false, $owner );
+		unset( $prepared->post_status );
+		return $prepared;
+	}
 	if ( omochix_core_glossary_is_live( $post_id ) ) {
 		return $prepared;
 	}
 	$stored = $post_id ? get_post( $post_id ) : null;
+	// The status this save ends with: the one sent, else the one stored. A scheduled term saved without a
+	// status stays scheduled, or is published at once when its date has passed (WordPress decides that
+	// while saving), so it is judged like a request that says "publish".
+	$status = (string) ( $prepared->post_status ?? ( $stored->post_status ?? '' ) );
+	if ( ! in_array( $status, array( 'publish', 'future' ), true ) ) {
+		return $prepared;
+	}
 	$post   = (object) array(
 		'ID'           => $post_id,
 		'post_type'    => 'omx_glossary',
@@ -306,8 +451,8 @@ function omochix_core_glossary_guard_rest( $prepared, $request ) {
 		}
 	}
 	if ( $shape ) {
-		omochix_core_glossary_pending( $post_id );
-		omochix_core_glossary_rest_approved( $post_id );
+		omochix_core_glossary_pending( 'forget', $post_id, $owner );
+		omochix_core_glossary_rest_approved( $post_id, false, $owner );
 		return new WP_Error(
 			'omochix_glossary_not_ready',
 			__( 'この用語は公開の条件を満たしていないため、公開・予約できません。下書きとして保存し、内容を確認してください。', 'omochix-core' ),
@@ -323,12 +468,12 @@ function omochix_core_glossary_guard_rest( $prepared, $request ) {
 	}
 	$problems = omochix_core_glossary_publish_problems( $post, $over );
 	if ( ! $problems ) {
-		omochix_core_glossary_pending( $post_id, $over );
-		omochix_core_glossary_rest_approved( $post_id, true );
+		omochix_core_glossary_pending( $post_id, $over, $owner );
+		omochix_core_glossary_rest_approved( $post_id, true, $owner );
 		return $prepared;
 	}
-	omochix_core_glossary_pending( $post_id ); // Refused: nothing is handed over.
-	omochix_core_glossary_rest_approved( $post_id );
+	omochix_core_glossary_pending( 'forget', $post_id, $owner ); // Refused: nothing is handed over.
+	omochix_core_glossary_rest_approved( $post_id, false, $owner );
 	return new WP_Error(
 		'omochix_glossary_not_ready',
 		__( 'この用語は公開の条件を満たしていないため、公開・予約できません。下書きとして保存し、内容を確認してください。', 'omochix-core' ),

@@ -63,6 +63,9 @@ require $REPO . '/wp-plugin/omochix-core/includes/web2/glossary-loader.php';
 $theme_hooks_before = array_keys($GLOBALS['hooks']);
 require $THEME . '/inc/web2/glossary.php';
 check('setup: Core glossary and theme module loaded', omochix_core_glossary_loaded() && function_exists('omochix_glossary_decide'));
+// The rules take "now" from a clock the tests fix: the fixtures below carry dates around 2026-11-21,
+// and with the real clock they would start to fail once those dates are past their review time.
+omochix_core_glossary_clock(strtotime('2026-11-24 03:00:00 UTC')); // 12:00 in Japan
 
 // ================================================ A: the theme keeps it closed
 add_filter('omochix_core_glossary_public', $early = static fn() => true, 5);
@@ -417,6 +420,20 @@ $GLOBALS['hooks']['post_type_archive_link'] = [];
 do_action('slim_seo_sitemap_before_output');
 check('P1-5 closed: Slim SEO gets no archive URL either', false === apply_filters('post_type_archive_link', 'https://example.test/glossary/', 'omx_glossary'));
 $GLOBALS['hooks']['post_type_archive_link'] = [];
+
+// ================================================ K: F2 (addresses of hidden terms)
+add_filter('omochix_core_glossary_public', $open, 20);
+$rev_hidden = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $failing, 'post_name' => $failing . '-revision-v1']);
+$auto_hidden = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $draft, 'post_name' => $draft . '-autosave-v1']);
+$rev_shown = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $ids[0], 'post_name' => $ids[0] . '-revision-v1']);
+$rev_tool = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $tool_draft, 'post_name' => $tool_draft . '-revision-v1']);
+$rev_orphan = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => 0, 'post_name' => 'orphan-revision-v1']);
+check('F2 /?p=<ID of a revision or an autosave of a hidden term>: forgotten like the term itself (WordPress swaps the parent in and redirects to it)', 0 === $forget(['p' => $rev_hidden])['p'] && 0 === $forget(['p' => $auto_hidden])['p'] && 0 === $forget(['page_id' => $rev_hidden])['page_id']);
+check('F2 a revision of a visible term, of another post type, or without a parent: untouched', $rev_shown === $forget(['p' => $rev_shown])['p'] && $rev_tool === $forget(['p' => $rev_tool])['p'] && $rev_orphan === $forget(['p' => $rev_orphan])['p']);
+check('F2 an editor keeps the revision ID', $rev_hidden === $forget(['p' => $rev_hidden], ['edit_post' => true])['p']);
+check('F2 the visible list still gets an address for each term (Core keeps addresses of visible terms)', 'u' === omochix_core_glossary_post_link('u', get_post($ids[0])) && '' === omochix_core_glossary_post_link('u', get_post($failing)) && '' === omochix_core_glossary_post_link('u', get_post($pw)) && 'u' === omochix_core_glossary_post_link('u', get_post($stale)));
+remove_filter('omochix_core_glossary_public', $open, 20);
+omochix_glossary_decide(true);
 
 // ================================================ H: theme without Core
 exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__FILE__) . ' --no-core 2>&1', $o, $code);

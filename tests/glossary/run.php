@@ -44,6 +44,9 @@ $PLUGIN = $REPO . '/wp-plugin/omochix-core';
 $core_hooks = gl_hook_names();
 require $PLUGIN . '/includes/web2/glossary-loader.php';
 check('module: loaded from this tree', omochix_core_glossary_loaded() && [] === omochix_core_glossary_load()['problems']);
+// The rules take "now" from a clock the tests fix: the fixtures below carry dates around 2026-11-21,
+// and with the real clock they would start to fail once those dates are past their review time.
+omochix_core_glossary_clock(strtotime('2026-11-24 03:00:00 UTC')); // 12:00 in Japan
 $TODAY = '2026-11-23';
 
 /** A term that passes every rule (synthetic test data, not glossary content). */
@@ -542,6 +545,7 @@ $bad_shapes = [
     'IDs as text' => ['related_tool_ids' => ['7']],
     'IDs as a comma string' => ['related_tool_ids' => '7,8'],
 ];
+omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
 foreach ($bad_shapes as $name => $m) {
     $r = $sh($m);
     check("P1-4 REST refuses before saving: $name", $r instanceof WP_Error && 400 === $r->data['status'] && [] !== preg_grep('/値の型/', $r->data['problems']) && null === omochix_core_glossary_pending($e4) && false === omochix_core_glossary_rest_approved($e4));
@@ -559,24 +563,25 @@ $draft_only = omochix_core_glossary_guard_rest((object) ['ID' => $e4, 'post_stat
 check('P1-4 a draft save is not judged at all (WordPress and the sanitizer handle its meta)', !($draft_only instanceof WP_Error));
 // Reading back after everything is stored.
 $rb = $empty();
-$approve = static function ($pid, $creating = false) use ($full_meta, $basics_id) { return omochix_core_glossary_guard_rest((object) array_merge(['post_status' => 'publish', 'post_name' => 'test-term', 'post_title' => 'テスト用語', 'post_content' => gl_valid()['content_html']], $creating ? [] : ['ID' => $pid]), new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]])); };
+// WordPress hands every hook of one call the same request object; the guard's notes belong to that call.
+$approve = static function ($pid, $creating = false) use ($full_meta, $basics_id) { $GLOBALS['gl_rq'] = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]); return omochix_core_glossary_guard_rest((object) array_merge(['post_status' => 'publish', 'post_name' => 'test-term', 'post_title' => 'テスト用語', 'post_content' => gl_valid()['content_html']], $creating ? [] : ['ID' => $pid]), $GLOBALS['gl_rq']); };
 $approve($rb);
 $GLOBALS['posts'][$rb]->post_status = 'publish'; // The post is saved; its meta was not (WordPress refused or lost it).
-do_action('rest_after_insert_omx_glossary', get_post($rb), new GL_Req(), false);
+do_action('rest_after_insert_omx_glossary', get_post($rb), $GLOBALS['gl_rq'], false);
 check('P1-4 read-back: a term this request made live that fails as stored goes back to draft, with the reasons kept', 'draft' === get_post_field('post_status', $rb) && [] !== preg_grep('/sources/', (array) get_transient('omochix_core_glossary_hold_' . $rb)));
 $rb2 = $empty();
 $approve($rb2);
 $GLOBALS['posts'][$rb2]->post_status = 'publish';
 foreach ($full_meta as $k => $val) { update_post_meta($rb2, $k, $val); }
 wp_set_object_terms($rb2, ['basics'], 'omx_glossary_category');
-do_action('rest_after_insert_omx_glossary', get_post($rb2), new GL_Req(), false);
+do_action('rest_after_insert_omx_glossary', get_post($rb2), $GLOBALS['gl_rq'], false);
 check('P1-4 read-back: a term that is complete as stored stays published', 'publish' === get_post_field('post_status', $rb2));
 apply_filters('rest_request_after_callbacks', null, null, null);
 do_action('rest_after_insert_omx_glossary', get_post($live), new GL_Req(), false);
 check('P1-4 read-back: a term that was live before (not made live by this request) is never demoted', 'publish' === get_post_field('post_status', $live));
 $approve(0, true);
 $new = ih_add_post(['post_type' => 'omx_glossary', 'post_status' => 'publish', 'post_name' => 'new-term', 'post_title' => '新しい用語', 'post_content' => gl_valid()['content_html']]);
-do_action('rest_after_insert_omx_glossary', get_post($new), new GL_Req(), true);
+do_action('rest_after_insert_omx_glossary', get_post($new), $GLOBALS['gl_rq'], true);
 check('P1-4 read-back: also for a term created by the request', 'draft' === get_post_field('post_status', $new));
 $approve($rb);
 apply_filters('rest_request_after_callbacks', null, null, null);
@@ -593,7 +598,7 @@ check('P1-4 REST: a title that gives no usable slug is refused with the reason',
 // The object WordPress answers with, and the calls that end before the read-back.
 $rb3 = $empty(); $approve($rb3); $GLOBALS['posts'][$rb3]->post_status = 'publish';
 $obj = clone get_post($rb3); // WordPress hands the action its own copy of the row.
-do_action('rest_after_insert_omx_glossary', $obj, new GL_Req(), false);
+do_action('rest_after_insert_omx_glossary', $obj, $GLOBALS['gl_rq'], false);
 check('P1-4 read-back: the post object WordPress builds its answer from says draft too', 'draft' === $obj->post_status && 'draft' === get_post_field('post_status', $rb3));
 $rb4 = $empty(); $approve($rb4); $GLOBALS['posts'][$rb4]->post_status = 'publish'; // Saved; then WordPress stopped at an error (no rest_after_insert).
 apply_filters('rest_request_after_callbacks', new WP_Error('rest_meta_database_error', 'x'), null, null);
@@ -626,7 +631,18 @@ check('P2-1 with the site date the same term passes', [] === omochix_core_glossa
 $t['verified_on'] = '2026-11-25'; $t['sources'][0]['checked_on'] = '2026-11-25';
 check('P2-1 tomorrow (JST) is still refused', gl_has(omochix_core_glossary_validate_term($t, ['today' => omochix_core_glossary_today($early), 'categories' => ['basics']]), '未来'));
 check('P2-1 an explicit today still wins (tests, CLI)', gl_has(omochix_core_glossary_validate_term(gl_valid(), ['today' => '2026-11-20', 'categories' => ['basics']]), '未来') && false === omochix_core_glossary_visibility($pub, '2020-01-01')['review']);
-check('P2-1 the default today is a date and is the Japan date now', 1 === preg_match('/^\d{4}-\d{2}-\d{2}$/D', omochix_core_glossary_today()) && (new DateTimeImmutable('now', new DateTimeZone('Asia/Tokyo')))->format('Y-m-d') === omochix_core_glossary_today());
+check('clock: fixed for this run, so today is 2026-11-24 whatever the real date is', '2026-11-24' === omochix_core_glossary_today() && strtotime('2026-11-24 03:00:00 UTC') === omochix_core_glossary_clock());
+$pinned = omochix_core_glossary_clock();
+omochix_core_glossary_clock(false);
+$jp = static fn() => (new DateTimeImmutable('now', new DateTimeZone('Asia/Tokyo')))->format('Y-m-d');
+$before = $jp(); $now_today = omochix_core_glossary_today(); $after = $jp(); // Read on both sides: the run may cross midnight.
+check('P2-1 the default today is a date and is the Japan date now', 1 === preg_match('/^\d{4}-\d{2}-\d{2}$/D', $now_today) && in_array($now_today, [$before, $after], true) && abs(omochix_core_glossary_clock() - time()) <= 2);
+omochix_core_glossary_clock($pinned);
+// Years from now the same run must give the same answers: nothing may read the real clock.
+omochix_core_glossary_clock(strtotime('2031-03-01 03:00:00 UTC'));
+$later = [omochix_core_glossary_today(), omochix_core_glossary_visibility($pub)['review'], [] === omochix_core_glossary_publish_problems(get_post($id))];
+omochix_core_glossary_clock($pinned);
+check('clock: the rules follow it (in 2031 the same term is past its review; today it is not), and no rule reads the real time', ['2031-03-01', true, true] === $later && false === omochix_core_glossary_visibility($pub)['review'] && 1 === preg_match_all('/\btime\(\)/', $core_src_all = implode('', array_map(static fn($f) => (string) file_get_contents("$PLUGIN/$f"), omochix_core_glossary_files()))) && 0 === preg_match('/\b(?:date|gmdate|wp_date)\(\s*\'[^\']*\'\s*\)|\bcurrent_time\(|\bstrtotime\(\s*\'(?:now|today|tomorrow)/', $core_src_all));
 // With WordPress: the timezone setting (wp_timezone) decides.
 function wp_timezone() { return new DateTimeZone($GLOBALS['gl_tz'] ?? 'Asia/Tokyo'); }
 $GLOBALS['gl_tz'] = 'Asia/Tokyo';
@@ -791,9 +807,275 @@ check('P1-3 every pattern that reads the whole content reports when it could not
 $t = gl_valid(); $t['content_html'] = '<p>' . str_repeat('あ', 500) . '</p>' . str_repeat('<p></p>', 30000);
 check('P1-3 a term is refused for raw content over the size limit even when its text is short', gl_has(gl_check($t), '大きすぎます'));
 $big_ok = "<!-- wp:paragraph -->\n<p>" . str_repeat('この段落はテスト用の文章で、意味のある説明ではありません。', 60) . "</p>\n<!-- /wp:paragraph -->";
-$t0 = microtime(true); $pr = omochix_core_glossary_html_problems(str_repeat($big_ok, 30)); $dt = microtime(true) - $t0;
-check('P1-3 ordinary content near the size limit is read quickly and passes the HTML rules', [] === $pr && $dt < 2.0);
+$t0 = microtime(true); $near = str_repeat($big_ok, 10); $pr = omochix_core_glossary_html_problems($near); $dt = microtime(true) - $t0;
+check('P1-3 ordinary content near the size limit is read quickly and passes the HTML rules', [] === $pr && $dt < 2.0 && strlen($near) > 50000 && strlen($near) < omochix_core_glossary_rules()['content_bytes_max']);
+$full = "<!-- wp:paragraph -->\n<p>" . str_repeat('あ', 6000) . "</p>\n<!-- /wp:paragraph -->" . str_repeat("\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">見出し</h2>\n<!-- /wp:heading -->", 100);
+$over_limit = '<p>' . str_repeat('あ', 500) . '</p>' . str_repeat('<p></p>', 8400); // 60,307 bytes
+check('size limit: 60,000 bytes of raw content; one step over is refused unread', strlen($over_limit) > 60000 && strlen($over_limit) < 61000 && [] !== preg_grep('/大きすぎます/', omochix_core_glossary_html_problems($over_limit)) && [] === preg_grep('/大きすぎます/', omochix_core_glossary_html_problems(substr($over_limit, 0, 59990))));
+// The answer for a term is kept for the request; it must never be an old answer.
+$mm = gl_store('publish');
+add_filter('omochix_core_glossary_public', $open);
+$v1 = omochix_core_glossary_visibility($mm);
+update_post_meta($mm, 'glossary_sources', []);
+$v2 = omochix_core_glossary_visibility($mm);
+update_post_meta($mm, 'glossary_sources', gl_valid()['sources']);
+$GLOBALS['posts'][$mm]->post_status = 'draft'; $v3 = omochix_core_glossary_visibility($mm);
+$GLOBALS['posts'][$mm]->post_status = 'publish'; $GLOBALS['posts'][$mm]->post_password = 'x'; $v4 = omochix_core_glossary_visibility($mm);
+$GLOBALS['posts'][$mm]->post_password = ''; $v5 = omochix_core_glossary_visibility($mm);
+$v6 = omochix_core_glossary_visibility($mm, '2027-06-20');
+$GLOBALS['posts'][$mm]->post_content .= '<script>x</script>'; $v7 = omochix_core_glossary_visibility($mm);
+remove_filter('omochix_core_glossary_public', $open);
+$v8 = omochix_core_glossary_visibility($mm);
+check('cache: the kept answer follows every change (meta, status, password, date, content, the gate)', [true, false, false, false, true, true, false, false] === [$v1['visible'], $v2['visible'], $v3['visible'], $v4['visible'], $v5['visible'], $v6['visible'], $v7['visible'], $v8['visible']] && true === $v5['indexable'] && false === $v6['indexable']);
+$GLOBALS['posts'][$mm]->post_content = gl_valid()['content_html'];
+// Content that takes long to check: the first answer costs a full check, the next 300 must not.
+$GLOBALS['posts'][$mm]->post_content = '<p>' . str_repeat('あ', 500) . '</p>' . str_repeat('<p><a href="https://docs.example.org/a">x</a></p>', 1000);
+add_filter('omochix_core_glossary_public', $open);
+$first = omochix_core_glossary_visibility($mm);
+// 15 checks that cannot be answered from the cache (15 different dates), against 300 that can.
+$t0 = microtime(true); for ($i = 1; $i <= 15; $i++) { omochix_core_glossary_visibility($mm, sprintf('2026-12-%02d', $i)); } $dt_fresh15 = microtime(true) - $t0;
+$t0 = microtime(true); for ($i = 0; $i < 300; $i++) { $again = omochix_core_glossary_visibility($mm); } $dt_cached = microtime(true) - $t0;
+remove_filter('omochix_core_glossary_public', $open);
+check('cache: 300 more questions about an unchanged term cost less than 150 full checks (they would cost 300)', true === $first['visible'] && $first === $again && $dt_cached < 10 * $dt_fresh15, sprintf('15 fresh %.4f, 300 cached %.4f', $dt_fresh15, $dt_cached));
+$GLOBALS['posts'][$mm]->post_content = gl_valid()['content_html'];
+check('size limit: a term with the longest allowed text (6,000 characters) and 100 block headings fits', strlen($full) < omochix_core_glossary_rules()['content_bytes_max'] && [] === omochix_core_glossary_html_problems($full), (string) strlen($full));
+// Ordinary content, as the block editor saves it, must not be refused by the size limit (or by anything else).
+function gls_sent($i) { $s = ['大規模言語モデルは、大量のテキストから次に来る語を予測するように学習したモデルです。', 'プロンプトの書き方によって、同じモデルでも回答の質や形式が大きく変わります。', '出力を業務で使う前に、出典と日付を確認し、誤りがないかを人が確かめる必要があります。', 'API の料金は入力と出力のトークン数で決まることが多く、長い文書ほど費用がかかります。', 'Retrieval-Augmented Generation（RAG）は、検索した文書を根拠として回答を作る方法です。']; return $s[$i % 5]; }
+function gls_text($chars, $seed = 0) { $t = ''; for ($i = $seed; mb_strlen($t) < $chars; $i++) { $t .= gls_sent($i); } return mb_substr($t, 0, $chars); }
+function gls_p($inner) { return "<!-- wp:paragraph -->\n<p>$inner</p>\n<!-- /wp:paragraph -->\n\n"; }
+function gls_h($text, $lv = 2) { return '<!-- wp:heading' . (2 === $lv ? '' : ' {"level":' . $lv . '}') . " -->\n<h$lv class=\"wp-block-heading\">$text</h$lv>\n<!-- /wp:heading -->\n\n"; }
+function gls_links($chars, $links, $seed = 0) { $u = ['https://platform.openai.com/docs/guides/text-generation', 'https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview', 'https://ai.google.dev/gemini-api/docs/models', 'https://arxiv.org/abs/2005.11401', 'https://www.nist.gov/itl/ai-risk-management-framework', 'https://huggingface.co/docs/transformers/main/en/index']; $per = intdiv($chars, $links); $o = ''; for ($n = 0; $n < $links; $n++) { $o .= gls_text($per, $seed + $n) . '（<a href="' . $u[$n % 6] . '?ref=' . $n . '">資料' . ($n + 1) . '</a>）'; } return gls_p($o); }
+function gls_list($items, $each, $ordered = false, $seed = 0) { $tag = $ordered ? 'ol' : 'ul'; $o = '<!-- wp:list' . ($ordered ? ' {"ordered":true}' : '') . " -->\n<$tag class=\"wp-block-list\">"; for ($i = 0; $i < $items; $i++) { $o .= "<!-- wp:list-item -->\n<li>" . gls_text($each, $seed + $i) . "</li>\n<!-- /wp:list-item -->"; } return $o . "</$tag>\n<!-- /wp:list -->\n\n"; }
+function gls_table($rows, $cols, $each) { $o = "<!-- wp:table {\"hasFixedLayout\":true} -->\n<figure class=\"wp-block-table\"><table class=\"has-fixed-layout\"><thead><tr>"; for ($c = 0; $c < $cols; $c++) { $o .= '<th>項目' . ($c + 1) . '</th>'; } $o .= '</tr></thead><tbody>'; for ($r = 0; $r < $rows; $r++) { $o .= '<tr>'; for ($c = 0; $c < $cols; $c++) { $o .= '<td>' . gls_text($each, $r + $c) . '</td>'; } $o .= '</tr>'; } return $o . "</tbody></table></figure>\n<!-- /wp:table -->\n\n"; }
+$gls_code = "<!-- wp:code -->\n<pre class=\"wp-block-code\"><code>curl https://api.example.com/v1/messages \\\n  -H &quot;content-type: application/json&quot;</code></pre>\n<!-- /wp:code -->\n\n";
+$gls_quote = "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\">" . gls_p(gls_sent(2)) . "</blockquote>\n<!-- /wp:quote -->\n\n";
+$gls = ['long article: 6,000 characters under 24 headings' => '', 'many links: 2,000 characters with 80 links' => gls_h('参考') . gls_links(1980, 80), 'lists: 5 lists of 40 items' => '', 'tables: 3 tables of 20 rows x 4 columns' => '', 'mixed: 60 links, 3 lists, 2 tables, code and a quote' => gls_h('概要') . gls_links(1500, 30) . gls_h('仕組み') . gls_p(gls_text(560, 1)) . gls_list(20, 30) . gls_h('比較') . gls_table(15, 4, 15) . gls_h('使い方') . gls_list(15, 30, true, 3) . $gls_code . $gls_quote . gls_h('注意点') . gls_links(800, 30, 2) . gls_table(10, 3, 15) . gls_h('まとめ') . gls_list(8, 25, false, 4), 'dense list: 540 items of 10 characters' => gls_list(540, 10)];
+for ($s = 0; $s < 12; $s++) { $gls['long article: 6,000 characters under 24 headings'] .= gls_h('説明' . ($s + 1)) . gls_h('補足', 3) . gls_p(gls_text(490, $s)); }
+for ($l = 0; $l < 5; $l++) { $gls['lists: 5 lists of 40 items'] .= gls_h('一覧' . ($l + 1)) . gls_list(40, 28, 1 === $l % 2, $l); }
+for ($t = 0; $t < 3; $t++) { $gls['tables: 3 tables of 20 rows x 4 columns'] .= gls_h('比較表' . ($t + 1)) . gls_table(20, 4, 20); }
+foreach ($gls as $name => $html) {
+    $tt = gl_valid(); $tt['content_html'] = $html; $res = gl_check($tt); $chars = omochix_core_glossary_len(omochix_core_glossary_text($html));
+    check("size limit: ordinary content is accepted whole ($name)", [] === $res['errors'] && $chars <= 6000 && strlen($html) < omochix_core_glossary_rules()['content_bytes_max'], sprintf('%d bytes, %d characters; %s', strlen($html), $chars, implode(' / ', $res['errors'])));
+}
+check('size limit: the realistic cases above stay under half the limit, except the dense list', max(array_map('strlen', array_diff_key($gls, ['dense list: 540 items of 10 characters' => 1]))) < 30000 && strlen($gls['dense list: 540 items of 10 characters']) < 50000);
 check('P3 (not changed here): a public name that resolves to an internal address is still accepted; no DNS lookup is made', '' === omochix_core_glossary_url_problem('https://127.0.0.1.nip.io/x') && 0 === preg_match('/gethostby|dns_get_record|checkdnsrr|wp_remote|curl_/', $core_src));
+
+// ================================== F1-F4: hardening after the final review of PR #83
+// ---------------------------------------------- F1: a scheduled term is not "live"
+$sch = gl_store('future');
+check('F1 a scheduled complete term may be published now', 'publish' === omochix_core_glossary_guard_insert_data($data, ['ID' => $sch])['post_status']);
+update_post_meta($sch, 'glossary_sources', []); // Emptied while it waits (a draft-like save is always allowed).
+check('F1 reproduction: scheduled, then made incomplete, then "publish now": held (it was never public)', 'draft' === omochix_core_glossary_guard_insert_data($data, ['ID' => $sch])['post_status']);
+check('F1 the reasons are kept', [] !== preg_grep('/sources/', (array) get_transient('omochix_core_glossary_hold_' . $sch)));
+check('F1 the same when it is saved as scheduled again', 'draft' === omochix_core_glossary_guard_insert_data(array_merge($data, ['post_status' => 'future']), ['ID' => $sch])['post_status']);
+$r = omochix_core_glossary_guard_rest((object) ['ID' => $sch, 'post_status' => 'publish'], new GL_Req());
+check('F1 REST: publishing a scheduled incomplete term is refused', $r instanceof WP_Error && [] !== preg_grep('/sources/', $r->data['problems']));
+$r = omochix_core_glossary_guard_rest((object) ['ID' => $sch, 'post_status' => 'publish'], new GL_Req(['meta' => ['glossary_sources' => gl_valid()['sources']]]));
+check('F1 REST: with the missing meta in the request it is allowed, and noted for the read-back', !($r instanceof WP_Error) && in_array($sch, omochix_core_glossary_rest_approved('list'), true));
+omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
+foreach (['category removed' => static function ($p) { wp_set_object_terms($p, [], 'omx_glossary_category'); }, 'summary emptied' => static function ($p) { update_post_meta($p, 'glossary_summary', ''); }, 'check date in the future' => static function ($p) { update_post_meta($p, 'glossary_verified_on', '2099-01-01'); }, 'script in the content' => static function ($p) { $GLOBALS['posts'][$p]->post_content .= '<script>x</script>'; }] as $name => $break) {
+    $p = gl_store('future'); $break($p);
+    $d2 = array_merge($data, ['post_content' => wp_slash($GLOBALS['posts'][$p]->post_content)]);
+    check("F1 scheduled term, $name: publishing now is held", 'draft' === omochix_core_glossary_guard_insert_data($d2, ['ID' => $p])['post_status']);
+}
+check('F1 a published term is still never demoted (only "publish" counts as live)', 'publish' === omochix_core_glossary_guard_insert_data($data, ['ID' => $live])['post_status'] && 'future' === omochix_core_glossary_guard_insert_data(array_merge($data, ['post_status' => 'future']), ['ID' => $live])['post_status'] && true === omochix_core_glossary_is_live($live) && false === omochix_core_glossary_is_live($sch) && false === omochix_core_glossary_is_live(0));
+$GLOBALS['posts'][$sch]->post_status = 'future';
+do_action('publish_future_post', $sch);
+check('F1 cron is unchanged: the due incomplete term goes back to draft', 'draft' === get_post_field('post_status', $sch));
+
+// A REST save that sends no status (review of this change, R1): a scheduled term stays scheduled, or is
+// published at once when its date has passed. WordPress decides that while saving, so the guard must
+// judge by the stored status when none is sent.
+$s1 = gl_store('future');
+$r = omochix_core_glossary_guard_rest((object) ['ID' => $s1, 'post_date' => '2020-01-01 00:00:00'], $q1 = new GL_Req(['meta' => ['glossary_sources' => [], 'glossary_summary' => '']]));
+check('F1 REST without a status on a scheduled term, meta emptied in the same request: refused (it would be published on the old meta)', $r instanceof WP_Error && 400 === $r->data['status'] && [] !== preg_grep('/sources/', $r->data['problems']) && null === omochix_core_glossary_pending($s1) && [] === omochix_core_glossary_rest_approved('list'));
+$r = omochix_core_glossary_guard_rest((object) ['ID' => $s1], new GL_Req(['glossary-categories' => []]));
+check('F1 the same when the request only takes the category away', $r instanceof WP_Error && [] !== preg_grep('/category/', $r->data['problems']));
+$r = omochix_core_glossary_guard_rest((object) ['ID' => $s1, 'post_title' => '新しい見出し'], $q2 = new GL_Req(['meta' => ['glossary_en' => 'Edited']]));
+check('F1 a complete scheduled term can still be edited without a status: judged, handed over and noted for the read-back', !($r instanceof WP_Error) && [$s1] === omochix_core_glossary_rest_approved('list', false, omochix_core_glossary_rest_owner($q2)));
+check('F1 ...and the insert guard, which sees "future" or "publish" from WordPress, agrees', 'publish' === omochix_core_glossary_guard_insert_data($data, ['ID' => $s1])['post_status']);
+update_post_meta($s1, 'glossary_summary', ''); $GLOBALS['posts'][$s1]->post_status = 'publish'; // What a spoiled save would leave.
+do_action('rest_after_insert_omx_glossary', get_post($s1), $q2, false);
+check('F1 ...and the read-back demotes it when what was stored fails', 'draft' === get_post_field('post_status', $s1));
+omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
+$dr = gl_store('draft', ['meta' => ['glossary_sources' => []]]);
+check('F1 a draft, a pending or a private term saved without a status is not judged (it does not become public)', !(omochix_core_glossary_guard_rest((object) ['ID' => $dr], new GL_Req(['meta' => ['glossary_summary' => '']])) instanceof WP_Error) && [] === omochix_core_glossary_rest_approved('list'));
+check('F1 a published term saved without a status is not judged either (live: never demoted)', !(omochix_core_glossary_guard_rest((object) ['ID' => $live], new GL_Req(['meta' => ['glossary_summary' => '']])) instanceof WP_Error) && [] === omochix_core_glossary_rest_approved('list'));
+check('F1 a new post without a status (WordPress makes it a draft) is not judged', !(omochix_core_glossary_guard_rest((object) ['post_title' => 'x'], new GL_Req()) instanceof WP_Error));
+
+// ---------------------------------------------- F2: no address for a hidden term
+$hid_pub = gl_store('publish', ['meta' => ['glossary_sources' => []]]); $hid_draft = gl_store('draft'); $vis = gl_store('publish');
+$link = static fn($p) => omochix_core_glossary_post_link('https://example.test/glossary/test-term/', get_post($p));
+$GLOBALS['caps'] = [];
+check('F2 closed: no term has an address for a visitor (WordPress would answer /?post_type=omx_glossary&p=ID from wp-trackback.php)', '' === $link($vis) && '' === $link($hid_pub) && '' === $link($hid_draft));
+add_filter('omochix_core_glossary_public', $open);
+check('F2 open: a hidden published term and a draft have no address for a visitor', '' === $link($hid_pub) && '' === $link($hid_draft));
+check('F2 open: a visible term keeps its address', 'https://example.test/glossary/test-term/' === $link($vis));
+$GLOBALS['caps'] = ['edit_post' => true];
+check('F2 an editor keeps every address (admin links, previews)', 'https://example.test/glossary/test-term/' === $link($hid_pub) && 'https://example.test/glossary/test-term/' === $link($hid_draft));
+$GLOBALS['caps'] = [];
+$other = ih_add_post(['post_type' => 'post', 'post_status' => 'draft', 'post_name' => 'x']);
+check('F2 other post types are untouched, also drafts; a missing post is untouched', 'u' === omochix_core_glossary_post_link('u', get_post($other)) && 'u' === omochix_core_glossary_post_link('u', null) && 'u' === omochix_core_glossary_post_link('u', (object) ['post_type' => 'ai_tool']));
+$rv_h = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $hid_pub, 'post_name' => $hid_pub . '-revision-v1']);
+$rv_v = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $vis, 'post_name' => $vis . '-revision-v1']);
+$rv_o = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $other, 'post_name' => $other . '-revision-v1']);
+add_filter('omochix_core_glossary_public', $open);
+check('F2 a revision of a hidden term has no address either; a revision of a visible term or of another post keeps WordPress\'s', '' === omochix_core_glossary_post_link('u', get_post($rv_h)) && 'u' === omochix_core_glossary_post_link('u', get_post($rv_v)) && 'u' === omochix_core_glossary_post_link('u', get_post($rv_o)) && true === omochix_core_glossary_is_hidden_from_user($rv_h) && false === omochix_core_glossary_is_hidden_from_user($rv_o) && false === omochix_core_glossary_is_hidden_from_user(0));
+remove_filter('omochix_core_glossary_public', $open);
+check('F2 the filter is on post_type_link (terms) and post_link (their revisions), last', 9999 === has_filter('post_type_link', 'omochix_core_glossary_post_link') && 9999 === has_filter('post_link', 'omochix_core_glossary_post_link'));
+remove_filter('omochix_core_glossary_public', $open);
+
+// ---------------------------------------------- F2: the other doors (review of this change, R2 R5 R6 R7)
+if (!class_exists('IXR_Error')) { class IXR_Error { public $code, $message; function __construct($c, $m) { $this->code = $c; $this->message = $m; } } }
+if (!function_exists('url_to_postid')) { function url_to_postid($url) { if (!is_string($url)) { return 0; } foreach ($GLOBALS['posts'] as $p) { if ('omx_glossary' === $p->post_type && 'publish' === $p->post_status && false !== strpos((string) $url, '/glossary/' . $p->post_name . '-' . $p->ID . '/')) { return $p->ID; } } return 0; } }
+if (!function_exists('count_user_posts')) { function count_user_posts($uid, $types = 'post', $public = false) { $n = 0; foreach ($GLOBALS['posts'] as $p) { if (in_array($p->post_type, (array) $types, true) && 'publish' === $p->post_status && (int) ($p->post_author ?? 0) === (int) $uid) { $n++; } } return $n; } }
+/** Core's own method, as far as it matters: an empty list for any post that exists. */
+$GLOBALS['wp_xmlrpc_server'] = new class { function pingback_extensions_getPingbacks($url) { return url_to_postid($url) ? [] : new IXR_Error(32, 'The specified target URL does not exist.'); } };
+$GLOBALS['caps'] = [];
+add_filter('omochix_core_glossary_public', $open);
+$m = omochix_core_glossary_xmlrpc_methods(['pingback.ping' => 'this:pingback_ping', 'pingback.extensions.getPingbacks' => 'this:pingback_extensions_getPingbacks', 'wp.getPost' => 'this:wp_getPost']);
+check('F2 XML-RPC: only getPingbacks is wrapped; every other method is left as it is', 'omochix_core_glossary_xmlrpc_get_pingbacks' === $m['pingback.extensions.getPingbacks'] && 'this:pingback_ping' === $m['pingback.ping'] && 'this:wp_getPost' === $m['wp.getPost'] && 3 === count($m) && ['a' => 'b'] === omochix_core_glossary_xmlrpc_methods(['a' => 'b']));
+$u = static fn($p) => 'https://example.test/glossary/' . get_post($p)->post_name . '-' . $p . '/';
+$missing = omochix_core_glossary_xmlrpc_get_pingbacks('https://example.test/glossary/no-such/');
+$hiddenr = omochix_core_glossary_xmlrpc_get_pingbacks($u($hid_pub));
+check('F2 XML-RPC getPingbacks: the address of a hidden published term answers like an address nothing lives at (reproduction: an empty list)', $missing instanceof IXR_Error && $hiddenr instanceof IXR_Error && [$missing->code, $missing->message] === [$hiddenr->code, $hiddenr->message]);
+check('F2 XML-RPC getPingbacks: a visible term still answers core\'s list; a non-string is "no such address"', [] === omochix_core_glossary_xmlrpc_get_pingbacks($u($vis)) && omochix_core_glossary_xmlrpc_get_pingbacks(['x']) instanceof IXR_Error);
+$GLOBALS['caps'] = ['edit_post' => true];
+check('F2 XML-RPC getPingbacks: an editor gets core\'s answer for a hidden term', [] === omochix_core_glossary_xmlrpc_get_pingbacks($u($hid_pub)));
+$GLOBALS['caps'] = [];
+check('F2 a term never takes trackbacks, pingbacks or comments, whatever is stored; other posts keep their setting', false === omochix_core_glossary_no_pings(true, $hid_pub) && false === omochix_core_glossary_no_pings(true, $vis) && true === omochix_core_glossary_no_pings(true, $other) && false === omochix_core_glossary_no_pings(false, $other) && true === omochix_core_glossary_no_pings(true, 0) && 99 === has_filter('pings_open', 'omochix_core_glossary_no_pings') && 99 === has_filter('comments_open', 'omochix_core_glossary_no_pings'));
+check('F2 REST term search: no glossary category for a visitor (alone: nothing is found; with others: only the others)', [0] === omochix_core_glossary_rest_term_search_args(['taxonomy' => ['omx_glossary_category']])['include'] && ['category', 'post_tag'] === omochix_core_glossary_rest_term_search_args(['taxonomy' => ['category', 'omx_glossary_category', 'post_tag']])['taxonomy'] && ['taxonomy' => ['category']] === omochix_core_glossary_rest_term_search_args(['taxonomy' => ['category']]));
+check('F2 REST users: asking only about terms lists nobody (review N1: ?has_published_posts=omx_glossary listed authors of hidden terms)', ['has_published_posts' => ['omx_glossary'], 'include' => [0]] === omochix_core_glossary_rest_user_args(['has_published_posts' => ['omx_glossary']]) && [0] === omochix_core_glossary_rest_user_args(['has_published_posts' => ['omx_glossary', 'omx_glossary'], 'include' => [5]])['include']);
+check('F2 REST users: a term does not make its author public; the list of types is never emptied', ['post', 'page'] === omochix_core_glossary_rest_user_args(['has_published_posts' => ['post', 'omx_glossary', 'page']])['has_published_posts'] && !isset(omochix_core_glossary_rest_user_args(['has_published_posts' => ['post', 'omx_glossary']])['include']) && ['has_published_posts' => true] === omochix_core_glossary_rest_user_args(['has_published_posts' => true]) && ['x' => 1] === omochix_core_glossary_rest_user_args(['x' => 1]));
+$GLOBALS['posts'][$hid_pub]->post_author = 77; $GLOBALS['posts'][$other]->post_author = 78; $GLOBALS['posts'][$other]->post_status = 'publish';
+check('F2 REST single user: terms are not counted for a visitor (0 for a terms-only author), other posts still are', 0 === omochix_core_glossary_user_post_count(1, 77, ['post', 'omx_glossary'], true) && 1 === omochix_core_glossary_user_post_count(2, 78, ['post', 'omx_glossary'], true) && 0 === omochix_core_glossary_user_post_count(5, 77, 'omx_glossary') && 5 === omochix_core_glossary_user_post_count(5, 77, 'post') && 5 === omochix_core_glossary_user_post_count(5, 77, ['post', 'page']));
+$GLOBALS['caps'] = ['edit_others_omx_glossaries' => true];
+check('F2 an editor sees categories in search, and the user and count answers untouched', ['taxonomy' => ['omx_glossary_category']] === omochix_core_glossary_rest_term_search_args(['taxonomy' => ['omx_glossary_category']]) && ['has_published_posts' => ['omx_glossary']] === omochix_core_glossary_rest_user_args(['has_published_posts' => ['omx_glossary']]) && 9 === omochix_core_glossary_user_post_count(9, 77, ['post', 'omx_glossary']));
+$GLOBALS['caps'] = []; $GLOBALS['posts'][$other]->post_status = 'draft';
+remove_filter('omochix_core_glossary_public', $open);
+check('F2 closed: every term is hidden, so getPingbacks answers "no such address" for any of them', omochix_core_glossary_xmlrpc_get_pingbacks($u($vis)) instanceof IXR_Error);
+
+// ---------------------------------------------- F3: the REST autosave route never publishes
+// The autosave controller saves the post from what rest_pre_insert returns (it does not stop on an error),
+// never stores meta or categories, and never fires rest_after_insert. So the status is taken off there.
+foreach (['/wp/v2/glossary/12/autosaves', '/wp/v2/glossary/12/autosaves/', '/WP/V2/Glossary/12/Autosaves', '//wp/v2//glossary/12//autosaves', '/wp/v2/glossary/12/%61utosaves'] as $route) {
+    foreach (['publish', 'future'] as $want) {
+        $e = $empty();
+        $prep = (object) ['ID' => $e, 'post_status' => $want, 'post_name' => 'test-term', 'post_title' => 'テスト用語', 'post_content' => gl_valid()['content_html']];
+        $r = omochix_core_glossary_guard_rest($prep, new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]], $route));
+        check("F3 autosave route $route, status=$want, complete request: the status is taken off the save, nothing is handed over or noted", $r === $prep && !isset($r->post_status) && 'テスト用語' === $r->post_title && null === omochix_core_glossary_pending($e) && [] === omochix_core_glossary_rest_approved('list'));
+    }
+}
+$e = $empty();
+check('F3 reproduction of the bypass: with the hand-over an autosave published on meta it never stores; now the insert guard sees only the stored (empty) meta', 'draft' === omochix_core_glossary_guard_insert_data($data, ['ID' => $e])['post_status']);
+$prep = (object) ['ID' => $e, 'post_title' => 'x', 'post_content' => 'y'];
+check('F3 an ordinary autosave (no status) and a draft autosave pass untouched', $prep === omochix_core_glossary_guard_rest($prep, new GL_Req([], '/wp/v2/glossary/12/autosaves')) && 'x' === $prep->post_title && !isset(omochix_core_glossary_guard_rest((object) ['ID' => $e, 'post_status' => 'draft'], new GL_Req([], '/wp/v2/glossary/12/autosaves'))->post_status));
+$r = omochix_core_glossary_guard_rest((object) ['ID' => $e, 'post_status' => 'publish', 'post_name' => 'test-term', 'post_title' => 'テスト用語', 'post_content' => gl_valid()['content_html']], new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]], '/wp/v2/glossary/12'));
+check('F3 the normal route still publishes a complete request (status kept, noted for the read-back)', !($r instanceof WP_Error) && 'publish' === $r->post_status && [$e] === omochix_core_glossary_rest_approved('list'));
+foreach (['/wp/v2/glossary/12/revisions', '/wp/v2/glossary/autosaves-guide', '/wp/v2/glossary/12/myautosaves'] as $route) {
+    omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
+    $r = omochix_core_glossary_guard_rest((object) ['ID' => $e, 'post_status' => 'publish', 'post_name' => 'test-term', 'post_title' => 'テスト用語', 'post_content' => gl_valid()['content_html']], new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]], $route));
+    check("F3 a route that only looks similar ($route) is judged normally", !($r instanceof WP_Error) && 'publish' === $r->post_status);
+}
+omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
+
+// ---------------------------------------------- F4: the guard's notes belong to one REST call
+$outer = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]);
+$a = $empty(); $b = $empty();
+$mk = static fn($pid) => (object) ['ID' => $pid, 'post_status' => 'publish', 'post_name' => 'test-term', 'post_title' => 'テスト用語', 'post_content' => gl_valid()['content_html']];
+omochix_core_glossary_guard_rest($mk($a), $outer);
+$inner = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]);
+omochix_core_glossary_guard_rest($mk($b), $inner); // A REST call made from inside the first one (rest_do_request in a save hook).
+$GLOBALS['posts'][$b]->post_status = 'publish';
+apply_filters('rest_request_after_callbacks', null, null, $inner);
+check('F4 a nested call ending: its own term is read back (incomplete as stored: draft) and its notes are dropped', 'draft' === get_post_field('post_status', $b) && !in_array($b, omochix_core_glossary_rest_approved('list'), true) && null === omochix_core_glossary_pending($b));
+check('F4 ...and the outer call keeps its own (reproduction: they were all dropped, and the outer read-back was skipped)', in_array($a, omochix_core_glossary_rest_approved('list'), true) && is_array(omochix_core_glossary_pending($a)));
+$GLOBALS['posts'][$a]->post_status = 'publish'; // The outer call saves the post; its meta was changed by the hook, or never stored.
+do_action('rest_after_insert_omx_glossary', get_post($a), $outer, false);
+check('F4 the outer read-back still runs: a term that fails as stored goes back to draft', 'draft' === get_post_field('post_status', $a));
+apply_filters('rest_request_after_callbacks', null, null, $outer);
+check('F4 when the outer call ends nothing is left', [] === omochix_core_glossary_rest_approved('list'));
+// The same term in two calls: the later one owns the note.
+$c = $empty(); $r1 = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]); $r2 = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]);
+omochix_core_glossary_guard_rest($mk($c), $r1); omochix_core_glossary_guard_rest($mk($c), $r2);
+apply_filters('rest_request_after_callbacks', null, null, $r1);
+check('F4 a call ending does not drop a note a later call made for the same term', in_array($c, omochix_core_glossary_rest_approved('list'), true));
+apply_filters('rest_request_after_callbacks', null, null, $r2);
+// A nested call for the SAME term (review, R4): each call has its own notes for it.
+$same = $empty(); $o2 = new GL_Req(['meta' => array_merge($full_meta, ['glossary_en' => 'Outer']), 'glossary-categories' => [$basics_id]]); $i2 = new GL_Req(['meta' => array_merge($full_meta, ['glossary_en' => 'Inner']), 'glossary-categories' => [$basics_id]]);
+omochix_core_glossary_guard_rest($mk($same), $o2);
+omochix_core_glossary_guard_rest($mk($same), $i2); // Inner call, same term.
+$first_taken = omochix_core_glossary_pending($same); $second_taken = omochix_core_glossary_pending($same);
+check('F4 the save that runs now takes the newest hand-over (the inner call\'s), the outer one\'s stays for the outer save', 'Inner' === ($first_taken['glossary_en'] ?? '') && 'Outer' === ($second_taken['glossary_en'] ?? '') && null === omochix_core_glossary_pending($same));
+$GLOBALS['posts'][$same]->post_status = 'publish';
+foreach ($full_meta as $k => $val) { update_post_meta($same, $k, $val); } wp_set_object_terms($same, ['basics'], 'omx_glossary_category');
+do_action('rest_after_insert_omx_glossary', get_post($same), $i2, false); // Inner read-back: complete at this moment.
+apply_filters('rest_request_after_callbacks', null, null, $i2);
+check('F4 the inner call ending leaves the outer call\'s note for the same term', [$same] === omochix_core_glossary_rest_approved('list', false, omochix_core_glossary_rest_owner($o2)));
+update_post_meta($same, 'glossary_summary', ''); // Then the outer call stores something that fails.
+do_action('rest_after_insert_omx_glossary', get_post($same), $o2, false);
+check('F4 ...so the outer read-back still demotes it (reproduction: the inner call had used up the note, the term stayed published)', 'draft' === get_post_field('post_status', $same));
+$same2 = $empty(); $o3 = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]);
+omochix_core_glossary_guard_rest($mk($same2), $o3);
+$r = omochix_core_glossary_guard_rest($mk($same2), new GL_Req(['meta' => array_merge($full_meta, ['glossary_sources' => []])])); // Inner call refused.
+check('F4 an inner call that is refused drops only its own notes', $r instanceof WP_Error && [$same2] === omochix_core_glossary_rest_approved('list') && is_array(omochix_core_glossary_pending($same2)));
+omochix_core_glossary_guard_rest($mk($same2), $au = new GL_Req(['meta' => $full_meta], '/wp/v2/glossary/9/autosaves'));
+check('F4 an inner autosave for the same term drops nothing of the outer call', [$same2] === omochix_core_glossary_rest_approved('list'));
+do_action('rest_after_insert_omx_glossary', get_post($same2), new GL_Req(), false);
+check('F4 a read-back asked by a call that noted nothing does nothing', [$same2] === omochix_core_glossary_rest_approved('list'));
+omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
+// The same request judged twice (dispatched again, or another filter runs the controller again): the later answer counts.
+$tw = $empty(); $rq2 = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]);
+omochix_core_glossary_guard_rest($mk($tw), $rq2);
+$rq2->p['meta']['glossary_aliases'] = 'a,b'; // Now of the wrong type.
+$r = omochix_core_glossary_guard_rest($mk($tw), $rq2);
+check('F4 a call that was allowed and is then refused for the type of a value keeps no approval and no hand-over', $r instanceof WP_Error && [] === omochix_core_glossary_rest_approved('list') && null === omochix_core_glossary_pending($tw));
+omochix_core_glossary_guard_rest($mk($tw), $rq3 = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]));
+$rq3->p['meta']['glossary_sources'] = [];
+$r = omochix_core_glossary_guard_rest($mk($tw), $rq3);
+check('F4 ...and the same when it is then refused for its content', $r instanceof WP_Error && [] === omochix_core_glossary_rest_approved('list') && null === omochix_core_glossary_pending($tw));
+// A create that is cut short inside wp_insert_post (review, R3): no REST hook has run yet, the note still says "a new post".
+omochix_core_glossary_guard_rest((object) ['post_status' => 'publish', 'post_name' => 'cut-term', 'post_title' => '途中で止まる用語', 'post_content' => gl_valid()['content_html']], new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]));
+check('F4 create: the note is for "a new post" until the row exists', [0] === omochix_core_glossary_rest_approved('list'));
+$cut = ih_add_post(['post_type' => 'omx_glossary', 'post_status' => 'publish', 'post_name' => 'cut-term', 'post_title' => '途中で止まる用語', 'post_content' => gl_valid()['content_html']]);
+do_action('transition_post_status', 'publish', 'new', get_post($cut)); // WordPress fires this inside wp_insert_post, before save_post.
+check('F4 create: as soon as the row exists the note carries its ID', [$cut] === omochix_core_glossary_rest_approved('list'));
+do_action('shutdown'); // save_post exits: nothing else runs.
+check('F4 create cut short inside wp_insert_post: read back at shutdown, draft (reproduction: it stayed published with no meta)', 'draft' === get_post_field('post_status', $cut) && [] === omochix_core_glossary_rest_approved('list'));
+$oth = ih_add_post(['post_type' => 'post', 'post_status' => 'publish', 'post_name' => 'p']);
+omochix_core_glossary_rest_approved(0, true, 7);
+do_action('transition_post_status', 'publish', 'new', get_post($oth)); do_action('transition_post_status', 'draft', 'new', get_post($cut)); do_action('transition_post_status', 'publish', 'draft', get_post($cut));
+check('F4 create: another post type, a new draft, or an existing post never takes the note', [0] === omochix_core_glossary_rest_approved('list'));
+omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
+// A call that never ends properly (wp_die, exit, a fatal error after the post row is saved).
+$dz = $empty();
+omochix_core_glossary_guard_rest($mk($dz), new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]));
+$GLOBALS['posts'][$dz]->post_status = 'publish';
+check('F4 the read-back is also registered for the end of the PHP request', false !== has_action('shutdown', 'omochix_core_glossary_guard_shutdown'));
+do_action('shutdown');
+check('F4 a call cut short after saving (no REST hook runs any more): read back at shutdown, draft, nothing left', 'draft' === get_post_field('post_status', $dz) && [] === omochix_core_glossary_rest_approved('list') && null === omochix_core_glossary_pending($dz));
+$GLOBALS['posts'][$live]->post_status = 'publish';
+do_action('shutdown');
+check('F4 shutdown with nothing noted touches nothing (a live failing term stays published)', 'publish' === get_post_field('post_status', $live));
+$gone = $empty();
+omochix_core_glossary_guard_rest($mk($gone), new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]));
+$GLOBALS['posts'][$gone]->post_status = 'publish';
+$real_posts = $GLOBALS['posts']; $kept = $GLOBALS['posts'][$gone]; unset($GLOBALS['posts'][$gone]);
+check('F4 read-back of a post that cannot be read: reported as not demoted, no error', false === omochix_core_glossary_rest_recheck($gone));
+$GLOBALS['posts'] = $real_posts;
+omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
+// Something puts the status back (another plugin's hook): the read-back must not claim a demotion that did not hold.
+$stuck = $empty();
+$rq = new GL_Req(['meta' => $full_meta, 'glossary-categories' => [$basics_id]]);
+omochix_core_glossary_guard_rest($mk($stuck), $rq);
+$GLOBALS['posts'][$stuck]->post_status = 'publish';
+add_action('transition_post_status', $undo = static function ($new, $old, $post) use ($stuck) { if ((int) $post->ID === $stuck && 'draft' === $new) { $post->post_status = 'publish'; } }, 10, 3);
+$answer = clone get_post($stuck);
+do_action('rest_after_insert_omx_glossary', $answer, $rq, false);
+remove_action('transition_post_status', $undo, 10);
+check('F4 read-back: when the demotion does not hold, the answer is not changed to "draft" (it says what is stored)', 'publish' === get_post_field('post_status', $stuck) && 'publish' === $answer->post_status);
+$GLOBALS['posts'][$stuck]->post_status = 'draft';
+omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
 
 // =================================================== T-SAFE: static
 $src = '';
