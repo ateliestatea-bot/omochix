@@ -1,4 +1,4 @@
-/* Interactive Storytelling (fictional washi workshop "紙季廊 / SHIKIRO"). Light only: the story is set on paper.
+/* Interactive Storytelling (fictional washi workshop "楮雪舎 / KOZOYUKI"). Light only: the story is set on paper.
    Static layout first (no JS, reduced motion, short landscape screens): every paragraph shows its own finished
    illustration. With JS: one illustration stays fixed beside (PC) or above (phone) the text and follows it. */
 :root{--washi:#f4efe4;--ink:#22201c;--mute:#5a554c;--indigo:#1f3a5f;--accent:#a8432f;--line:#ddd3c1;--ch1:#e8edf1;--ch2:#e9eee6;--ch3:#f4efe4;--ch4:#f6ecdc;color-scheme:light}

@@ -1,19 +1,43 @@
 {
-  "release": "Theme 1.31.1 (design sitemap: same 404 as an unknown URL while the gate is closed)",
-  "note": "Theme only, on production 1.31.0 (release commit c9ae6e2, deployed 2026-11-20 with the publish gate closed). Baseline: the 1.31.0 release manifest (287 files, sha256 e5f537d5...). Core stays 1.10.0. 2 files: inc/design-library.php (no posts are queried for /design-sitemap.xml while it has nothing to list, so Slim SEO no longer prints rel=\"next\" on that 404), then style.css (version 1.31.1, switch file). No new rewrite rule and no database change.",
+  "release": "Theme 1.33.0 (Design Library G12: fictional-brand notices N1-N4, N6, N7, catalog fictionalBrand, usage-terms link shown only once that page is published; every work stays verified-local; publish gate stays closed)",
+  "note": "Theme only, on production 1.32.2 (release commit a1c4dec = main, deployed 2026-11-24 18:02 JST). Baseline: the 1.32.2 release manifest (292 files, sha256 696a2abe..., rebuilt byte-identical from a1c4dec and identical to the deploy record). Core stays 1.10.0. 8 replaced files, no file added: inc/design-library.php first (the validator accepts the optional fictionalBrand; notice, poster alt, JSON-LD description and terms-link helpers), then catalog.schema.json, design-library.css (N2 label style), the list page, card and detail templates (N1, N2, N3, N4, N6), catalog.json (fictionalBrand for the 11 works whose content shows a brand; every verification state unchanged: verified-local), then style.css last (version 1.33.0, switch file). No new rewrite rule (design-library-terms is an ordinary page, created and published in G13), no database change, no verified-production, publish gate stays closed (/design/ 404).",
   "packages": {
     "theme": {
       "name": "omochix-theme",
       "dir": "wp-theme/omochix-theme",
       "target": "themes/omochix-theme",
-      "baseline": "tools/release/baseline/omochix-theme-1.31.0.sha256",
-      "baseline_version": "1.31.0"
+      "baseline": "tools/release/baseline/omochix-theme-1.32.2.sha256",
+      "baseline_version": "1.32.2"
     }
   },
   "order": [
     [
       "theme",
       "inc/design-library.php"
+    ],
+    [
+      "theme",
+      "assets/data/design/catalog.schema.json"
+    ],
+    [
+      "theme",
+      "assets/css/design-library.css"
+    ],
+    [
+      "theme",
+      "page-design.php"
+    ],
+    [
+      "theme",
+      "template-parts/design-library/card.php"
+    ],
+    [
+      "theme",
+      "template-parts/design-library/detail.php"
+    ],
+    [
+      "theme",
+      "assets/data/design/catalog.json"
     ],
     [
       "theme",
@@ -32,7 +56,7 @@
         "theme",
         "style.css"
       ],
-      "check": "Existing 101 URLs unchanged from the 1.31.0 baseline; /design-sitemap.xml is a 404 with no rel=\"next\" link and the same head as an unknown URL; /design/, /design/web/, /design/video/, a work detail and a demo URL still answer 404 (the demo 404 keeps its sandbox CSP, no-store and noindex); robots.txt and the sitemaps unchanged; style.css?ver=1.31.1; both files match the manifest."
+      "check": "Existing 101 URLs unchanged from the 1.32.2 baseline taken twice right before the deploy (status, headers, canonical, robots, PHP errors); the sitemaps keep exactly the URLs of that baseline; /design/, /design/web/, /design/video/, a work detail, a demo URL and /design-sitemap.xml still answer 404 (gate closed; the demo 404 keeps its sandbox CSP, no-store and noindex); /design-library-terms/ answers 404 until G13 publishes it; robots.txt unchanged; style.css?ver=1.33.0; the public static files match the manifest; assets/data/design/catalog.json and catalog.schema.json answer 403 or 404 with no JSON body, also with a cache-busting query, as HEAD and on a second request."
     }
   },
   "rollback_order": [
@@ -42,14 +66,39 @@
     ],
     [
       "theme",
+      "assets/data/design/catalog.json"
+    ],
+    [
+      "theme",
+      "template-parts/design-library/detail.php"
+    ],
+    [
+      "theme",
+      "template-parts/design-library/card.php"
+    ],
+    [
+      "theme",
+      "page-design.php"
+    ],
+    [
+      "theme",
+      "assets/css/design-library.css"
+    ],
+    [
+      "theme",
+      "assets/data/design/catalog.schema.json"
+    ],
+    [
+      "theme",
       "inc/design-library.php"
     ]
   ],
   "after_apply": [
-    "Do not reset OPcache or purge caches unless separately approved: 1.31.0 showed new files are picked up without a reset.",
+    "Do not reset OPcache or purge caches unless separately approved.",
     "Run gate B checks (public GETs)."
   ],
   "after_rollback": [
-    "Check the 101 URLs match the 1.31.0 state (rel=\"next\" comes back on the /design-sitemap.xml 404; harmless). Cache purge and OPcache reset only with separate approval."
+    "No rewrite rule or database change to undo.",
+    "Check the 101 URLs match the 1.32.2 state and style.css?ver=1.32.2. Cache purge and OPcache reset only with separate approval."
   ]
 }

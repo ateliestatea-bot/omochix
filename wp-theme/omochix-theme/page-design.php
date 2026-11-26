@@ -53,6 +53,7 @@ while (have_posts()) :
                     <p class="dl-eyebrow">DESIGN LIBRARY</p>
                     <h1><?php echo esc_html($omx_is_list ? $omx_mediums[$omx_medium]['label'] : get_the_title()); ?></h1>
                     <p class="dl-lead"><?php esc_html_e('Web デザインと動画モーションの作品を、動くプレビューで見比べられます。作品ごとに使った技術、制作手順、AI に頼むときのプロンプトをまとめています。', 'omochix'); ?></p>
+                    <p class="dl-lead dl-lead--note" data-dl-fiction><?php esc_html_e('掲載の作品は、架空のブランドを使った制作の見本です。ブランド名・人物・数値はすべて架空で、実在の企業・商品・サービスとは関係ありません。', 'omochix'); ?></p>
                     <nav class="dl-kinds" aria-label="<?php esc_attr_e('作品の種類', 'omochix'); ?>">
                         <?php foreach (omochix_design_public_mediums() as $omx_m) : ?>
                             <?php if (!omochix_design_is_public($omx_m)) { continue; } ?>

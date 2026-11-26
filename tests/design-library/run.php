@@ -129,7 +129,7 @@ $it['related']['learn'] = ['learn/development', 'learn/hidden', 'learn/missing']
 $it['related']['designs'] = ['liquid-glass', 'bento-saas', 'no-such-item'];
 $rel = omochix_design_related($it);
 check('related: only published Learn pages are linked', 1 === count($rel['learn']) && 'AI開発' === $rel['learn'][0]['title']);
-check('related: other public works only (not itself, not unknown)', 1 === count($rel['designs']) && 'Liquid Glass' === $rel['designs'][0]['title']);
+check('related: other public works only (not itself, not unknown)', 1 === count($rel['designs']) && 'Frosted Glass UI' === $rel['designs'][0]['title']);
 check('related: Motion Gallery links need the gallery (not loaded here) -> none', [] === $rel['motion']);
 $it['motionStudio'] = ['templateId' => 'rag-intro', 'status' => 'verified'];
 check('Motion Studio: no URL even for a verified mapping (no editor exists)', '' === omochix_design_motion_studio_url($it));
@@ -167,6 +167,28 @@ $lg = omochix_design_get_catalog()['items']['liquid-glass']; $lv = omochix_desig
 check('urls: list, detail, demo for Web', 'https://example.test/design/web/' === omochix_design_medium_url('web') && 'https://example.test/design/web/liquid-glass/' === omochix_design_item_url($lg) && 'https://example.test/design/demo/web/liquid-glass/' === omochix_design_demo_url($lg));
 check('urls: list and detail for video', 'https://example.test/design/video/' === omochix_design_medium_url('video') && 'https://example.test/design/video/logo-reveal-short/' === omochix_design_item_url($lv));
 check('urls: component medium uses the "components" segment', 'https://example.test/design/components/' === omochix_design_medium_url('component'));
+
+// ---------------------------------------------- G12: N3, N4, N6, N7 (fictional brand notice, terms link)
+$cat = omochix_design_get_catalog()['items'];
+check('N3: a work with a brand names it in the detail notice', '架空のブランド「Quillmere」を使った制作の見本です。実在の企業・商品とは関係ありません。' === omochix_design_fiction_notice($cat['liquid-glass']));
+check('N3: a work without a brand gets the generic notice (no invented name)', !isset($cat['data-chart-explainer']['fictionalBrand']) && '架空の内容を使った制作の見本です。実在の企業・商品とは関係ありません。' === omochix_design_fiction_notice($cat['data-chart-explainer']));
+check('N6: poster alt names the title and the fictional brand', 'Frosted Glass UIの静止画（架空のブランド「Quillmere」の見本）' === omochix_design_poster_alt($cat['liquid-glass']) && false !== strpos(omochix_design_poster_alt($cat['data-chart-explainer']), '架空の内容の見本'));
+$cw7 = omochix_design_schema_entity($cat['minimal-editorial']); $vo7 = omochix_design_schema_entity($cat['data-chart-explainer']); $vb7 = omochix_design_schema_entity($cat['brand-typography']);
+check('N7: CreativeWork description says fictional brand sample; author stays OmochiX', false !== strpos($cw7['description'], '架空のブランド「IKIMA」を使った制作の見本') && 0 === strpos($cw7['description'], $cat['minimal-editorial']['description']) && 'OmochiX' === $cw7['author']['name']);
+check('N7: VideoObject description too (brand or generic)', false !== strpos($vb7['description'], '架空のブランド「HONYOI」') && false !== strpos($vo7['description'], '架空の内容を使った制作の見本'));
+$GLOBALS['stub']['pages'] = []; omochix_design_reset_cache();
+check('N4: no terms page -> no link', '' === omochix_design_terms_url());
+foreach (['draft', 'private', 'pending', 'future'] as $st) {
+    $GLOBALS['stub']['pages'] = ['design-library-terms' => new WP_Post(['ID' => 88, 'post_name' => 'design-library-terms', 'post_status' => $st])]; omochix_design_reset_cache();
+    check("N4: $st terms page -> no link", '' === omochix_design_terms_url());
+}
+$GLOBALS['stub']['pages'] = ['design-library-terms' => new WP_Post(['ID' => 88, 'post_name' => 'design-library-terms', 'post_status' => 'publish', 'post_password' => 'x'])]; omochix_design_reset_cache();
+check('N4: password-protected terms page -> no link', '' === omochix_design_terms_url());
+$GLOBALS['stub']['pages'] = ['design-library-terms' => new WP_Post(['ID' => 88, 'post_name' => 'design-library-terms', 'post_status' => 'publish'])]; omochix_design_reset_cache();
+check('N4: published terms page -> link to /design-library-terms/', 'https://example.test/design-library-terms/' === omochix_design_terms_url());
+check('N4: the terms page does not open the Design Library gate', 0 === omochix_design_page_id() && !omochix_design_is_public('web'));
+check('N4: the terms slug is not under /design/ (no clash with the Design Library rewrite rules)', 0 !== strpos(OMOCHIX_DESIGN_TERMS_PATH . '/', OMOCHIX_DESIGN_PATH . '/') && !preg_match('#^design/(web|video|app|components)(/|$)#', OMOCHIX_DESIGN_TERMS_PATH) && OMOCHIX_DESIGN_SITEMAP_PATH !== OMOCHIX_DESIGN_TERMS_PATH);
+$GLOBALS['stub']['pages'] = []; omochix_design_reset_cache();
 
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

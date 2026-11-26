@@ -1,0 +1,89 @@
+{
+  "release": "Theme 1.32.0 (Labs Code Studio, shipped as a draft)",
+  "note": "Theme only, on production 1.31.1 (release commit 68d81af, main f02c2fb). Baseline: the 1.31.1 release manifest (287 files, sha256 29d3d926...). Core stays 1.10.0. 8 files: the 4 new Code Studio files (lesson data, the sanitiser and checks, the page script, the template part), then inc/labs.php (it reads the new lesson data and template part), assets/data/labs/catalog.json (code-studio listed with status draft), assets/css/labs.css, and style.css last (version 1.32.0, switch file). Code Studio stays a draft: /labs/code-studio/ answers 404 and it is not in the Labs list, search, sitemap or related links until a separately approved publish. No new rewrite rule and no database change. Nothing else changes: Design Library (gate closed), Industry Hub, SVG Motion Studio, Learn and the three published Labs tools stay byte-identical to 1.31.1.",
+  "packages": {
+    "theme": {
+      "name": "omochix-theme",
+      "dir": "wp-theme/omochix-theme",
+      "target": "themes/omochix-theme",
+      "baseline": "tools/release/baseline/omochix-theme-1.31.1.sha256",
+      "baseline_version": "1.31.1"
+    }
+  },
+  "order": [
+    [
+      "theme",
+      "assets/data/labs/code-studio.json"
+    ],
+    [
+      "theme",
+      "assets/js/labs/core/codestudio.js"
+    ],
+    [
+      "theme",
+      "assets/js/labs/ui/code-studio.js"
+    ],
+    [
+      "theme",
+      "template-parts/labs/content/code-studio.php"
+    ],
+    [
+      "theme",
+      "inc/labs.php"
+    ],
+    [
+      "theme",
+      "assets/data/labs/catalog.json"
+    ],
+    [
+      "theme",
+      "assets/css/labs.css"
+    ],
+    [
+      "theme",
+      "style.css"
+    ]
+  ],
+  "switches": [
+    [
+      "theme",
+      "style.css"
+    ]
+  ],
+  "gates": {
+    "B": {
+      "after": [
+        "theme",
+        "style.css"
+      ],
+      "check": "Existing 101 URLs unchanged from the 1.31.1 state; /labs/ and the three published tools answer 200 with no script error; /labs/code-studio/ (also without the trailing slash, upper case, ?lesson= and /index.php/) answers 404 and Code Studio is not in /labs/, the Labs search, /labs-sitemap.xml, robots.txt or the related links; /design/... and /design-sitemap.xml still answer the closed-gate 404; style.css?ver=1.32.0; all 8 files match the manifest."
+    }
+  },
+  "rollback_order": [
+    [
+      "theme",
+      "style.css"
+    ],
+    [
+      "theme",
+      "assets/css/labs.css"
+    ],
+    [
+      "theme",
+      "assets/data/labs/catalog.json"
+    ],
+    [
+      "theme",
+      "inc/labs.php"
+    ]
+  ],
+  "after_apply": [
+    "Do not reset OPcache or purge caches unless separately approved: 1.31.0 and 1.31.1 showed new files are picked up without a reset.",
+    "Run gate B checks (public GETs)."
+  ],
+  "after_rollback": [
+    "Without --remove-added the 4 added Code Studio files stay on the server: once inc/labs.php and catalog.json are restored nothing loads them and /labs/code-studio/ stays 404 (the two scripts and the lesson JSON stay reachable by their URLs; harmless, no secret). Use --remove-added to remove them.",
+    "No rewrite rule or database change to undo.",
+    "Check the 101 URLs match the 1.31.1 state (style.css?ver=1.31.1, /labs/ and the three tools 200, /labs/code-studio/ 404). Cache purge and OPcache reset only with separate approval."
+  ]
+}

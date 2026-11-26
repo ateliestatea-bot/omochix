@@ -28,6 +28,7 @@ const OMOCHIX_LABS_SITEMAP_VAR      = 'omx_labs_sitemap';
 const OMOCHIX_LABS_CATALOG_VERSION  = 1;
 const OMOCHIX_LABS_PRICING_VERSION  = 2; // 2: per-row approval and caveats
 const OMOCHIX_LABS_CRAWLERS_VERSION = 1;
+const OMOCHIX_LABS_STUDIO_VERSION   = 1; // assets/data/labs/code-studio.json
 
 /**
  * Hosts a price may be sourced from (the providers' own pricing pages). A
@@ -47,6 +48,7 @@ function omochix_labs_limits() {
         'text-diff'             => ['input' => 1024 * 1024, 'lines' => 20000, 'worker' => 0],
         'robots-txt-generator'  => ['rules' => 200, 'path' => 2048, 'robots' => 512 * 1024],
         'token-cost-calculator' => ['input' => 1024 * 1024, 'worker' => 256 * 1024],
+        'code-studio'           => ['html' => 50 * 1024, 'css' => 50 * 1024, 'nodes' => 1500, 'worker' => 0],
         'timeout_ms'            => 10000,
     ];
 }
@@ -78,7 +80,7 @@ function omochix_labs_data_file($name) {
 
 /** Lower-case slug: letters, digits, single hyphens. */
 function omochix_labs_is_slug($value) {
-    return is_string($value) && '' !== $value && strlen($value) <= 60 && 1 === preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $value);
+    return is_string($value) && '' !== $value && strlen($value) <= 60 && 1 === preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $value);
 }
 
 /** Learn page path such as "learn/tutorials/add-ai-api". */
@@ -802,6 +804,152 @@ function omochix_labs_get_crawlers() {
 }
 
 /* -------------------------------------------------------------------------
+ * Code Studio lessons (assets/data/labs/code-studio.json)
+ * ---------------------------------------------------------------------- */
+
+/** Check types the browser knows (assets/js/labs/core/codestudio.js CHECK_TYPES). */
+function omochix_labs_studio_check_types() {
+    return ['element', 'text', 'attribute', 'css', 'css-media'];
+}
+
+/** A selector simple enough for an exercise check: no quotes, brackets with content only, at most 80 characters. */
+function omochix_labs_studio_is_selector($value) {
+    return is_string($value) && 1 === preg_match('/^[A-Za-z0-9 .#>+~*:,\-_()\[\]=]{1,80}$/D', $value);
+}
+
+/**
+ * One exercise check with known keys only, or null when it is not valid.
+ *
+ * @param mixed $check
+ * @return array<string, mixed>|null
+ */
+function omochix_labs_studio_check($check) {
+    if (!is_array($check) || !in_array($check['type'] ?? null, omochix_labs_studio_check_types(), true) || !omochix_labs_studio_is_selector($check['selector'] ?? null)) {
+        return null;
+    }
+    $out  = ['type' => $check['type'], 'selector' => $check['selector']];
+    $prop = static fn($v) => is_string($v) && 1 === preg_match('/^[a-z][a-z-]{1,40}$/D', $v);
+    $text = static fn($v) => is_string($v) && '' !== $v && omochix_labs_strlen($v) <= 80;
+    switch ($check['type']) {
+        case 'element':
+            $out['min'] = max(1, min(50, (int) ($check['min'] ?? 1)));
+            return $out;
+        case 'text':
+            if ($text($check['contains'] ?? null)) {
+                $out['contains'] = $check['contains'];
+            } else {
+                $out['min_length'] = max(1, min(200, (int) ($check['min_length'] ?? 1)));
+            }
+            return $out;
+        case 'attribute':
+            if (!is_string($check['name'] ?? null) || 1 !== preg_match('/^[a-z][a-z-]{0,30}$/D', $check['name'])) {
+                return null;
+            }
+            $out['name'] = $check['name'];
+            return $out; // "pattern" is not accepted from data: no regular expression is built from a file
+        case 'css':
+        case 'css-media':
+            if (!$prop($check['property'] ?? null)) {
+                return null;
+            }
+            $out['property'] = $check['property'];
+            foreach (['value', 'not'] as $key) {
+                if ($text($check[$key] ?? null)) {
+                    $out[$key] = $check[$key];
+                }
+            }
+            if ('css-media' === $check['type']) {
+                $out['feature'] = in_array($check['feature'] ?? null, ['max-width', 'min-width'], true) ? $check['feature'] : 'max-width';
+            }
+            return $out;
+    }
+    return null;
+}
+
+/**
+ * Lessons and glossary the page may use: known keys, bounded sizes, valid
+ * checks only. A lesson with a problem is left out instead of half-shown.
+ *
+ * @param mixed $data Decoded code-studio.json.
+ * @return array{glossary: array{tags: array<string, array<string, string>>, properties: array<string, array<string, string>>}, lessons: array<int, array<string, mixed>>}
+ */
+function omochix_labs_studio_view($data) {
+    $view = ['glossary' => ['tags' => [], 'properties' => []], 'lessons' => []];
+    if (!is_array($data) || ($data['schema_version'] ?? null) !== OMOCHIX_LABS_STUDIO_VERSION) {
+        return $view;
+    }
+    $limits = omochix_labs_limits()['code-studio'];
+    $line   = static fn($v, $max) => is_string($v) && '' !== trim($v) && omochix_labs_strlen($v) <= $max;
+    foreach (['tags' => '/^[a-z][a-z0-9]{0,15}$/D', 'properties' => '/^[a-z][a-z-]{1,40}$/D'] as $group => $pattern) {
+        foreach ((array) ($data['glossary'][$group] ?? []) as $name => $entry) {
+            if (is_string($name) && 1 === preg_match($pattern, $name) && is_array($entry) && $line($entry['label'] ?? null, 30) && $line($entry['text'] ?? null, 160)) {
+                $view['glossary'][$group][$name] = ['label' => $entry['label'], 'text' => $entry['text']];
+            }
+        }
+    }
+    $seen = [];
+    foreach ((array) ($data['lessons'] ?? []) as $lesson) {
+        if (!is_array($lesson) || !omochix_labs_is_slug($lesson['slug'] ?? null) || isset($seen[$lesson['slug']])) {
+            continue;
+        }
+        if (!is_string($lesson['id'] ?? null) || 1 !== preg_match('/^cs-[a-z0-9-]{3,40}$/D', $lesson['id']) || 'html-css' !== ($lesson['language'] ?? null)) {
+            continue;
+        }
+        if (!$line($lesson['title'] ?? null, 60) || !$line($lesson['summary'] ?? null, 120) || 'beginner' !== ($lesson['level'] ?? null)) {
+            continue;
+        }
+        $html = $lesson['files']['html'] ?? null;
+        $css  = $lesson['files']['css'] ?? null;
+        if (!is_string($html) || !is_string($css) || strlen($html) > $limits['html'] || strlen($css) > $limits['css']) {
+            continue;
+        }
+        $steps = array_values(array_filter((array) ($lesson['steps'] ?? []), static fn($s) => $line($s, 200)));
+        $exercises = [];
+        foreach ((array) ($lesson['exercises'] ?? []) as $exercise) {
+            if (!is_array($exercise) || !is_string($exercise['id'] ?? null) || 1 !== preg_match('/^cs-[a-z0-9-]{3,48}$/D', $exercise['id']) || !$line($exercise['prompt'] ?? null, 120)) {
+                continue 2; // one broken exercise drops the lesson: its checklist would be wrong
+            }
+            $checks = array_map('omochix_labs_studio_check', (array) ($exercise['checks'] ?? []));
+            if (!$checks || in_array(null, $checks, true)) {
+                continue 2;
+            }
+            $exercises[] = ['id' => $exercise['id'], 'prompt' => $exercise['prompt'], 'hint' => $line($exercise['hint'] ?? null, 160) ? $exercise['hint'] : '', 'checks' => $checks];
+        }
+        if (!$steps || !$exercises) {
+            continue;
+        }
+        $path = $lesson['learn']['path'] ?? null;
+        $path = is_string($path) && 1 === preg_match('#^learn(?:/[a-z0-9-]+){1,3}$#D', $path) ? $path : '';
+        $ref  = $lesson['learn']['lesson_id'] ?? null;
+        $seen[$lesson['slug']] = true;
+        $view['lessons'][]     = [
+            'id'        => $lesson['id'],
+            'slug'      => $lesson['slug'],
+            'title'     => $lesson['title'],
+            'summary'   => $lesson['summary'],
+            'language'  => 'html-css',
+            'learn'     => [
+                'url'       => '' !== $path && function_exists('omochix_get_published_page_url') ? (string) omochix_get_published_page_url($path) : '',
+                'lesson_id' => is_string($ref) && 1 === preg_match('/^[a-z0-9-]{1,60}$/D', $ref) ? $ref : null,
+            ],
+            'files'     => ['html' => $html, 'css' => $css],
+            'steps'     => $steps,
+            'exercises' => $exercises,
+        ];
+    }
+    return $view;
+}
+
+function omochix_labs_get_studio() {
+    static $view = null;
+    if (null === $view) {
+        $read = omochix_labs_read_json(omochix_labs_data_file('code-studio'));
+        $view = omochix_labs_studio_view($read['ok'] ? $read['data'] : null);
+    }
+    return $view;
+}
+
+/* -------------------------------------------------------------------------
  * Routing
  * ---------------------------------------------------------------------- */
 
@@ -1171,6 +1319,7 @@ function omochix_labs_tool_modules() {
         'text-diff'             => ['diff'],
         'robots-txt-generator'  => ['robots'],
         'token-cost-calculator' => ['tokens', 'cost'],
+        'code-studio'           => ['diff', 'codestudio'],
     ];
 }
 
@@ -1228,6 +1377,11 @@ function omochix_labs_enqueue_assets() {
         $deps[]    = 'omochix-labs-' . $module;
         $workers[] = get_theme_file_uri($relative) . '?ver=' . omochix_labs_asset_version($relative);
     }
+    if ('code-studio' === $tool['slug']) {
+        // The sanitiser the SVG Motion Studio already ships (DOMPurify, same file): no new third-party code.
+        $script('omochix-labs-purify', '/assets/js/svg-motion/lib/purify.min.js', []);
+        $deps[] = 'omochix-labs-purify';
+    }
     $script('omochix-labs-tool', '/assets/js/labs/ui/' . $tool['slug'] . '.js', $deps);
 
     $config['worker'] = [
@@ -1239,6 +1393,9 @@ function omochix_labs_enqueue_assets() {
     }
     if ('robots-txt-generator' === $tool['slug']) {
         $config['crawlers'] = omochix_labs_get_crawlers();
+    }
+    if ('code-studio' === $tool['slug']) {
+        $config['studio'] = omochix_labs_get_studio();
     }
     wp_add_inline_script('omochix-labs-shared', 'window.omochixLabs = ' . omochix_labs_json_for_script($config) . ';', 'before');
 }

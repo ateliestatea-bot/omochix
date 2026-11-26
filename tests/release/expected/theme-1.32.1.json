@@ -1,0 +1,43 @@
+{
+  "release": "Theme 1.32.1 (sitemap: leave out the noindex Composer page, the retired RTX article that answers 301, and posts whose canonical points elsewhere)",
+  "commit": "1aa10bbc47cec1ca72d29dd21f0001e08102024e",
+  "note": "Archived with the 1.32.1 release (main 1aa10bb; release bundle releases/theme-1.32.1-1aa10bb rebuilt byte-identical from 1aa10bb, manifest 9eb40169...; deployed 2026-11-23 01:04-01:06 JST, RESULT DEPLOYED, post-check PASS: sitemap 599 -> 597, 101 URLs unchanged, production style.css matches the manifest). Recorded by hand from the 1.32.1 tree against the production 1.32.0 manifest (b282a689...).",
+  "versions": {
+    "core": "1.10.0",
+    "theme": "1.32.1"
+  },
+  "packages": {
+    "theme": {
+      "baseline_sha256": "b282a689c14f0842853571383e387cd9c653c8b639d4ee5c40bf8da58b3d0260",
+      "files": 291,
+      "add": 0,
+      "replace": 3
+    }
+  },
+  "unchanged": {
+    "core": {
+      "dir": "wp-plugin/omochix-core",
+      "baseline": "tools/release/baseline/omochix-core-1.10.0.sha256",
+      "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
+    }
+  },
+  "steps": 3,
+  "changed_paths_sha256": "22a43abfa92790a8fe7df15ead9c47d5f88250f35292dcb41a4ebf49717e469e",
+  "forbidden": {
+    "pattern": "#labs|svg-motion|logo-motion#i",
+    "allowed": []
+  },
+  "order_rules": [],
+  "switches": [
+    "theme:style.css"
+  ],
+  "gates": [
+    "B"
+  ],
+  "rollback": {
+    "first": "theme:style.css",
+    "last": "theme:inc/learn-composer.php",
+    "count": 3
+  },
+  "core_version_markers": 11
+}

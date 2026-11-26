@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "updated": "2026-11-20",
+  "glossary": {
+    "tags": {
+      "h1": { "label": "大見出し", "text": "ページでいちばん大事な見出しです。1ページに1つだけ置くのが基本です。" },
+      "h2": { "label": "中見出し", "text": "話題の区切りを表す見出しです。h1 の次の階層として使います。" },
+      "h3": { "label": "小見出し", "text": "h2 の中をさらに分けるときの見出しです。" },
+      "p": { "label": "段落", "text": "ひとまとまりの文章です。前後に少し余白が入ります。" },
+      "a": { "label": "リンク", "text": "ほかの場所へ移動するリンクです。ふつうは href に行き先を書きます。この練習場では、押しても移動しません（見た目の練習用）。" },
+      "strong": { "label": "重要", "text": "重要な言葉を表します。ふつうは太字で表示されます。" },
+      "em": { "label": "強調", "text": "強調したい言葉を表します。ふつうは斜体で表示されます。" },
+      "br": { "label": "改行", "text": "文章の途中で行を変えます。段落を分けたいときは p を使います。" },
+      "ul": { "label": "箇条書き", "text": "順番のないリストです。中に li を並べます。" },
+      "ol": { "label": "番号付きリスト", "text": "順番のあるリストです。中に li を並べると、自動で番号が付きます。" },
+      "li": { "label": "リストの項目", "text": "ul や ol の中の1項目です。" },
+      "div": { "label": "まとまり（ブロック）", "text": "意味を持たない箱です。いくつかの要素をまとめて、CSS で形を付けるときに使います。" },
+      "span": { "label": "まとまり（文中）", "text": "文章の一部だけに CSS を当てたいときに使う、意味を持たない目印です。" },
+      "img": { "label": "画像", "text": "画像を表示します。alt に、画像が見えない人のための説明を書きます。" },
+      "header": { "label": "ヘッダー", "text": "ページや記事の先頭部分（タイトルや案内）をまとめます。" },
+      "main": { "label": "本文の中心", "text": "そのページの中心になる内容をまとめます。1ページに1つです。" },
+      "footer": { "label": "フッター", "text": "ページや記事の最後の部分（著作権表示や連絡先）をまとめます。" },
+      "nav": { "label": "ナビゲーション", "text": "ページ内やサイト内を移動するためのリンク集をまとめます。" },
+      "section": { "label": "セクション", "text": "見出しを持つ、内容のひとまとまりです。" },
+      "article": { "label": "記事", "text": "それだけで内容が完結するまとまり（記事やカード）です。" },
+      "button": { "label": "ボタン", "text": "押せるボタンです。この練習場では押しても何も起きません（見た目の練習用）。" },
+      "table": { "label": "表", "text": "行と列でデータを見せる表です。中に tr、th、td を入れます。" },
+      "blockquote": { "label": "引用", "text": "ほかの文章からの引用を表します。" },
+      "code": { "label": "コード", "text": "プログラムのコードや命令を表します。等幅の文字で表示されます。" }
+    },
+    "properties": {
+      "color": { "label": "文字の色", "text": "文字の色を決めます。色の名前（red）や #ff0000 のような番号で書けます。" },
+      "background": { "label": "背景", "text": "背景の色などをまとめて決めます。" },
+      "background-color": { "label": "背景の色", "text": "要素の背景の色を決めます。" },
+      "font-size": { "label": "文字の大きさ", "text": "文字の大きさを決めます。16px がふつうの本文の大きさです。" },
+      "font-weight": { "label": "文字の太さ", "text": "文字の太さを決めます。bold で太字、normal でふつうの太さです。" },
+      "font-family": { "label": "書体", "text": "文字の書体を決めます。sans-serif はゴシック体、serif は明朝体のなかまです。" },
+      "line-height": { "label": "行の高さ", "text": "行と行のあいだの広さを決めます。1.7 前後が読みやすい値です。" },
+      "text-align": { "label": "文字の位置", "text": "文字を左（left）、中央（center）、右（right）のどこにそろえるかを決めます。" },
+      "margin": { "label": "外側の余白", "text": "要素の外側の余白です。となりの要素との距離になります。" },
+      "margin-top": { "label": "上の外側の余白", "text": "要素の上側の余白です。" },
+      "margin-bottom": { "label": "下の外側の余白", "text": "要素の下側の余白です。" },
+      "padding": { "label": "内側の余白", "text": "要素の内側の余白です。枠と中身のあいだの距離になります。" },
+      "border": { "label": "枠線", "text": "要素のまわりの線です。太さ・種類・色を 1px solid #ccc のように並べて書きます。" },
+      "border-radius": { "label": "角の丸み", "text": "角を丸くします。値が大きいほど丸くなります。" },
+      "width": { "label": "幅", "text": "要素の横の長さを決めます。" },
+      "max-width": { "label": "最大の幅", "text": "これより広くならない、という上限です。画面が狭いときは画面に合わせて縮みます。" },
+      "height": { "label": "高さ", "text": "要素の縦の長さを決めます。" },
+      "display": { "label": "並べ方", "text": "要素の並べ方を決めます。flex や grid にすると、中の要素を横や格子に並べられます。" },
+      "flex-direction": { "label": "並べる向き", "text": "flex で並べる向きです。row で横、column で縦に並びます。" },
+      "flex-wrap": { "label": "折り返し", "text": "flex で並べた要素が入りきらないときに、次の行へ折り返すかを決めます。" },
+      "gap": { "label": "すき間", "text": "flex や grid で並べた要素どうしのすき間です。" },
+      "justify-content": { "label": "並ぶ方向のそろえ方", "text": "flex や grid で、並ぶ方向の位置（左・中央・右・均等）を決めます。" },
+      "align-items": { "label": "交差する方向のそろえ方", "text": "flex や grid で、並ぶ方向と直角の位置（上・中央・下）を決めます。" },
+      "grid-template-columns": { "label": "列の数と幅", "text": "grid の列を決めます。1fr 1fr と書くと、同じ幅の2列になります。" },
+      "box-shadow": { "label": "影", "text": "要素に影を付けます。" },
+      "list-style": { "label": "リストの記号", "text": "箇条書きの先頭の記号を決めます。none で記号を消せます。" },
+      "text-decoration": { "label": "文字の線", "text": "下線などを付けたり消したりします。リンクの下線を消すときは none を使います。" }
+    }
+  },
+  "lessons": [
+    {
+      "id": "cs-html-001",
+      "slug": "first-page",
+      "title": "はじめてのHTML：見出しと文章",
+      "level": "beginner",
+      "language": "html-css",
+      "summary": "見出し・段落・箇条書きで、自己紹介のページを作ります。",
+      "learn": { "path": "learn/development/web-basics", "lesson_id": null },
+      "files": {
+        "html": "<h1>はじめてのページ</h1>\n<p>ここに自己紹介を書きます。</p>\n",
+        "css": "body {\n  font-family: sans-serif;\n}\n"
+      },
+      "steps": [
+        "左の HTML を書き換えると、右のプレビューがすぐに変わります。まず h1 の文字を自分の名前に変えてみましょう。",
+        "p は段落です。文章を書き足してみましょう。",
+        "好きなものを ul と li で箇条書きにします。<ul> の中に <li> を並べます。"
+      ],
+      "exercises": [
+        {
+          "id": "cs-html-001-a",
+          "prompt": "h2 の見出し「好きなもの」を追加しましょう。",
+          "hint": "<h2>好きなもの</h2> のように書きます。",
+          "checks": [{ "type": "element", "selector": "h2", "min": 1 }, { "type": "text", "selector": "h2", "min_length": 1 }]
+        },
+        {
+          "id": "cs-html-001-b",
+          "prompt": "箇条書き（ul）に、項目（li）を3つ以上並べましょう。",
+          "hint": "<ul> と </ul> のあいだに、<li>項目</li> を3行書きます。",
+          "checks": [{ "type": "element", "selector": "ul li", "min": 3 }]
+        }
+      ]
+    },
+    {
+      "id": "cs-css-001",
+      "slug": "style-a-card",
+      "title": "はじめてのCSS：色と余白でカードを作る",
+      "level": "beginner",
+      "language": "html-css",
+      "summary": "色・余白・角の丸みで、文章をカードの形に整えます。",
+      "learn": { "path": "learn/development/web-basics", "lesson_id": null },
+      "files": {
+        "html": "<div class=\"card\">\n  <h2>OmochiX Labs</h2>\n  <p>ブラウザだけで使える無料ツール集です。</p>\n</div>\n",
+        "css": ".card {\n  border: 1px solid #cccccc;\n}\n\n.card h2 {\n  margin: 0;\n}\n"
+      },
+      "steps": [
+        "CSS は「どこに（セレクタ）」「何を（プロパティ）」「どうする（値）」の順に書きます。.card は class=\"card\" の要素を指します。",
+        "padding は内側の余白、margin は外側の余白です。値を変えて、違いを見比べましょう。",
+        "「変更前と比べる」を押すと、最初の表示と今の表示を並べて確かめられます。"
+      ],
+      "exercises": [
+        {
+          "id": "cs-css-001-a",
+          "prompt": ".card に内側の余白（padding）を付けましょう。",
+          "hint": ".card { … } の中に padding: 16px; を足します。",
+          "checks": [{ "type": "css", "selector": ".card", "property": "padding" }]
+        },
+        {
+          "id": "cs-css-001-b",
+          "prompt": ".card の角を丸く（border-radius）して、背景の色（background-color）を付けましょう。",
+          "hint": "border-radius: 12px; と background-color: #f5f0ff; を足します。",
+          "checks": [{ "type": "css", "selector": ".card", "property": "border-radius" }, { "type": "css", "selector": ".card", "property": "background-color" }]
+        },
+        {
+          "id": "cs-css-001-c",
+          "prompt": "見出し（.card h2）の文字の色を変えましょう。",
+          "hint": ".card h2 { … } の中に color: #6735c7; を足します。",
+          "checks": [{ "type": "css", "selector": ".card h2", "property": "color" }]
+        }
+      ]
+    },
+    {
+      "id": "cs-responsive-001",
+      "slug": "responsive-columns",
+      "title": "レスポンシブ修正ラボ：スマホで崩れる2列を直す",
+      "level": "beginner",
+      "language": "html-css",
+      "summary": "スマホの幅ではみ出す横並びを、メディアクエリで縦並びに直します。",
+      "learn": { "path": "learn/development/web-basics", "lesson_id": null },
+      "files": {
+        "html": "<div class=\"columns\">\n  <div class=\"box\">お知らせ</div>\n  <div class=\"box\">使い方</div>\n</div>\n",
+        "css": ".columns {\n  display: flex;\n  gap: 16px;\n}\n\n.box {\n  width: 300px;\n  padding: 16px;\n  background-color: #f5f0ff;\n}\n"
+      },
+      "steps": [
+        "プレビューの上の「スマホ」を押してください。箱が画面からはみ出して、横にスクロールしてしまいます。",
+        "原因は .box の width: 300px です。幅を固定すると、狭い画面に入りきりません。",
+        "@media (max-width: 600px) { … } の中に書いた CSS は、画面の幅が 600px 以下のときだけ効きます。"
+      ],
+      "exercises": [
+        {
+          "id": "cs-responsive-001-a",
+          "prompt": "画面の幅が狭いときだけ、.columns を縦並び（flex-direction: column）にしましょう。",
+          "hint": "@media (max-width: 600px) { .columns { flex-direction: column; } } を書き足します。",
+          "checks": [{ "type": "css-media", "feature": "max-width", "selector": ".columns", "property": "flex-direction" }]
+        },
+        {
+          "id": "cs-responsive-001-b",
+          "prompt": "同じメディアクエリの中で、.box の幅を画面に合わせましょう（width: auto など）。",
+          "hint": "@media (max-width: 600px) { … } の中に .box { width: auto; } を足します。",
+          "checks": [{ "type": "css-media", "feature": "max-width", "selector": ".box", "property": "width" }]
+        }
+      ]
+    }
+  ]
+}

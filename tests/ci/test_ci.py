@@ -144,6 +144,252 @@ class RepoCase(unittest.TestCase):
         self.addCleanup(self.r.cleanup)
 
 
+# ------------------------------------------------- CI change guard: pull request target
+
+class GuardPullRequestTarget(RepoCase):
+    """pull_request_target runs from the default branch: GITHUB_SHA is main's tip for every target.
+
+    The rules stay main's; the files a pull request changes are compared with its verified
+    target. Every case runs the UNCHANGED guard step of ci-guard.yml in a shell, with the
+    environment GitHub gives it, so the workflow file itself is what is tested.
+    """
+
+    def setUp(self):
+        super().setUp()
+        r = self.r
+        # integrate/web2 forks from main and gets a CI change of its own (like PR #77) ...
+        r.git("checkout", "-q", "-b", "integrate/web2", "main")
+        r.write("tests/ci/test_extra.py", "# only on the integration branch\n")
+        r.commit("ci change that only integrate/web2 has")
+        # ... while main moves on without it.
+        r.git("checkout", "-q", "main")
+        r.write("docs/readme.md", "main moved on\n")
+        # main also gained a test and requires it (like a release on main): its workflows and
+        # inventory are ahead of the integration branch's.
+        r.apply({".github/workflows/tests.yml": lambda c: c.replace("tests/nav/run.php \\", "tests/nav/run.php \\\n            tests/nav/main-only.php \\", 1),
+                 "tools/ci/required-checks.json": lambda c: c.replace('"tests/nav/run.php",', '"tests/nav/run.php", "tests/nav/main-only.php",', 1)})
+        self.assertIn("tests/nav/main-only.php", r.read(".github/workflows/tests.yml"))
+        self.assertIn("tests/nav/main-only.php", r.read("tools/ci/required-checks.json"))
+        r.commit("main after the fork")
+        self.sync_refs()
+        self.temp = tempfile.mkdtemp(prefix="omx-ci-runner-")
+        self.addCleanup(shutil.rmtree, self.temp, True)
+        wf = workflow_policy.load_yaml(slurp(os.path.join(REPO, ".github/workflows/ci-guard.yml")))
+        steps = {st.get("name"): st for st in wf["jobs"]["guard"]["steps"]}
+        self.script = steps["CI change guard (base rules against this change)"]["run"]
+
+    def sync_refs(self):
+        for b in ("main", "integrate/web2"):
+            self.r.git("update-ref", "refs/remotes/origin/" + b, b)
+
+    def branch(self, name, changes, base="integrate/web2"):
+        self.r.git("checkout", "-q", "-B", name, base)
+        self.r.apply(changes)
+        return self.r.commit("change on " + name)
+
+    def run_step(self, head, ref="integrate/web2", base_sha=None, labels="", body="", event_file=True, payload=None, default_sha=None, env_extra=None):
+        """Run the workflow's guard step as GitHub would for a pull request head -> ref."""
+        r = self.r
+        r.git("checkout", "-q", "--detach", head)  # actions/checkout of the pull request head
+        base_sha = base_sha if base_sha is not None else r.git("rev-parse", ref if ref in ("main", "integrate/web2") else "main")
+        path = os.path.join(self.temp, "event.json")
+        if payload is None:
+            payload = {"pull_request": {"base": {"ref": ref, "sha": base_sha}, "head": {"sha": head}}, "repository": {"default_branch": "main"}}
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh)
+        env = dict(os.environ, EVENT="pull_request_target", BEFORE="", PR_HEAD_SHA=head, PR_LABELS=labels, PR_BODY=body,
+                   GITHUB_SHA=default_sha or r.git("rev-parse", "main"), GITHUB_EVENT_NAME="pull_request_target", RUNNER_TEMP=self.temp,
+                   GITHUB_EVENT_PATH=path if event_file else os.path.join(self.temp, "missing.json"))
+        env.update(env_extra or {})
+        res = subprocess.run(["bash", "-e", "-c", self.script], cwd=r.dir, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return res.returncode, res.stdout.decode()
+
+    # -- the false positive (PR #79, PR #75)
+    def test_stream_pull_request_into_integrate_needs_no_ci_approval(self):
+        for name, changes in (("web2/kh/glossary", {"wp-plugin/omochix-core/includes/web2/glossary-loader.php": "<?php\n", "tests/glossary/run.php": "<?php\n"}),
+                              ("web2/hooks/loader", {"wp-plugin/omochix-core/includes/web2-loader.php": "<?php\n", "wp-theme/omochix-theme/functions.php": "<?php\n// loader\n"})):
+            with self.subTest(name):
+                code, out = self.run_step(self.branch(name, changes))
+                self.assertEqual(code, 0, out)
+                self.assertIn("compared with its target integrate/web2", out)
+                self.assertIn("PASS no CI or gate file changes", out)
+                self.assertNotIn("tests/ci/test_extra.py", out)
+
+    def test_the_same_pull_request_compared_with_main_would_ask_for_approval(self):
+        # What happened before the fix: the comparison with main shows the integration branch's own CI change.
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        self.r.git("checkout", "-q", "--detach", "main")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", head)
+        ok, lines = ci_guard.guard("HEAD^1", "HEAD", "pull_request", [], cwd=self.r.dir)
+        self.assertFalse(ok)
+        self.assertTrue(any("tests/ci/test_extra.py" in l for l in lines), "\n".join(lines))
+
+    # -- real CI changes still need the approval
+    def test_ci_change_into_integrate_needs_the_approval_for_that_content(self):
+        head = self.branch("web2/ci/x", {"tools/ci/cilib.py": lambda c: c + "\n# changed\n"})
+        code, out = self.run_step(head)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("FAIL   tools/ci/cilib.py", out)
+        self.assertNotIn("test_extra.py", out)
+        line = [l.split("put this line in the description: ", 1)[1] for l in out.splitlines() if "put this line in the description: ci-change-reviewed:" in l][0]
+        self.assertNotEqual(self.run_step(head, labels="ci-change-reviewed")[0], 0)          # label alone
+        self.assertNotEqual(self.run_step(head, body=line)[0], 0)                            # digest alone
+        self.assertNotEqual(self.run_step(head, labels="ci-change-reviewed", body="ci-change-reviewed: " + "0" * 16)[0], 0)
+        code, out = self.run_step(head, labels="ci-change-reviewed", body=line)
+        self.assertEqual(code, 0, out)
+        # A commit after the review needs a new one.
+        self.r.git("checkout", "-q", "web2/ci/x")
+        self.r.apply({"tools/ci/cilib.py": lambda c: c + "# again\n"})
+        head2 = self.r.commit("after the review")
+        self.assertNotEqual(self.run_step(head2, labels="ci-change-reviewed", body=line)[0], 0)
+
+    def test_digest_matches_the_push_after_the_merge(self):
+        # Pull request: compared with the target. Push: BEFORE = the target's tip, HEAD = the merge.
+        # A file main does not have: its digest depends on which base it is compared with.
+        head = self.branch("web2/ci/x", {"tests/ci/test_extra.py": "# only on the integration branch, changed\n"})
+        code, out = self.run_step(head)
+        line = [l.split("put this line in the description: ", 1)[1] for l in out.splitlines() if "ci-change-reviewed:" in l and "put this line" in l][0]
+        before = self.r.git("rev-parse", "integrate/web2")
+        self.r.git("checkout", "-q", "integrate/web2")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", head)
+        merge = self.r.git("rev-parse", "HEAD")
+        pulls = [{"number": 7, "merged_at": "2026-11-24T00:00:00Z", "merge_commit_sha": merge, "labels": [{"name": "ci-change-reviewed"}], "body": line}]
+        ok, lines = ci_guard.guard(before, merge, "push", [], cwd=self.r.dir, merged_pulls=pulls)
+        self.assertTrue(ok, "\n".join(lines))
+        pulls[0]["body"] = "ci-change-reviewed: " + "f" * 16
+        self.assertFalse(ci_guard.guard(before, merge, "push", [], cwd=self.r.dir, merged_pulls=pulls)[0])
+
+    # -- main's rules always apply
+    def test_weakening_or_insecure_workflow_change_into_integrate_fails_by_mains_rules(self):
+        cases = {
+            "weakening (a test dropped)": {".github/workflows/industry-hub.yml": lambda c: c.replace("tests/industry-hub/run.php", "tests/industry-hub/gone.php")},
+            "security (write permission)": {".github/workflows/tests.yml": lambda c: c.replace("contents: read", "contents: write", 1)},
+            "security (second pull_request_target workflow)": {".github/workflows/evil.yml": "name: Evil\non:\n  pull_request_target:\npermissions: {}\njobs:\n  x:\n    name: X\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo hi\n"},
+        }
+        for name, changes in cases.items():
+            with self.subTest(name):
+                head = self.branch("web2/ci/bad", changes)
+                code, out = self.run_step(head, labels="ci-change-reviewed,ci-weakening-approved" if "security" in name else "ci-change-reviewed")
+                self.assertNotEqual(code, 0, out)
+                self.assertIn("FAIL workflow policy", out)
+
+    def test_a_weaker_inventory_on_the_integration_branch_is_not_used(self):
+        # The integration branch loosens its own inventory, then a pull request drops the test: main's inventory still judges.
+        self.r.git("checkout", "-q", "integrate/web2")
+        self.r.apply({"tools/ci/required-checks.json": lambda c: c.replace('"tests/industry-hub/run.php",', "", 1)})
+        self.assertNotIn('"tests/industry-hub/run.php",', self.r.read("tools/ci/required-checks.json"))
+        self.r.commit("integration branch loosened its inventory")
+        self.sync_refs()
+        head = self.branch("web2/ci/bad", {".github/workflows/industry-hub.yml": lambda c: c.replace("tests/industry-hub/run.php", "tests/industry-hub/gone.php")})
+        code, out = self.run_step(head, labels="ci-change-reviewed")
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("no longer runs 'tests/industry-hub/run.php'", out)
+
+    def test_a_change_that_conflicts_with_main_fails_closed(self):
+        # The rules judge the merge with main: a workflow line main changed too cannot be judged, so it fails.
+        head = self.branch("web2/ci/bad", {".github/workflows/tests.yml": lambda c: c.replace("tests/nav/run.php", "tests/nav/gone.php")})
+        code, out = self.run_step(head, labels="ci-change-reviewed,ci-weakening-approved")
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("does not merge cleanly", out)
+
+    # -- tampered or unverifiable base and head: fail closed
+    def test_unverifiable_base_fails_closed(self):
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        fork = self.r.git("merge-base", "main", "integrate/web2")
+        cases = {
+            "stale base (an older commit of the target)": dict(base_sha=fork),
+            "base is main's tip, not the target's": dict(base_sha=self.r.git("rev-parse", "main")),
+            "base is not a commit id": dict(base_sha="integrate/web2"),
+            "base is a short id": dict(base_sha=self.r.git("rev-parse", "integrate/web2")[:12]),
+            "no event file": dict(event_file=False),
+            "event file without a pull request": dict(payload={"repository": {"default_branch": "main"}}),
+            "event file with non-string fields": dict(payload={"pull_request": {"base": {"ref": ["integrate/web2"], "sha": None}, "head": {"sha": head}}, "repository": {"default_branch": "main"}}),
+            "event file without the default branch": dict(payload={"pull_request": {"base": {"ref": "integrate/web2", "sha": self.r.git("rev-parse", "integrate/web2")}, "head": {"sha": head}}}),
+            "event head is another commit": dict(payload={"pull_request": {"base": {"ref": "integrate/web2", "sha": self.r.git("rev-parse", "integrate/web2")}, "head": {"sha": fork}}, "repository": {"default_branch": "main"}}),
+        }
+        for name, kw in cases.items():
+            with self.subTest(name):
+                code, out = self.run_step(head, **kw)
+                self.assertNotEqual(code, 0, out)
+                self.assertIn("CI change guard: FAIL", out)
+                self.assertNotIn("PASS no CI", out)
+        # The target branch was not fetched.
+        self.r.git("update-ref", "-d", "refs/remotes/origin/integrate/web2")
+        code, out = self.run_step(head)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("was not fetched", out)
+
+    def test_target_moved_after_the_event_fails_until_rerun(self):
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        old = self.r.git("rev-parse", "integrate/web2")
+        self.r.git("checkout", "-q", "integrate/web2")
+        self.r.write("docs/other.md", "another pull request landed\n")
+        self.r.commit("target moved")
+        self.sync_refs()
+        code, out = self.run_step(head, base_sha=old)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("run again", out)
+        self.assertEqual(self.run_step(head)[0], 0)
+
+    def test_checked_out_commit_must_be_the_pull_request_head(self):
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        code, out = self.run_step(head, env_extra={"PR_HEAD_SHA": self.r.git("rev-parse", "main")})
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("checked-out commit is not the pull request head", out)
+
+    def test_bad_target_names_are_compared_with_main(self):
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        tip = self.r.git("rev-parse", "integrate/web2")
+        for ref in ("integrate", "integrate/", "integrate/../main", "refs/heads/integrate/web2", "xintegrate/web2", "integrate/.x", "feature/x", "integrate/web2\n"):
+            with self.subTest(ref):
+                code, out = self.run_step(head, ref=ref, base_sha=tip)
+                self.assertNotEqual(code, 0, out)           # main's comparison: the integration-only CI file shows
+                self.assertIn("tests/ci/test_extra.py", out)
+
+    # -- main keeps its checks
+    def test_pull_requests_into_main_are_judged_as_before(self):
+        clean = self.branch("feature/x", {"docs/readme.md": "x\n"}, base="main")
+        code, out = self.run_step(clean, ref="main")
+        self.assertEqual(code, 0, out)
+        self.assertIn("compared with its base main", out)
+        ci = self.branch("fix/ci", {"tools/ci/cilib.py": lambda c: c + "\n# changed\n"}, base="main")
+        code, out = self.run_step(ci, ref="main")
+        self.assertNotEqual(code, 0, out)
+        # Same digest as the direct comparison the guard always made for main.
+        self.r.git("checkout", "-q", "--detach", "main")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", ci)
+        ok, lines = ci_guard.guard("HEAD^1", "HEAD", "pull_request", [], cwd=self.r.dir)
+        want = [l.split("ci-change-reviewed: ", 1)[1] for l in lines if "put this line" in l][0]
+        self.assertIn("ci-change-reviewed: " + want, out)
+        # main moved after the event: fail closed.
+        code, out = self.run_step(clean, ref="main", base_sha=self.r.git("merge-base", "main", "integrate/web2"))
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("is not the default branch tip", out)
+
+    def test_integration_branch_ci_change_reaching_main_still_needs_approval(self):
+        # The pull request that brings integrate/web2 into main shows every CI change it carries.
+        code, out = self.run_step(self.r.git("rev-parse", "integrate/web2"), ref="main")
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("FAIL   tests/ci/test_extra.py", out)
+
+    # -- no pull request code runs
+    def test_no_pull_request_code_runs(self):
+        marker = os.path.join(self.temp, "pwned")
+        payload = "import os\nopen(%r, 'w').write('x')\n" % marker
+        head = self.branch("web2/ci/evil", {"tools/ci/ci_guard.py": payload + "raise SystemExit(0)\n", "tools/ci/cilib.py": payload, "tools/ci/sitecustomize.py": payload,
+                                            "sitecustomize.py": payload, "json.py": payload, "tools/ci/workflow_policy.py": payload})
+        code, out = self.run_step(head, env_extra={"PYTHONPATH": self.r.dir, "PYTHONSTARTUP": os.path.join(self.r.dir, "sitecustomize.py")})
+        self.assertFalse(os.path.exists(marker), "pull request code ran")
+        self.assertNotEqual(code, 0, out)                     # judged by main's copy: the CI change needs approval
+        self.assertIn("FAIL   tools/ci/ci_guard.py", out)
+
+    def test_the_guard_step_still_takes_its_rules_from_github_sha(self):
+        # The rules come from the default branch tip (GITHUB_SHA); only the compared files follow the target.
+        self.assertIn('trusted="$GITHUB_SHA"', self.script)
+        self.assertIn('git archive "$trusted" tools/ci', self.script)
+        self.assertIn('python3 -I "$dir/tools/ci/ci_guard.py"', self.script)
+
+
 # --------------------------------------------------------------------------- Release scope
 
 class ReleaseScope(RepoCase):
