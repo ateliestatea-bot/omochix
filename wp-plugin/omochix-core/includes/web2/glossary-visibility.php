@@ -551,7 +551,8 @@ function omochix_core_glossary_map_read_post( $caps, $cap = '', $user_id = 0, $a
 	if ( 'read_post' !== $cap || ! is_array( $caps ) || ! is_array( $args ) || empty( $args[0] ) ) {
 		return $caps;
 	}
-	$post = get_post( (int) $args[0] );
+	// Core accepts a post object as well as an ID here.
+	$post = is_object( $args[0] ) ? get_post( (int) ( $args[0]->ID ?? 0 ) ) : get_post( (int) $args[0] );
 	if ( is_object( $post ) && 'revision' === ( $post->post_type ?? '' ) && (int) ( $post->post_parent ?? 0 ) > 0 ) {
 		$post = get_post( (int) $post->post_parent );
 	}
@@ -572,11 +573,12 @@ add_filter( 'map_meta_cap', 'omochix_core_glossary_map_read_post', 10, 4 );
  * or a contributor, listed hidden terms with their title, content and
  * summary (block bindings) on the page, in REST and in the feeds, to
  * visitors too. The pagination, total and no-results blocks build the same
- * query through the same filter. Hidden published and private terms are
- * left out of the query itself, so pages and counts agree; a status other
- * than the default (or "publish"), a closed glossary, or more terms than can
- * be listed leaves the glossary out entirely. This holds for every viewer,
- * editors included: a generic post is no place for a hidden term, and a
+ * query through the same filter. Only published posts are asked for (so no
+ * draft, pending, scheduled or private term, in wp-admin either) and hidden
+ * published terms leave post__not_in and post__in alike, in the query
+ * itself, so pages and counts agree; a status other than the default (or
+ * "publish"), a closed glossary, or more terms than can be listed leaves the
+ * glossary out entirely. This holds for every viewer, editors included: a generic post is no place for a hidden term, and a
  * page built for one viewer may be cached for the next. "any" never covers
  * the glossary (it is excluded from search). The glossary's own templates
  * do not use this filter and are not changed.
@@ -594,17 +596,51 @@ function omochix_core_glossary_query_loop_vars( $query ) {
 	}
 	$status = $query['post_status'] ?? '';
 	$plain  = '' === $status || array() === $status || array( 'publish' ) === array_values( (array) $status );
-	$hidden = $plain ? omochix_core_glossary_hidden_published_ids( array( 'publish', 'private' ) ) : null;
+	$hidden = $plain ? omochix_core_glossary_hidden_published_ids() : null;
 	if ( null === $hidden ) {
 		$query['post_type'] = omochix_core_glossary_types_without( $types );
 		return $query;
 	}
+	// Published only, stated: left at the default, WP_Query adds drafts, pending and scheduled posts in wp-admin
+	// (the block editor renders the post it opens) and private ones for whoever may read them.
+	$query['post_status'] = 'publish';
 	if ( $hidden ) {
 		$query['post__not_in'] = array_values( array_unique( array_merge( array_map( 'intval', (array) ( $query['post__not_in'] ?? array() ) ), $hidden ) ) );
+		// WP_Query ignores post__not_in once post__in is set (sticky "only", other filters): take them out there too.
+		// An emptied list must stay a list that finds nothing; an empty post__in would mean "no limit".
+		if ( ! empty( $query['post__in'] ) ) {
+			$in                = array_values( array_diff( array_map( 'intval', (array) $query['post__in'] ), $hidden ) );
+			$query['post__in'] = $in ? $in : array( 0 );
+		}
 	}
+	$query['omochix_glossary_loop'] = true; // Read back by omochix_core_glossary_loop_posts().
 	return $query;
 }
 add_filter( 'query_loop_block_query_vars', 'omochix_core_glossary_query_loop_vars', 9999 );
+
+/**
+ * The same for the posts a Query Loop query found (a second line: a filter
+ * that changes the query after the one above, or an ID WP_Query takes ahead
+ * of post__not_in, cannot bring a hidden term onto the page).
+ *
+ * @param mixed $posts Posts found.
+ * @param mixed $query WP_Query.
+ * @return mixed
+ */
+function omochix_core_glossary_loop_posts( $posts, $query = null ) {
+	if ( ! is_array( $posts ) || ! is_object( $query ) || ! method_exists( $query, 'get' ) || true !== $query->get( 'omochix_glossary_loop' ) ) {
+		return $posts;
+	}
+	$out = array();
+	foreach ( $posts as $p ) {
+		$p = is_object( $p ) ? $p : get_post( (int) $p );
+		if ( is_object( $p ) && ( 'omx_glossary' !== ( $p->post_type ?? '' ) || omochix_core_glossary_visibility( $p )['visible'] ) ) {
+			$out[] = $p;
+		}
+	}
+	return $out;
+}
+add_filter( 'the_posts', 'omochix_core_glossary_loop_posts', 9999, 2 );
 
 /**
  * Comments screen for one post (wp-admin/edit-comments.php?p=<ID>, review
