@@ -1,17 +1,17 @@
 {
-  "release": "Theme 1.33.0 (Design Library G12: fictional-brand notices N1-N4, N6, N7, catalog fictionalBrand, usage-terms link shown only once that page is published; every work stays verified-local; publish gate stays closed)",
+  "release": "Theme 1.33.1 (G13 preparation: page template for the Design Library usage terms page; publish gate stays closed, every work stays verified-local)",
   "commit": "HEAD",
-  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.33.0 tree (G12, local) against the production 1.32.2 manifest (a1c4dec, sha256 696a2abe...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
+  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.33.1 tree (G13-T1, local) against the production 1.33.0 manifest (b3dcd3c, sha256 f5830e5a...); the gate and the tests compare the real tree and the config against these values, never the config against itself. 1 added (page-design-library-terms.php) and 2 replaced (inc/shell.php, style.css), 3 steps. Order rule: inc/shell.php after the added template and before style.css. Rollback A restores the 2 replaced files (style.css first, inc/shell.php last); the added template stays unless the owner approves --remove-added (rollback B).",
   "versions": {
     "core": "1.10.0",
-    "theme": "1.33.0"
+    "theme": "1.33.1"
   },
   "packages": {
     "theme": {
-      "baseline_sha256": "696a2abeffcb357a3f9548cf8550ba9bce6678be67f066a96ec2a85ba7024486",
-      "files": 292,
-      "add": 0,
-      "replace": 8
+      "baseline_sha256": "f5830e5aa464e33eddb32fbf9fab4fad7ef17a655536672c92135333dc7c615b",
+      "files": 293,
+      "add": 1,
+      "replace": 2
     }
   },
   "unchanged": {
@@ -21,26 +21,18 @@
       "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
     }
   },
-  "steps": 8,
-  "changed_paths_sha256": "eaafb82f399362194a754910c625da3c7a55dd31cc4be0a710e8ac14743945a1",
+  "steps": 3,
+  "changed_paths_sha256": "0c06b32d21cec27638a5ee964645bc7045e82b8c351e431e9039f07d57c93993",
   "forbidden": {
     "pattern": "#labs|svg-motion|logo-motion#i",
     "allowed": []
   },
   "order_rules": [
     {
-      "path": "theme:inc/design-library.php",
+      "path": "theme:inc/shell.php",
       "after_every": "add",
       "before_every": "replace",
       "except": []
-    },
-    {
-      "path": "theme:assets/data/design/catalog.json",
-      "after_every": "replace",
-      "before_every": "add",
-      "except": [
-        "theme:style.css"
-      ]
     }
   ],
   "switches": [
@@ -51,8 +43,8 @@
   ],
   "rollback": {
     "first": "theme:style.css",
-    "last": "theme:inc/design-library.php",
-    "count": 8
+    "last": "theme:inc/shell.php",
+    "count": 2
   },
   "core_version_markers": 11
 }
