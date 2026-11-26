@@ -1,4 +1,4 @@
-/* Micro Interaction Collection (fictional "HAKARI"): small, meaningful feedback inside one app screen.
+/* Micro Interaction Collection (fictional "TEMOCHO"): small, meaningful feedback inside one app screen.
    States are told by shape, icon and words as well as colour; reduced motion keeps them and drops the movement. */
 :root{--bg:#f3efe8;--surface:#fffdf9;--ink:#1d1b26;--mute:#5d5866;--line:#e3dccf;--coral:#ff6b4a;--coral-soft:#ffe3da;--ok:#17703f;--ok-soft:#dcefe2;--err:#c62828;--err-soft:#fbe3e1;--focus:#1d1b26;--shadow:0 16px 40px -20px #1d1b2655;color-scheme:light}
 html[data-theme="dark"]{--bg:#17161c;--surface:#211f27;--ink:#f1ede6;--mute:#b7b1a8;--line:#34313b;--coral:#ff8a6e;--coral-soft:#3a2622;--ok:#5fd394;--ok-soft:#173326;--err:#ff8f8a;--err-soft:#3b1f20;--focus:#f1ede6;--shadow:0 16px 40px -20px #000;color-scheme:dark}

@@ -735,6 +735,21 @@ add_filter('slim_seo_robots_index', static function ($indexed) {
     return omochix_learn_composer_is_request() ? false : $indexed;
 });
 
+/**
+ * The composer page is always noindex (above), so it also leaves Slim SEO's page sitemap -- same rule, same page id.
+ * Other pages, and the ignore decision of other filters, are left as they are.
+ *
+ * @param bool        $ignore Whether Slim SEO already leaves the post out.
+ * @param WP_Post|int $post   Post being listed.
+ * @return bool
+ */
+function omochix_learn_composer_sitemap_post_ignore($ignore, $post = null) {
+    $id      = $post instanceof WP_Post ? (int) $post->ID : (is_numeric($post) ? (int) $post : 0);
+    $page_id = omochix_learn_composer_page_id();
+    return $ignore || ($id > 0 && $page_id > 0 && $id === $page_id);
+}
+add_filter('slim_seo_sitemap_post_ignore', 'omochix_learn_composer_sitemap_post_ignore', 10, 2);
+
 /** Title as shown in the tab / meta title: "<page title> | Learn". */
 function omochix_learn_composer_title() {
     return omochix_learn_composer_is_request() ? sprintf(__('%s | Learn', 'omochix'), get_the_title()) : '';

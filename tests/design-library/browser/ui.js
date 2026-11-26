@@ -22,6 +22,55 @@ var check = L.check, BASE = L.BASE;
 var SHOTS = L.qaOut('screenshots');
 fs.mkdirSync(SHOTS, { recursive: true });
 var AXE = L.axePath();
+/** Capture every part of a long page without exceeding a single GPU screenshot surface. */
+async function captureQaPage(page, output, fullPage) {
+    if (!fullPage) {
+        await page.screenshot({ path: output, fullPage: false });
+        return;
+    }
+    var size = await page.evaluate(function () {
+        return { height: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight), viewport: innerHeight };
+    });
+    // Keep a margin below the 8192 px SwiftShader surface reported by G12 QA.
+    if (size.height <= 7800) {
+        await page.screenshot({ path: output, fullPage: true });
+        return;
+    }
+    if (!(size.viewport > 120)) throw new Error('Invalid viewport height for tiled screenshot');
+    var end = Math.max(0, size.height - size.viewport);
+    var step = size.viewport - 120; // Overlap prevents gaps around sticky elements.
+    var offsets = [];
+    for (var y = 0; y < end; y += step) offsets.push(y);
+    offsets.push(end);
+    var before = await page.evaluate(function () {
+        return { y: scrollY, root: document.documentElement.style.scrollBehavior, body: document.body.style.scrollBehavior };
+    });
+    try {
+        await page.evaluate(function () {
+            document.documentElement.style.scrollBehavior = 'auto';
+            document.body.style.scrollBehavior = 'auto';
+        });
+        for (var i = 0; i < offsets.length; i++) {
+            await page.evaluate(function (top) { window.scrollTo(0, top); }, offsets[i]);
+            await page.waitForTimeout(80);
+            var actualY = await page.evaluate(function () { return scrollY; });
+            if (Math.abs(actualY - offsets[i]) > 2) throw new Error('Tiled screenshot scroll mismatch: ' + actualY + ' vs ' + offsets[i]);
+            await page.screenshot({
+                path: output.replace(/\.png$/, '-tile-' + String(i + 1).padStart(2, '0') + '.png'),
+                fullPage: false
+            });
+        }
+    } finally {
+        await page.evaluate(function (s) {
+            document.documentElement.style.scrollBehavior = 'auto';
+            document.body.style.scrollBehavior = 'auto';
+            window.scrollTo(0, s.y);
+            document.documentElement.style.scrollBehavior = s.root;
+            document.body.style.scrollBehavior = s.body;
+        }, before);
+    }
+    L.info('tiled screenshot: ' + output + ' (' + offsets.length + ' viewport images)');
+}
 
 function playing(page) { return page.evaluate(function () { return Array.prototype.filter.call(document.querySelectorAll('[data-dl-video]'), function (v) { return !v.paused; }).length; }); }
 async function newCtx(browser, o) {
@@ -56,7 +105,7 @@ async function listChecks(type, browser) {
             check(T + ': no horizontal scroll, theme ' + mode.scheme, st.sw <= st.iw + 1 && st.theme === mode.scheme, st);
             await axe(page, T);
             if (type === 'chromium' || mode.n === 'pc-light' || mode.n === 'phone-dark') {
-                await page.screenshot({ path: path.join(SHOTS, type + '-' + mode.n + url.replace(/\//g, '_').replace(/_$/, '') + '.png'), fullPage: url !== '/design/web/bento-saas/' });
+                await captureQaPage(page, path.join(SHOTS, type + '-' + mode.n + url.replace(/\//g, '_').replace(/_$/, '') + '.png'), url !== '/design/web/bento-saas/');
             }
         }
         check(type + ' ' + mode.n + ': no page errors', errors.length === 0, errors);
@@ -144,7 +193,7 @@ async function listChecks(type, browser) {
     await px.goto(BASE + '/design/web/');
     function vis() { return px.evaluate(function () { return Array.prototype.filter.call(document.querySelectorAll('[data-dl-card]'), function (c) { return !c.hidden; }).map(function (c) { return c.querySelector('.dl-card__title').textContent.trim(); }); }); }
     await px.selectOption('#dl-motion_type', 'ambient'); await L.wait(200);
-    check(type + ' filter motion_type=ambient -> Liquid Glass and Aurora Gradient, URL synced', JSON.stringify(await vis()) === '["Liquid Glass","Aurora Gradient"]' && px.url().indexOf('motion_type=ambient') !== -1);
+    check(type + ' filter motion_type=ambient -> Frosted Glass UI and Aurora Gradient, URL synced', JSON.stringify(await vis()) === '["Frosted Glass UI","Aurora Gradient"]' && px.url().indexOf('motion_type=ambient') !== -1);
     await px.selectOption('#dl-motion_type', ''); await px.selectOption('#dl-technology', 'webgl'); await L.wait(200);
     check(type + ' filter technology=webgl -> 3D Interactive', JSON.stringify(await vis()) === '["3D Interactive"]');
     await px.selectOption('#dl-technology', ''); await px.selectOption('#dl-use_case', 'saas'); await L.wait(200);
@@ -269,7 +318,7 @@ async function demoChecks(type, browser) {
     var cr = await newCtx(browser, { reduce: true, vp: { width: 1280, height: 800 } });
     var pr = await cr.newPage();
     await pr.goto(BASE + '/design/demo/web/liquid-glass/'); await L.wait(800);
-    check(type + ' reduced: Liquid Glass background and highlight are still', await pr.evaluate(function () { return getComputedStyle(document.querySelector('.lg-blob--1')).animationName === 'none' && getComputedStyle(document.querySelector('.lg-spot')).opacity === '0' && getComputedStyle(document.querySelector('.lg-float')).animationName === 'none'; }));
+    check(type + ' reduced: Frosted Glass UI (liquid-glass) background and highlight are still', await pr.evaluate(function () { return getComputedStyle(document.querySelector('.lg-blob--1')).animationName === 'none' && getComputedStyle(document.querySelector('.lg-spot')).opacity === '0' && getComputedStyle(document.querySelector('.lg-float')).animationName === 'none'; }));
     await pr.goto(BASE + '/design/demo/web/minimal-editorial/'); await L.wait(300);
     check(type + ' reduced: Editorial headline shown at once, lines fully drawn', await pr.evaluate(function () { return Array.prototype.every.call(document.querySelectorAll('.ed-line'), function (e) { return getComputedStyle(e).opacity === '1'; }) && document.querySelector('.ed-rule').style.getPropertyValue('--p') === '1'; }));
     await pr.click('[data-ed-next]');

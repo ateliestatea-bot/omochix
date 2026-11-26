@@ -490,6 +490,107 @@ function omochix_filter_slim_seo_sitemap_taxonomies($taxonomies) {
 add_filter('slim_seo_sitemap_taxonomies', 'omochix_filter_slim_seo_sitemap_taxonomies');
 
 /**
+ * Comparable form of a URL for the canonical check below: host lower-cased, scheme and fragment ignored, path without
+ * its trailing slash, query kept. Relative URLs are resolved against home_url(). '' for anything that is not a URL.
+ *
+ * @param mixed $url URL.
+ * @return string
+ */
+function omochix_sitemap_comparable_url($url) {
+    if (!is_string($url) || '' === trim($url)) {
+        return '';
+    }
+    $url = trim($url);
+    if ('/' === $url[0] && (strlen($url) < 2 || '/' !== $url[1])) {
+        $url = home_url($url);
+    }
+    $parts = wp_parse_url($url);
+    if (!is_array($parts) || empty($parts['host'])) {
+        return '';
+    }
+    $path  = isset($parts['path']) ? untrailingslashit((string) $parts['path']) : '';
+    $query = isset($parts['query']) && '' !== $parts['query'] ? '?' . $parts['query'] : '';
+    $port  = isset($parts['port']) ? ':' . (int) $parts['port'] : '';
+    return strtolower((string) $parts['host']) . $port . $path . $query;
+}
+
+/**
+ * Keep a post out of the Slim SEO sitemap when its Slim SEO canonical (post meta slim_seo['canonical'], the value Slim
+ * SEO prints as <link rel="canonical">) names another URL. Slim SEO's sitemap only checks noindex, so such a post was
+ * listed although it points search engines elsewhere (e.g. an older duplicate article). Posts without a manual
+ * canonical, or whose canonical is their own permalink, are left as they are; another filter's "ignore" is kept.
+ *
+ * @param bool        $ignore Whether Slim SEO already leaves the post out.
+ * @param WP_Post|int $post   Post being listed.
+ * @return bool
+ */
+function omochix_sitemap_ignore_non_self_canonical($ignore, $post = null) {
+    if ($ignore) {
+        return $ignore;
+    }
+    $post = $post instanceof WP_Post ? $post : (is_numeric($post) && (int) $post > 0 ? get_post((int) $post) : null);
+    if (!$post instanceof WP_Post) {
+        return $ignore;
+    }
+    $data      = get_post_meta($post->ID, 'slim_seo', true);
+    $canonical = is_array($data) && isset($data['canonical']) ? omochix_sitemap_comparable_url($data['canonical']) : '';
+    if ('' === $canonical) {
+        return $ignore;
+    }
+    $permalink = omochix_sitemap_comparable_url(get_permalink($post));
+    return '' !== $permalink && $canonical !== $permalink;
+}
+add_filter('slim_seo_sitemap_post_ignore', 'omochix_sitemap_ignore_non_self_canonical', 10, 2);
+
+/**
+ * Published posts whose URL is retired by a 301 that WordPress' own data does not show (a Redirection rule), so they
+ * must leave the sitemap although their canonical is empty and they are not noindex. Keyed by post ID with the slug
+ * the post must still have. Fixed in code on purpose: there is no filter, so no plugin, setting or request can add to
+ * or widen the list; a change is a reviewed theme release.
+ *
+ * @return array<int,string>
+ */
+function omochix_sitemap_retired_posts() {
+    return [
+        1184 => 'nvidia-rtx-spark-launch-announcement', // 301 to /microsoft-nvidia-rtx-spark-local-ai-windows-2026/ (Redirection), 2026-11-22
+    ];
+}
+
+/**
+ * Whether $post is one of $retired: a 'post' whose ID is a key and whose slug equals that key's value. A reused ID, a
+ * renamed post or another post type is never matched. Pure, so the rule can be tested with any list.
+ *
+ * @param mixed             $post    Post being listed.
+ * @param array<int,string> $retired Post ID => slug.
+ * @return bool
+ */
+function omochix_sitemap_is_retired_post($post, array $retired) {
+    if (!$post instanceof WP_Post || 'post' !== $post->post_type) {
+        return false;
+    }
+    $id   = (int) $post->ID;
+    $slug = $id > 0 && array_key_exists($id, $retired) ? $retired[$id] : null;
+    return is_string($slug) && '' !== $slug && is_string($post->post_name) && $slug === $post->post_name;
+}
+
+/**
+ * Keep a retired post (above) out of the Slim SEO sitemap. Canonical, robots, redirects and the page itself are not
+ * touched; another filter's "ignore" is kept.
+ *
+ * @param bool        $ignore Whether Slim SEO already leaves the post out.
+ * @param WP_Post|int $post   Post being listed.
+ * @return bool
+ */
+function omochix_sitemap_ignore_retired_post($ignore, $post = null) {
+    if ($ignore) {
+        return $ignore;
+    }
+    $post = $post instanceof WP_Post ? $post : (is_numeric($post) && (int) $post > 0 ? get_post((int) $post) : null);
+    return omochix_sitemap_is_retired_post($post, omochix_sitemap_retired_posts());
+}
+add_filter('slim_seo_sitemap_post_ignore', 'omochix_sitemap_ignore_retired_post', 10, 2);
+
+/**
  * Exclude thin term archives, and the AI News category, from taxonomy sitemap output.
  *
  * The "ai-news" category is excluded unconditionally (regardless of its post

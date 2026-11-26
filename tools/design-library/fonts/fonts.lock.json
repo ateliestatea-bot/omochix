@@ -1,0 +1,36 @@
+{
+  "purpose": "Fonts used ONLY to render Design Library media (posters, card loops, videos). Not shipped in the theme; the live demos keep naming system fonts.",
+  "location": "Outside the repository: <media store>/fonts/<tag>/<file>. Install into ~/Library/Fonts only while rendering, then remove.",
+  "license": { "name": "SIL Open Font License 1.1", "file": "tools/design-library/fonts/OFL.txt", "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2", "git_blob": "d952d62c065f3f35fb83a173496e90b21525aef3", "source": "https://github.com/notofonts/noto-cjk/blob/523d033d6cb47f4a80c58a35753646f5c3608a78/LICENSE (identical at Serif2.003: Serif/LICENSE)" },
+  "fonts": [
+    {
+      "family": "Noto Sans JP",
+      "repository": "https://github.com/notofonts/noto-cjk",
+      "tag": "Sans2.004",
+      "commit": "523d033d6cb47f4a80c58a35753646f5c3608a78",
+      "path": "Sans/Variable/TTF/Subset/NotoSansJP-VF.ttf",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/Variable/TTF/Subset/NotoSansJP-VF.ttf",
+      "bytes": 9590732,
+      "git_blob": "12bd91340893f5b28ca26b99528a19f5f2fd7e89",
+      "sha256": "f4b373b226668ee33a6e54b02823dcd2d1209f17159f777421ae8c2275160369",
+      "name_version": "Version 2.004;hotconv 1.0.118;makeotfexe 2.5.65603",
+      "copyright": "© 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.",
+      "wght_axis": [100, 900]
+    },
+    {
+      "family": "Noto Serif JP",
+      "repository": "https://github.com/notofonts/noto-cjk",
+      "tag": "Serif2.003",
+      "commit": "9b0f1436e455d902de067a2501422e5dc71ad16b",
+      "path": "Serif/Variable/TTF/Subset/NotoSerifJP-VF.ttf",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/9b0f1436e455d902de067a2501422e5dc71ad16b/Serif/Variable/TTF/Subset/NotoSerifJP-VF.ttf",
+      "bytes": 13574104,
+      "git_blob": "69d15fae87d4bcc93b975b1fa8c640eb66e77fb6",
+      "sha256": "99999f906b3793c7c97661a05ef9d53488d488604683b308c756d084b71df7d1",
+      "name_version": "Version 2.003;hotconv 1.1.1;makeotfexe 2.6.0",
+      "copyright": "© 2017-2024 Adobe (http://www.adobe.com/).",
+      "wght_axis": [200, 900]
+    }
+  ],
+  "verified": "2026-11-20: git hash-object equals the blob recorded by the GitHub API at the pinned commit; SHA-256 computed locally; name table read (IDs 0, 1, 5, 7, 13, 14); fvar wght axis read."
+}

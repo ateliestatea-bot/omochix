@@ -114,7 +114,7 @@ async function checkEvents(page, label) {
 }
 
 async function layoutChecks(browser, name) {
-    var urls = ['/labs/'].concat(TOOLS.map(function (t) { return '/labs/' + t + '/'; }));
+    var urls = ['/labs/'].concat(TOOLS.concat(['code-studio']).map(function (t) { return '/labs/' + t + '/'; }));
     for (var w of [375, 768, 1440]) {
         for (var url of urls) {
             var s = await openPage(browser, w, url + '?gtag=1');
@@ -125,7 +125,8 @@ async function layoutChecks(browser, name) {
                 check(name + ' ' + w + 'px ' + url + ': axe WCAG 2.2 AA clean', v.length === 0, v);
             }
             check(name + ' ' + w + 'px ' + url + ': no script errors', s.errors.length === 0, s.errors);
-            await consoleCheck(s, name, w + 'px ' + url);
+            // Code Studio's console is checked in code-studio.js: the init script above is refused by its sandboxed frame (a harness message).
+            if (url.indexOf('code-studio') === -1) await consoleCheck(s, name, w + 'px ' + url);
             if (shots && w !== 768) await s.page.screenshot({ path: path.join(shots, name + '-' + w + url.replace(/\//g, '_') + '.png'), fullPage: true });
             await s.context.close();
         }
@@ -375,7 +376,7 @@ async function toolChecks(browser, name) {
     await p.fill('#labs-search-q', '');
     await p.click('[data-labs-cat="dev"]');
     await wait(300);
-    check(name + ' list: category filter and aria-current', (await p.locator('[data-labs-card]:visible').count()) === 2 && (await p.getAttribute('[data-labs-cat="dev"]', 'aria-current')) === 'true' && /cat=dev/.test(p.url()));
+    check(name + ' list: category filter and aria-current', (await p.locator('[data-labs-card]:visible').count()) === 3 && (await p.getAttribute('[data-labs-cat="dev"]', 'aria-current')) === 'true' && /cat=dev/.test(p.url()));
     await p.fill('#labs-search-q', 'zzzz');
     await wait(400);
     check(name + ' list: empty state', await p.isVisible('[data-labs-empty]'));
@@ -392,7 +393,7 @@ async function toolChecks(browser, name) {
     var sm = await req.get(ORIGIN + '/labs-sitemap.xml');
     var smText = await sm.text();
     check(name + ' sitemap: 200 application/xml, noindex, Last-Modified', sm.status() === 200 && /^application\/xml; charset=UTF-8$/i.test(sm.headers()['content-type']) && /noindex/.test(sm.headers()['x-robots-tag']) && !!sm.headers()['last-modified']);
-    check(name + ' sitemap: four tool URLs and not the list page', (smText.match(/<loc>/g) || []).length === 4 && smText.indexOf('<loc>' + ORIGIN + '/labs/</loc>') === -1);
+    check(name + ' sitemap: five tool URLs and not the list page', (smText.match(/<loc>/g) || []).length === 5 && smText.indexOf('<loc>' + ORIGIN + '/labs/</loc>') === -1);
     var sm304 = await req.get(ORIGIN + '/labs-sitemap.xml', { headers: { 'If-Modified-Since': sm.headers()['last-modified'] } });
     check(name + ' sitemap: 304 for an unchanged copy', sm304.status() === 304 && (await sm304.text()) === '');
     var rb = await (await req.get(ORIGIN + '/robots.txt')).text();

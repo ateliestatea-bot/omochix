@@ -1,6 +1,6 @@
 <?php
 /**
- * Design Library demo: Liquid Glass. Markup only; rendered by the isolated
+ * Design Library demo: Frosted Glass UI. Markup only; rendered by the isolated
  * demo endpoint (inc/design-library-demo.php). Opening this file directly
  * prints nothing. Product name and copy are fictional.
  */
@@ -17,7 +17,7 @@ defined('ABSPATH') || exit;
     <div class="lg-spot" aria-hidden="true"></div>
 
     <header class="lg-nav glass">
-        <span class="lg-logo"><span class="lg-logo__mark" aria-hidden="true"></span>Aerolume</span>
+        <span class="lg-logo"><span class="lg-logo__mark" aria-hidden="true"></span>Quillmere</span>
         <nav aria-label="ページ内"><a href="#lg-features">機能</a><a href="#lg-flow">使い方</a><a href="#lg-plans">プラン</a></nav>
         <button class="lg-btn lg-btn--small" type="button">無料で試す</button>
     </header>
@@ -27,7 +27,7 @@ defined('ABSPATH') || exit;
             <div class="lg-hero__text">
                 <p class="lg-eyebrow">AI WORKSPACE · 架空の製品</p>
                 <h1><span class="lg-ph">考えごとを、</span><br><span class="lg-ph">光のように</span><span class="lg-ph">軽く。</span></h1>
-                <p class="lg-lead">メモ、資料、会議の記録をひとつの画面に。Aerolume は散らばった考えを集めて、次にやることを静かに差し出します。</p>
+                <p class="lg-lead">メモ、資料、会議の記録をひとつの画面に。Quillmere は散らばった考えを集めて、次にやることを静かに差し出します。</p>
                 <div class="lg-cta">
                     <button class="lg-btn lg-btn--primary" type="button">はじめる</button>
                     <button class="lg-btn" type="button">2 分で分かる紹介</button>
@@ -41,7 +41,7 @@ defined('ABSPATH') || exit;
                     <li><b>見積もりの確認</b><span>担当：佐藤</span></li>
                     <li><b>次回の議題案</b><span>3 件</span></li>
                 </ul>
-                <p class="lg-panel__chip">✦ 提案を 3 件作成しました</p>
+                <p class="lg-panel__chip"><svg viewBox="0 0 10 10" width="0.8em" height="0.8em" aria-hidden="true" focusable="false" style="vertical-align:-0.05em"><path d="M5 0C5.5 3 7 4.5 10 5C7 5.5 5.5 7 5 10C4.5 7 3 5.5 0 5C3 4.5 4.5 3 5 0Z" fill="currentColor"/></svg> 提案を 3 件作成しました</p>
             </div>
         </section>
 

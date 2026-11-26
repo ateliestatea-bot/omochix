@@ -7,8 +7,8 @@ defined('ABSPATH') || exit;
 ?>
 <div class="ed">
     <header class="ed-mast">
-        <span class="ed-mast__title">YOHAKU</span>
-        <span class="ed-mast__sub">季刊 余白 — 架空の雑誌</span>
+        <span class="ed-mast__title">IKIMA</span>
+        <span class="ed-mast__sub">季刊 イキマ — 架空の雑誌</span>
         <span class="ed-mast__issue">No. 07 / 秋</span>
     </header>
     <div class="ed-rule" aria-hidden="true"></div>

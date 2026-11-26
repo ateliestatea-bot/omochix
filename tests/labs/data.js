@@ -162,7 +162,7 @@ check('crawlers: user-initiated agents carry the robots.txt caveat where the ope
 
 // ------------------------------------------------------------- catalog
 check('catalog: tools are published or draft', catalog.tools.every(function (t) { return t.status === 'published' || t.status === 'draft'; }));
-check('catalog: four tools with unique slugs and titles', catalog.tools.length === 4 && new Set(catalog.tools.map(function (t) { return t.slug; })).size === 4 && new Set(catalog.tools.map(function (t) { return t.title; })).size === 4);
+check('catalog: five tools with unique slugs and titles', catalog.tools.length === 5 && new Set(catalog.tools.map(function (t) { return t.slug; })).size === 5 && new Set(catalog.tools.map(function (t) { return t.title; })).size === 5);
 check('catalog: every tool has a UI script and a content template', catalog.tools.every(function (t) {
     return fs.existsSync(path.join(theme, 'assets/js/labs/ui', t.slug + '.js')) && fs.existsSync(path.join(theme, 'template-parts/labs/content', t.slug + '.php'));
 }));

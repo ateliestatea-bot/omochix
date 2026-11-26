@@ -110,5 +110,19 @@ check('presets: target and intent lists exist with plain keys', count($presets['
 check('routing: composer url resolves through the published page', 'https://example.test/learn/motion/compose/' === omochix_learn_composer_url());
 check('routing: constants', 'learn/motion/compose' === OMOCHIX_LEARN_COMPOSER_PATH && 3 === OMOCHIX_LEARN_COMPOSER_MAX_SLOTS && 'c' === OMOCHIX_LEARN_COMPOSER_HASH_KEY);
 
+// ------------------------------------------------------------------- sitemap
+// The page is always noindex, so it must also leave Slim SEO's page sitemap; nothing else changes.
+$composePage = $GLOBALS['pages']['learn/motion/compose'];
+check('sitemap: the composer page (WP_Post) is left out', true === omochix_learn_composer_sitemap_post_ignore(false, $composePage));
+check('sitemap: the composer page (int id) is left out', true === omochix_learn_composer_sitemap_post_ignore(false, 8));
+check('sitemap: the gallery page stays listed', false === omochix_learn_composer_sitemap_post_ignore(false, $GLOBALS['pages']['learn/motion']));
+check('sitemap: another post stays listed', false === omochix_learn_composer_sitemap_post_ignore(false, new WP_Post(['ID' => 99, 'post_type' => 'post'])));
+check('sitemap: null / garbage leave the decision unchanged', false === omochix_learn_composer_sitemap_post_ignore(false, null) && false === omochix_learn_composer_sitemap_post_ignore(false, 'x') && true === omochix_learn_composer_sitemap_post_ignore(true, null));
+check('sitemap: another filter\'s ignore=true is kept', true === omochix_learn_composer_sitemap_post_ignore(true, $GLOBALS['pages']['learn/motion']));
+// Without a published composer page (id 0) nothing is left out; separate process because the page id is cached.
+$child = 'require ' . var_export(__DIR__ . '/../learn-gallery/stub.php', true) . '; require $THEME . "/inc/learn-composer.php"; $GLOBALS["pages"] = []; '
+    . 'echo json_encode([omochix_learn_composer_sitemap_post_ignore(false, new WP_Post(["ID" => 8])), omochix_learn_composer_sitemap_post_ignore(false, 0)]);';
+check('sitemap: no published composer page -> nothing left out', '[false,false]' === trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' -d display_errors=stderr -r ' . escapeshellarg($child))));
+
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

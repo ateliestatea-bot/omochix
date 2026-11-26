@@ -1,0 +1,61 @@
+{
+  "release": "Theme 1.32.0 (Labs Code Studio, shipped as a draft)",
+  "commit": "112dd02701ce649128a016a9de36eae7bb403cd7",
+  "note": "Archived with the 1.32.0 release (main 112dd02; release bundle rebuilt byte-identical from 112dd02; production checked read-only on 2026-11-22: style.css 1.32.0, post-check PASS, 101 URLs unchanged, all 189 public files match the release manifest b282a689... (inc/labs-data/.htaccess is not served)); checked by CI on that commit. Independent expectations for tools/release/release.json. Recorded by hand from the 1.32.0 tree against the production 1.31.1 manifest (releases/theme-1.31.1-68d81af, sha256 29d3d926...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
+  "versions": {
+    "core": "1.10.0",
+    "theme": "1.32.0"
+  },
+  "packages": {
+    "theme": {
+      "baseline_sha256": "29d3d926634fc59f502d4b947f8be3ff137c1f0f81bca5744f01cb96060146a2",
+      "files": 291,
+      "add": 4,
+      "replace": 4
+    }
+  },
+  "unchanged": {
+    "core": {
+      "dir": "wp-plugin/omochix-core",
+      "baseline": "tools/release/baseline/omochix-core-1.10.0.sha256",
+      "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
+    }
+  },
+  "steps": 8,
+  "changed_paths_sha256": "2c04320d57ac3ee97baadf21185926805ad5e0de34a217302422567828079bcf",
+  "forbidden": {
+    "pattern": "#labs|svg-motion|logo-motion#i",
+    "allowed": [
+      "theme:assets/css/labs.css",
+      "theme:assets/data/labs/catalog.json",
+      "theme:assets/data/labs/code-studio.json",
+      "theme:assets/js/labs/core/codestudio.js",
+      "theme:assets/js/labs/ui/code-studio.js",
+      "theme:inc/labs.php",
+      "theme:template-parts/labs/content/code-studio.php"
+    ]
+  },
+  "order_rules": [
+    {
+      "path": "theme:inc/labs.php",
+      "after_every": "add",
+      "before_every": "replace",
+      "except": [
+        "theme:style.css"
+      ],
+      "why": "inc/labs.php reads the new Code Studio lesson data and template part"
+    }
+  ],
+  "switches": [
+    "theme:style.css"
+  ],
+  "gates": [
+    "B"
+  ],
+  "rollback": {
+    "first": "theme:style.css",
+    "last": "theme:inc/labs.php",
+    "count": 4
+  },
+  "core_version_markers": 11
+}

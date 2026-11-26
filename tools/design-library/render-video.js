@@ -30,18 +30,31 @@ var slug = process.argv[2];
 var spec = SPECS[slug];
 if (!spec) { console.error('usage: render-video.js <' + Object.keys(SPECS).join('|') + '>'); process.exit(2); }
 var SRC = path.join(__dirname, 'video-sources', slug, 'index.html');
-var OUT = path.resolve(__dirname, '../../wp-theme/omochix-theme/assets/design');
+// R-7: output ONLY to DL_OUT (outside the repository) with the OFL fonts of fonts/fonts.lock.json; the
+// source names them directly, and every frame range is font-audited before rendering (audit/{slug}.json).
+var guard = require('./render-guard');
+var OUT;
+try { OUT = guard.outDir(); console.log('fonts: ' + guard.checkFonts().join(', ') + '\nout: ' + OUT); } catch (e) { console.error('STOP: ' + e.message); process.exit(2); }
 var TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'omx-dl-video-'));
 ['videos', 'loops', 'posters'].forEach(function (d) { fs.mkdirSync(path.join(OUT, d), { recursive: true }); });
 function sh(cmd, args) { var r = cp.spawnSync(cmd, args, { encoding: 'utf8' }); if (r.status !== 0) throw new Error(cmd + ': ' + (r.stderr || '').slice(-400)); }
 
 (async function () {
     var browser = await chromium.launch();
+    await guard.waitForFonts(browser);
     var page = await browser.newPage({ viewport: { width: spec.width, height: spec.height }, deviceScaleFactor: 1 });
     await page.route('**/*', function (r) { return r.request().url().indexOf('file://') === 0 ? r.continue() : r.abort(); }); // no network
     await page.goto('file://' + SRC);
     await page.evaluate(function () { return document.fonts.ready; });
     var frames = Math.round(spec.fps * spec.seconds);
+    var audits = [];
+    for (var k = 0; k <= 4; k++) {   // every text element is in the DOM for the whole work; check 5 points in time
+        var at = spec.seconds * 1000 * k / 4;
+        await page.evaluate(function (ms) { document.getAnimations().forEach(function (a) { a.pause(); a.currentTime = ms; }); }, at);
+        audits.push(await guard.auditFonts(page, slug + ' t=' + (at / 1000) + 's'));
+    }
+    fs.writeFileSync(path.join(OUT, 'audit', slug + '.json'), JSON.stringify(audits, null, 1));
+    if (audits.some(function (a) { return !a.pass; })) throw new Error('font audit failed: ' + JSON.stringify(audits.map(function (a) { return a.fonts; })));
     var raw = path.join(TMP, 'frames.mp4');
     var ff = cp.spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(spec.fps), '-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '12', '-pix_fmt', 'yuv420p', raw], { stdio: ['pipe', 'inherit', 'inherit'] });
     var posterPng = path.join(TMP, 'poster.png');

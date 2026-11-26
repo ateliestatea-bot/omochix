@@ -21,6 +21,7 @@ var Tokens = require(path.join(dir, 'core/tokens.js'));
 var Cost = require(path.join(dir, 'core/cost.js'));
 var Events = require(path.join(dir, 'core/events.js'));
 var Ops = require(path.join(dir, 'core/ops.js'));
+var Studio = require(path.join(dir, 'core/codestudio.js'));
 
 var pass = 0;
 var fail = 0;
@@ -311,6 +312,204 @@ check('ops: json.format through the registry', Ops.run('json.format', { text: '[
 check('ops: diff.lines adds unified text', Ops.run('diff.lines', { oldText: 'a', newText: 'b', oldName: 'x', newName: 'y' }).unified.indexOf('--- x') === 0);
 check('ops: unknown op throws', (function () { try { Ops.run('eval', {}); return false; } catch (e) { return true; } }()));
 
+// ----------------------------------------------------------- Code Studio
+var pc = Studio.purifyConfig();
+check('studio: script, style, frames, forms, svg and loaders are forbidden tags', ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form', 'svg', 'math', 'template', 'audio', 'video'].every(function (t) { return pc.FORBID_TAGS.indexOf(t) !== -1 && pc.ALLOWED_TAGS.indexOf(t) === -1; }));
+check('studio: no event attribute, srcset, srcdoc, action or target is allowed', pc.ALLOWED_ATTR.every(function (a) { return !/^on/.test(a); }) && ['srcset', 'srcdoc', 'action', 'formaction', 'target', 'ping'].every(function (a) { return pc.FORBID_ATTR.indexOf(a) !== -1 && pc.ALLOWED_ATTR.indexOf(a) === -1; }) && pc.ALLOW_DATA_ATTR === false && pc.ALLOW_UNKNOWN_PROTOCOLS === false);
+check('studio: no href; URLs are small inline images only', pc.ALLOWED_ATTR.indexOf('href') === -1 && pc.FORBID_ATTR.indexOf('href') !== -1 && ['data:image/png;base64,AAAA', 'data:image/webp;base64,AA+/=='].every(function (u) { return pc.ALLOWED_URI_REGEXP.test(u); }) && ['#top', '#', 'https://example.com/', '//example.com/x', 'http://x', 'javascript:alert(1)', 'JaVaScRiPt:alert(1)', ' javascript:alert(1)', 'data:text/html;base64,AAAA', 'data:image/svg+xml;base64,AAAA', '/wp-admin/', 'mailto:a@b.c', 'x', '#a b', '#"><script>'].every(function (u) { return !pc.ALLOWED_URI_REGEXP.test(u); }));
+check('studio: purifyConfig returns fresh lists (a caller cannot widen the allowlist)', (function () { var a = Studio.purifyConfig(); a.ALLOWED_TAGS.push('script'); a.FORBID_TAGS.length = 0; var b = Studio.purifyConfig(); return b.ALLOWED_TAGS.indexOf('script') === -1 && b.FORBID_TAGS.indexOf('script') !== -1; }()));
+function cssOut(css) { return Studio.sanitizeCss(css).css; }
+var cssAttacks = [
+    '</style><script>alert(1)</script>', '<!-- x -->', '@import url(https://evil.example/a.css);', '@import "https://evil.example/a.css";', '@IMPORT url(//evil.example);',
+    'a{background:url(https://evil.example/x.png)}', 'a{background:URL( "//evil.example/x" )}', 'a{background:u\\72l(https://evil.example)}', 'a{background:ur\\l(https://evil.example)}',
+    'a{background:\\75\\72\\6c(https://evil.example)}', 'a{background:image-set("https://evil.example/x.png" 1x)}', 'a{background:-webkit-image-set(url(https://evil.example/x) 1x)}',
+    'a{background:image("https://evil.example/x.png")}', 'a{background:cross-fade(url(https://evil.example/a), url(b))}', '@font-face{font-family:x;src:url(https://evil.example/f.woff2)}',
+    'a{width:expression(alert(1))}', 'a{-moz-binding:url(https://evil.example/x.xml#x)}', 'a{behavior:url(x.htc)}', 'a{background:url(javascript:alert(1))}',
+    'a{background:url(data:text/html;base64,AAAA)}', 'a{background:url(data:image/svg+xml;base64,AAAA)}', 'a{background:url(https://evil.example/x', '@namespace url(http://www.w3.org/1999/xhtml);',
+    'a{cursor:url(https://evil.example/c.cur),auto}', 'a{list-style:url("https://evil.example/l.png")}', 'a{content:url(https://evil.example/c)}', 'a{background:url(/wp-admin/admin-ajax.php?x)}',
+    '@media screen{a{background:url(https://evil.example/m)}}', 'a{background:url(\nhttps://evil.example/n)}', '@im\\port url(https://evil.example);', '@charset "x";@import url(//evil.example);'
+];
+check('studio css: ' + cssAttacks.length + ' attack strings leave no markup, escape, @import, loader or remote url()', cssAttacks.every(function (c) {
+    var o = cssOut(c);
+    return !/[<\\]|-->/.test(o) && !/@import|@font-face|@namespace|@charset/i.test(o) && !/(?:image-set|image|cross-fade|element|paint|expression)\s*\(/i.test(o) && !/["']/.test(o) && !/https?:|ftp:|wss?:|file:/i.test(o) && !/-moz-binding|behavior\s*:|javascript\s*:/i.test(o)
+        && (o.match(/url\([^)]*\)?/gi) || []).every(function (u) { return /^url\(\s*["']?data:image\/(?:png|gif|jpeg|webp);base64,/i.test(u); });   // what is left of an escape ("u72l(https://…)") is an unknown function: not a request
+}));
+check('studio css: sanitising is idempotent', cssAttacks.every(function (c) { var once = cssOut(c); return cssOut(once) === once; }));
+var cssJoins = [
+    '@im@import;port "//evil.example/a.css";', '@im@im@im@import;port;port;port "//evil.example/a.css";', '@im@charset;port "//evil.example/a.css";', '@imjavascript:port "//evil.example/a.css";',
+    '@im<port "//evil.example/a.css";', '@import "//evil.example/a{.css";', '@import "//evil.example/a}.css";', 'a{background:uexpression(rl(//evil.example/x)}', 'a{background:ubehavior:rl(//evil.example/x)}',
+    'a{background:u@import;rl(//evil.example/x)}', 'a{background:ur@namespace;l(//evil.example/x)}', 'a{background:im@import;age-set("//evil.example/x" 1x)}', '@font-@import;face{src:local(x)}'
+];
+check('studio css: text joined by a removal is sanitised again (' + cssJoins.length + ' strings)', cssJoins.every(function (c) {
+    var o = cssOut(c);
+    return !/@import|@font-face|url\s*\(|image-set\s*\(/i.test(o) && cssOut(o) === o;
+}), cssJoins.map(cssOut));
+check('studio css: text that keeps changing is dropped whole', (function () { var c = new Array(40).join('@im') + '@import;' + new Array(40).join('port;') + ' "//evil.example/a.css";a{color:red}'; var r = Studio.sanitizeCss(c); return r.css === '' && r.removed.indexOf('unstable') !== -1; }()));
+check('studio purify: only src is checked as a URL; the plain attributes are not', (function () { var safe = pc.ADD_URI_SAFE_ATTR; return safe.indexOf('src') === -1 && pc.ALLOWED_ATTR.indexOf('cite') === -1 && ['type', 'colspan', 'rowspan', 'width', 'height', 'lang', 'start', 'min', 'max', 'rows', 'tabindex'].every(function (a) { return safe.indexOf(a) !== -1; }) && safe.length === pc.ALLOWED_ATTR.length - 1; }()));
+check('studio purify: isImageUri accepts a small inline bitmap only', Studio.isImageUri('data:image/png;base64,AAAA') && Studio.isImageUri(' data:image/webp;base64,AA== ') && !Studio.isImageUri('data:image/svg+xml;base64,AAAA') && !Studio.isImageUri('data:image/svg+xml,%3Csvg%3E') && !Studio.isImageUri('data:text/html;base64,AAAA') && !Studio.isImageUri('//evil.example/x.png') && !Studio.isImageUri('x.png') && !Studio.isImageUri('data:image/png;base64,AA AA') && !Studio.isImageUri(null));
+check('studio check dom: a pattern in a check is ignored (no RegExp from data)', Studio.checkDom({ querySelectorAll: function () { return [{ getAttribute: function () { return 'x'; } }]; } }, { type: 'attribute', selector: 'img', name: 'alt', pattern: '^y$' }) === true);
+// What the sanitiser must never leave: IE "behavior" as a property name, "javascript:" where a URL can start (not inside
+// a class / id / element name such as ".javascript:hover", which is a pseudo-class and loads nothing).
+var DANGER_WORD = /(?:^|[^A-Za-z0-9_\-\u0080-\uFFFF])(?:-ms-)?behavior\s*:|(?:^|[^A-Za-z0-9_\-\u0080-\uFFFF.#])javascript\s*:/i;
+// Fuzz (seeded, so a failure is reproducible): pieces that a removal can join back together.
+check('studio css: 20,000 random joins of removable pieces leave nothing that loads or escapes', (function () {
+    var seed = 20261120;
+    function rnd(n) { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed % n; }
+    var pieces = ['@im', 'port', '@import', ';', 'u', 'rl', 'url(', ')', '(', '<', '-->', '\\', '/*', '*/', '"', "'", 'http:', '//evil.example/x', 'expression(', 'behavior:', 'javascript:',
+        '@font-face', '@namespace', '@charset', 'image', '-set', 'image-set(', 'cross-fade(', 'el', 'ement(', '{', '}', ' ', 'a{background:', 'data:image/png;base64,AAAA', 'data:text/html,', '@media x{',
+        // Review 2026-11-21 (M3): the boundaries the sanitiser now looks at.
+        '.file', '.http', '#blob', 'a.', ':hover', '::before', 'scroll-', 'overscroll-', '-ms-', 'x', 'src(', 'é', 'file:', 'https:'];
+    var bad = [];
+    for (var i = 0; i < 20000 && bad.length < 5; i++) {
+        var c = '', n = 2 + rnd(14);
+        for (var k = 0; k < n; k++) c += pieces[rnd(pieces.length)];
+        var o = cssOut(c);
+        var urls = (o.match(/url\s*\([^)]*\)?/gi) || []).filter(function (u) { return !/^url\(\s*["']?data:image\/(?:png|gif|jpeg|webp);base64,/i.test(u); });
+        // A bare "http:" left as text loads nothing; what matters is a function or rule that loads, an escape or markup.
+        if (/[<\\]|-->|@import|@font-face|@namespace|@charset|expression\s*\(|(?:image-set|image|cross-fade|element|paint|src)\s*\(/i.test(o) || DANGER_WORD.test(o) || urls.length || cssOut(o) !== o) bad.push([c, o]);
+    }
+    return bad.length === 0 || (console.log(JSON.stringify(bad)), false);
+}()));
+// Review 2026-11-21 (M3): ordinary CSS that only looks like a scheme or "behavior" stays whole.
+var cssKeep = ['html{scroll-behavior:smooth}', '.x{overscroll-behavior: contain}', '.list{overscroll-behavior-y:none}', '.file:hover{color:red}', '.blob::before{content:"x"}', 'a.http:focus{color:red}',
+    '#ftp:focus{outline:1px solid}', '.https:focus-visible{color:red}', '.javascript:hover{color:red}', '.ファイル:hover{color:red}', '.x-file:hover{color:red}', 'a.wss:active{color:red}', '.filesystem:checked{color:red}', '.u-behavior:hover{color:red}'];
+eq('studio css (M3): ' + cssKeep.length + ' ordinary rules whose words look like a scheme or "behavior" are kept as they are', cssKeep.map(function (c) { var r = Studio.sanitizeCss(c); return r.removed.length ? r.css + ' ' + r.removed : c; }), cssKeep);
+eq('studio css (M3): IE behavior (as a property), javascript: and schemes where a URL can start are still removed', [
+    'a{behavior:url(x.htc)}', 'a{-ms-behavior:url(x.htc)}', 'a{BEHAVIOR :x}', 'a{ behavior:x}', '/**/behavior:x', 'a{content:"https://x"}', "a{content:'file:///etc'}", 'a{b:javascript:alert(1)}', 'a{b: ftp://x}', 'a{b:(blob:x)}', 'a{background:src("//x")}', 'a{background:SRC (x)}'
+].map(cssOut), ['a{none}', 'a{none}', 'a{x}', 'a{ x}', '/**/x', 'a{content:"//x"}', "a{content:'///etc'}", 'a{b:alert(1)}', 'a{b: //x}', 'a{b:(x)}', 'a{background:none}', 'a{background:none}']);
+check('studio css: ordinary CSS is unchanged and nothing is reported', (function () { var c = '.card {\n  padding: 16px;\n  color: #6735c7;\n  background: linear-gradient(90deg, #fff, #f5f0ff);\n}\n@media (max-width: 600px) { .card > h2:hover { font-size: 1.2rem; } }\n'; var r = Studio.sanitizeCss(c); return r.css === c && r.removed.length === 0; }()));
+check('studio css: an inline png stays', cssOut('a{background:url(data:image/png;base64,AAAA)}') === 'a{background:url(data:image/png;base64,AAAA)}');
+check('studio css: removed lists what was taken out', Studio.sanitizeCss('@import "x";a{background:url(//x)}').removed.join(',') === 'import,url');
+var docOut = Studio.buildDocument({ html: '<h1>x</h1>', css: 'h1{color:red}</style><script>alert(1)</script>' });
+check('studio document: the enforced policy is the first element of head', docOut.indexOf('<!doctype html><html lang="ja"><head><meta http-equiv="Content-Security-Policy" content="default-src &#039;none&#039;') === 0 || docOut.indexOf('<!doctype html><html lang="ja"><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; form-action \'none\'"><meta charset="utf-8">') === 0 && docOut.indexOf('<base') === -1);
+check('studio document: the policy allows no script, connection, font, frame or form', Studio.PREVIEW_CSP === "default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'none'" && !/script-src|connect-src|unsafe-eval|https?:|\*/.test(Studio.PREVIEW_CSP));
+check('studio document: CSS cannot close the style element', docOut.indexOf('<script') === -1 && (docOut.match(/<\/style>/g) || []).length === 3);
+check('studio document: reduced-motion rule is last so it wins', docOut.lastIndexOf('prefers-reduced-motion') > docOut.indexOf('h1{color:red}'));
+check('studio export: a standalone file without the preview policy, CSS sanitised', (function () { var e = Studio.buildExport({ html: '<p>a</p>', css: '@import "x";p{color:red}' }, 'T<x>'); return e.indexOf('<title>T&lt;x&gt;</title>') !== -1 && e.indexOf('@import') === -1 && e.indexOf('p{color:red}') !== -1 && e.indexOf('Content-Security-Policy') === -1; }()));
+check('studio limits: 50KB each, counted in UTF-8 bytes', Studio.overLimit({ html: new Array(51201).join('a'), css: '' }) === null && Studio.overLimit({ html: new Array(51202).join('a'), css: '' }) === 'html' && Studio.overLimit({ html: '', css: new Array(17068).join('あ') }) === 'css' && Studio.overLimit({ html: '', css: new Array(17067).join('あ') }) === null && Studio.byteLength('あ😀a') === 8);
+var parsed = Studio.parseCss('/* c */ .card , .box { padding : 16px ; COLOR: Red }\n@media (max-width: 600px) { .columns { flex-direction: column } }\n@keyframes k { from { opacity: 0 } }\n.card h2{margin:0}');
+eq('studio parse: selectors, declarations and media', parsed.rules.map(function (r) { return [r.selectors.join('|'), Object.keys(r.declarations).join('|'), r.media]; }), [['.card|.box', 'padding|color', null], ['.columns', 'flex-direction', '(max-width: 600px)'], ['.card h2', 'margin', null]]);
+eq('studio parse: properties in order of first use', Studio.cssProperties(parsed), ['padding', 'color', 'flex-direction', 'margin']);
+eq('studio parse: tags in the source, comments ignored', Studio.htmlTags('<H1>a</H1><!-- <table> --><p class="x">b<br/></p><ul><li>1</li><li>2</li></ul>'), ['h1', 'p', 'br', 'ul', 'li']);
+check('studio parse: unbalanced and huge input ends (no hang)', (function () { var t = Date.now(); Studio.parseCss(new Array(20001).join('a{')); Studio.parseCss(new Array(5001).join('@media x{a{b:c}')); Studio.parseCss('}}}}{{{{'); return Date.now() - t < 5000; }()));
+check('studio check css: selector and property, outside media only', Studio.checkCss(parsed, { type: 'css', selector: '.card', property: 'padding' }) && Studio.checkCss(parsed, { type: 'css', selector: '.card  H2', property: 'margin' }) && !Studio.checkCss(parsed, { type: 'css', selector: '.columns', property: 'flex-direction' }) && !Studio.checkCss(parsed, { type: 'css', selector: '.card', property: 'margin' }));
+// Review 2026-11-21 (M1): class names, ids and attribute values are case-sensitive in HTML / CSS; element names,
+// pseudo-classes and attribute names are not. The line above used to expect ".CARD H2" to match ".card h2", which a
+// browser does not do (".CARD" never selects class="card"), so a learner could pass with CSS that has no effect.
+check('studio check css (M1): class / id / attribute value keep their case; element, pseudo-class and attribute names do not', (function () {
+    // Review N4: the value of "type" (and the other attributes HTML lists) matches without case; "title" does not.
+    var p = Studio.parseCss('.Card{padding:1px}\n#Main H2:HOVER{color:red}\nINPUT[TYPE="Text"]{margin:0}\nP[TITLE="Hi"]{width:2px}\nli:NTH-CHILD(ODD){width:1px}');
+    function has(sel, prop) { return Studio.checkCss(p, { type: 'css', selector: sel, property: prop }); }
+    return !has('.card', 'padding') && has('.Card', 'padding') && has('#Main h2:hover', 'color') && !has('#main h2:hover', 'color') && has('input[type="Text"]', 'margin') && has('input[type="text"]', 'margin')
+        && has('p[title="Hi"]', 'width') && !has('p[title="hi"]', 'width') && has('li:nth-child(odd)', 'width');
+}()));
+eq('studio normSelector (M1, N4): what is lower-cased', ['DIV.Card > H2', 'A:HOVER::BEFORE', 'p:NOT(.Lead)', 'INPUT[TYPE="Text" I]', 'P[TITLE="Hi"]', '.a  .b', '.カード', 'a[title="x]y"].B'].map(function (x) { return Studio.normSelector(x); }),
+    ['div.Card > h2', 'a:hover::before', 'p:not(.Lead)', 'input[type="text" i]', 'p[title="Hi"]', '.a .b', '.カード', 'a[title="x]y"].B']);
+// Review N3 / N4 (2026-11-21): what reads the same is the same, and nothing else is.
+var sameSel = [['.card>h2', '.card > h2'], ['li+li', 'li  +  li'], ['.a ~.b', '.a~ .b'], ['.a,  .b', '.a,.b'], ['DIV.a  >  P:HOVER', 'div.a > p:hover'], ['li:nth-child(2n+1)', 'li:nth-child( 2n + 1 )'],
+    ['input[type="TEXT"]', 'input[type=text]'], ['input[TYPE = "Text"]', 'input[type="text"]'], ['p[title="A" i]', 'p[title="a" I]'], ['em[lang="EN"]', 'em[lang="en"]'], ["a[title='x']", 'a[title="x"]'], ['p:not(.A, .b)', 'p:not(.A,.b)']];
+var diffSel = [['.Card', '.card'], ['#Main', '#main'], ['a[title="a  b"]', 'a[title="a b"]'], ['a[title="x>y"]', 'a[title="x > y"]'], ['a[title="x,y"]', 'a[title="x, y"]'], ['p[title="A"]', 'p[title="a"]'],
+    ['p[title="A" i]', 'p[title="a"]'], ['input[type="TEXT" s]', 'input[type="text"]'], ['p:not(.A)', 'p:not(.a)'], ['.カード', '.ｶｰﾄﾞ'], ['a[x', 'a[y'],
+    // Review F2 (2026-11-21): case is ignored for A-Z only. A browser tells these apart (class, element, "i"-flag value, HTML list value).
+    ['.Café', '.cafÉ'], ['.É', '.é'], ['x-É', 'x-é'], ['ÉLÉMENT', 'élément'], ['[title="É" i]', '[title="é" i]'], ['input[type="É"]', 'input[type="é"]'], ['p[lang="ÆN"]', 'p[lang="æn"]'], ['p:not(.Ä)', 'p:not(.ä)']];
+// Review F2 / F4: ASCII case and spacing inside parentheses still do not matter next to non-ASCII text.
+sameSel.push(['DIV.Café', 'div.Café'], ['INPUT[TYPE="TEXTÉ"]', 'input[type="textÉ"]'], ['p[title="aÉ" I]', 'p[title="AÉ" i]'], ['X-É', 'x-É'],
+    [':not(.a , .b)', ':not(.a,.b)'], ['p:not( .a ,.b )', 'p:not(.a, .b)'], ['li:is(.a  ,  .b) > p', 'li:is(.a,.b)>p']);
+check('studio normSelector (N3/N4): ' + sameSel.length + ' pairs that read the same are equal', sameSel.every(function (p) { return Studio.normSelector(p[0]) === Studio.normSelector(p[1]); }), sameSel.filter(function (p) { return Studio.normSelector(p[0]) !== Studio.normSelector(p[1]); }).map(function (p) { return p.map(Studio.normSelector); }));
+check('studio normSelector (N3/N4): ' + diffSel.length + ' pairs that differ (quoted text, class / id case, value case outside the HTML list, flags) stay different', diffSel.every(function (p) { return Studio.normSelector(p[0]) !== Studio.normSelector(p[1]); }), diffSel.filter(function (p) { return Studio.normSelector(p[0]) === Studio.normSelector(p[1]); }));
+check('studio check css (N4): ".card>h2" in the CSS solves a check written ".card > h2", and the other way round', Studio.checkCss(Studio.parseCss('.card>h2{color:red}'), { type: 'css', selector: '.card > h2', property: 'color' }) && Studio.checkCss(Studio.parseCss('.card > h2{color:red}'), { type: 'css', selector: '.card>h2', property: 'color' }));
+// Review N2 (2026-11-21): deep nesting is refused; ordinary nesting is kept.
+check('studio css (N2): nesting deeper than ' + Studio.LIMITS.depth + ' levels is dropped whole ("too_deep"); the deepest ordinary CSS is kept', (function () {
+    function nots(k) { return 'a' + new Array(k + 1).join(':not(') + '.b' + new Array(k + 1).join(')') + '{color:red}'; }
+    var deep = Studio.sanitizeCss(nots(Studio.LIMITS.depth + 1));
+    var ok = Studio.sanitizeCss(nots(Studio.LIMITS.depth));
+    var calc = '.a{width:calc(100% - min(10px, max(1px, calc(2px + var(--x, calc(1px * 2))))))}';
+    return deep.css === '' && deep.removed.join() === 'too_deep' && ok.css === nots(Studio.LIMITS.depth) && Studio.sanitizeCss(calc).css === calc;
+}()));
+// Review F1 (2026-11-21): the depth is the larger of "every bracket" and "the brackets the browser's tokenizer sees", so
+// brackets in strings, comments and escapes now count too (too deep only refuses CSS). The line before F1 expected
+// 'a{b:"(((("}' to be 1 deep: a stray quote ended by a newline hid 6,000 levels that way and crashed the tab.
+eq('studio css (N2, F1): depth counts ( [ { together, inside strings, comments and escapes too', [Studio.nestingDepth('a:not(:not(.b)){c:d}'), Studio.nestingDepth('a{b:"(((("}'), Studio.nestingDepth('/*((((*/a{}'), Studio.nestingDepth('a\\(({}'), Studio.nestingDepth('a[b]{c:d(e)}'), Studio.nestingDepth('a{b{c{d:e}}}')], [2, 5, 5, 3, 2, 3]);
+eq('studio css (F1): what the browser tokenizer sees counts even where every-bracket counting is low', [
+    Studio.nestingDepth('a' + new Array(41).join(':not(")"') + '{}'),           // ")" in strings: every-bracket 1, browser 41
+    Studio.nestingDepth('a' + new Array(41).join(':not(]') + '{}'),             // "]" does not close "(": browser 41
+    Studio.nestingDepth('a{b:"x\n}' + new Array(41).join(':not(')),            // a newline ends a string
+    Studio.nestingDepth('a{b:"x\\\n((((("}'),                                 // "\" + newline continues the string
+    Studio.nestingDepth('a{b:url(x"y)}' + new Array(41).join('('))             // an unquoted url( ends at ")", a quote in it starts no string
+], [41, 41, 40, 6, 40]);
+// Each of these depends on one rule of the tokenizer alone (the ")" hidden in strings keep the every-bracket count at 1).
+eq('studio css (F1): tokenizer rules: a newline ends a string, "\\" + newline continues it, an unquoted url( ends at ")"', (function () {
+    var hidden = new Array(41).join(':not(")"');
+    return [Studio.nestingDepth('a{b:"x\n}a' + hidden + '{}'), Studio.nestingDepth('a{b:"x\\\n}a' + hidden + '{}'), Studio.nestingDepth('a{b:url(x"y)}a' + hidden + '{}')];
+}()), [41, 1, 41]);
+// Review G1 (2026-11-22): "#url(" is a hash token and "@url(" an at-keyword to the browser, not a url token, so their "("
+// count. Before G1 they were read as url tokens up to the ")" hidden in a comment, and the closes in the comment kept the
+// every-bracket count low: 16,000 levels read 32 and crashed Firefox. A real url( after a space stays one token.
+eq('studio css (G1): "#url(" and "@url(" are not url tokens (their brackets count); " url(" still is', ['#', '@', ' '].map(function (p) {
+    return Studio.nestingDepth('a{--x:' + new Array(41).join(p + 'url(x(/*))*/') + '}');
+}), [81, 81, 3]);
+// Review F4 (2026-11-21): the limit itself, and CSS that becomes deeper when the sanitiser takes text out.
+check('studio css (F4): the depth limit is 32 levels: 32 are kept, 33 are refused', Studio.LIMITS.depth === 32 && (function () {
+    function nest(k) { return 'a' + new Array(k + 1).join(':not(') + '.b' + new Array(k + 1).join(')') + '{color:red}'; }   // k levels
+    return Studio.nestingDepth(nest(32)) === 32 && Studio.sanitizeCss(nest(32)).css === nest(32) && Studio.sanitizeCss(nest(33)).removed.join() === 'too_deep';
+}()));
+var f1Shapes = {
+    'stray quote (the tab crash)': 'a{content:"x\n}a' + new Array(6001).join(':not(') + '.b' + new Array(6001).join(')') + '{color:red}',
+    'escaped brackets': 'a' + new Array(6001).join(':not\\(') + '{}',
+    'comment opener removed with @import': '@import /*;\na' + new Array(6001).join(':not(') + '{}*/',
+    'quote removed with url()': 'a{background:url(")}a' + new Array(6001).join(':not(') + '{}"}',
+    'shallow before, deep after (every-bracket and tokenizer both low before)': '@import /*;\na' + new Array(41).join(':not(")"') + '{}',
+    '#url( hiding the closes in a comment (review G1, Firefox tab crash)': 'a{--x:' + new Array(501).join('#url(data:image/png;base64,' + new Array(31).join('(') + '/*' + new Array(32).join(')') + '*/') + '}',
+    '@url( hiding the closes in a comment (review G1)': 'a{color:var(--y,' + new Array(501).join('@url(data:image/png;base64,' + new Array(30).join('(') + '/*' + new Array(31).join(')') + '*/') + ')}'
+};
+check('studio css (F1): CSS that is (or becomes) deeper than the limit is dropped whole: <style>, style="" and the saved file', Object.keys(f1Shapes).every(function (k) {
+    var css = f1Shapes[k], r = Studio.sanitizeCss(css);
+    var doc = Studio.buildDocument({ html: '<p>x</p>', css: css }), file = Studio.buildExport({ html: '<p>x</p>', css: css }, 't');
+    return r.css === '' && r.removed.join() === 'too_deep' && Studio.nestingDepth(doc) < 8 && Studio.nestingDepth(file) < 8;
+}), Object.keys(f1Shapes).filter(function (k) { return Studio.sanitizeCss(f1Shapes[k]).css !== ''; }));
+check('studio css (F1): the second check is on the sanitised text (before it, the depth reads 1)', Studio.nestingDepth(f1Shapes['shallow before, deep after (every-bracket and tokenizer both low before)']) <= Studio.LIMITS.depth);
+check('studio css (F1): brackets in strings over many rules are not carried along: 40 rule pairs with content:"(" / ")" and 20 rules with a lone "(" are kept', (function () {
+    var pairs = '', lone = '';
+    for (var k = 0; k < 40; k++) pairs += '.x' + k + '::before{content:"("}.x' + k + '::after{content:")"}\n';
+    for (var j = 0; j < 20; j++) lone += '.y' + j + '::before{content:"("}\n';
+    return Studio.sanitizeCss(pairs).css === pairs && Studio.sanitizeCss(lone).css === lone;
+}()));
+check('studio css (F1): the site\'s own stylesheets are not refused (deepest 7)', (function () {
+    var max = 0, bad = [];
+    (function walk(d) { fs.readdirSync(d).forEach(function (f) { var p = path.join(d, f); if (fs.statSync(p).isDirectory()) { if (f !== 'node_modules') walk(p); } else if (/\.css$/.test(f)) { var t = fs.readFileSync(p, 'utf8'); max = Math.max(max, Studio.nestingDepth(t)); if (Studio.sanitizeCss(t).removed.indexOf('too_deep') !== -1) bad.push(f); } }); }(path.join(dir, '../../..')));
+    return max > 0 && max <= 8 && bad.length === 0;
+}()));
+check('studio css (N2): 8,000 levels (inside the 50KB limit) end quickly and throw nothing (sanitizeCss, parseCss, normSelector)', (function () {
+    var huge = 'a' + new Array(8001).join(':not(') + '.b' + new Array(8001).join(')') + '{c:d}', t = Date.now();
+    try { Studio.sanitizeCss(huge); Studio.parseCss(huge); Studio.normSelector(huge); Studio.nestingDepth(huge); } catch (e) { return false; }
+    return Date.now() - t < 2000;
+}()));
+check('studio css (N2): the shipped lessons are far below the limit', JSON.parse(fs.readFileSync(path.join(dir, '../../data/labs/code-studio.json'), 'utf8')).lessons.every(function (l) { return Studio.nestingDepth(l.files.css) < 8; }));
+check('studio parse (N3): every selector of a long list is normalised (the 40th too)', (function () { var list = []; for (var k = 0; k < 40; k++) list.push('.a' + k + '>B'); var r = Studio.parseCss(list.join(',') + '{color:red}').rules[0]; return r.selectors.length === 40 && r.selectors[39] === '.a39 > b'; }()));
+check('studio check css: value / not', Studio.checkCss(parsed, { type: 'css', selector: '.card', property: 'color', value: 'RED' }) && !Studio.checkCss(parsed, { type: 'css', selector: '.card', property: 'color', value: 'blue' }) && Studio.checkCss(parsed, { type: 'css', selector: '.card', property: 'color', not: 'blue' }) && !Studio.checkCss(parsed, { type: 'css', selector: '.card', property: 'color', not: 'red' }));
+check('studio check css-media: needs the feature in the media condition', Studio.checkCss(parsed, { type: 'css-media', feature: 'max-width', selector: '.columns', property: 'flex-direction' }) && !Studio.checkCss(parsed, { type: 'css-media', feature: 'min-width', selector: '.columns', property: 'flex-direction' }) && !Studio.checkCss(parsed, { type: 'css-media', feature: 'max-width', selector: '.card', property: 'padding' }));
+function fakeDoc(map) { return { querySelectorAll: function (sel) { if (sel === '!!') throw new Error('bad'); return map[sel] || []; } }; }
+function node(text, attrs) { return { textContent: text, getAttribute: function (n) { return attrs && Object.prototype.hasOwnProperty.call(attrs, n) ? attrs[n] : null; } }; }
+var fd = fakeDoc({ 'h2': [node(' 好きなもの ')], 'ul li': [node('a'), node('b'), node('c')], 'img': [node('', { alt: '  ' }), node('', { alt: '猫' })], 'p': [node('   ')] });
+check('studio check dom: element count', Studio.checkDom(fd, { type: 'element', selector: 'ul li', min: 3 }) && !Studio.checkDom(fd, { type: 'element', selector: 'ul li', min: 4 }) && !Studio.checkDom(fd, { type: 'element', selector: 'h3' }));
+check('studio check dom: text contains / min_length, whitespace ignored', Studio.checkDom(fd, { type: 'text', selector: 'h2', contains: '好きな' }) && Studio.checkDom(fd, { type: 'text', selector: 'h2', min_length: 5 }) && !Studio.checkDom(fd, { type: 'text', selector: 'p', min_length: 1 }));
+check('studio check dom: attribute must be non-empty', Studio.checkDom(fd, { type: 'attribute', selector: 'img', name: 'alt' }) && !Studio.checkDom(fd, { type: 'attribute', selector: 'img', name: 'src' }));
+check('studio check dom: an invalid selector is false, not an exception', Studio.checkDom(fd, { type: 'element', selector: '!!' }) === false && Studio.checkDom(fd, { type: 'unknown', selector: 'h2' }) === false);
+var studioData = JSON.parse(fs.readFileSync(path.join(dir, '../../data/labs/code-studio.json'), 'utf8'));
+check('studio data: no starter lesson is already solved, and none is changed by the CSS sanitiser', studioData.lessons.every(function (l) {
+    var p = Studio.parseCss(l.files.css);
+    var cssChecks = l.exercises.reduce(function (acc, e) { return acc.concat(e.checks.filter(function (c) { return c.type === 'css' || c.type === 'css-media'; })); }, []);
+    return Studio.sanitizeCss(l.files.css).removed.length === 0 && cssChecks.every(function (c) { return !Studio.checkCss(p, c); });
+}));
+check('studio data: every hint that is CSS solves its own check', (function () {
+    var l = studioData.lessons[2];
+    var p = Studio.parseCss(l.files.css + '\n@media (max-width: 600px) { .columns { flex-direction: column; } .box { width: auto; } }');
+    return l.exercises.every(function (e) { return Studio.runChecks(null, p, e.checks).every(Boolean); });
+}()));
+check('studio data: every tag and property the starter code uses has a glossary entry', studioData.lessons.every(function (l) {
+    return Studio.htmlTags(l.files.html).every(function (t) { return !!studioData.glossary.tags[t]; }) && Studio.cssProperties(Studio.parseCss(l.files.css)).every(function (p) { return !!studioData.glossary.properties[p]; });
+}));
+
 // ----------------------------------------------------------- source scan
 function walk(d) {
     return fs.readdirSync(d).reduce(function (acc, name) {
@@ -326,7 +525,7 @@ files.forEach(function (file) {
     banned.forEach(function (re) { if (re.test(src)) offenders.push(path.relative(root, file) + ' ' + re); });
 });
 eq('source: no HTML injection, eval, storage or network APIs in Labs scripts', offenders, []);
-check('source: scanned all Labs scripts', files.length >= 15);
+check('source: scanned all Labs scripts', files.length >= 17);
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
