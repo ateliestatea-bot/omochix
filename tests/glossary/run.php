@@ -991,6 +991,48 @@ remove_filter('omochix_core_glossary_public', $open);
 check('N2 closed: no term in the link search for a non-editor, and no term is readable', ['post', 'page'] === omochix_core_glossary_link_query_args($lq)['post_type'] && ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$vis]));
 check('N2 hooks: link query args and results last, pre_get_posts last, map_meta_cap with its 4 arguments', 9999 === has_filter('wp_link_query_args', 'omochix_core_glossary_link_query_args') && 9999 === has_filter('wp_link_query', 'omochix_core_glossary_link_query_results') && 9999 === has_action('pre_get_posts', 'omochix_core_glossary_find_posts_query') && 10 === has_filter('map_meta_cap', 'omochix_core_glossary_map_read_post') && [['omochix_core_glossary_map_read_post', 4]] === array_values(array_filter($GLOBALS['hooks']['map_meta_cap'][10] ?? [], static fn($h) => 'omochix_core_glossary_map_read_post' === $h[0])));
 
+// ---------------------------------------------- N2 case B: Query Loop block (review of the N2 fix)
+// Reproduction (real WordPress 7.1.4, glossary open): a Query Loop set to the glossary in an author's published post listed
+// hidden terms (rule problems, a password, a future check date) with title, content and summary to visitors, in REST and feeds.
+add_filter('omochix_core_glossary_public', $open);
+$GLOBALS['caps'] = [];
+$priv_t = gl_store('private');
+$qv = ['post_type' => 'omx_glossary', 'order' => 'DESC', 'orderby' => 'date', 'post__not_in' => [], 'tax_query' => [], 'offset' => 0, 'posts_per_page' => 10];
+$qa = omochix_core_glossary_query_loop_vars($qv);
+check('N2-B Query Loop: hidden published and private terms are left out of the query itself (pages and counts agree), visible ones stay', in_array($hid_pub, $qa['post__not_in'], true) && in_array($priv_t, $qa['post__not_in'], true) && !in_array($vis, $qa['post__not_in'], true) && 'omx_glossary' === $qa['post_type'] && 10 === $qa['posts_per_page']);
+check('N2-B Query Loop: mixed types keep every other type, and an earlier exclusion is kept', ['post', 'omx_glossary'] === omochix_core_glossary_query_loop_vars(['post_type' => ['post', 'omx_glossary']] + $qv)['post_type'] && in_array($other, omochix_core_glossary_query_loop_vars(['post__not_in' => [$other]] + $qv)['post__not_in'], true));
+check('N2-B Query Loop: "any", no type, other types and non-arrays are untouched ("any" never covers the glossary, it is excluded from search)', ['post_type' => 'any'] === omochix_core_glossary_query_loop_vars(['post_type' => 'any']) && ['x' => 1] === omochix_core_glossary_query_loop_vars(['x' => 1]) && ['post_type' => ''] === omochix_core_glossary_query_loop_vars(['post_type' => '']) && ['post_type' => ['page']] === omochix_core_glossary_query_loop_vars(['post_type' => ['page']]) && 'x' === omochix_core_glossary_query_loop_vars('x'));
+check('N2-B Query Loop: a status other than the default or "publish" drops the glossary (fail closed); "publish" alone keeps the list', ['post'] === omochix_core_glossary_query_loop_vars(['post_type' => ['post', 'omx_glossary'], 'post_status' => ['publish', 'draft']] + $qv)['post_type'] && ['__omx_none__'] === omochix_core_glossary_query_loop_vars(['post_status' => 'any'] + $qv)['post_type'] && 'omx_glossary' === omochix_core_glossary_query_loop_vars(['post_status' => 'publish'] + $qv)['post_type'] && 'omx_glossary' === omochix_core_glossary_query_loop_vars(['post_status' => []] + $qv)['post_type']);
+$GLOBALS['caps'] = ['edit_others_omx_glossaries' => true];
+check('N2-B Query Loop: editors get the same list (a page built for one viewer may be cached for the next)', $qa === omochix_core_glossary_query_loop_vars($qv));
+$GLOBALS['caps'] = [];
+$big = []; for ($i = 0; $i <= OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX; $i++) { $big[] = ih_add_post(['post_type' => 'omx_glossary', 'post_status' => 'private', 'post_name' => 'bigq-' . $i]); }
+check('N2-B Query Loop: more published and private terms than can be listed: no glossary (fail closed)', ['__omx_none__'] === omochix_core_glossary_query_loop_vars($qv)['post_type']);
+foreach ($big as $i) { unset($GLOBALS['posts'][$i]); }
+remove_filter('omochix_core_glossary_public', $open);
+check('N2-B Query Loop closed: no glossary at all', ['__omx_none__'] === omochix_core_glossary_query_loop_vars($qv)['post_type'] && ['post'] === omochix_core_glossary_query_loop_vars(['post_type' => ['post', 'omx_glossary']] + $qv)['post_type']);
+add_filter('omochix_core_glossary_public', $open);
+
+// ---------------------------------------------- N2 case A: the comments screen and admin titles
+// Reproduction: /wp-admin/edit-comments.php?p=<ID> (contributors and up) printed the title of a term in any status, glossary closed too.
+$die = static function ($id) { try { omochix_core_glossary_comments_screen_args(['post_id' => $id, 'number' => 20]); return false; } catch (RuntimeException $e) { return false !== strpos($e->getMessage(), 'wp_die'); } };
+check('N2-A comments screen: refused for a hidden published term, a draft and a private term (before anything is printed)', $die($hid_pub) && $die($hid_draft) && $die($priv_t));
+check('N2-A comments screen: a visible term, another post, an unknown ID and the screen without a post are unchanged', ['post_id' => $vis] === omochix_core_glossary_comments_screen_args(['post_id' => $vis]) && ['post_id' => $other] === omochix_core_glossary_comments_screen_args(['post_id' => $other]) && ['post_id' => 999999] === omochix_core_glossary_comments_screen_args(['post_id' => 999999]) && ['post_id' => 0] === omochix_core_glossary_comments_screen_args(['post_id' => 0]) && [] === omochix_core_glossary_comments_screen_args([]) && 'x' === omochix_core_glossary_comments_screen_args('x'));
+$GLOBALS['ctx']['is_admin'] = true;
+check('N2-A admin titles: none for a hidden term or its revision; visible terms, other posts and junk IDs keep theirs', '' === omochix_core_glossary_admin_title('T', $hid_pub) && '' === omochix_core_glossary_admin_title('T', $hid_draft) && '' === omochix_core_glossary_admin_title('T', $rv_h) && 'T' === omochix_core_glossary_admin_title('T', $vis) && 'T' === omochix_core_glossary_admin_title('T', $other) && 'T' === omochix_core_glossary_admin_title('T', 0) && 'T' === omochix_core_glossary_admin_title('T', 'abc') && 'T' === omochix_core_glossary_admin_title('T'));
+$GLOBALS['caps'] = ['edit_post' => true, 'edit_others_omx_glossaries' => true];
+check('N2-A editors keep the comments screen and every title', ['post_id' => $hid_draft] === omochix_core_glossary_comments_screen_args(['post_id' => $hid_draft]) && 'T' === omochix_core_glossary_admin_title('T', $hid_draft));
+$GLOBALS['caps'] = [];
+$GLOBALS['ctx']['is_admin'] = false;
+check('N2-A front end, feeds, REST and e-mails: titles are not touched outside wp-admin', 'T' === omochix_core_glossary_admin_title('T', $hid_pub));
+remove_filter('omochix_core_glossary_public', $open);
+$GLOBALS['ctx']['is_admin'] = true;
+check('N2-A closed: every term is hidden from non-editors on the comments screen and in admin titles', $die($vis) && '' === omochix_core_glossary_admin_title('T', $vis));
+$GLOBALS['ctx']['is_admin'] = false;
+unset($GLOBALS['posts'][$priv_t]);
+$hook = static fn($h, $cb) => array_values(array_filter(array_merge(...array_values($GLOBALS['hooks'][$h] ?? [[]])), static fn($x) => $cb === $x[0]));
+check('N2-A/B hooks: Query Loop vars, comments screen and admin titles run last, with the arguments they use', 9999 === has_filter('query_loop_block_query_vars', 'omochix_core_glossary_query_loop_vars') && 9999 === has_filter('comments_list_table_query_args', 'omochix_core_glossary_comments_screen_args') && 9999 === has_filter('the_title', 'omochix_core_glossary_admin_title') && [['omochix_core_glossary_admin_title', 2]] === $hook('the_title', 'omochix_core_glossary_admin_title'));
+
 // ---------------------------------------------- F3: the REST autosave route never publishes
 // The autosave controller saves the post from what rest_pre_insert returns (it does not stop on an error),
 // never stores meta or categories, and never fires rest_after_insert. So the status is taken off there.

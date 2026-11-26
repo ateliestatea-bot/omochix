@@ -422,17 +422,18 @@ function omochix_core_glossary_types_without( $types ) {
 }
 
 /**
- * IDs of the published terms that are hidden (gate G-B). null when the
- * glossary is closed or there are too many terms to list: then no term may
- * be offered at all.
+ * IDs of the terms in the given statuses that are hidden (gate G-B; for the
+ * default, the published ones). null when the glossary is closed or there
+ * are too many terms to list: then no term may be offered at all.
  *
+ * @param string[] $statuses Statuses to look at.
  * @return int[]|null
  */
-function omochix_core_glossary_hidden_published_ids() {
+function omochix_core_glossary_hidden_published_ids( array $statuses = array( 'publish' ) ) {
 	if ( ! omochix_core_glossary_public() ) {
 		return null;
 	}
-	$posts = get_posts( array( 'post_type' => 'omx_glossary', 'post_status' => 'publish', 'posts_per_page' => OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX + 1, 'fields' => 'all', 'no_found_rows' => true, 'suppress_filters' => true ) );
+	$posts = get_posts( array( 'post_type' => 'omx_glossary', 'post_status' => array_values( $statuses ), 'posts_per_page' => OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX + 1, 'fields' => 'all', 'no_found_rows' => true, 'suppress_filters' => true ) );
 	if ( ! is_array( $posts ) || count( $posts ) > OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX ) {
 		return null;
 	}
@@ -562,6 +563,89 @@ function omochix_core_glossary_map_read_post( $caps, $cap = '', $user_id = 0, $a
 	return $caps;
 }
 add_filter( 'map_meta_cap', 'omochix_core_glossary_map_read_post', 10, 4 );
+
+/**
+ * Query Loop block (review N2, case B).
+ *
+ * build_query_vars_from_query_block() takes any viewable post type for the
+ * block, so a Query Loop set to the glossary, put into a post by an author
+ * or a contributor, listed hidden terms with their title, content and
+ * summary (block bindings) on the page, in REST and in the feeds, to
+ * visitors too. The pagination, total and no-results blocks build the same
+ * query through the same filter. Hidden published and private terms are
+ * left out of the query itself, so pages and counts agree; a status other
+ * than the default (or "publish"), a closed glossary, or more terms than can
+ * be listed leaves the glossary out entirely. This holds for every viewer,
+ * editors included: a generic post is no place for a hidden term, and a
+ * page built for one viewer may be cached for the next. "any" never covers
+ * the glossary (it is excluded from search). The glossary's own templates
+ * do not use this filter and are not changed.
+ *
+ * @param mixed $query WP_Query arguments.
+ * @return mixed
+ */
+function omochix_core_glossary_query_loop_vars( $query ) {
+	if ( ! is_array( $query ) ) {
+		return $query;
+	}
+	$types = isset( $query['post_type'] ) && '' !== $query['post_type'] ? (array) $query['post_type'] : array( 'post' );
+	if ( ! in_array( 'omx_glossary', $types, true ) ) {
+		return $query;
+	}
+	$status = $query['post_status'] ?? '';
+	$plain  = '' === $status || array() === $status || array( 'publish' ) === array_values( (array) $status );
+	$hidden = $plain ? omochix_core_glossary_hidden_published_ids( array( 'publish', 'private' ) ) : null;
+	if ( null === $hidden ) {
+		$query['post_type'] = omochix_core_glossary_types_without( $types );
+		return $query;
+	}
+	if ( $hidden ) {
+		$query['post__not_in'] = array_values( array_unique( array_merge( array_map( 'intval', (array) ( $query['post__not_in'] ?? array() ) ), $hidden ) ) );
+	}
+	return $query;
+}
+add_filter( 'query_loop_block_query_vars', 'omochix_core_glossary_query_loop_vars', 9999 );
+
+/**
+ * Comments screen for one post (wp-admin/edit-comments.php?p=<ID>, review
+ * N2, case A).
+ *
+ * The screen needs only edit_posts (contributors and up) and prints the
+ * post's title in its heading and in the HTML title, and a "view" link with
+ * the post type's label, for any ID, in any status. For a term the user may
+ * not see it is refused before anything is printed: the list query is built
+ * (prepare_items) before the header. Editors, other post types and the
+ * screen without a post are unchanged.
+ *
+ * @param mixed $args Comment query arguments of the list table.
+ * @return mixed
+ */
+function omochix_core_glossary_comments_screen_args( $args ) {
+	if ( is_array( $args ) && ! empty( $args['post_id'] ) && omochix_core_glossary_is_hidden_from_user( (int) $args['post_id'] ) ) {
+		wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'omochix-core' ), '', array( 'response' => 403 ) );
+	}
+	return $args;
+}
+add_filter( 'comments_list_table_query_args', 'omochix_core_glossary_comments_screen_args', 9999 );
+
+/**
+ * Admin screens: no title for a term the user may not see (a second line
+ * behind the comments screen and the media fix, for any other screen that
+ * prints a post's title by ID). Only in wp-admin and admin-ajax, only for
+ * glossary terms (and their revisions), and never for editors: front-end
+ * titles, feeds, REST, SEO output and e-mails are not touched.
+ *
+ * @param mixed $title   Title.
+ * @param mixed $post_id Post ID.
+ * @return mixed
+ */
+function omochix_core_glossary_admin_title( $title, $post_id = 0 ) {
+	if ( ! is_admin() || ! $post_id || ! is_numeric( $post_id ) ) {
+		return $title;
+	}
+	return omochix_core_glossary_is_hidden_from_user( (int) $post_id ) ? '' : $title;
+}
+add_filter( 'the_title', 'omochix_core_glossary_admin_title', 9999, 2 );
 
 /**
  * What is indexable right now (gate G-B per term, gate G-C for the lists).
