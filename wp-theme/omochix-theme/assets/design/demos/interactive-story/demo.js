@@ -1,4 +1,4 @@
-/* Interactive Storytelling (fictional "紙季廊 / SHIKIRO"). The fixed illustration follows the paragraph in the
+/* Interactive Storytelling (fictional "楮雪舎 / KOZOYUKI"). The fixed illustration follows the paragraph in the
    middle of the screen (IntersectionObserver; no frame loop). While the demo is paused or hidden nothing changes
    (CSS transitions are not held by the runtime's pause, so state changes wait) and the latest paragraph is applied
    once on resume. Reading progress uses one rAF per scroll burst. No network, no storage. */

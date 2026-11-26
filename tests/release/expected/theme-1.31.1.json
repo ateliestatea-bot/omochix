@@ -1,0 +1,43 @@
+{
+  "release": "Theme 1.31.1 (design sitemap: same 404 as an unknown URL while the gate is closed)",
+  "commit": "68d81afe1372075d6b2f4871d5abd60a71f41a90",
+  "note": "Archived with the 1.31.1 release (main 68d81af; production checked read-only on 2026-11-22: style.css 1.31.1, 183 public files match the release manifest 29d3d926...); checked by CI on that commit. Independent expectations for tools/release/release.json. Recorded by hand from the 1.31.1 tree against the production 1.31.0 manifest (releases/theme-1.31.0-c9ae6e2, sha256 e5f537d5...); the gate and the tests compare the real tree and the config against these values, never the config against itself.",
+  "versions": {
+    "core": "1.10.0",
+    "theme": "1.31.1"
+  },
+  "packages": {
+    "theme": {
+      "baseline_sha256": "e5f537d5d8d21a2b3ac5cb8dc56b135790cba737933fc22e7e71305790ed766b",
+      "files": 287,
+      "add": 0,
+      "replace": 2
+    }
+  },
+  "unchanged": {
+    "core": {
+      "dir": "wp-plugin/omochix-core",
+      "baseline": "tools/release/baseline/omochix-core-1.10.0.sha256",
+      "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
+    }
+  },
+  "steps": 2,
+  "changed_paths_sha256": "04a7035574575adc692c6d03834046d2d0b2dcc94eaed3e6ca9c282884a34bdf",
+  "forbidden": {
+    "pattern": "#labs|svg-motion|logo-motion#i",
+    "allowed": []
+  },
+  "order_rules": [],
+  "switches": [
+    "theme:style.css"
+  ],
+  "gates": [
+    "B"
+  ],
+  "rollback": {
+    "first": "theme:style.css",
+    "last": "theme:inc/design-library.php",
+    "count": 2
+  },
+  "core_version_markers": 11
+}

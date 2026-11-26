@@ -144,6 +144,252 @@ class RepoCase(unittest.TestCase):
         self.addCleanup(self.r.cleanup)
 
 
+# ------------------------------------------------- CI change guard: pull request target
+
+class GuardPullRequestTarget(RepoCase):
+    """pull_request_target runs from the default branch: GITHUB_SHA is main's tip for every target.
+
+    The rules stay main's; the files a pull request changes are compared with its verified
+    target. Every case runs the UNCHANGED guard step of ci-guard.yml in a shell, with the
+    environment GitHub gives it, so the workflow file itself is what is tested.
+    """
+
+    def setUp(self):
+        super().setUp()
+        r = self.r
+        # integrate/web2 forks from main and gets a CI change of its own (like PR #77) ...
+        r.git("checkout", "-q", "-b", "integrate/web2", "main")
+        r.write("tests/ci/test_extra.py", "# only on the integration branch\n")
+        r.commit("ci change that only integrate/web2 has")
+        # ... while main moves on without it.
+        r.git("checkout", "-q", "main")
+        r.write("docs/readme.md", "main moved on\n")
+        # main also gained a test and requires it (like a release on main): its workflows and
+        # inventory are ahead of the integration branch's.
+        r.apply({".github/workflows/tests.yml": lambda c: c.replace("tests/nav/run.php \\", "tests/nav/run.php \\\n            tests/nav/main-only.php \\", 1),
+                 "tools/ci/required-checks.json": lambda c: c.replace('"tests/nav/run.php",', '"tests/nav/run.php", "tests/nav/main-only.php",', 1)})
+        self.assertIn("tests/nav/main-only.php", r.read(".github/workflows/tests.yml"))
+        self.assertIn("tests/nav/main-only.php", r.read("tools/ci/required-checks.json"))
+        r.commit("main after the fork")
+        self.sync_refs()
+        self.temp = tempfile.mkdtemp(prefix="omx-ci-runner-")
+        self.addCleanup(shutil.rmtree, self.temp, True)
+        wf = workflow_policy.load_yaml(slurp(os.path.join(REPO, ".github/workflows/ci-guard.yml")))
+        steps = {st.get("name"): st for st in wf["jobs"]["guard"]["steps"]}
+        self.script = steps["CI change guard (base rules against this change)"]["run"]
+
+    def sync_refs(self):
+        for b in ("main", "integrate/web2"):
+            self.r.git("update-ref", "refs/remotes/origin/" + b, b)
+
+    def branch(self, name, changes, base="integrate/web2"):
+        self.r.git("checkout", "-q", "-B", name, base)
+        self.r.apply(changes)
+        return self.r.commit("change on " + name)
+
+    def run_step(self, head, ref="integrate/web2", base_sha=None, labels="", body="", event_file=True, payload=None, default_sha=None, env_extra=None):
+        """Run the workflow's guard step as GitHub would for a pull request head -> ref."""
+        r = self.r
+        r.git("checkout", "-q", "--detach", head)  # actions/checkout of the pull request head
+        base_sha = base_sha if base_sha is not None else r.git("rev-parse", ref if ref in ("main", "integrate/web2") else "main")
+        path = os.path.join(self.temp, "event.json")
+        if payload is None:
+            payload = {"pull_request": {"base": {"ref": ref, "sha": base_sha}, "head": {"sha": head}}, "repository": {"default_branch": "main"}}
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh)
+        env = dict(os.environ, EVENT="pull_request_target", BEFORE="", PR_HEAD_SHA=head, PR_LABELS=labels, PR_BODY=body,
+                   GITHUB_SHA=default_sha or r.git("rev-parse", "main"), GITHUB_EVENT_NAME="pull_request_target", RUNNER_TEMP=self.temp,
+                   GITHUB_EVENT_PATH=path if event_file else os.path.join(self.temp, "missing.json"))
+        env.update(env_extra or {})
+        res = subprocess.run(["bash", "-e", "-c", self.script], cwd=r.dir, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return res.returncode, res.stdout.decode()
+
+    # -- the false positive (PR #79, PR #75)
+    def test_stream_pull_request_into_integrate_needs_no_ci_approval(self):
+        for name, changes in (("web2/kh/glossary", {"wp-plugin/omochix-core/includes/web2/glossary-loader.php": "<?php\n", "tests/glossary/run.php": "<?php\n"}),
+                              ("web2/hooks/loader", {"wp-plugin/omochix-core/includes/web2-loader.php": "<?php\n", "wp-theme/omochix-theme/functions.php": "<?php\n// loader\n"})):
+            with self.subTest(name):
+                code, out = self.run_step(self.branch(name, changes))
+                self.assertEqual(code, 0, out)
+                self.assertIn("compared with its target integrate/web2", out)
+                self.assertIn("PASS no CI or gate file changes", out)
+                self.assertNotIn("tests/ci/test_extra.py", out)
+
+    def test_the_same_pull_request_compared_with_main_would_ask_for_approval(self):
+        # What happened before the fix: the comparison with main shows the integration branch's own CI change.
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        self.r.git("checkout", "-q", "--detach", "main")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", head)
+        ok, lines = ci_guard.guard("HEAD^1", "HEAD", "pull_request", [], cwd=self.r.dir)
+        self.assertFalse(ok)
+        self.assertTrue(any("tests/ci/test_extra.py" in l for l in lines), "\n".join(lines))
+
+    # -- real CI changes still need the approval
+    def test_ci_change_into_integrate_needs_the_approval_for_that_content(self):
+        head = self.branch("web2/ci/x", {"tools/ci/cilib.py": lambda c: c + "\n# changed\n"})
+        code, out = self.run_step(head)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("FAIL   tools/ci/cilib.py", out)
+        self.assertNotIn("test_extra.py", out)
+        line = [l.split("put this line in the description: ", 1)[1] for l in out.splitlines() if "put this line in the description: ci-change-reviewed:" in l][0]
+        self.assertNotEqual(self.run_step(head, labels="ci-change-reviewed")[0], 0)          # label alone
+        self.assertNotEqual(self.run_step(head, body=line)[0], 0)                            # digest alone
+        self.assertNotEqual(self.run_step(head, labels="ci-change-reviewed", body="ci-change-reviewed: " + "0" * 16)[0], 0)
+        code, out = self.run_step(head, labels="ci-change-reviewed", body=line)
+        self.assertEqual(code, 0, out)
+        # A commit after the review needs a new one.
+        self.r.git("checkout", "-q", "web2/ci/x")
+        self.r.apply({"tools/ci/cilib.py": lambda c: c + "# again\n"})
+        head2 = self.r.commit("after the review")
+        self.assertNotEqual(self.run_step(head2, labels="ci-change-reviewed", body=line)[0], 0)
+
+    def test_digest_matches_the_push_after_the_merge(self):
+        # Pull request: compared with the target. Push: BEFORE = the target's tip, HEAD = the merge.
+        # A file main does not have: its digest depends on which base it is compared with.
+        head = self.branch("web2/ci/x", {"tests/ci/test_extra.py": "# only on the integration branch, changed\n"})
+        code, out = self.run_step(head)
+        line = [l.split("put this line in the description: ", 1)[1] for l in out.splitlines() if "ci-change-reviewed:" in l and "put this line" in l][0]
+        before = self.r.git("rev-parse", "integrate/web2")
+        self.r.git("checkout", "-q", "integrate/web2")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", head)
+        merge = self.r.git("rev-parse", "HEAD")
+        pulls = [{"number": 7, "merged_at": "2026-11-24T00:00:00Z", "merge_commit_sha": merge, "labels": [{"name": "ci-change-reviewed"}], "body": line}]
+        ok, lines = ci_guard.guard(before, merge, "push", [], cwd=self.r.dir, merged_pulls=pulls)
+        self.assertTrue(ok, "\n".join(lines))
+        pulls[0]["body"] = "ci-change-reviewed: " + "f" * 16
+        self.assertFalse(ci_guard.guard(before, merge, "push", [], cwd=self.r.dir, merged_pulls=pulls)[0])
+
+    # -- main's rules always apply
+    def test_weakening_or_insecure_workflow_change_into_integrate_fails_by_mains_rules(self):
+        cases = {
+            "weakening (a test dropped)": {".github/workflows/industry-hub.yml": lambda c: c.replace("tests/industry-hub/run.php", "tests/industry-hub/gone.php")},
+            "security (write permission)": {".github/workflows/tests.yml": lambda c: c.replace("contents: read", "contents: write", 1)},
+            "security (second pull_request_target workflow)": {".github/workflows/evil.yml": "name: Evil\non:\n  pull_request_target:\npermissions: {}\njobs:\n  x:\n    name: X\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo hi\n"},
+        }
+        for name, changes in cases.items():
+            with self.subTest(name):
+                head = self.branch("web2/ci/bad", changes)
+                code, out = self.run_step(head, labels="ci-change-reviewed,ci-weakening-approved" if "security" in name else "ci-change-reviewed")
+                self.assertNotEqual(code, 0, out)
+                self.assertIn("FAIL workflow policy", out)
+
+    def test_a_weaker_inventory_on_the_integration_branch_is_not_used(self):
+        # The integration branch loosens its own inventory, then a pull request drops the test: main's inventory still judges.
+        self.r.git("checkout", "-q", "integrate/web2")
+        self.r.apply({"tools/ci/required-checks.json": lambda c: c.replace('"tests/industry-hub/run.php",', "", 1)})
+        self.assertNotIn('"tests/industry-hub/run.php",', self.r.read("tools/ci/required-checks.json"))
+        self.r.commit("integration branch loosened its inventory")
+        self.sync_refs()
+        head = self.branch("web2/ci/bad", {".github/workflows/industry-hub.yml": lambda c: c.replace("tests/industry-hub/run.php", "tests/industry-hub/gone.php")})
+        code, out = self.run_step(head, labels="ci-change-reviewed")
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("no longer runs 'tests/industry-hub/run.php'", out)
+
+    def test_a_change_that_conflicts_with_main_fails_closed(self):
+        # The rules judge the merge with main: a workflow line main changed too cannot be judged, so it fails.
+        head = self.branch("web2/ci/bad", {".github/workflows/tests.yml": lambda c: c.replace("tests/nav/run.php", "tests/nav/gone.php")})
+        code, out = self.run_step(head, labels="ci-change-reviewed,ci-weakening-approved")
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("does not merge cleanly", out)
+
+    # -- tampered or unverifiable base and head: fail closed
+    def test_unverifiable_base_fails_closed(self):
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        fork = self.r.git("merge-base", "main", "integrate/web2")
+        cases = {
+            "stale base (an older commit of the target)": dict(base_sha=fork),
+            "base is main's tip, not the target's": dict(base_sha=self.r.git("rev-parse", "main")),
+            "base is not a commit id": dict(base_sha="integrate/web2"),
+            "base is a short id": dict(base_sha=self.r.git("rev-parse", "integrate/web2")[:12]),
+            "no event file": dict(event_file=False),
+            "event file without a pull request": dict(payload={"repository": {"default_branch": "main"}}),
+            "event file with non-string fields": dict(payload={"pull_request": {"base": {"ref": ["integrate/web2"], "sha": None}, "head": {"sha": head}}, "repository": {"default_branch": "main"}}),
+            "event file without the default branch": dict(payload={"pull_request": {"base": {"ref": "integrate/web2", "sha": self.r.git("rev-parse", "integrate/web2")}, "head": {"sha": head}}}),
+            "event head is another commit": dict(payload={"pull_request": {"base": {"ref": "integrate/web2", "sha": self.r.git("rev-parse", "integrate/web2")}, "head": {"sha": fork}}, "repository": {"default_branch": "main"}}),
+        }
+        for name, kw in cases.items():
+            with self.subTest(name):
+                code, out = self.run_step(head, **kw)
+                self.assertNotEqual(code, 0, out)
+                self.assertIn("CI change guard: FAIL", out)
+                self.assertNotIn("PASS no CI", out)
+        # The target branch was not fetched.
+        self.r.git("update-ref", "-d", "refs/remotes/origin/integrate/web2")
+        code, out = self.run_step(head)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("was not fetched", out)
+
+    def test_target_moved_after_the_event_fails_until_rerun(self):
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        old = self.r.git("rev-parse", "integrate/web2")
+        self.r.git("checkout", "-q", "integrate/web2")
+        self.r.write("docs/other.md", "another pull request landed\n")
+        self.r.commit("target moved")
+        self.sync_refs()
+        code, out = self.run_step(head, base_sha=old)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("run again", out)
+        self.assertEqual(self.run_step(head)[0], 0)
+
+    def test_checked_out_commit_must_be_the_pull_request_head(self):
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        code, out = self.run_step(head, env_extra={"PR_HEAD_SHA": self.r.git("rev-parse", "main")})
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("checked-out commit is not the pull request head", out)
+
+    def test_bad_target_names_are_compared_with_main(self):
+        head = self.branch("web2/kh/glossary", {"tests/glossary/run.php": "<?php\n"})
+        tip = self.r.git("rev-parse", "integrate/web2")
+        for ref in ("integrate", "integrate/", "integrate/../main", "refs/heads/integrate/web2", "xintegrate/web2", "integrate/.x", "feature/x", "integrate/web2\n"):
+            with self.subTest(ref):
+                code, out = self.run_step(head, ref=ref, base_sha=tip)
+                self.assertNotEqual(code, 0, out)           # main's comparison: the integration-only CI file shows
+                self.assertIn("tests/ci/test_extra.py", out)
+
+    # -- main keeps its checks
+    def test_pull_requests_into_main_are_judged_as_before(self):
+        clean = self.branch("feature/x", {"docs/readme.md": "x\n"}, base="main")
+        code, out = self.run_step(clean, ref="main")
+        self.assertEqual(code, 0, out)
+        self.assertIn("compared with its base main", out)
+        ci = self.branch("fix/ci", {"tools/ci/cilib.py": lambda c: c + "\n# changed\n"}, base="main")
+        code, out = self.run_step(ci, ref="main")
+        self.assertNotEqual(code, 0, out)
+        # Same digest as the direct comparison the guard always made for main.
+        self.r.git("checkout", "-q", "--detach", "main")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", ci)
+        ok, lines = ci_guard.guard("HEAD^1", "HEAD", "pull_request", [], cwd=self.r.dir)
+        want = [l.split("ci-change-reviewed: ", 1)[1] for l in lines if "put this line" in l][0]
+        self.assertIn("ci-change-reviewed: " + want, out)
+        # main moved after the event: fail closed.
+        code, out = self.run_step(clean, ref="main", base_sha=self.r.git("merge-base", "main", "integrate/web2"))
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("is not the default branch tip", out)
+
+    def test_integration_branch_ci_change_reaching_main_still_needs_approval(self):
+        # The pull request that brings integrate/web2 into main shows every CI change it carries.
+        code, out = self.run_step(self.r.git("rev-parse", "integrate/web2"), ref="main")
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("FAIL   tests/ci/test_extra.py", out)
+
+    # -- no pull request code runs
+    def test_no_pull_request_code_runs(self):
+        marker = os.path.join(self.temp, "pwned")
+        payload = "import os\nopen(%r, 'w').write('x')\n" % marker
+        head = self.branch("web2/ci/evil", {"tools/ci/ci_guard.py": payload + "raise SystemExit(0)\n", "tools/ci/cilib.py": payload, "tools/ci/sitecustomize.py": payload,
+                                            "sitecustomize.py": payload, "json.py": payload, "tools/ci/workflow_policy.py": payload})
+        code, out = self.run_step(head, env_extra={"PYTHONPATH": self.r.dir, "PYTHONSTARTUP": os.path.join(self.r.dir, "sitecustomize.py")})
+        self.assertFalse(os.path.exists(marker), "pull request code ran")
+        self.assertNotEqual(code, 0, out)                     # judged by main's copy: the CI change needs approval
+        self.assertIn("FAIL   tools/ci/ci_guard.py", out)
+
+    def test_the_guard_step_still_takes_its_rules_from_github_sha(self):
+        # The rules come from the default branch tip (GITHUB_SHA); only the compared files follow the target.
+        self.assertIn('trusted="$GITHUB_SHA"', self.script)
+        self.assertIn('git archive "$trusted" tools/ci', self.script)
+        self.assertIn('python3 -I "$dir/tools/ci/ci_guard.py"', self.script)
+
+
 # --------------------------------------------------------------------------- Release scope
 
 class ReleaseScope(RepoCase):
@@ -392,6 +638,545 @@ class IntegrationGate(RepoCase):
                              cwd=self.r.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(res.returncode, 1)
         self.assertIn("not the pull request's merge commit", res.stdout.decode())
+
+
+class _SyncRepo(RepoCase):
+    """integrate/web2 with work of its own; main with a release merged from a two-commit pull request."""
+
+    def setUp(self):
+        super().setUp()
+        r = self.r
+        r.git("branch", "integrate/web2", "main")
+        r.git("checkout", "-q", "integrate/web2")
+        r.write("docs/web2/kh/a.md", "integration work\n")
+        self.before = r.commit("work on the integration branch")
+        # A release on main through a pull request with two commits: the first is not a main state.
+        r.git("checkout", "-q", "-B", "release/x", "main")
+        r.write("wp-theme/omochix-theme/style.css", STYLE.replace("1.30.0", "1.31.0"))
+        r.write("tools/release/release.json", "{\"release\": \"rc\"}\n")
+        self.intermediate = r.commit("release candidate")
+        r.write("tools/release/release.json", "{\"release\": \"1.31.0\"}\n")
+        self.pr_head = r.commit("release 1.31.0")
+        r.git("checkout", "-q", "main")
+        r.git("merge", "-q", "--no-ff", "--no-edit", "release/x")
+        self.main = r.git("rev-parse", "HEAD")
+        r.git("update-ref", "refs/remotes/origin/main", "main")
+
+    def merge(self, source, first=None):
+        first = first or self.before
+        self.r.git("checkout", "-q", "--detach", first)
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", source)
+        return self.r.git("rev-parse", "HEAD")
+
+    def tree(self, rev):
+        return self.r.git("rev-parse", rev + "^{tree}")
+
+    def commit_tree(self, tree, *parents):
+        args = ["commit-tree", tree]
+        for p in parents:
+            args += ["-p", p]
+        return self.r.git(*args, "-m", "crafted")
+
+    def push(self, after, before=None):
+        return integration_gate.check(before or self.before, after, "push", cwd=self.r.dir)
+
+    def assertSync(self, res):
+        ok, lines = res
+        self.assertTrue(ok, "\n".join(lines))
+        self.assertTrue(any(l.startswith("PASS sync from main") for l in lines), "\n".join(lines))
+
+    def assertNotSync(self, res, why, fails=None):
+        ok, lines = res
+        self.assertFalse(any(l.startswith("PASS sync from main") for l in lines), "\n".join(lines))
+        self.assertTrue(any(l.startswith("NOTE not a sync from main") and why in l for l in lines), "\n".join(lines))
+        if fails is not None:
+            self.assertFalse(ok, "\n".join(lines))
+            self.assertTrue(any(l.startswith("FAIL") and fails in l for l in lines), "\n".join(lines))
+
+
+
+class IntegrationGatePushSync(_SyncRepo):
+    """A push to integrate/web2 passes as a sync only when it is GitHub's clean merge of a main state."""
+
+    def test_merge_of_main_tip_passes(self):
+        self.assertSync(self.push(self.merge("main")))
+
+    def test_merge_of_a_merged_pull_request_head_with_main_s_content_passes(self):
+        # The S2 plan: the second parent is the approved pull request head, whose tree is main's.
+        self.assertEqual(self.tree(self.pr_head), self.tree(self.main))
+        self.assertSync(self.push(self.merge(self.pr_head)))
+
+    def test_pr_mode_still_passes_for_both_sources(self):
+        for source in ("main", self.pr_head):
+            with self.subTest(source):
+                head = self.merge(source)
+                self.assertSync(integration_gate.check(self.before, head, "pr", "sync/main", cwd=self.r.dir))
+
+    def test_merge_with_an_extra_change_fails(self):
+        clean = self.merge("main")
+        self.r.write("docs/web2/kh/b.md", "smuggled\n")
+        self.r.git("add", "-A")
+        self.r.git("commit", "-q", "--amend", "--no-edit")
+        self.assertNotSync(self.push(self.r.git("rev-parse", "HEAD")), "differs from the clean merge")
+        self.assertSync(self.push(clean))
+
+    def test_merge_with_an_extra_release_change_fails(self):
+        self.merge("main")
+        self.r.write("tools/release/release.json", "{\"release\": \"evil\"}\n")
+        self.r.git("add", "-A")
+        self.r.git("commit", "-q", "--amend", "--no-edit")
+        self.assertNotSync(self.push(self.r.git("rev-parse", "HEAD")), "differs from the clean merge", "release.json is release-only")
+
+    def test_forged_parents_with_another_tree_fail(self):
+        # Parents claim a sync; the tree is not their merge (it drops the integration work).
+        forged = self.commit_tree(self.tree(self.main), self.before, self.main)
+        self.assertNotSync(self.push(forged), "differs from the clean merge", "style.css Version changed")
+
+    def test_forged_first_parent_fails(self):
+        other = self.commit_tree(self.tree(self.before), self.before)
+        forged = self.commit_tree(self.tree(self.merge("main")), other, self.main)
+        self.assertNotSync(self.push(forged), "is not the commit before the push", "release-only")
+
+    def test_second_parent_outside_main_fails(self):
+        self.r.git("checkout", "-q", "-B", "lookalike", self.r.git("rev-parse", "main^1"))
+        self.r.write("wp-theme/omochix-theme/style.css", STYLE.replace("1.30.0", "1.31.0"))
+        self.r.write("tools/release/release.json", "{\"release\": \"1.31.0\"}\n")
+        self.r.commit("same content, not main's")
+        self.assertNotSync(self.push(self.merge("lookalike")), "is not contained in main", "release-only")
+
+    def test_intermediate_commit_of_a_merged_branch_fails(self):
+        self.assertNotSync(self.push(self.merge(self.intermediate)), "is not a state of main that the base lacks", "release-only")
+        self.assertNotSync(integration_gate.check(self.before, self.merge(self.intermediate), "pr", "sync/main", cwd=self.r.dir),
+                           "is not a state of main that the base lacks", "release-only")
+
+    def test_direct_push_fails(self):
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.r.write("wp-theme/omochix-theme/style.css", STYLE.replace("1.30.0", "1.31.0"))
+        after = self.r.commit("direct push")
+        self.assertNotSync(self.push(after), "not a merge commit", "style.css Version changed")
+
+    def test_squash_and_rebase_fail(self):
+        squash = self.commit_tree(self.tree(self.merge("main")), self.before)
+        self.assertNotSync(self.push(squash), "not a merge commit", "release-only")
+        self.r.git("checkout", "-q", "-B", "rebased", self.before)
+        self.r.git("cherry-pick", self.intermediate, self.pr_head)
+        self.assertNotSync(self.push(self.r.git("rev-parse", "HEAD")), "not a merge commit", "release-only")
+
+    def test_several_commits_in_one_push_fail(self):
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.r.write("docs/web2/kh/c.md", "x\n")
+        extra = self.r.commit("extra")
+        merged = self.merge("main", first=extra)
+        self.assertNotSync(self.push(merged), "is not the commit before the push", "release-only")
+
+    def test_octopus_merge_fails(self):
+        self.r.git("checkout", "-q", "-B", "side", self.before)
+        self.r.write("docs/web2/kh/d.md", "x\n")
+        side = self.r.commit("side")
+        tree = self.tree(self.merge("main"))
+        octo = self.commit_tree(tree, self.before, self.main, side)
+        self.assertNotSync(self.push(octo), "not a merge commit with two parents", "release-only")
+
+    def test_conflicting_merge_with_a_resolution_fails(self):
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.r.write("tools/release/release.json", "{\"release\": \"integration\"}\n")
+        before = self.r.commit("integration touches a main file")
+        self.r.git("checkout", "-q", "--detach", before)
+        res = subprocess.run(["git", "merge", "--no-ff", "--no-edit", "main"], cwd=self.r.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertNotEqual(res.returncode, 0)
+        self.r.write("tools/release/release.json", "{\"release\": \"resolved\"}\n")
+        self.r.git("add", "-A")
+        self.r.git("commit", "-q", "--no-edit")
+        self.assertNotSync(self.push(self.r.git("rev-parse", "HEAD"), before=before), "do not merge cleanly", "release-only")
+
+    def test_old_sync_source_is_not_a_sync(self):
+        synced = self.merge("main")
+        again = self.commit_tree(self.tree(synced), synced, self.r.git("rev-parse", "main^1"))
+        self.assertNotSync(self.push(again, before=synced), "already in the integration branch")
+
+    def test_without_main_nothing_is_a_sync(self):
+        merged = self.merge("main")
+        self.r.git("update-ref", "-d", "refs/remotes/origin/main")
+        ok, lines = self.push(merged)
+        self.assertFalse(ok, "\n".join(lines))
+        self.assertTrue(any("sync-from-main exception cannot apply" in l for l in lines), "\n".join(lines))
+
+    def test_command_line_push_after_a_sync(self):
+        merged = self.merge(self.pr_head)
+        script = os.path.join(self.r.dir, "tools/ci/integration_gate.py")
+        res = subprocess.run([sys.executable, script, "--mode", "push", "--base", self.before, "--head", merged],
+                             cwd=self.r.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(res.returncode, 0, res.stdout.decode() + res.stderr.decode())
+        self.assertIn("PASS sync from main (refs/remotes/origin/main ", res.stdout.decode())
+
+
+
+FAKE_GIT = "#!/bin/sh\n%s\nexec %s \"$@\"\n"
+
+
+class IntegrationGateSyncHardening(_SyncRepo):
+    """Independent attacks on the sync exception: a tag posing as main, old states, up-to-date sync merges, git errors."""
+
+    def sync_merge(self, source, base=None):
+        """The head a sync pull request needs under a strict ruleset: base merged with a main state."""
+        base = base or self.before
+        self.r.git("checkout", "-q", "-B", "sync/main", base)
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", source)
+        return self.r.git("rev-parse", "HEAD")
+
+    def github_merge(self, head, base=None):
+        """GitHub's merge commit (and refs/pull/N/merge) of head into base."""
+        return self.merge(head, first=base or self.before)
+
+    def pr(self, head, base=None):
+        return integration_gate.check(base or self.before, self.github_merge(head, base), "pr", "sync/main", cwd=self.r.dir)
+
+    def release_lines(self, version):
+        self.r.write("wp-theme/omochix-theme/style.css", STYLE.replace("1.30.0", version))
+        self.r.write("tools/release/release.json", "{\"release\": \"%s\"}\n" % version)
+
+    # -- P1-1: main is refs/remotes/origin/main, never a tag of the same name
+    def test_a_tag_named_origin_main_does_not_pose_as_main(self):
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.release_lines("9.9.9")
+        evil = self.r.commit("not main")
+        self.r.git("tag", "origin/main", evil)
+        self.assertNotEqual(self.r.git("rev-parse", "origin/main"), self.main)   # git prefers the tag
+        self.assertNotSync(self.pr(evil), "not contained in main", "release-only")
+        self.assertNotSync(self.push(self.github_merge(evil)), "not contained in main", "release-only")
+        res = self.push(self.merge("main"))   # a real sync still uses the real main
+        self.assertSync(res)
+        self.assertTrue(any(self.main[:12] in l for l in res[1] if l.startswith("PASS sync")), res[1])
+
+    def test_a_tag_named_like_the_full_ref_is_still_not_main(self):
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.release_lines("9.9.9")
+        evil = self.r.commit("not main")
+        self.r.git("tag", "refs/remotes/origin/main", evil)   # refs/tags/refs/remotes/origin/main
+        self.assertNotSync(self.push(self.github_merge(evil)), "not contained in main", "release-only")
+
+    def test_any_other_main_ref_is_refused(self):
+        merged = self.merge("main")
+        self.r.git("tag", "t", "main")
+        for ref in ("origin/main", "main", "refs/heads/main", "refs/tags/t", "refs/remotes/origin/main@{0}",
+                    "refs/remotes/origin/main^{commit}", "refs/remotes/origin/../origin/main", None):
+            with self.subTest(ref):
+                ok, lines = integration_gate.check(self.before, merged, "push", main_ref=ref, cwd=self.r.dir)
+                self.assertFalse(ok, "\n".join(lines))
+                self.assertFalse(any(l.startswith("PASS sync") for l in lines), "\n".join(lines))
+                self.assertTrue(any("is not refs/remotes/origin/main" in l for l in lines), "\n".join(lines))
+        script = os.path.join(self.r.dir, "tools/ci/integration_gate.py")
+        for ref in ("origin/main", "refs/heads/main"):
+            res = subprocess.run([sys.executable, "-I", script, "--mode", "push", "--base", self.before, "--head", merged, "--main-ref", ref],
+                                 cwd=self.r.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.assertEqual(res.returncode, 1, res.stdout.decode())
+            self.assertIn("--main-ref must be refs/remotes/origin/main", res.stdout.decode())
+
+    def evil_release(self):
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.release_lines("9.9.9")
+        return self.r.commit("not main")
+
+    def test_missing_main_ref_is_never_replaced_by_a_tag_or_branch_of_that_name(self):
+        # P2-A: git rev-parse falls back to refs/tags/<full name>, then refs/heads/<full name>.
+        for kind in ("tag", "branch", "both"):
+            with self.subTest(kind):
+                evil = self.evil_release()
+                if kind in ("tag", "both"):
+                    self.r.git("update-ref", "refs/tags/refs/remotes/origin/main", evil)
+                if kind in ("branch", "both"):
+                    self.r.git("update-ref", "refs/heads/refs/remotes/origin/main", evil)
+                self.r.git("update-ref", "-d", "refs/remotes/origin/main")
+                self.assertEqual(self.r.git("rev-parse", "--verify", "refs/remotes/origin/main^{commit}"), evil)   # git's fallback
+                for res in (self.pr(evil), self.push(self.github_merge(evil))):
+                    ok, lines = res
+                    self.assertFalse(ok, "\n".join(lines))
+                    self.assertFalse(any(l.startswith("PASS sync") for l in lines), "\n".join(lines))
+                    self.assertTrue(any("is not available: the sync-from-main exception cannot apply" in l for l in lines), "\n".join(lines))
+                    self.assertTrue(any(l.startswith("FAIL") and "release-only" in l for l in lines), "\n".join(lines))
+                self.r.git("update-ref", "-d", "refs/tags/refs/remotes/origin/main")
+                self.r.git("update-ref", "-d", "refs/heads/refs/remotes/origin/main")
+                self.r.git("update-ref", "refs/remotes/origin/main", self.main)
+
+    def test_main_ref_wins_over_same_named_tags_branches_and_packed_refs(self):
+        evil = self.evil_release()
+        for ref in ("refs/tags/origin/main", "refs/heads/origin/main", "refs/tags/refs/remotes/origin/main", "refs/heads/refs/remotes/origin/main"):
+            self.r.git("update-ref", ref, evil)
+        self.r.git("pack-refs", "--all")
+        self.assertNotSync(self.pr(evil), "not contained in main", "release-only")
+        self.assertNotSync(self.push(self.github_merge(evil)), "not contained in main", "release-only")
+        res = self.push(self.merge("main"))
+        self.assertSync(res)
+        self.assertTrue(any(self.main[:12] in l for l in res[1] if l.startswith("PASS sync")), res[1])
+
+    def test_main_ref_must_point_straight_at_a_commit(self):
+        merged = self.merge("main")
+        self.r.git("tag", "-a", "-m", "x", "annotated", "main")
+        self.r.git("update-ref", "refs/remotes/origin/main", self.r.git("rev-parse", "annotated"))
+        ok, lines = self.push(merged)
+        self.assertFalse(ok, "\n".join(lines))
+        self.assertTrue(any("is not available" in l for l in lines), "\n".join(lines))
+
+    def test_new_branch_push_uses_the_exact_main_ref(self):
+        # main(): a zero base is compared with the merge base on main; a tag must not move it.
+        evil = self.evil_release()
+        self.r.git("tag", "origin/main", evil)
+        self.r.git("update-ref", "refs/tags/refs/remotes/origin/main", evil)
+        script = os.path.join(self.r.dir, "tools/ci/integration_gate.py")
+        res = subprocess.run([sys.executable, "-I", script, "--mode", "push", "--base", cilib.ZERO_SHA, "--head", evil],
+                             cwd=self.r.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(res.returncode, 1, res.stdout.decode())
+        self.assertIn("theme style.css Version changed", res.stdout.decode())
+        self.r.git("update-ref", "-d", "refs/remotes/origin/main")
+        res = subprocess.run([sys.executable, "-I", script, "--mode", "push", "--base", cilib.ZERO_SHA, "--head", evil],
+                             cwd=self.r.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(res.returncode, 1, res.stdout.decode())
+        self.assertIn("FAIL new branch and no merge base", res.stdout.decode())
+
+    # -- P2-B: the tests the reviewer's mutants asked for
+    def test_fast_forward_back_to_an_old_main_state_fails(self):
+        # N11: integrate/web2 at main's tip, pushed "forward" to nothing new / an older first-parent state.
+        old = self.r.git("rev-parse", "main^1")
+        synced = self.main
+        self.assertNotSync(integration_gate.check(synced, old, "push", cwd=self.r.dir), "is not a state of main that the base lacks", "style.css Version changed")
+        # ... and the same as a "sync" merge whose second parent is that old state.
+        again = self.commit_tree(self.tree(old), synced, old)
+        self.assertNotSync(self.push(again, before=synced), "already in the integration branch", "style.css Version changed")
+
+    def test_rollback_after_a_sync_fails_in_every_shape(self):
+        synced = self.merge("main")                 # integrate/web2 has 1.31.0 and its own work
+        old = self.r.git("rev-parse", "main^1")     # main's state before the release
+        for name, head, why in (
+                ("fast-forward", old, "is not a state of main that the base lacks"),
+                ("merge of the old state", self.commit_tree(self.tree(old), synced, old), "already in the integration branch"),
+                ("sync merge of the old state", self.commit_tree(self.tree(synced), synced, self.commit_tree(self.tree(old), synced, old)), "")):
+            with self.subTest(name):
+                ok, lines = self.push(head, before=synced)
+                self.assertFalse(any(l.startswith("PASS sync") for l in lines), "\n".join(lines))
+                self.assertTrue(any(l.startswith("NOTE not a sync from main") and why in l for l in lines), "\n".join(lines))
+        z = self.commit_tree(self.tree(old), synced, old)
+        self.assertNotSync(self.pr(z, base=synced), "is not a state of main that the base lacks")
+
+    def test_sync_merge_first_parent_is_compared_by_commit_not_by_tree(self):
+        # X15: F has the base's tree but main as its parent, so merge-tree(F, main) is the base's
+        # tree: a "sync" that claims to take main in and throws its content away.
+        fake = self.commit_tree(self.tree(self.before), self.main)
+        self.assertEqual(self.tree(fake), self.tree(self.before))
+        z = self.commit_tree(self.r.git("merge-tree", "--write-tree", fake, self.main).split("\n")[0], fake, self.main)
+        self.assertEqual(self.tree(z), self.tree(self.before))
+        ok, lines = self.pr(z)
+        self.assertFalse(any(l.startswith("PASS sync") for l in lines), "\n".join(lines))
+        self.assertTrue(any("is not the base" in l for l in lines), "\n".join(lines))
+        ok, lines = self.push(self.github_merge(z))
+        self.assertFalse(any(l.startswith("PASS sync") for l in lines), "\n".join(lines))
+
+    def test_command_line_default_is_the_full_ref(self):
+        self.assertEqual(integration_gate.MAIN_REF, "refs/remotes/origin/main")
+        src = slurp(os.path.join(REPO, "tools/ci/integration_gate.py"))
+        self.assertNotIn('"origin/main"', src.split('"""', 2)[2])   # no short name in the code, only in the docstring
+        self.assertIn('"show-ref", "--verify", "--hash", "--", ref', src)
+        self.assertIn('ap.add_argument("--main-ref", default=MAIN_REF)', src)
+
+    # -- P2-1: only states main had and the base lacks
+    def test_an_old_main_state_cannot_downgrade(self):
+        synced = self.merge("main")   # integrate now has 1.31.0
+        # A later main pull request reverts to the 1.30.0 content in its first commit, then ships 1.32.0.
+        self.r.git("checkout", "-q", "-B", "release/y", "main")
+        self.r.write("wp-theme/omochix-theme/style.css", STYLE)
+        self.r.write("tools/release/release.json", "{}\n")
+        side = self.r.commit("back to the old state")
+        self.assertEqual(self.tree(side), self.tree("main^1"))   # the state before the 1.31.0 release
+        self.release_lines("1.32.0")
+        self.r.commit("release 1.32.0")
+        self.r.git("checkout", "-q", "main")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", "release/y")
+        self.r.git("update-ref", "refs/remotes/origin/main", "main")
+        self.assertNotSync(self.push(self.merge(side, first=synced), before=synced), "is not a state of main that the base lacks", "release-only")
+        self.assertNotSync(self.pr(side, base=synced), "is not a state of main that the base lacks", "release-only")
+        self.assertSync(self.push(self.merge("main", first=synced), before=synced))
+
+    def test_a_main_state_the_base_already_has_is_not_a_sync_source(self):
+        synced = self.merge("main")
+        again = self.commit_tree(self.tree(synced), synced, self.main)
+        self.assertNotSync(self.push(again, before=synced), "already in the integration branch")
+
+    # -- P1-2: the up-to-date sync merge as the pull request head (strict ruleset)
+    def test_up_to_date_sync_merge_passes_in_both_modes(self):
+        for source in ("main", self.pr_head):
+            with self.subTest(source):
+                z = self.sync_merge(source)
+                self.assertSync(self.pr(z))
+                self.assertSync(self.push(self.github_merge(z)))
+
+    def test_sync_merge_with_an_extra_change_fails(self):
+        z = self.sync_merge("main")
+        self.r.write("tools/release/release.json", "{\"release\": \"evil\"}\n")
+        self.r.git("add", "-A")
+        self.r.git("commit", "-q", "--amend", "--no-edit")
+        z = self.r.git("rev-parse", "HEAD")
+        self.assertNotSync(self.pr(z), "differs from the clean merge", "release.json is release-only")
+        self.assertNotSync(self.push(self.github_merge(z)), "differs from the clean merge", "release-only")
+
+    def test_sync_merge_on_an_old_base_fails(self):
+        z = self.sync_merge("main")
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.r.write("docs/web2/kh/later.md", "x\n")
+        moved = self.r.commit("the base moved")
+        self.assertNotSync(self.pr(z, base=moved), "is not the base", "release-only")
+
+    def test_sync_merge_of_a_non_main_source_fails(self):
+        for src in (self.intermediate,):
+            with self.subTest(src):
+                z = self.sync_merge(src)
+                self.assertNotSync(self.pr(z), "is not a state of main that the base lacks", "release-only")
+        self.r.git("checkout", "-q", "-B", "lookalike", self.before)
+        self.release_lines("1.31.0")
+        look = self.r.commit("same version, not main")
+        z = self.sync_merge(look)
+        self.assertNotSync(self.pr(z), "is not contained in main", "release-only")
+
+    def test_sync_merge_with_a_hand_resolution_fails(self):
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.r.write("tools/release/release.json", "{\"release\": \"integration\"}\n")
+        base = self.r.commit("integration touches a main file")
+        self.r.git("checkout", "-q", "-B", "sync/main", base)
+        res = subprocess.run(["git", "merge", "--no-ff", "--no-edit", "main"], cwd=self.r.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertNotEqual(res.returncode, 0)
+        self.r.write("tools/release/release.json", "{\"release\": \"resolved\"}\n")
+        self.r.git("add", "-A")
+        self.r.git("commit", "-q", "--no-edit")
+        z = self.r.git("rev-parse", "HEAD")
+        self.assertNotSync(self.pr(z, base=base), "do not merge cleanly", "release-only")
+
+    def test_github_merge_of_a_sync_merge_must_keep_its_tree(self):
+        z = self.sync_merge("main")
+        g = self.github_merge(z)
+        self.r.write("docs/web2/kh/smuggled.md", "x\n")
+        self.r.git("add", "-A")
+        self.r.git("commit", "-q", "--amend", "--no-edit")
+        self.assertNotSync(self.push(self.r.git("rev-parse", "HEAD")), "differs from the sync merge it merged")
+        self.assertSync(self.push(g))
+
+    def test_nested_sync_merges_fail(self):
+        z = self.sync_merge("main")
+        self.r.git("checkout", "-q", "-B", "sync/outer", self.before)
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", z)
+        outer = self.r.git("rev-parse", "HEAD")
+        self.assertNotSync(self.pr(outer), "is not contained in main", "release-only")
+
+    def test_octopus_sync_merge_fails(self):
+        self.r.git("checkout", "-q", "-B", "side", self.before)
+        self.r.write("docs/web2/kh/side.md", "x\n")
+        side = self.r.commit("side")
+        z = self.sync_merge("main")
+        octo = self.commit_tree(self.tree(z), self.before, self.main, side)
+        self.assertNotSync(self.pr(octo), "is not contained in main and is not a two-parent sync merge", "release-only")
+
+    def test_merged_head_without_main_s_tree_is_not_a_main_state(self):
+        # main moved while a pull request was open; its head never was a state of main.
+        self.r.git("checkout", "-q", "-B", "release/z", "main")
+        self.release_lines("1.32.0")
+        head = self.r.commit("release 1.32.0, branched before the docs change")
+        self.r.git("checkout", "-q", "main")
+        self.r.write("docs/readme.md", "main moved\n")
+        self.r.commit("docs on main")
+        self.r.git("merge", "-q", "--no-ff", "--no-edit", "release/z")
+        self.r.git("update-ref", "refs/remotes/origin/main", "main")
+        self.assertNotEqual(self.tree(head), self.tree("main"))
+        self.assertNotSync(self.push(self.merge(head)), "is not a state of main that the base lacks", "release-only")
+        self.assertSync(self.push(self.merge("main")))
+
+    def test_pr_judged_commit_must_merge_the_base(self):
+        r = self.github_merge(self.sync_merge("main"))
+        self.r.git("checkout", "-q", "--detach", self.before)
+        self.r.write("docs/web2/kh/other.md", "x\n")
+        other = self.r.commit("another base")
+        ok, lines = integration_gate.check(other, r, "pr", "sync/main", cwd=self.r.dir)
+        self.assertNotSync((ok, lines), "is not the merge of the base and the pull request head", "release-only")
+
+    def test_fast_forward_to_an_intermediate_main_commit_fails(self):
+        # integrate/web2 without work of its own, moved straight to a commit inside main's history.
+        base = self.r.git("rev-parse", "main^1")
+        self.assertNotSync(self.push(self.intermediate, before=base), "is not a state of main that the base lacks", "release-only")
+        self.assertSync(self.push(self.main, before=base))
+
+    def test_unexpected_errors_are_not_a_sync(self):
+        merged = self.merge("main")
+        orig = integration_gate._clean_merge
+
+        def boom(*a, **k):
+            raise ValueError("boom")
+        integration_gate._clean_merge = boom
+        try:
+            self.assertNotSync(self.push(merged), "unexpected error", "release-only")
+        finally:
+            integration_gate._clean_merge = orig
+
+    # -- P2-2 / P2-3: git errors are never a "no" that lets a sync pass
+    def fake(self, body):
+        d = tempfile.mkdtemp(prefix="omx-fake-git-")
+        self.addCleanup(shutil.rmtree, d, True)
+        p = os.path.join(d, "git")
+        with open(p, "w") as fh:
+            fh.write(FAKE_GIT % (body, shutil.which("git")))
+        os.chmod(p, 0o755)
+        old = os.environ["PATH"]
+        self.addCleanup(os.environ.__setitem__, "PATH", old)
+        os.environ["PATH"] = d + os.pathsep + old
+
+    CASES = {
+        "is-ancestor error": 'if [ "$1" = merge-base ] && [ "$2" = --is-ancestor ]; then exit 128; fi',
+        "log error": 'if [ "$1" = log ]; then exit 128; fi',
+        "log empty": 'if [ "$1" = log ]; then exit 0; fi',
+        "log garbage": 'if [ "$1" = log ]; then echo "zzz yyy"; exit 0; fi',
+        "merge-tree error": 'if [ "$1" = merge-tree ]; then exit 128; fi',
+        "merge-tree old git": 'if [ "$1" = merge-tree ]; then echo usage >&2; exit 129; fi',
+        "merge-tree garbage": 'if [ "$1" = merge-tree ]; then echo zzz; exit 0; fi',
+        "merge-tree empty": 'if [ "$1" = merge-tree ]; then exit 0; fi',
+        "merge-tree extra lines": 'if [ "$1" = merge-tree ]; then "$REAL" "$@"; echo extra; exit 0; fi',
+        "tree lookup error": 'case "$*" in *"^{tree}"*) exit 1;; esac',
+        "rev-list error": 'if [ "$1" = rev-list ]; then exit 128; fi',
+        "rev-list garbage": 'if [ "$1" = rev-list ]; then echo zzz; exit 0; fi',
+    }
+
+    def test_git_errors_never_make_a_sync(self):
+        # A release change smuggled into the sync merge must fail whatever git does; the clean
+        # merge may then fail too (a false FAIL is acceptable), but nothing may raise.
+        clean = self.merge("main")
+        self.r.write("tools/release/release.json", "{\"release\": \"evil\"}\n")
+        self.r.git("add", "-A")
+        self.r.git("commit", "-q", "--amend", "--no-edit")
+        evil = self.r.git("rev-parse", "HEAD")
+        for name, body in self.CASES.items():
+            with self.subTest(name):
+                self.fake(body.replace('"$REAL"', shutil.which("git")))
+                try:
+                    ok, lines = self.push(evil)
+                    self.push(clean)
+                finally:
+                    os.environ["PATH"] = os.environ["PATH"].split(os.pathsep, 1)[1]
+                self.assertFalse(any(l.startswith("PASS sync") for l in lines), "\n".join(lines))
+                self.assertFalse(ok, "\n".join(lines))
+
+    def test_is_ancestor_error_is_not_read_as_no(self):
+        synced = self.merge("main")
+        again = self.commit_tree(self.tree(synced), synced, self.main)
+        self.fake('if [ "$1" = merge-base ] && [ "$2" = --is-ancestor ]; then exit 128; fi')
+        ok, lines = self.push(again, before=synced)
+        self.assertFalse(any(l.startswith("PASS sync") for l in lines), "\n".join(lines))
+        self.assertTrue(any("git could not answer" in l for l in lines), "\n".join(lines))
+
+    def test_command_line_with_a_failing_git_exits_non_zero(self):
+        self.merge("main")
+        self.r.write("tools/release/release.json", "{\"release\": \"evil\"}\n")
+        self.r.git("add", "-A")
+        self.r.git("commit", "-q", "--amend", "--no-edit")
+        evil = self.r.git("rev-parse", "HEAD")
+        self.fake('if [ "$1" = merge-tree ]; then exit 128; fi')
+        res = subprocess.run([sys.executable, "-I", os.path.join(self.r.dir, "tools/ci/integration_gate.py"), "--mode", "push", "--base", self.before, "--head", evil],
+                             cwd=self.r.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(res.returncode, 1, res.stdout.decode() + res.stderr.decode())
+        self.assertIn("Integration gate: FAIL", res.stdout.decode())
 
 
 # --------------------------------------------------------------------------- CI change guard

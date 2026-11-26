@@ -47,6 +47,7 @@ import json
 import os
 import re
 import hashlib
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -90,10 +91,78 @@ def merged_pull(head, pulls):
     return None
 
 
-def guard(base, head, event, labels, inventory=None, cwd=None, body="", merged_pulls=None):
-    """Return (ok, lines). merged_pulls: the parsed API answer for a push (None = unavailable)."""
-    """Return (ok, lines)."""
+INTEGRATE_REF_RE = re.compile(r"(?!.*\.\.)integrate(?:/(?!\.)[A-Za-z0-9._-]+)+")
+SHA_RE = re.compile(r"[0-9a-f]{40}")
+
+
+def pr_compare(event, base, head, cwd=None, remote="origin"):
+    """What a pull request itself changes: (compare_base, compare_head, note), or (None, None, reason).
+
+    GitHub runs pull_request_target from the default branch, so the workflow's base
+    (GITHUB_SHA) is main's tip whatever branch the pull request targets. The RULES stay
+    main's (the workflow policy judges the merge with main, with main's inventory). The
+    FILES a pull request changes are compared with its real target: for integrate/* that
+    is the target's tip, taken from the runner's event file and checked against the
+    fetched branch, never against main (files only the integration branch has are not
+    this pull request's change). Anything that cannot be verified fails closed.
+
+    event: the parsed GITHUB_EVENT_PATH file (written by the runner; no pull request code
+    runs in this job, so the pull request cannot alter it).
+    """
+    try:
+        pull = event["pull_request"]
+        ref, base_sha, head_sha = pull["base"]["ref"], pull["base"]["sha"], pull["head"]["sha"]
+        default = event["repository"]["default_branch"]
+    except (KeyError, TypeError):
+        return None, None, "the event file has no pull request base and head"
+    if not all(isinstance(x, str) for x in (ref, base_sha, head_sha, default)) or not SHA_RE.fullmatch(base_sha) or not SHA_RE.fullmatch(head_sha):
+        return None, None, "the pull request base or head in the event file is not a commit id"
+    try:
+        main_sha, merged = cilib.rev(base, cwd=cwd), cilib.rev(head, cwd=cwd)
+        ps = cilib.parents(merged, cwd=cwd)
+    except cilib.GitError as exc:
+        return None, None, "git could not read the judged commits: %s" % exc
+    if ps != [main_sha, head_sha]:
+        return None, None, "the judged commit is not the merge of the default branch tip %s and the pull request head %s" % (main_sha[:12], head_sha[:12])
+    if ref == default:
+        if base_sha != main_sha:
+            return None, None, "the pull request base %s is not the default branch tip %s (the branch moved; run again)" % (base_sha[:12], main_sha[:12])
+        return base, head, "compared with its base %s (%s)" % (ref, main_sha[:12])
+    if not INTEGRATE_REF_RE.fullmatch(ref):
+        # Other targets keep the stricter comparison with the default branch.
+        return base, head, "target '%s' is neither %s nor integrate/*: compared with %s" % (ref[:80], default, main_sha[:12])
+    try:
+        tip = cilib.rev("refs/remotes/%s/%s" % (remote, ref), cwd=cwd)
+    except cilib.GitError:
+        return None, None, "the target branch %s was not fetched: its tip cannot be verified" % ref
+    if tip != base_sha:
+        return None, None, "the pull request base %s is not the tip of %s (%s): the branch moved or the event is stale; run again" % (base_sha[:12], ref, tip[:12])
+    env = dict(os.environ, GIT_AUTHOR_NAME="ci", GIT_AUTHOR_EMAIL="ci@example.invalid", GIT_COMMITTER_NAME="ci", GIT_COMMITTER_EMAIL="ci@example.invalid",
+               GIT_AUTHOR_DATE="2000-01-01T00:00:00Z", GIT_COMMITTER_DATE="2000-01-01T00:00:00Z")
+    try:
+        res = subprocess.run(["git", "merge-tree", "--write-tree", tip, head_sha], cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        tree = res.stdout.decode().split("\n")[0].strip()
+        if res.returncode != 0 or not SHA_RE.fullmatch(tree):
+            return None, None, "the pull request does not merge cleanly into %s" % ref
+        res = subprocess.run(["git", "commit-tree", tree, "-p", tip, "-p", head_sha, "-m", "merge into the target for the CI change guard"],
+                             cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        commit = res.stdout.decode().strip()
+        if res.returncode != 0 or not SHA_RE.fullmatch(commit):
+            return None, None, "git could not build the merge into %s" % ref
+    except OSError as exc:
+        return None, None, "git could not run: %s" % exc
+    return tip, commit, "compared with its target %s (%s); the rules are the default branch's (%s)" % (ref, tip[:12], main_sha[:12])
+
+
+def guard(base, head, event, labels, inventory=None, cwd=None, body="", merged_pulls=None, compare=None):
+    """Return (ok, lines). merged_pulls: the parsed API answer for a push (None = unavailable).
+
+    compare: (base, head) the changed files and the digest are taken from, when that is
+    not (base, head) itself: a pull request into integrate/* (pr_compare). The workflow
+    policy always judges head.
+    """
     lines, ok = [], True
+    cmp_base, cmp_head = compare if compare else (base, head)
     if event == "pull_request_target":
         event = "pull_request"
     inv = inventory
@@ -107,7 +176,7 @@ def guard(base, head, event, labels, inventory=None, cwd=None, body="", merged_p
     weakening = inv.get("labels", {}).get("weakening", "ci-weakening-approved")
     protected = inv.get("protected_paths") or FALLBACK_PROTECTED
     try:
-        paths = cilib.changed_paths(cilib.rev(base, cwd=cwd), cilib.rev(head, cwd=cwd), cwd=cwd)
+        paths = cilib.changed_paths(cilib.rev(cmp_base, cwd=cwd), cilib.rev(cmp_head, cwd=cwd), cwd=cwd)
     except cilib.GitError as exc:
         return False, ["FAIL git could not list the changed files: %s" % exc]
     hits = [p for p in paths if cilib.matches(p, protected)]
@@ -121,7 +190,7 @@ def guard(base, head, event, labels, inventory=None, cwd=None, body="", merged_p
     weak = [x for x in violations if not x.startswith((workflow_policy.SECURITY, workflow_policy.REVIEW))]
 
     try:
-        full = digest(hits, weak + review, base, head, cwd=cwd)
+        full = digest(hits, weak + review, cmp_base, cmp_head, cwd=cwd)
     except cilib.GitError as exc:
         return False, ["FAIL git could not read the changed files: %s" % exc]
     short = full[:16]
@@ -258,7 +327,24 @@ def main(argv=None):
                 pulls = json.load(fh)
         except (OSError, ValueError):
             pulls = None   # guard() fails closed if it needs them
-    ok, lines = guard(base, a.head, a.event, labels, body=a.body, merged_pulls=pulls)
+    compare, note = None, None
+    if a.event != "push" and os.environ.get("GITHUB_EVENT_NAME") == "pull_request_target":
+        # On the runner the pull request's own target must be known and verified: fail closed.
+        try:
+            with open(os.environ.get("GITHUB_EVENT_PATH", ""), encoding="utf-8") as fh:
+                payload = json.load(fh)
+        except (OSError, ValueError) as exc:
+            print("FAIL the event file could not be read (%s)\n\nCI change guard: FAIL" % type(exc).__name__)
+            return 1
+        cmp_base, cmp_head, note = pr_compare(payload, base, a.head)
+        if cmp_base is None:
+            print("FAIL %s\n\nCI change guard: FAIL" % note)
+            cilib.write_summary("**CI change guard: FAIL**\n\n- %s" % note.replace("`", "'"))
+            return 1
+        compare = (cmp_base, cmp_head)
+    ok, lines = guard(base, a.head, a.event, labels, body=a.body, merged_pulls=pulls, compare=compare)
+    if note:
+        lines.insert(0, "NOTE this pull request is " + note)
     print("\n".join(lines))
     print("\nCI change guard: %s" % ("PASS" if ok else "FAIL"))
     cilib.write_summary("**CI change guard: %s**\n\n%s" % ("PASS" if ok else "FAIL", "\n".join("- " + l.replace("`", "'") for l in lines)))

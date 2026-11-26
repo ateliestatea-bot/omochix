@@ -1,4 +1,4 @@
-/* AI Workspace UI (fictional "NOKURA"). Nothing typed here is sent or stored: replies are prepared text,
+/* AI Workspace UI (fictional "TOIMORI"). Nothing typed here is sent or stored: replies are prepared text,
    inserted with textContent. Timers wait while the demo is paused or hidden; reduced motion and Save-Data
    show every reply at once. No frame loop, no network, no storage. */
 (function () {
@@ -130,8 +130,8 @@
         var u = el('div', 'aw-msg aw-msg--user is-new');
         u.appendChild(el('p', 'aw-who', 'あなた')); u.appendChild(el('p', '', text));
         log.appendChild(u);
-        var a = el('article', 'aw-msg aw-msg--ai is-new'); a.setAttribute('aria-label', 'NOKURA の回答');
-        var who = el('p', 'aw-who'); var mark = el('span', 'aw-brand__mark'); mark.setAttribute('aria-hidden', 'true'); who.appendChild(mark); who.appendChild(document.createTextNode('NOKURA'));
+        var a = el('article', 'aw-msg aw-msg--ai is-new'); a.setAttribute('aria-label', 'TOIMORI の回答');
+        var who = el('p', 'aw-who'); var mark = el('span', 'aw-brand__mark'); mark.setAttribute('aria-hidden', 'true'); who.appendChild(mark); who.appendChild(document.createTextNode('TOIMORI'));
         a.appendChild(who);
         var skel = el('div', 'aw-skel'); skel.setAttribute('aria-hidden', 'true'); for (var k = 0; k < 3; k++) skel.appendChild(el('i'));
         a.appendChild(skel);

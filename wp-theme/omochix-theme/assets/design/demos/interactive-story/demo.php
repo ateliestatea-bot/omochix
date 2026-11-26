@@ -1,7 +1,7 @@
 <?php
 /**
  * Design Library demo: Interactive Storytelling. Markup only; rendered by the isolated demo endpoint.
- * A fictional washi workshop ("紙季廊 / SHIKIRO"); people, places and the workshop are fictional, and the
+ * A fictional washi workshop ("楮雪舎 / KOZOYUKI"); people, places and the workshop are fictional, and the
  * paper-making steps are described only in general terms.
  * Without JavaScript (and with reduced motion) every paragraph shows its own finished illustration;
  * the craftsman / paper voice switch works with CSS alone (:has). JavaScript adds the fixed illustration
@@ -48,7 +48,7 @@ $omx_story = [
 ?>
 <div class="sk" data-sk data-ch="0">
     <header class="sk-bar">
-        <a class="sk-brand" href="#sk-top"><span class="sk-brand__mark" aria-hidden="true"></span>紙季廊<span class="sk-brand__en">SHIKIRO</span></a>
+        <a class="sk-brand" href="#sk-top"><span class="sk-brand__mark" aria-hidden="true"></span>楮雪舎<span class="sk-brand__en">KOZOYUKI</span></a>
         <p class="sk-bar__ch" data-sk-chapter>一枚の紙ができるまで</p>
         <button class="sk-bar__toc" type="button" data-sk-toc aria-haspopup="dialog" hidden>目次</button>
         <div class="sk-progress" aria-hidden="true"><i data-sk-progress></i></div>
@@ -58,7 +58,7 @@ $omx_story = [
         <section class="sk-intro" id="sk-top" aria-labelledby="sk-title">
             <p class="sk-kicker">架空の手漉き和紙の工房の一年</p>
             <h1 id="sk-title">一枚の紙が<br>できるまで</h1>
-            <p class="sk-lead">冬の畑の細い枝が、春に一通の手紙になるまで。紙季廊の一年を、職人の目と、紙の目で読む物語です。</p>
+            <p class="sk-lead">冬の畑の細い枝が、春に一通の手紙になるまで。楮雪舎の一年を、職人の目と、紙の目で読む物語です。</p>
             <p class="sk-meta">4 章 · 13 場面 · 読む時間 約 4 分</p>
             <fieldset class="sk-voice">
                 <legend>どちらの目で読みますか</legend>
@@ -112,7 +112,7 @@ $omx_story = [
         </div>
 
         <section class="sk-end" id="sk-end" aria-labelledby="sk-end-h">
-            <h2 id="sk-end-h" tabindex="-1">紙季廊の一年</h2>
+            <h2 id="sk-end-h" tabindex="-1">楮雪舎の一年</h2>
             <ol class="sk-year">
                 <li><b>冬</b>楮を刈り、蒸して皮をむく</li>
                 <li><b>冬の終わり</b>流れにさらし、ちりを取り、叩く</li>
@@ -132,7 +132,7 @@ $omx_story = [
                 <?php foreach ($omx_story as $omx_n => $omx_ch) : ?>
                     <li><button type="button" data-sk-go="<?php echo esc_attr($omx_ch['id']); ?>"><span>第<?php echo (int) $omx_n; ?>章</span><?php echo esc_html($omx_ch['title']); ?></button></li>
                 <?php endforeach; ?>
-                <li><button type="button" data-sk-go="sk-end"><span>結び</span>紙季廊の一年</button></li>
+                <li><button type="button" data-sk-go="sk-end"><span>結び</span>楮雪舎の一年</button></li>
             </ol>
             <button class="sk-sheet__close" type="button" data-sk-close>閉じる</button>
         </div>

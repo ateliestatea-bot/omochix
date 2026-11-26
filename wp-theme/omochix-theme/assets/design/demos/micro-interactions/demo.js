@@ -1,4 +1,4 @@
-/* Micro Interaction Collection (fictional "HAKARI"). Feedback for settings, input checks, submit states and
+/* Micro Interaction Collection (fictional "TEMOCHO"). Feedback for settings, input checks, submit states and
    undo. Nothing is sent or stored; user text is only ever set with textContent. Timers wait while the demo is
    paused or hidden; reduced motion keeps every state and drops the movement. */
 (function () {

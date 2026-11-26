@@ -7,7 +7,8 @@
       "slug": "liquid-glass",
       "medium": "web",
       "status": "published",
-      "title": "Liquid Glass",
+      "title": "Frosted Glass UI",
+      "fictionalBrand": "Quillmere",
       "summary": "半透明のガラス層と、ゆっくり動く光のグラデーション。ポインターを追うハイライトと、スクロールで変わるぼかしが特徴です。",
       "description": "ガラスのような半透明カードと光のグラデーションで構成した、AI・テック製品向けの LP の見本。ポインター追従のハイライト、カードの浮遊、スクロール連動のぼかし。",
       "use_cases": [
@@ -128,7 +129,7 @@
       "deliverables": {
         "html": {
           "file": "demos/liquid-glass/",
-          "sha256": "db35c5a5015bb458fa108a9e475b3d8b5d6474cc013d6e2456c0a26388a64fab"
+          "sha256": "4d70e16ea986728bbc3669afe1151d0705bbdd73fe21cbbbe1bddf2bfd43819e"
         },
         "showCode": true
       },
@@ -186,6 +187,7 @@
       "medium": "web",
       "status": "published",
       "title": "Minimal Editorial",
+      "fictionalBrand": "IKIMA",
       "summary": "色を一色に絞り、文字と余白で読ませる雑誌風のレイアウト。見出しの行ごとの出現と、スクロールで引かれる細い罫線。",
       "description": "12 カラムのグリッドと大きな余白、縦書きの引用を使った、メディア・ブランドストーリー向けの見本。見出しの行単位フェード、罫線の描画、ページ送り風の切り替え。",
       "use_cases": [
@@ -305,7 +307,7 @@
       "deliverables": {
         "html": {
           "file": "demos/minimal-editorial/",
-          "sha256": "e769c9f30db60b9c5d6c9304dbadb50442f05230af6f1eff3868f34f4ff50e6e"
+          "sha256": "0b96317f44a19d403f3b51e5cde72eb956ee4a68986cb54a29ffb137b0c3792e"
         },
         "showCode": true
       },
@@ -362,6 +364,7 @@
       "medium": "web",
       "status": "published",
       "title": "3D Interactive",
+      "fictionalBrand": "WAKUREI-01",
       "summary": "ドラッグで回せる 3D モデルが主役。読み込み時の組み立て演出、スクロールでのカメラ移動、部品のハイライト。",
       "description": "プログラムで生成した抽象的な 3D モジュールを WebGL で描く、製品紹介・製造業向けの見本。ドラッグ回転、スクロール連動のカメラ、ホバーで部品を強調、横スクロールの機能紹介。",
       "use_cases": [
@@ -483,7 +486,7 @@
       "deliverables": {
         "html": {
           "file": "demos/3d-interactive/",
-          "sha256": "6c35dca9638d9d085bd938dacab7c45a2b223a333338935c030e94cf9d278b70"
+          "sha256": "7ca66209d21a9731b43a439d7466d7037cfd640ccbd1e4aa61a2a28cefa79a06"
         },
         "showCode": true
       },
@@ -538,6 +541,7 @@
       "medium": "web",
       "status": "published",
       "title": "Bento SaaS",
+      "fictionalBrand": "Grivio",
       "summary": "大きさの違うタイルに情報を詰めた SaaS のダッシュボード風 LP。タイルの順次出現、数値のカウントアップ、グラフの描画。",
       "description": "不揃いな Bento グリッドと料金表で構成した、SaaS・B2B ツール向けの見本。タイルの順次出現、ホバーで拡大と影、数値のカウントアップ、折れ線・棒グラフの描画。数値と価格は架空。",
       "use_cases": [
@@ -659,7 +663,7 @@
       "deliverables": {
         "html": {
           "file": "demos/bento-saas/",
-          "sha256": "b73b63be855dfdc134369335ebcc8745c8169f52dbb1f7db6af4d38b06dd7b16"
+          "sha256": "b9318bb081464e5e38e09aae6d03a57b40e01c82eaa16aa759b630362a513ea9"
         },
         "showCode": true
       },
@@ -717,6 +721,7 @@
       "medium": "web",
       "status": "published",
       "title": "Dark Luxury",
+      "fictionalBrand": "KAGEMURO",
       "summary": "黒の階調と控えめなゴールド、明朝の文字組みで見せる建築ブランドのサイト。奥行きのある層のスクロール演出と、作品の横送り。",
       "description": "黒を基調に、明朝体の見出しと細い金の線で組んだ建築・不動産ブランド向けの見本。SVG で描いた建築を層で重ね、スクロールで奥行きを出し、作品は横に送る。",
       "use_cases": [
@@ -852,7 +857,7 @@
       "deliverables": {
         "html": {
           "file": "demos/dark-luxury/",
-          "sha256": "99bc45a92ffb97f3f6e5d5e03ea8ccd6976d9c9180e850f8b4cf4af841b108a4"
+          "sha256": "0d200cf22a7f3158ff705245cf17128255a7e5ba0178ddc0663e1f2e66e1de80"
         },
         "showCode": true
       },
@@ -909,6 +914,7 @@
       "medium": "web",
       "status": "published",
       "title": "Aurora Gradient",
+      "fictionalBrand": "NAGIWA",
       "summary": "夜明けの空に流れるオーロラを Canvas 2D で描いた、SaaS の紹介サイト。ゆっくり流れる光の帯と、明るく静かな本文。",
       "description": "深い藍から淡い夜明け色へ移る空に、Canvas 2D で描いたオーロラの帯を重ねたファーストビュー。下は明るい SaaS の構成（機能・導入・料金・CTA）。描画は低解像度・最大 30fps・帯の数を端末に合わせて制御する。",
       "use_cases": [
@@ -1047,7 +1053,7 @@
       "deliverables": {
         "html": {
           "file": "demos/aurora-gradient/",
-          "sha256": "aeca72964cf7366f761ed31bace6513a9782294a0aeb00d3eab21755f70a9f2c"
+          "sha256": "1283a6b3a00174cdb5d8c96a6001618dff9199243c9ac3da9e6ef12cf6ca74fd"
         },
         "showCode": true
       },
@@ -1105,6 +1111,7 @@
       "medium": "web",
       "status": "published",
       "title": "AI Workspace UI",
+      "fictionalBrand": "TOIMORI",
       "summary": "架空の AI リサーチアプリの作業画面。スレッド・会話・出典の 3 カラムに、コマンドパレットと出典の参照、ライトとダークの切り替え。",
       "description": "製品を紹介するページではなく、AI リサーチアプリそのものの画面の見本。回答は用意した文章を段落ごとに表示し、出典の番号から参照パネルへ移る。AI には接続せず、入力内容はどこにも送らない。",
       "use_cases": [
@@ -1241,7 +1248,7 @@
       "deliverables": {
         "html": {
           "file": "demos/ai-workspace/",
-          "sha256": "1d28b74a081d55e9d3658907c12ec873ce6633fe0f30b4b751ac68f101be8ce3"
+          "sha256": "7d65d7ee48215ac816fe93e84ed067c1c19504aa13be77f4cb8cc7e336c3a6c6"
         },
         "showCode": true
       },
@@ -1300,6 +1307,7 @@
       "medium": "web",
       "status": "published",
       "title": "Micro Interaction Collection",
+      "fictionalBrand": "TEMOCHO",
       "summary": "架空の家計・経費アプリの画面で見せる、小さな操作の手応え。設定の保存、入力の確認、送信の成功と失敗、精算の切り替えと元に戻す。",
       "description": "動きを 1 つずつ並べた見本帳ではなく、1 つのアプリの画面の中で状態の変化（保存・エラー・読み込み中・成功・失敗・取り消し）を一貫した小さな動きで伝える見本。状態は色だけでなく形・記号・文字でも示す。",
       "use_cases": [
@@ -1428,7 +1436,7 @@
       "deliverables": {
         "html": {
           "file": "demos/micro-interactions/",
-          "sha256": "f15828593bedfc39465b31dd9a33bd051c4e5ee0394666d0273cc021ab66a9c3"
+          "sha256": "d49eaeec672cf9ed598a78ab4a5eece06e610d2b138be67060cd508c566251ac"
         },
         "showCode": true
       },
@@ -1488,6 +1496,7 @@
       "medium": "web",
       "status": "published",
       "title": "Interactive Storytelling",
+      "fictionalBrand": "楮雪舎（KOZOYUKI）",
       "summary": "架空の手漉き和紙の工房の一年を、スクロールに合わせて挿絵が描き変わる物語で。職人の目と紙の目、2 つの語りを途中で切り替えられる。",
       "description": "4 章 13 場面の読み物。段落が画面の中ほどに来ると、横（スマホでは上）に固定した挿絵がその場面に変わる。語り手を職人と紙で切り替えても、読んでいる位置は保たれる。WebGL・画像は使わず、挿絵はすべて SVG で自作した。",
       "use_cases": [
@@ -1630,7 +1639,7 @@
       "deliverables": {
         "html": {
           "file": "demos/interactive-story/",
-          "sha256": "130c0e9d30cde519a1f1d98baf09e76e444391a7047e911581b204e41965fd54"
+          "sha256": "e587ac5ba3a62cc3be9bd3da152b6a2aad2b160790456af3f52b4b7e9ee2b0bf"
         },
         "showCode": true
       },
@@ -1638,7 +1647,7 @@
         "author": "OmochiX",
         "source": "original",
         "license": "original",
-        "notes": "工房・人物・地名は架空（工房名「紙季廊」は商標未確認の仮の名前）。紙すきの工程は一般的な流れを簡単にしたもの。写真・外部素材・外部ライブラリ・Web フォントは使っていない"
+        "notes": "工房・人物・地名は架空（工房名「楮雪舎」は架空の名前）。紙すきの工程は一般的な流れを簡単にしたもの。写真・外部素材・外部ライブラリ・Web フォントは使っていない"
       },
       "verification": {
         "state": "verified-local",
@@ -1691,6 +1700,7 @@
       "medium": "video",
       "status": "published",
       "title": "Logo Reveal Short",
+      "fictionalBrand": "TSUKIAMI",
       "summary": "縦型 6 秒のロゴ登場。線で描かれるマーク、1 文字ずつ立ち上がるワードマーク、タグラインの順に現れる SNS 向けの見本。",
       "description": "架空のブランドのロゴを、線の描画と文字の順次出現で見せる縦型ショート動画の見本。HTML と CSS で組み、フレームごとに書き出した。",
       "use_cases": [
@@ -1737,8 +1747,7 @@
         }
       ],
       "fonts": [
-        "Hiragino Sans",
-        "system-ui"
+        "Noto Sans JP"
       ],
       "poster": "posters/logo-reveal-short.avif",
       "posterFallback": "posters/logo-reveal-short.webp",
@@ -1757,12 +1766,6 @@
         "orientation": "portrait"
       },
       "materials": [
-        {
-          "name": "システムフォント",
-          "type": "font",
-          "source": "system",
-          "license": "system-font"
-        },
         {
           "name": "HTML・CSS・SVG の構成（自作）",
           "type": "code",
@@ -1809,7 +1812,7 @@
         "author": "OmochiX",
         "source": "original",
         "license": "original",
-        "notes": "ブランド名・数値は架空。音声・写真・外部素材は使っていない。HTML と CSS で組んだ構成からフレームごとに書き出した"
+        "notes": "ブランド名・数値は架空。音声・写真は使っていない。HTML と CSS で組んだ構成からフレームごとに書き出し、和文は Noto Sans JP（SIL Open Font License 1.1）を使った"
       },
       "verification": {
         "state": "verified-local",
@@ -1895,8 +1898,7 @@
         }
       ],
       "fonts": [
-        "Hiragino Sans",
-        "system-ui"
+        "Noto Sans JP"
       ],
       "poster": "posters/data-chart-explainer.avif",
       "posterFallback": "posters/data-chart-explainer.webp",
@@ -1915,12 +1917,6 @@
         "orientation": "landscape"
       },
       "materials": [
-        {
-          "name": "システムフォント",
-          "type": "font",
-          "source": "system",
-          "license": "system-font"
-        },
         {
           "name": "HTML・CSS・SVG の構成（自作）",
           "type": "code",
@@ -1967,7 +1963,7 @@
         "author": "OmochiX",
         "source": "original",
         "license": "original",
-        "notes": "ブランド名・数値は架空。音声・写真・外部素材は使っていない。HTML と CSS で組んだ構成からフレームごとに書き出した"
+        "notes": "ブランド名・数値は架空。音声・写真は使っていない。HTML と CSS で組んだ構成からフレームごとに書き出し、和文は Noto Sans JP（SIL Open Font License 1.1）を使った"
       },
       "verification": {
         "state": "verified-local",
@@ -2002,8 +1998,9 @@
       "medium": "video",
       "status": "published",
       "title": "Brand Typography Motion",
+      "fictionalBrand": "HONYOI",
       "summary": "正方形 10 秒、文字だけで語るブランド動画。紙・明るい緑・黄色の面が切り替わり、和文の縦組みと欧文、直線と円弧で作ったワードマークで締める。",
-      "description": "架空の書店兼カフェ「YOMIBA」の、ロゴを使わず文字だけで組んだ 1:1 の SNS 向け動画。4 つの場面で地の色と組み方を変え、最後はフォントを使わず直線と円弧で自作したワードマークで締める。HTML と CSS で組み、フレームごとに書き出した。",
+      "description": "架空の書店兼カフェ「HONYOI（本宵）」の、ロゴを使わず文字だけで組んだ 1:1 の SNS 向け動画。4 つの場面で地の色と組み方を変え、最後はフォントを使わず直線と円弧で自作したワードマークで締める。HTML と CSS で組み、フレームごとに書き出した。",
       "use_cases": [
         "sns-short",
         "brand-intro"
@@ -2052,9 +2049,8 @@
         }
       ],
       "fonts": [
-        "Hiragino Mincho ProN",
-        "Hiragino Sans",
-        "system-ui"
+        "Noto Serif JP",
+        "Noto Sans JP"
       ],
       "poster": "posters/brand-typography.avif",
       "posterFallback": "posters/brand-typography.webp",
@@ -2074,13 +2070,7 @@
       },
       "materials": [
         {
-          "name": "システムフォント（明朝・ゴシック）",
-          "type": "font",
-          "source": "system",
-          "license": "system-font"
-        },
-        {
-          "name": "ワードマーク YOMIBA の線画（自作）",
+          "name": "ワードマーク HONYOI の線画（自作）",
           "type": "image",
           "source": "original",
           "license": "original"
@@ -2095,7 +2085,7 @@
       "customization": [
         {
           "label": "動画内の文字（全文）",
-          "description": "YOMIBA · BOOK & COFFEE／よむ。／一冊と、一杯のあいだ。／PAUSE BETWEEN PAGES.／ページの間で、ひと休み。／OPEN 8:00 — 21:00／本と、珈琲と、ゆっくりの時間。／YOMIBA 本と珈琲の店（架空）"
+          "description": "HONYOI · BOOK & COFFEE／よむ。／一冊と、一杯のあいだ。／PAUSE BETWEEN PAGES.／ページの間で、ひと休み。／OPEN 8:00 — 21:00／本と、珈琲と、ゆっくりの時間。／HONYOI 本宵（ほんよい）／本と珈琲の店（架空）"
         },
         {
           "label": "言葉",
@@ -2135,7 +2125,7 @@
         "author": "OmochiX",
         "source": "original",
         "license": "original",
-        "notes": "ブランド名・営業時間は架空。音声・写真・外部素材・Web フォントは使っていない。ワードマークは線で自作し、和文はシステムフォントで書き出した"
+        "notes": "ブランド名・営業時間は架空。音声・写真は使っていない。ワードマークは線で自作。和文は Noto Serif JP / Noto Sans JP（SIL Open Font License 1.1）で書き出した"
       },
       "verification": {
         "state": "verified-local",
@@ -2147,8 +2137,7 @@
           "ffprobe"
         ],
         "limitations": [
-          "実機のスマートフォンでの再生は未確認",
-          "書き出しに使ったシステムフォントの、動画での利用条件は運営者の確認待ち"
+          "実機のスマートフォンでの再生は未確認"
         ]
       },
       "related": {

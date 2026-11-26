@@ -1,0 +1,59 @@
+{
+  "release": "Theme 1.32.2 (Design Library R-7: OFL-rendered media, new fictional brand names, Frosted Glass UI title; publish gate stays closed)",
+  "commit": "a1c4decc49b6414ad34575d4925bd32586dd8212",
+  "note": "Archived with the 1.32.2 release (main a1c4dec = PR #84 merge; release bundle rebuilt byte-identical from a1c4dec, zip 8f234661..., manifest 696a2abe...; deployed 2026-11-24 18:02 JST, RESULT DEPLOYED, post-check PASS: 181 public files match, the 101 URLs unchanged, sitemap 606 -> 606, catalog 403, gate 404). Recorded by hand from the 1.32.2 tree (R-7) against the production 1.32.1 manifest (9eb40169...).",
+  "versions": {
+    "core": "1.10.0",
+    "theme": "1.32.2"
+  },
+  "packages": {
+    "theme": {
+      "baseline_sha256": "9eb40169a59d4cb2efae7b7f6649e378283ecb27a1ba251b9ced4623efbbb633",
+      "files": 292,
+      "add": 1,
+      "replace": 73
+    }
+  },
+  "unchanged": {
+    "core": {
+      "dir": "wp-plugin/omochix-core",
+      "baseline": "tools/release/baseline/omochix-core-1.10.0.sha256",
+      "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
+    }
+  },
+  "steps": 74,
+  "changed_paths_sha256": "13c8095097b08957a4e7db4e6758b1defd987712de9a91adc6212bcedfd5e2e4",
+  "forbidden": {
+    "pattern": "#labs|svg-motion|logo-motion#i",
+    "allowed": []
+  },
+  "order_rules": [
+    {
+      "path": "theme:assets/data/design/.htaccess",
+      "after_every": "add",
+      "before_every": "replace",
+      "except": []
+    },
+    {
+      "path": "theme:assets/data/design/catalog.json",
+      "after_every": "replace",
+      "before_every": "add",
+      "except": [
+        "theme:style.css",
+        "theme:assets/data/design/.htaccess"
+      ]
+    }
+  ],
+  "switches": [
+    "theme:style.css"
+  ],
+  "gates": [
+    "B"
+  ],
+  "rollback": {
+    "first": "theme:style.css",
+    "last": "theme:assets/design/demos/3d-interactive/demo.php",
+    "count": 73
+  },
+  "core_version_markers": 11
+}

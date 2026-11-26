@@ -1,0 +1,10 @@
+# OmochiX Design Library: catalog data (catalog.json, catalog.schema.json) is read on the server by
+# inc/design-library.php from the file path; browsers never need it. Never served over HTTP, even while
+# the publish gate is closed (it lists unpublished works, brand names and prompts). Apache / LiteSpeed.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

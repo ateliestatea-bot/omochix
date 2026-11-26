@@ -1,0 +1,55 @@
+{
+  "release": "Theme 1.31.1 (design sitemap: same 404 as an unknown URL while the gate is closed)",
+  "note": "Theme only, on production 1.31.0 (release commit c9ae6e2, deployed 2026-11-20 with the publish gate closed). Baseline: the 1.31.0 release manifest (287 files, sha256 e5f537d5...). Core stays 1.10.0. 2 files: inc/design-library.php (no posts are queried for /design-sitemap.xml while it has nothing to list, so Slim SEO no longer prints rel=\"next\" on that 404), then style.css (version 1.31.1, switch file). No new rewrite rule and no database change.",
+  "packages": {
+    "theme": {
+      "name": "omochix-theme",
+      "dir": "wp-theme/omochix-theme",
+      "target": "themes/omochix-theme",
+      "baseline": "tools/release/baseline/omochix-theme-1.31.0.sha256",
+      "baseline_version": "1.31.0"
+    }
+  },
+  "order": [
+    [
+      "theme",
+      "inc/design-library.php"
+    ],
+    [
+      "theme",
+      "style.css"
+    ]
+  ],
+  "switches": [
+    [
+      "theme",
+      "style.css"
+    ]
+  ],
+  "gates": {
+    "B": {
+      "after": [
+        "theme",
+        "style.css"
+      ],
+      "check": "Existing 101 URLs unchanged from the 1.31.0 baseline; /design-sitemap.xml is a 404 with no rel=\"next\" link and the same head as an unknown URL; /design/, /design/web/, /design/video/, a work detail and a demo URL still answer 404 (the demo 404 keeps its sandbox CSP, no-store and noindex); robots.txt and the sitemaps unchanged; style.css?ver=1.31.1; both files match the manifest."
+    }
+  },
+  "rollback_order": [
+    [
+      "theme",
+      "style.css"
+    ],
+    [
+      "theme",
+      "inc/design-library.php"
+    ]
+  ],
+  "after_apply": [
+    "Do not reset OPcache or purge caches unless separately approved: 1.31.0 showed new files are picked up without a reset.",
+    "Run gate B checks (public GETs)."
+  ],
+  "after_rollback": [
+    "Check the 101 URLs match the 1.31.0 state (rel=\"next\" comes back on the /design-sitemap.xml 404; harmless). Cache purge and OPcache reset only with separate approval."
+  ]
+}

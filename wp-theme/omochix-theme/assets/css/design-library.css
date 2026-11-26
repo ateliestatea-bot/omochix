@@ -9,6 +9,8 @@
 .dl-eyebrow { margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: .22em; color: var(--dl-accent); }
 .dl h1 { margin: 0; font-size: clamp(32px, 5vw, 56px); line-height: 1.15; letter-spacing: -.01em; }
 .dl-lead { margin: 16px 0 0; max-width: 44em; color: var(--color-muted); font-size: 16px; line-height: 1.85; }
+/* G12 N1: the fictional-brand note under the lead is one compact line on desktop, so the first cards stay where they were (their loops start at 50 % visible). */
+.dl-lead--note { margin-top: 8px; max-width: none; font-size: 13px; line-height: 1.6; }
 .dl-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
 .dl-kinds__link { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--color-line); border-radius: 999px; color: var(--color-text); text-decoration: none; font-size: 14px; font-weight: 600; }
 .dl-kinds__link[aria-current="page"] { border-color: var(--dl-accent); color: var(--dl-accent); }
@@ -177,6 +179,9 @@ html.dl-noscroll, html.dl-noscroll body { overflow: hidden; }
 .dl-card__medium { color: var(--dl-accent); font-size: 11.5px; font-weight: 800; letter-spacing: .08em; }
 .dl-card__fact { display: inline-flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
 .dl-card__fact::before { content: ""; width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .7; }
+/* G12 N2: the fictional-brand label is text (read aloud), not one of the card facts. */
+.dl-card__fiction { display: inline-flex; align-items: center; gap: 10px; }
+.dl-card__fiction::before { content: ""; width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .7; }
 .dl-card__title { font-size: 20px; line-height: 1.35; letter-spacing: .005em; }
 .dl-card__summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; line-height: 1.7; }
 .dl-tags { gap: 6px; margin-top: 2px; }
