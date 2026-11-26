@@ -398,6 +398,172 @@ function omochix_core_glossary_oembed_post_id( $post_id ) {
 add_filter( 'oembed_request_post_id', 'omochix_core_glossary_oembed_post_id' );
 
 /**
+ * Most published terms there can be before the link search stops offering
+ * the glossary to non-editors at all (rather than listing every hidden one).
+ */
+if ( ! defined( 'OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX' ) ) {
+	define( 'OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX', 1000 );
+}
+
+/**
+ * Post types of a query without the glossary. Never empty: an empty list
+ * would mean "the default type" to WP_Query.
+ *
+ * @param mixed $types post_type of a query.
+ * @return string[]
+ */
+function omochix_core_glossary_types_without( $types ) {
+	$types = (array) $types;
+	if ( in_array( 'any', $types, true ) ) {
+		$types = array_keys( get_post_types( array( 'public' => true ) ) );
+	}
+	$left = array_values( array_diff( array_map( 'strval', $types ), array( 'omx_glossary' ) ) );
+	return $left ? $left : array( '__omx_none__' );
+}
+
+/**
+ * IDs of the published terms that are hidden (gate G-B). null when the
+ * glossary is closed or there are too many terms to list: then no term may
+ * be offered at all.
+ *
+ * @return int[]|null
+ */
+function omochix_core_glossary_hidden_published_ids() {
+	if ( ! omochix_core_glossary_public() ) {
+		return null;
+	}
+	$posts = get_posts( array( 'post_type' => 'omx_glossary', 'post_status' => 'publish', 'posts_per_page' => OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX + 1, 'fields' => 'all', 'no_found_rows' => true, 'suppress_filters' => true ) );
+	if ( ! is_array( $posts ) || count( $posts ) > OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX ) {
+		return null;
+	}
+	$hidden = array();
+	foreach ( $posts as $p ) {
+		if ( ! omochix_core_glossary_visibility( $p )['visible'] ) {
+			$hidden[] = (int) $p->ID;
+		}
+	}
+	return $hidden;
+}
+
+/**
+ * Classic editor link search (admin-ajax wp-link-ajax, review N2).
+ *
+ * _WP_Editors::wp_link_query() searches every public post type in the
+ * "publish" status and returns the ID and title of each hit; it does not ask
+ * whether a term may be shown. Any user with the internal-linking nonce
+ * (contributors and up get it on the post editor) saw the title and ID of
+ * published terms that are hidden (rule problems, a password, the glossary
+ * closed). For everyone but editors the hidden terms are now left out of the
+ * query itself, so paging stays right; visible terms can still be linked.
+ * Runs last, so a filter that widens the statuses cannot bring them back:
+ * anything but "publish" drops the glossary from the search.
+ *
+ * @param mixed $query WP_Query arguments.
+ * @return mixed
+ */
+function omochix_core_glossary_link_query_args( $query ) {
+	if ( ! is_array( $query ) || omochix_core_glossary_current_user_is_editor() ) {
+		return $query;
+	}
+	$types = isset( $query['post_type'] ) ? (array) $query['post_type'] : array( 'post' );
+	if ( ! in_array( 'omx_glossary', $types, true ) && ! in_array( 'any', $types, true ) ) {
+		return $query;
+	}
+	$hidden = array( 'publish' ) === array_values( (array) ( $query['post_status'] ?? '' ) ) ? omochix_core_glossary_hidden_published_ids() : null;
+	if ( null === $hidden ) {
+		$query['post_type'] = omochix_core_glossary_types_without( $types );
+		return $query;
+	}
+	if ( $hidden ) {
+		$query['post__not_in'] = array_values( array_unique( array_merge( array_map( 'intval', (array) ( $query['post__not_in'] ?? array() ) ), $hidden ) ) );
+	}
+	return $query;
+}
+add_filter( 'wp_link_query_args', 'omochix_core_glossary_link_query_args', 9999 );
+
+/**
+ * The same for the results (a second line: whatever the query found, a
+ * term the user may not see is not returned).
+ *
+ * @param mixed $results Link query results.
+ * @return mixed
+ */
+function omochix_core_glossary_link_query_results( $results ) {
+	if ( ! is_array( $results ) || omochix_core_glossary_current_user_is_editor() ) {
+		return $results;
+	}
+	$out = array();
+	foreach ( $results as $r ) {
+		$id = is_array( $r ) ? (int) ( $r['ID'] ?? 0 ) : 0;
+		$p  = $id ? get_post( $id ) : null;
+		if ( is_array( $r ) && ( ! $id || ( $p && 'omx_glossary' !== $p->post_type ) || ( $p && omochix_core_glossary_visibility( $p )['visible'] ) ) ) {
+			$out[] = $r;
+		}
+	}
+	return $out;
+}
+add_filter( 'wp_link_query', 'omochix_core_glossary_link_query_results', 9999 );
+
+/**
+ * Media "Attach to" search (admin-ajax find_posts, review N2).
+ *
+ * wp_ajax_find_posts() checks only its nonce (authors and up get it on the
+ * media list) and lists every public post type in every status but trash, so
+ * it showed the titles of draft, scheduled, pending and private terms.
+ * Attaching a file to a post needs edit_post on that post, which only editors
+ * have for a term, so for everyone else no term is a choice there: the
+ * glossary is left out of every query run inside that request handler. The
+ * handler's own query uses suppress_filters, but pre_get_posts still runs.
+ *
+ * @param mixed $query WP_Query.
+ * @return void
+ */
+function omochix_core_glossary_find_posts_query( $query ) {
+	if ( ! is_object( $query ) || ! method_exists( $query, 'get' ) || ! doing_action( 'wp_ajax_find_posts' ) || omochix_core_glossary_current_user_is_editor() ) {
+		return;
+	}
+	$types = $query->get( 'post_type' );
+	$types = '' === $types || array() === $types ? array( 'post' ) : (array) $types;
+	if ( in_array( 'omx_glossary', $types, true ) || in_array( 'any', $types, true ) ) {
+		$query->set( 'post_type', omochix_core_glossary_types_without( $types ) );
+	}
+}
+add_action( 'pre_get_posts', 'omochix_core_glossary_find_posts_query', 9999 );
+
+/**
+ * read_post: a hidden term is not readable for anyone but editors.
+ *
+ * For a published post core maps read_post to "read", which every user has.
+ * The media list ("Uploaded to") and the media modal (uploadedToTitle) print
+ * the parent's title when read_post allows it, so a file attached to a
+ * published hidden term showed that term's title to authors (review N2,
+ * same leak). Unpublished terms already need the glossary's edit
+ * capabilities; visible terms stay readable to everyone.
+ *
+ * @param mixed $caps    Primitive capabilities so far.
+ * @param mixed $cap     Capability asked for.
+ * @param mixed $user_id User ID.
+ * @param mixed $args    Arguments (the post ID first).
+ * @return mixed
+ */
+function omochix_core_glossary_map_read_post( $caps, $cap = '', $user_id = 0, $args = array() ) {
+	if ( 'read_post' !== $cap || ! is_array( $caps ) || ! is_array( $args ) || empty( $args[0] ) ) {
+		return $caps;
+	}
+	$post = get_post( (int) $args[0] );
+	if ( is_object( $post ) && 'revision' === ( $post->post_type ?? '' ) && (int) ( $post->post_parent ?? 0 ) > 0 ) {
+		$post = get_post( (int) $post->post_parent );
+	}
+	if ( ! is_object( $post ) || 'omx_glossary' !== ( $post->post_type ?? '' ) || omochix_core_glossary_visibility( $post )['visible'] ) {
+		return $caps;
+	}
+	// The user asked about, not the current user (user_can() runs this filter for any user).
+	$caps[] = 'edit_others_omx_glossaries';
+	return $caps;
+}
+add_filter( 'map_meta_cap', 'omochix_core_glossary_map_read_post', 10, 4 );
+
+/**
  * What is indexable right now (gate G-B per term, gate G-C for the lists).
  *
  * @param bool $reset Forget the cached answer (tests).

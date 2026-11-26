@@ -955,6 +955,42 @@ $GLOBALS['caps'] = []; $GLOBALS['posts'][$other]->post_status = 'draft';
 remove_filter('omochix_core_glossary_public', $open);
 check('F2 closed: every term is hidden, so getPingbacks answers "no such address" for any of them', omochix_core_glossary_xmlrpc_get_pingbacks($u($vis)) instanceof IXR_Error);
 
+// ---------------------------------------------- N2: link search, "Attach to" search, read_post (review N2)
+// Reproduction (real WordPress 7.1.4, glossary open): with the internal-linking nonce (post editor, contributors and up)
+// wp-link-ajax returned the ID and title of published hidden terms; with the find-posts nonce (media list, authors and up)
+// find_posts returned the titles of draft, scheduled, pending and private terms; the media list and the media modal
+// printed the title of a published hidden term as a file's parent ("Uploaded to"), because read_post allowed it.
+if (!function_exists('get_post_types')) { function get_post_types($args = [], $out = 'names') { $n = ['post' => 'post', 'page' => 'page', 'attachment' => 'attachment', 'omx_glossary' => 'omx_glossary']; return $n; } }
+$gl_q = static function (array $v) { return new class($v) { public $v; function __construct($v) { $this->v = $v; } function get($k) { return $this->v[$k] ?? ''; } function set($k, $x) { $this->v[$k] = $x; } }; };
+$gl_find = static function ($q) { $GLOBALS['action_stack'][] = 'wp_ajax_find_posts'; omochix_core_glossary_find_posts_query($q); array_pop($GLOBALS['action_stack']); return $q->v['post_type']; };
+$GLOBALS['caps'] = [];
+add_filter('omochix_core_glossary_public', $open);
+$lq = ['post_type' => ['post', 'page', 'omx_glossary'], 'suppress_filters' => true, 'post_status' => 'publish', 'posts_per_page' => 20, 'offset' => 0];
+$la = omochix_core_glossary_link_query_args($lq);
+check('N2 link search: published hidden terms are left out of the query for a non-editor (so paging stays right), visible terms are not', in_array($hid_pub, $la['post__not_in'], true) && !in_array($vis, $la['post__not_in'], true) && ['post', 'page', 'omx_glossary'] === $la['post_type'] && 20 === $la['posts_per_page']);
+check('N2 link search: an existing post__not_in is kept', in_array($other, omochix_core_glossary_link_query_args(['post__not_in' => [$other]] + $lq)['post__not_in'], true) && 'omx_glossary' !== get_post($other)->post_type && in_array($hid_pub, omochix_core_glossary_link_query_args(['post__not_in' => [$other]] + $lq)['post__not_in'], true));
+check('N2 link search: any status but "publish" (a filter widened it) drops the glossary from the search', ['post', 'page'] === omochix_core_glossary_link_query_args(['post_status' => ['publish', 'draft']] + $lq)['post_type'] && ['post', 'page'] === omochix_core_glossary_link_query_args(['post_status' => 'any'] + $lq)['post_type'] && ['post', 'page'] === omochix_core_glossary_link_query_args(array_diff_key($lq, ['post_status' => 1]))['post_type']);
+check('N2 link search: "any" type becomes the public types without the glossary; glossary alone becomes nothing', !in_array('omx_glossary', omochix_core_glossary_link_query_args(['post_type' => 'any', 'post_status' => 'draft'] + $lq)['post_type'], true) && ['__omx_none__'] === omochix_core_glossary_link_query_args(['post_type' => 'omx_glossary', 'post_status' => 'draft'] + $lq)['post_type']);
+check('N2 link search: a query without the glossary, a non-array and an editor\'s query are untouched', ['post_type' => ['post'], 'post_status' => 'publish'] === omochix_core_glossary_link_query_args(['post_type' => ['post'], 'post_status' => 'publish']) && 'x' === omochix_core_glossary_link_query_args('x'));
+$big = []; for ($i = 0; $i <= OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX; $i++) { $big[] = ih_add_post(['post_type' => 'omx_glossary', 'post_status' => 'publish', 'post_name' => 'big-' . $i]); }
+check('N2 link search: more published terms than can be listed: the glossary is left out of the search (fail closed)', null === omochix_core_glossary_hidden_published_ids() && ['post', 'page'] === omochix_core_glossary_link_query_args($lq)['post_type']);
+foreach ($big as $i) { unset($GLOBALS['posts'][$i]); }
+check('N2 link search: below the limit the list is back', is_array(omochix_core_glossary_hidden_published_ids()));
+$rows = [['ID' => $hid_pub, 'title' => 'h'], ['ID' => $vis, 'title' => 'v'], ['ID' => $other, 'title' => 'o'], ['ID' => 0, 'title' => 'z'], ['ID' => 999999, 'title' => 'gone'], 'junk'];
+check('N2 link results: a hidden term is not returned even if the query found it; visible terms and other posts are (a row for a post that cannot be read back is dropped too)', [$vis, $other, 0] === array_column(omochix_core_glossary_link_query_results($rows), 'ID') && 'x' === omochix_core_glossary_link_query_results('x'));
+check('N2 find_posts: inside the handler the glossary is left out for a non-editor (review: draft and scheduled titles were listed)', ['post', 'page'] === $gl_find($gl_q(['post_type' => ['post', 'page', 'omx_glossary'], 'post_status' => 'any'])) && ['__omx_none__'] === $gl_find($gl_q(['post_type' => 'omx_glossary'])) && !in_array('omx_glossary', $gl_find($gl_q(['post_type' => 'any'])), true) && ['post'] === $gl_find($gl_q(['post_type' => ['post']])));
+$q = $gl_q(['post_type' => ['post', 'omx_glossary']]); omochix_core_glossary_find_posts_query($q);
+check('N2 find_posts: queries outside that handler are untouched (front end, other admin screens)', ['post', 'omx_glossary'] === $q->v['post_type'] && null === omochix_core_glossary_find_posts_query('x'));
+check('N2 read_post: a hidden term needs the glossary\'s editor capability (media "Uploaded to" printed its title), for a revision too', ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$hid_pub]) && ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$rv_h]) && in_array('edit_others_omx_glossaries', omochix_core_glossary_map_read_post(['edit_others_omx_glossaries'], 'read_post', 7, [$hid_draft]), true));
+check('N2 read_post: a visible term, other posts, other capabilities and junk are untouched', ['read'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$vis]) && ['read'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$other]) && ['edit_x'] === omochix_core_glossary_map_read_post(['edit_x'], 'edit_post', 7, [$hid_pub]) && ['read'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, []) && 'x' === omochix_core_glossary_map_read_post('x', 'read_post', 7, [$hid_pub]));
+check('N2 the capability asked for is one only editors get at run time', omochix_core_glossary_user_has_cap(['edit_others_posts' => true])['edit_others_omx_glossaries'] && !isset(omochix_core_glossary_user_has_cap(['edit_posts' => true, 'edit_others_omx_glossaries' => true])['edit_others_omx_glossaries']));
+$GLOBALS['caps'] = ['edit_others_omx_glossaries' => true];
+check('N2 an editor keeps every term in the link search, its results and the "Attach to" search', $lq === omochix_core_glossary_link_query_args($lq) && $rows === omochix_core_glossary_link_query_results($rows) && ['post', 'omx_glossary'] === $gl_find($gl_q(['post_type' => ['post', 'omx_glossary']])));
+$GLOBALS['caps'] = [];
+remove_filter('omochix_core_glossary_public', $open);
+check('N2 closed: no term in the link search for a non-editor, and no term is readable', ['post', 'page'] === omochix_core_glossary_link_query_args($lq)['post_type'] && ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$vis]));
+check('N2 hooks: link query args and results last, pre_get_posts last, map_meta_cap with its 4 arguments', 9999 === has_filter('wp_link_query_args', 'omochix_core_glossary_link_query_args') && 9999 === has_filter('wp_link_query', 'omochix_core_glossary_link_query_results') && 9999 === has_action('pre_get_posts', 'omochix_core_glossary_find_posts_query') && 10 === has_filter('map_meta_cap', 'omochix_core_glossary_map_read_post'));
+
 // ---------------------------------------------- F3: the REST autosave route never publishes
 // The autosave controller saves the post from what rest_pre_insert returns (it does not stop on an error),
 // never stores meta or categories, and never fires rest_after_insert. So the status is taken off there.
