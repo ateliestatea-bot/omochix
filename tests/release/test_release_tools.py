@@ -145,6 +145,28 @@ class ReleaseExpectations(unittest.TestCase):
                     self.assertEqual(['themes/omochix-theme/style.css'], [s['target'] for s in plan['steps'] if s['n'] == len(plan['steps'])])
                 if 'release.json' == name:
                     self.assertTrue(any('101 URLs' in n for n in plan['after_rollback']), 'rollback checks the existing URLs')
+                    self.assertFalse(any('Permalinks' in n for n in plan['after_rollback']), '1.33.1 adds no rewrite rule')
+                    notes = plan['after_rollback']
+                    a_note = [n for n in notes if n.startswith('ROLLBACK A')]
+                    b_note = [n for n in notes if n.startswith('ROLLBACK B')]
+                    self.assertEqual((1, 1), (len(a_note), len(b_note)), 'the normal and the full rollback are two separate notes')
+                    for needle in ('page-design-library-terms.php STAYS', '293 files', 'Do not report this as the complete 1.33.0 file set'):
+                        self.assertIn(needle, a_note[0], 'rollback A says ' + needle)
+                    self.assertNotIn('--remove-added', a_note[0], 'rollback A never removes the added template')
+                    for needle in ('--remove-added ONLY with the owner', 'not published', 'separate approval to set the page back to draft', 'SHA-256 equals the release SHA-256',
+                                   'does not exist', '292 files of the 1.33.0 manifest'):
+                        self.assertIn(needle, b_note[0], 'rollback B says ' + needle)
+                    self.assertEqual([['theme', 'style.css'], ['theme', 'inc/shell.php']], [list(s) for s in plan['rollback_order']])
+                    check = plan['gates']['B']['check']
+                    for needle in ('catalog.json', 'catalog.schema.json', '403 or 404', 'cache-busting', 'second request', '/design/', 'design-sitemap.xml',
+                                   '/design-library-terms/ answers 404', 'style.css?ver=1.33.1'):
+                        self.assertIn(needle, check, 'gate B checks ' + needle)
+                    self.assertEqual({'add': 1, 'replace': 2}, {a: sum(1 for s in plan['steps'] if s['action'] == a) for a in ('add', 'replace')})
+                    self.assertEqual(['themes/omochix-theme/page-design-library-terms.php', 'themes/omochix-theme/inc/shell.php', 'themes/omochix-theme/style.css'],
+                                     [s['target'] for s in sorted(plan['steps'], key=lambda s: s['n'])])
+                    self.assertEqual(['themes/omochix-theme/style.css'], [s['target'] for s in plan['steps'] if s['n'] == len(plan['steps'])])
+                if 'theme-1.33.0.json' == name:
+                    self.assertTrue(any('101 URLs' in n for n in plan['after_rollback']), 'rollback checks the existing URLs')
                     self.assertFalse(any('Permalinks' in n for n in plan['after_rollback']), '1.33.0 adds no rewrite rule')
                     check = plan['gates']['B']['check']
                     for needle in ('catalog.json', 'catalog.schema.json', '403 or 404', 'cache-busting', 'second request', '/design/', 'design-sitemap.xml',
@@ -200,9 +222,9 @@ class ReleaseExpectations(unittest.TestCase):
     def test_plan_refuses_a_step_missing_from_the_order_and_a_step_that_does_not_change(self):
         with release_config('release.json'):
             cfg = rl.load_config()
-        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'template-parts/design-library/detail.php']])
+        dropped = dict(cfg, order=[s for s in cfg['order'] if s != ['theme', 'page-design-library-terms.php']])
         extra = dict(cfg, order=[['theme', '404.php']] + cfg['order'])
-        for bad, needle in ((dropped, 'template-parts/design-library/detail.php differs from production but is not in the approved order'),
+        for bad, needle in ((dropped, 'page-design-library-terms.php differs from production but is not in the approved order'),
                             (extra, '404.php is in the order but does not change')):
             with self.subTest(needle=needle):
                 orig = rl.load_config

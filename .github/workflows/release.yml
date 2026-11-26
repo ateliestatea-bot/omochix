@@ -138,6 +138,14 @@ jobs:
           git archive a1c4decc49b6414ad34575d4925bd32586dd8212 wp-plugin wp-theme | tar -x -C "$tree"
           OMOCHIX_RELEASE_CONFIG=theme-1.32.2.json OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php
 
+      - name: Release gate for the previous release on its own commit (theme 1.33.0, b3dcd3c)
+        if: steps.scope.outputs.target == 'true'
+        run: |
+          set -e
+          tree="$RUNNER_TEMP/theme-1.33.0-tree"; mkdir -p "$tree"
+          git archive b3dcd3ca7115eee94156516eb56b88d638729fc6 wp-plugin wp-theme | tar -x -C "$tree"
+          OMOCHIX_RELEASE_CONFIG=theme-1.33.0.json OMOCHIX_RELEASE_TREE="$tree" php tests/release/release-gate.php
+
       - name: Release tools (reproducible build, verify, plan, staged replace rehearsal)
         if: steps.scope.outputs.target == 'true'
         run: python3 -W error::ResourceWarning -m unittest discover -s tests/release -v
@@ -159,3 +167,4 @@ jobs:
           OMOCHIX_RELEASE_CONFIG=theme-1.32.0.json python3 tools/release/plan.py --commit 112dd02701ce649128a016a9de36eae7bb403cd7 --check
           OMOCHIX_RELEASE_CONFIG=theme-1.32.1.json python3 tools/release/plan.py --commit 1aa10bbc47cec1ca72d29dd21f0001e08102024e --check
           OMOCHIX_RELEASE_CONFIG=theme-1.32.2.json python3 tools/release/plan.py --commit a1c4decc49b6414ad34575d4925bd32586dd8212 --check
+          OMOCHIX_RELEASE_CONFIG=theme-1.33.0.json python3 tools/release/plan.py --commit b3dcd3ca7115eee94156516eb56b88d638729fc6 --check
