@@ -989,7 +989,7 @@ check('N2 an editor keeps every term in the link search, its results and the "At
 $GLOBALS['caps'] = [];
 remove_filter('omochix_core_glossary_public', $open);
 check('N2 closed: no term in the link search for a non-editor, and no term is readable', ['post', 'page'] === omochix_core_glossary_link_query_args($lq)['post_type'] && ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$vis]));
-check('N2 hooks: link query args and results last, pre_get_posts last, map_meta_cap with its 4 arguments', 9999 === has_filter('wp_link_query_args', 'omochix_core_glossary_link_query_args') && 9999 === has_filter('wp_link_query', 'omochix_core_glossary_link_query_results') && 9999 === has_action('pre_get_posts', 'omochix_core_glossary_find_posts_query') && 10 === has_filter('map_meta_cap', 'omochix_core_glossary_map_read_post'));
+check('N2 hooks: link query args and results last, pre_get_posts last, map_meta_cap with its 4 arguments', 9999 === has_filter('wp_link_query_args', 'omochix_core_glossary_link_query_args') && 9999 === has_filter('wp_link_query', 'omochix_core_glossary_link_query_results') && 9999 === has_action('pre_get_posts', 'omochix_core_glossary_find_posts_query') && 10 === has_filter('map_meta_cap', 'omochix_core_glossary_map_read_post') && [['omochix_core_glossary_map_read_post', 4]] === array_values(array_filter($GLOBALS['hooks']['map_meta_cap'][10] ?? [], static fn($h) => 'omochix_core_glossary_map_read_post' === $h[0])));
 
 // ---------------------------------------------- F3: the REST autosave route never publishes
 // The autosave controller saves the post from what rest_pre_insert returns (it does not stop on an error),
