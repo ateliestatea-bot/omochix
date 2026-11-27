@@ -116,6 +116,45 @@ function omochix_editorial_visual($name, $class = '', $priority = false) {
     printf('<img class="%s" src="%s" width="1672" height="940" alt="" loading="%s" decoding="async">', esc_attr($class), esc_url(get_theme_file_uri('/assets/img/editorial/' . $name . '-v1.webp')), $priority ? 'eager' : 'lazy');
 }
 
+/**
+ * Motion frames for the AI Tools, Prompts, Learn and About sections (HTML and CSS, assets/css/editorial-motion.css).
+ * The markup with plain CSS is the finished frame: without JavaScript, with reduced motion, in print and after
+ * the one play on first view (assets/js/editorial-motion.js) the same finished frame shows. Decorative only:
+ * fixed, theme-owned text, no post or user data, hidden from assistive technology. Other names fall back to
+ * the still image.
+ */
+function omochix_editorial_motion($name, $class = '') {
+    if (!in_array($name, ['tools', 'prompts', 'learn', 'about'], true)) { omochix_editorial_visual($name, $class); return; }
+    $line = '<span class="omx-mo-line"></span>';
+    $logo = '<span class="omx-mo-logo"><img src="' . esc_url(get_theme_file_uri('/assets/img/editorial/omochix-logo-wh.png')) . '" width="406" height="90" alt="" loading="lazy" decoding="async"></span>';
+    if ('tools' === $name) {
+        $icons = [
+            '文章' => '<path d="M5 19h4L19.5 8.5a2.1 2.1 0 0 0-3-3L6 16l-1 3Z"/><path d="m14.5 7.5 2 2"/>',
+            '画像' => '<rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m5 17 4.5-4 3 2.5L16 12l3 3"/>',
+            '開発' => '<path d="m9 8-4 4 4 4"/><path d="m15 8 4 4-4 4"/><path d="m13 6-2 12"/>',
+        ];
+        $cards = '';
+        $i = 0;
+        foreach ($icons as $label => $paths) {
+            $cards .= '<span class="omx-mo-card omx-mo-glass" style="--i:' . $i++ . '"><span class="omx-mo-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' . $paths . '</svg></span><span class="omx-mo-label">' . esc_html($label) . '</span>' . $line . $line . '</span>';
+        }
+        $body = '<span class="omx-mo-search omx-mo-glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4.5 4.5"/></svg><span class="omx-mo-query">' . esc_html__('気になるAIを検索', 'omochix') . '</span><span class="omx-mo-caret"></span></span><span class="omx-mo-cards">' . $cards . '</span>';
+    } elseif ('prompts' === $name) {
+        $stars = str_repeat('<span class="omx-mo-star"></span>', 4) . '<span class="omx-mo-star is-dim"></span>';
+        $bars = '';
+        foreach ([0.42, 0.66, 0.54, 0.88] as $i => $h) { $bars .= '<span style="--i:' . $i . ';--h:' . $h . '"></span>'; }
+        $body = '<span class="omx-mo-sheet omx-mo-sheet--review omx-mo-glass"><span class="omx-mo-head">' . esc_html__('顧客レビュー', 'omochix') . '</span><span class="omx-mo-stars">' . $stars . '</span>' . $line . $line . '<span class="omx-mo-line is-short"></span></span>'
+            . '<span class="omx-mo-sheet omx-mo-sheet--insight omx-mo-glass"><span class="omx-mo-head">' . esc_html__('購買インサイト', 'omochix') . '</span><span class="omx-mo-bars">' . $bars . '</span><span class="omx-mo-chip">' . esc_html__('リピート', 'omochix') . ' ↑</span></span>';
+    } elseif ('about' === $name) {
+        $body = '<span class="omx-mo-trail" style="--k:-1;--o:.55"></span><span class="omx-mo-trail" style="--k:0;--o:1"></span><span class="omx-mo-trail" style="--k:1;--o:.7"></span>';
+    } else {
+        $steps = '';
+        foreach (['知る', '試す', '作る'] as $i => $label) { $steps .= '<span class="omx-mo-step" style="--i:' . $i . '"><span>' . esc_html($label) . '</span></span>'; }
+        $body = '<span class="omx-mo-stairs">' . $steps . '</span><span class="omx-mo-ui omx-mo-glass"><span class="omx-mo-ui-bar"><i></i><i></i><i></i></span><span class="omx-mo-ui-body"><span class="omx-mo-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12.5 4 4 8-9"/></svg></span>' . $line . '<span class="omx-mo-line is-short"></span><span class="omx-mo-btn">' . esc_html__('完成', 'omochix') . '</span></span></span>';
+    }
+    printf('<div class="omx-mo omx-mo--%1$s %2$s" data-omx-motion aria-hidden="true">%3$s<span class="omx-mo-stage">%4$s</span></div>', esc_attr($name), esc_attr($class), $logo, $body);
+}
+
 function omochix_editorial_category($post) {
     $terms = get_the_category($post->ID);
     return $terms ? $terms[0]->name : __('記事', 'omochix');
@@ -128,6 +167,8 @@ add_filter('body_class', static function ($classes) {
 add_action('wp_enqueue_scripts', static function () {
     if (!is_front_page()) { return; }
     wp_enqueue_style('omochix-editorial', get_theme_file_uri('/assets/css/editorial-home.css'), ['omochix-style'], (string) filemtime(get_theme_file_path('/assets/css/editorial-home.css')));
+    wp_enqueue_style('omochix-editorial-motion', get_theme_file_uri('/assets/css/editorial-motion.css'), ['omochix-editorial'], (string) filemtime(get_theme_file_path('/assets/css/editorial-motion.css')));
+    wp_enqueue_script('omochix-editorial-motion', get_theme_file_uri('/assets/js/editorial-motion.js'), [], (string) filemtime(get_theme_file_path('/assets/js/editorial-motion.js')), true);
     // Reuse exact copy behavior used by existing prompt details.
     wp_enqueue_script('omochix-prompt', get_theme_file_uri('/assets/js/prompt.js'), [], wp_get_theme()->get('Version'), true);
 });

@@ -140,5 +140,55 @@ add(2, 'prompt', '2026-01-01 00:00:00', ['prompt_body' => 'x']);
 $sel = omochix_editorial_selection();
 check('selection returns tools and prompt', ids($sel['tools']) === [1] && $sel['prompt']->ID === 2);
 
+// --- motion frames (AI Tools, Prompts, Learn): the markup is the finished frame ---
+if (!function_exists('esc_url')) { function esc_url($u) { return $u; } }
+if (!function_exists('esc_attr')) { function esc_attr($t) { return htmlspecialchars((string) $t, ENT_QUOTES); } }
+if (!function_exists('esc_html')) { function esc_html($t) { return htmlspecialchars((string) $t, ENT_QUOTES); } }
+if (!function_exists('esc_html__')) { function esc_html__($t) { return esc_html($t); } }
+if (!function_exists('get_theme_file_uri')) { function get_theme_file_uri($p = '') { return 'https://example.test/theme' . $p; } }
+function motion_html($name, $class = 'x-class') { ob_start(); omochix_editorial_motion($name, $class); return ob_get_clean(); }
+function in_order($html, array $needles) { $at = -1; foreach ($needles as $n) { $p = strpos($html, $n, $at + 1); if (false === $p) { return false; } $at = $p; } return true; }
+$theme = __DIR__ . '/../../wp-theme/omochix-theme';
+foreach (['tools', 'prompts', 'learn', 'about'] as $n) {
+    $h = motion_html($n);
+    check("motion $n: decorative frame with data-omx-motion, aria-hidden and the given class", 1 === preg_match('/^<div class="omx-mo omx-mo--' . $n . ' x-class" data-omx-motion aria-hidden="true">/', $h));
+    check("motion $n: small logo, top left (406x90, empty alt)", false !== strpos($h, '<span class="omx-mo-logo"><img src="https://example.test/theme/assets/img/editorial/omochix-logo-wh.png" width="406" height="90" alt=""'));
+    check("motion $n: rendered finished (no armed/playing state in markup)", false === strpos($h, 'is-armed') && false === strpos($h, 'is-playing'));
+    check("motion $n: no prompt copy hooks, links or form controls inside", !preg_match('/data-prompt-text|data-copy|<a |<button|<input|tabindex/', $h));
+}
+$h = motion_html('tools');
+check('motion tools: search field, then 文章・画像・開発 cards', in_order($h, ['omx-mo-search', '気になるAIを検索', 'omx-mo-cards', '>文章<', '>画像<', '>開発<']) && 3 === substr_count($h, 'omx-mo-card '));
+$h = motion_html('prompts');
+check('motion prompts: customer review sheet, then purchase insight sheet', in_order($h, ['omx-mo-sheet--review', '顧客レビュー', 'omx-mo-sheet--insight', '購買インサイト']));
+$h = motion_html('learn');
+check('motion learn: 知る・試す・作る steps, then the finished UI', in_order($h, ['omx-mo-stairs', '>知る<', '>試す<', '>作る<', 'omx-mo-ui ']));
+$h = motion_html('about');
+check('motion about: three trails, then the logo (no text, links or controls)', 3 === substr_count($h, 'omx-mo-trail"') && in_order($h, ['omx-mo-logo', 'omx-mo-stage', 'omx-mo-trail']));
+ob_start(); omochix_editorial_motion('feature', 'y'); $h = ob_get_clean();
+check('motion: other names fall back to the still image', 0 === strpos($h, '<img class="y" src="https://example.test/theme/assets/img/editorial/feature-v1.webp"'));
+$logo = @getimagesize($theme . '/assets/img/editorial/omochix-logo-wh.png');
+check('motion: supplied logo is a 406x90 PNG', $logo && 406 === $logo[0] && 90 === $logo[1] && IMAGETYPE_PNG === $logo[2]);
+$front = file_get_contents($theme . '/front-page.php');
+check('front page: the AI Tools, Prompts and Learn frames use their motion', 1 === substr_count($front, "omochix_editorial_motion('prompts', 'ed-practice-visual')") && 1 === substr_count($front, "omochix_editorial_motion('learn', 'ed-practice-visual')") && 1 === substr_count($front, "omochix_editorial_motion('tools', 'ed-tools-visual')"));
+check('front page: the about frame uses its own motion; learn-v1.webp stays for the shared still image', 1 === substr_count($front, "omochix_editorial_motion('about', 'ed-about-visual')") && false === strpos($front, "omochix_editorial_visual('learn', 'ed-about-visual')") && is_file($theme . '/assets/img/editorial/learn-v1.webp'));
+check('front page: prompt full-text copy is kept', false !== strpos($front, 'data-prompt-copy-scope') && false !== strpos($front, 'data-prompt-text') && false !== strpos($front, 'data-copy-prompt data-copy-target="ed-prompt-text"'));
+$css = file_get_contents($theme . '/assets/css/editorial-motion.css');
+preg_match_all('/@keyframes\s+([\w-]+)\s*\{(.*?)\}\s*\}/s', $css, $kf, PREG_SET_ORDER);
+$bad = [];
+foreach ($kf as $k) { if (preg_match('/\b(to|100%)\s*[{,]/', $k[2]) && 'omx-mo-caret' !== $k[1]) { $bad[] = $k[1]; } }
+check('motion css: keyframes end on the plain rules (no "to"/100% step; caret ends hidden like its rule)', count($kf) >= 10 && !$bad && 1 === preg_match('/@keyframes omx-mo-caret \{[^@]*?20%, 60%, 100% \{ opacity: 0; \} \}/', $css) && 1 === preg_match('/\.omx-mo--tools \.omx-mo-caret \{[^}]*opacity: 0;/', $css));
+$plain = preg_replace(['/@keyframes[^{]*\{.*?\}\s*\}/s', '/@media \((?:prefers-reduced-motion: reduce|print)\)? ?\{\s*\.omx-mo,\s*\.omx-mo::before,\s*\.omx-mo \* \{ animation: none !important; \}\s*\}/', '/@media print \{\s*\.omx-mo,\s*\.omx-mo::before,\s*\.omx-mo \* \{ animation: none !important; \}\s*\}/'], '', $css);
+preg_match_all('/([^{}]+)\{[^}]*\banimation(?:-name)?\s*:/', $plain, $an);
+$unguarded = array_filter($an[1], static fn($sel) => false === strpos($sel, ':is(.is-armed, .is-playing)'));
+check('motion css: animations run only while armed or playing', count($an[1]) > 10 && !$unguarded);
+check('motion css: reduced motion and print show the finished frame', 1 === preg_match('/@media \(prefers-reduced-motion: reduce\) \{\s*\.omx-mo,\s*\.omx-mo::before,\s*\.omx-mo \* \{ animation: none !important; \}/', $css) && 1 === preg_match('/@media print \{\s*\.omx-mo,/', $css));
+check('motion css: armed frames wait on their first frame', false !== strpos($css, '.omx-mo.is-armed * { animation-play-state: paused !important; }'));
+check('motion css: dark mode only swaps colours (custom properties)', 1 === preg_match('/:root\[data-theme="dark"\] \.omx-mo \{([^}]*)\}/', $css, $dm) && !preg_match('/^\s*(?!--)[a-z-]+\s*:/m', $dm[1]));
+$js = file_get_contents($theme . '/assets/js/editorial-motion.js');
+check('motion js: plays once per frame on first view, reduced motion skips it', false !== strpos($js, 'observer.unobserve(entry.target)') && false !== strpos($js, "matchMedia('(prefers-reduced-motion: reduce)')") && false !== strpos($js, 'if (reduce && reduce.matches) return;'));
+check('motion js: no replay hooks (theme switch, storage, buttons)', !preg_match('/data-theme|MutationObserver|localStorage|sessionStorage|addEventListener\(\'click\'|createElement/', $js));
+$inc = file_get_contents($theme . '/inc/editorial-home.php');
+check('motion assets: enqueued on the front page only, script in footer', false !== strpos($inc, "wp_enqueue_style('omochix-editorial-motion'") && false !== strpos($inc, "'/assets/js/editorial-motion.js'), [], (string) filemtime(get_theme_file_path('/assets/js/editorial-motion.js')), true);"));
+
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

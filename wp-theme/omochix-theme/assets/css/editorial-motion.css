@@ -1,0 +1,183 @@
+/*
+ * Editorial motion frames: AI Tools, Prompts, Learn (inc/editorial-home.php omochix_editorial_motion()).
+ *
+ * The plain rules below are the finished frame. assets/js/editorial-motion.js plays it once on first view:
+ * .is-armed holds each animation at its first frame until the frame is in view, .is-playing runs it, and
+ * afterwards both classes go away, so the frame rests on these plain rules again. Every keyframe has only a
+ * "from" step, so the last frame of the play is exactly the finished frame. Without JavaScript, with reduced
+ * motion and in print, nothing is armed or played. Colours follow the light/dark switch through custom
+ * properties only, so switching theme never restarts the play.
+ */
+.omx-mo {
+    --mo-bg: radial-gradient(120% 95% at 88% 0%, rgba(160, 118, 240, .20), transparent 58%), linear-gradient(140deg, #fcfbff 0%, #f2edfb 100%);
+    --mo-glass: rgba(255, 255, 255, .68);
+    --mo-line: rgba(103, 53, 199, .14);
+    --mo-ink: #2b2436;
+    --mo-sub: rgba(43, 36, 54, .13);
+    --mo-accent: #7444d6;
+    --mo-accent-soft: rgba(116, 68, 214, .12);
+    --mo-beam: rgba(150, 105, 235, .13);
+    --mo-shadow: 0 10px 26px rgba(64, 36, 120, .09);
+    --mo-step: linear-gradient(180deg, rgba(124, 82, 222, .20), rgba(124, 82, 222, .09));
+    --mo-logo-bg: #1c1826;
+    --mo-logo-line: rgba(255, 255, 255, 0);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    container-type: size;
+    background: var(--mo-bg);
+    color: var(--mo-ink);
+    font-size: clamp(10px, 6.2cqh, 14px);
+    line-height: 1.3;
+    -webkit-user-select: none;
+    user-select: none;
+}
+:root[data-theme="dark"] .omx-mo {
+    --mo-bg: radial-gradient(120% 95% at 88% 0%, rgba(126, 72, 230, .24), transparent 58%), linear-gradient(150deg, #0c0b11 0%, #15121c 62%, #0e0c13 100%);
+    --mo-glass: rgba(255, 255, 255, .055);
+    --mo-line: rgba(191, 154, 250, .20);
+    --mo-ink: #f3effb;
+    --mo-sub: rgba(243, 239, 251, .15);
+    --mo-accent: #c3a0ff;
+    --mo-accent-soft: rgba(176, 130, 255, .17);
+    --mo-beam: rgba(150, 92, 255, .30);
+    --mo-shadow: 0 14px 34px rgba(0, 0, 0, .45);
+    --mo-step: linear-gradient(180deg, rgba(176, 130, 255, .30), rgba(176, 130, 255, .10));
+    --mo-logo-bg: rgba(255, 255, 255, .06);
+    --mo-logo-line: rgba(255, 255, 255, .10);
+}
+/* The slanted light. */
+.omx-mo::before {
+    content: "";
+    position: absolute;
+    inset: -40% -25%;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(112deg, transparent 36%, var(--mo-beam) 49%, transparent 63%);
+}
+.omx-mo span { display: block; }
+.omx-mo svg { display: block; width: 100%; height: 100%; }
+
+/* Logo: small, top left; a dark base under the white logo (a glass chip in dark mode). */
+.omx-mo .omx-mo-logo { position: absolute; z-index: 3; top: 10px; left: 12px; padding: 5px 8px; line-height: 0; border-radius: 7px; background: var(--mo-logo-bg); box-shadow: inset 0 0 0 1px var(--mo-logo-line); }
+.omx-mo .omx-mo-logo img { display: block; width: auto; max-width: none; height: 11px; }
+
+.omx-mo .omx-mo-stage { position: absolute; inset: 38px 7% 9%; }
+.omx-mo .omx-mo-glass { background: var(--mo-glass); border: 1px solid var(--mo-line); border-radius: 10px; box-shadow: var(--mo-shadow); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.omx-mo .omx-mo-line { height: .46em; margin-top: .5em; border-radius: 99px; background: var(--mo-sub); transform-origin: left center; }
+.omx-mo .omx-mo-line.is-short { width: 58%; }
+
+/* AI Tools: a search field, and under it three cards side by side. */
+.omx-mo--tools .omx-mo-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7cqh; }
+.omx-mo--tools .omx-mo-search { display: flex; align-items: center; gap: .6em; width: min(80%, 470px); height: 17cqh; padding: 0 1.1em; border-radius: 99px; }
+.omx-mo--tools .omx-mo-search > svg { flex: none; width: 1.15em; height: 1.15em; color: var(--mo-accent); }
+.omx-mo--tools .omx-mo-query { color: var(--mo-ink); opacity: .72; white-space: nowrap; }
+.omx-mo--tools .omx-mo-caret { width: 1.5px; height: 1.1em; background: var(--mo-accent); opacity: 0; }
+.omx-mo--tools .omx-mo-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: min(3cqw, 18px); width: min(100%, 560px); }
+.omx-mo--tools .omx-mo-card { min-width: 0; min-height: 40cqh; padding: .75em .8em; }
+.omx-mo--tools .omx-mo-ico { width: 1.9em; height: 1.9em; padding: .38em; border-radius: 8px; color: var(--mo-accent); background: var(--mo-accent-soft); }
+.omx-mo--tools .omx-mo-label { margin-top: .45em; font-weight: 700; }
+.omx-mo--tools .omx-mo-card .omx-mo-line + .omx-mo-line { width: 64%; }
+
+/* Prompts: a customer review sheet, then a purchase insight sheet. */
+.omx-mo--prompts .omx-mo-sheet { position: absolute; padding: .8em .9em; }
+.omx-mo--prompts .omx-mo-sheet--review { left: 0; top: 2%; width: 56%; height: 70%; }
+.omx-mo--prompts .omx-mo-sheet--insight { right: 0; bottom: 0; width: 52%; height: 72%; }
+.omx-mo--prompts .omx-mo-head { font-weight: 700; font-size: .92em; }
+.omx-mo--prompts .omx-mo-stars { display: flex; gap: .18em; margin-top: .45em; }
+.omx-mo--prompts .omx-mo-star { width: .95em; height: .95em; background: var(--mo-accent); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.omx-mo--prompts .omx-mo-star.is-dim { background: var(--mo-sub); }
+.omx-mo--prompts .omx-mo-bars { display: flex; align-items: flex-end; gap: 9%; height: 46%; margin-top: .6em; padding: 0 4%; border-bottom: 1px solid var(--mo-line); }
+.omx-mo--prompts .omx-mo-bars > span { flex: 1; height: calc(var(--h) * 100%); border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--mo-accent), var(--mo-accent-soft)); transform-origin: bottom center; }
+.omx-mo--prompts .omx-mo-chip { display: inline-block; margin-top: .55em; padding: .2em .65em; font-size: .82em; font-weight: 700; color: var(--mo-accent); border-radius: 99px; background: var(--mo-accent-soft); }
+
+/* Learn: steps "know, try, make", then a small finished UI. */
+.omx-mo--learn .omx-mo-stairs { position: absolute; left: 0; bottom: 0; display: flex; align-items: flex-end; gap: 3%; width: 54%; height: 100%; }
+.omx-mo--learn .omx-mo-step { flex: 1; height: calc(34% + var(--i) * 28%); padding-top: .55em; text-align: center; font-weight: 700; color: var(--mo-accent); border: 1px solid var(--mo-line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--mo-step); transform-origin: bottom center; }
+.omx-mo--learn .omx-mo-ui { position: absolute; right: 0; top: 4%; width: 40%; max-height: 96%; overflow: hidden; }
+.omx-mo--learn .omx-mo-ui-bar { display: flex; gap: .3em; padding: .5em .6em; border-bottom: 1px solid var(--mo-line); }
+.omx-mo--learn .omx-mo-ui-bar i { width: .45em; height: .45em; border-radius: 50%; background: var(--mo-sub); }
+.omx-mo--learn .omx-mo-ui-body { padding: .6em .7em .75em; }
+.omx-mo--learn .omx-mo-check { width: 1.7em; height: 1.7em; padding: .3em; border-radius: 50%; color: #fff; background: var(--mo-accent); }
+:root[data-theme="dark"] .omx-mo--learn .omx-mo-check { color: #16121e; }
+.omx-mo--learn .omx-mo-btn { display: inline-block; margin-top: .6em; padding: .2em .8em; font-size: .82em; font-weight: 700; color: var(--mo-accent); border: 1px solid var(--mo-line); border-radius: 99px; }
+
+/* About: three thin trails gather along the slanted light; the logo then appears at the centre. */
+.omx-mo--about .omx-mo-stage { inset: 0; }
+.omx-mo--about .omx-mo-logo { top: 50%; left: 50%; padding: 9px 14px; border-radius: 10px; transform: translate(-50%, -50%); }
+.omx-mo--about .omx-mo-logo img { height: 18px; }
+.omx-mo--about .omx-mo-trail { position: absolute; top: 50%; left: 50%; width: 96cqh; height: 2px; margin: -1px 0 0 -48cqh; border-radius: 99px; opacity: var(--o); background: linear-gradient(90deg, transparent, var(--mo-accent) 30%, var(--mo-accent) 70%, transparent); transform: rotate(-68deg) translateY(calc(var(--k) * 7cqh)); }
+
+@media (max-width: 600px) {
+    .omx-mo.omx-mo--about .omx-mo-logo { top: 50%; left: 50%; padding: 7px 11px; }
+    .omx-mo.omx-mo--about .omx-mo-logo img { height: 14px; }
+    .omx-mo .omx-mo-logo { top: 8px; left: 10px; padding: 4px 7px; }
+    .omx-mo .omx-mo-logo img { height: 10px; }
+    .omx-mo .omx-mo-stage { inset: 32px 6% 8%; }
+    .omx-mo--tools .omx-mo-stage { gap: 5cqh; }
+    .omx-mo--tools .omx-mo-search { width: 92%; height: 16cqh; }
+    .omx-mo--tools .omx-mo-card { min-height: 0; padding: .6em .65em; }
+    .omx-mo--tools .omx-mo-card .omx-mo-line + .omx-mo-line { display: none; }
+    .omx-mo--learn .omx-mo-ui-body .omx-mo-line.is-short { display: none; }
+}
+
+/* ---- The one play (only while the script arms or plays a frame). ---- */
+@keyframes omx-mo-clock { from { opacity: 1; } }
+@keyframes omx-mo-rise { from { opacity: 0; transform: translateY(12px) scale(.97); } }
+@keyframes omx-mo-slide { from { opacity: 0; transform: translate(-14px, 16px) rotate(-2deg); } }
+@keyframes omx-mo-slide-in { from { opacity: 0; transform: translate(16px, 18px) rotate(2deg); } }
+@keyframes omx-mo-fade { from { opacity: 0; } }
+@keyframes omx-mo-type { from { clip-path: inset(0 100% 0 0); } }
+@keyframes omx-mo-grow-x { from { transform: scaleX(0); } }
+@keyframes omx-mo-grow-y { from { transform: scaleY(0); } }
+@keyframes omx-mo-pop { 0% { opacity: 0; transform: scale(.86); } 70% { opacity: 1; transform: scale(1.03); } }
+@keyframes omx-mo-beam { from { opacity: 0; transform: translateX(-30%); } }
+@keyframes omx-mo-trail { from { opacity: 0; transform: rotate(-68deg) translate(-26cqh, calc(var(--k) * 34cqh)) scaleX(.35); } }
+@keyframes omx-mo-logo-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.88); } }
+@keyframes omx-mo-caret { 0%, 40%, 80% { opacity: 1; } 20%, 60%, 100% { opacity: 0; } }
+
+.omx-mo:is(.is-armed, .is-playing) { animation: omx-mo-clock 2.8s linear both; }
+.omx-mo:is(.is-armed, .is-playing)::before { animation: omx-mo-beam 2.4s cubic-bezier(.2, .7, .2, 1) both; }
+.omx-mo:is(.is-armed, .is-playing) .omx-mo-logo { animation: omx-mo-fade .5s ease-out both; }
+
+.omx-mo--tools:is(.is-armed, .is-playing) .omx-mo-search { animation: omx-mo-rise .55s cubic-bezier(.2, .7, .2, 1) .1s both; }
+.omx-mo--tools:is(.is-armed, .is-playing) .omx-mo-query { animation: omx-mo-type .7s steps(8, end) .5s both; }
+.omx-mo--tools:is(.is-armed, .is-playing) .omx-mo-caret { animation: omx-mo-caret 1.5s linear .45s both; }
+.omx-mo--tools:is(.is-armed, .is-playing) .omx-mo-card { animation: omx-mo-rise .6s cubic-bezier(.2, .7, .2, 1) calc(1.15s + var(--i) * .22s) both; }
+.omx-mo--tools:is(.is-armed, .is-playing) .omx-mo-card .omx-mo-line { animation: omx-mo-grow-x .5s ease-out calc(1.45s + var(--i) * .22s) both; }
+
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-sheet--review { animation: omx-mo-slide .65s cubic-bezier(.2, .7, .2, 1) .15s both; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-sheet--review .omx-mo-star { animation: omx-mo-pop .35s ease-out .55s both; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-star:nth-child(2) { animation-delay: .62s; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-star:nth-child(3) { animation-delay: .69s; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-star:nth-child(4) { animation-delay: .76s; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-star:nth-child(5) { animation-delay: .83s; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-sheet--review .omx-mo-line { animation: omx-mo-grow-x .5s ease-out .75s both; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-sheet--insight { animation: omx-mo-slide-in .65s cubic-bezier(.2, .7, .2, 1) 1.15s both; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-bars > span { animation: omx-mo-grow-y .5s cubic-bezier(.2, .7, .2, 1) calc(1.55s + var(--i) * .12s) both; }
+.omx-mo--prompts:is(.is-armed, .is-playing) .omx-mo-chip { animation: omx-mo-pop .4s ease-out 2.2s both; }
+
+.omx-mo--learn:is(.is-armed, .is-playing) .omx-mo-step { animation: omx-mo-grow-y .55s cubic-bezier(.2, .7, .2, 1) calc(.2s + var(--i) * .35s) both; }
+.omx-mo--learn:is(.is-armed, .is-playing) .omx-mo-step > span { animation: omx-mo-fade .35s ease-out calc(.55s + var(--i) * .35s) both; }
+.omx-mo--learn:is(.is-armed, .is-playing) .omx-mo-ui { animation: omx-mo-pop .55s cubic-bezier(.2, .7, .2, 1) 1.55s both; }
+.omx-mo--learn:is(.is-armed, .is-playing) .omx-mo-check { animation: omx-mo-pop .4s ease-out 2.05s both; }
+.omx-mo--learn:is(.is-armed, .is-playing) .omx-mo-ui-body .omx-mo-line { animation: omx-mo-grow-x .45s ease-out 2.15s both; }
+
+.omx-mo--about:is(.is-armed, .is-playing) .omx-mo-trail { animation: omx-mo-trail 1.5s cubic-bezier(.2, .7, .2, 1) calc(.1s + (var(--k) + 1) * .18s) both; }
+.omx-mo--about:is(.is-armed, .is-playing) .omx-mo-logo { animation: omx-mo-logo-in .7s cubic-bezier(.2, .7, .2, 1) 1.7s both; }
+
+/* Armed: every animation waits on its first frame until the frame is in view. */
+.omx-mo.is-armed,
+.omx-mo.is-armed::before,
+.omx-mo.is-armed * { animation-play-state: paused !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    .omx-mo,
+    .omx-mo::before,
+    .omx-mo * { animation: none !important; }
+}
+@media print {
+    .omx-mo,
+    .omx-mo::before,
+    .omx-mo * { animation: none !important; }
+}
