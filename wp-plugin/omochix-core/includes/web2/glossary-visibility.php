@@ -719,7 +719,7 @@ function omochix_core_glossary_nav_ref_ok( $value ) {
 		$id = $value;
 	} elseif ( is_float( $value ) && $value >= 1 && $value < 9007199254740992 && floor( $value ) === $value ) {
 		$id = (int) $value; // The block renderer REST route hands numbers over as floats (rest_sanitize_value_from_schema).
-	} elseif ( is_string( $value ) && 1 === preg_match( '/^[1-9][0-9]{0,18}$/', $value ) ) {
+	} elseif ( is_string( $value ) && 1 === preg_match( '/^[1-9][0-9]{0,18}\z/', $value ) ) {
 		$id = (int) $value;
 	} else {
 		return false;
