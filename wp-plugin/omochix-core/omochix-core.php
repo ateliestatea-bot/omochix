@@ -238,6 +238,147 @@ function omochix_core_deactivate() {
 }
 register_deactivation_hook( __FILE__, 'omochix_core_deactivate' );
 
+// Web 2.0 security layer (docs/web2/sec/README.md). Not a module: always
+// loaded, before the Web 2.0 block and also with OMOCHIX_WEB2_DISABLED, because
+// it only narrows what WordPress renders (it opens nothing). Fail closed: when
+// the file is missing, cut short, throws or does not define its guards, every
+// navigation block renders nothing, REST returns no menu blocks to non-editors
+// and searches no password-protected menu for them,
+// and the problem is logged and shown to administrators. The rest of the
+// plugin keeps working.
+/**
+ * Loads the security layer; true when its navigation guard is in place.
+ *
+ * @return bool
+ */
+function omochix_core_sec_layer_load() {
+	$file = OMOCHIX_CORE_DIR . 'includes/web2/security.php';
+	$why  = '';
+	if ( ! is_readable( $file ) ) {
+		$why = 'missing';
+	} else {
+		try {
+			require_once $file;
+		} catch ( Throwable $omochix_core_error ) {
+			$why = 'failed to load (' . get_class( $omochix_core_error ) . ')';
+			unset( $omochix_core_error );
+		}
+	}
+	$guards = array(
+		'register_block_type_args'              => 'omochix_core_security_nav_block_args',
+		'block_core_navigation_render_fallback' => 'omochix_core_security_nav_fallback',
+		'rest_prepare_wp_navigation'            => 'omochix_core_security_nav_rest',
+		'rest_wp_navigation_query'              => 'omochix_core_security_nav_rest_query',
+	);
+	if ( '' === $why ) {
+		foreach ( $guards as $hook => $callback ) {
+			if ( ! function_exists( $callback ) || false === has_filter( $hook, $callback ) ) {
+				$why = 'incomplete';
+				break;
+			}
+		}
+	}
+	if ( '' === $why ) {
+		return true;
+	}
+	// A broken copy may have registered a filter whose function is missing: running it would be a
+	// fatal error, so such a filter is taken off (working guards stay).
+	foreach ( $guards as $hook => $callback ) {
+		$priority = has_filter( $hook, $callback );
+		if ( false !== $priority && ! function_exists( $callback ) ) {
+			remove_filter( $hook, $callback, $priority );
+		}
+	}
+	omochix_core_sec_layer_problem( $why );
+	add_filter( 'register_block_type_args', 'omochix_core_nav_render_closed', 9999, 2 );
+	add_filter( 'rest_prepare_wp_navigation', 'omochix_core_nav_rest_closed', 9999, 2 );
+	add_filter( 'rest_wp_navigation_query', 'omochix_core_nav_query_closed', 9999 );
+	add_action( 'admin_notices', 'omochix_core_sec_layer_notice' );
+	error_log( 'OmochiX Core: the security layer (includes/web2/security.php) is ' . $why . '; navigation blocks render nothing until it is restored.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	return false;
+}
+
+/**
+ * Why the security layer is unavailable ('' when it is in place).
+ *
+ * @param string|null $set Reason to record (loader only).
+ * @return string
+ */
+function omochix_core_sec_layer_problem( $set = null ) {
+	static $why = '';
+	if ( is_string( $set ) ) {
+		$why = $set;
+	}
+	return $why;
+}
+
+/**
+ * Fail closed: core/navigation renders nothing while the security layer is unavailable.
+ *
+ * @param mixed $args Block type arguments.
+ * @param mixed $name Block type name.
+ * @return mixed
+ */
+function omochix_core_nav_render_closed( $args, $name = '' ) {
+	if ( 'core/navigation' === $name && is_array( $args ) ) {
+		$args['render_callback'] = '__return_empty_string';
+	}
+	return $args;
+}
+
+/**
+ * Fail closed in REST: while the security layer is unavailable, /wp/v2/navigation returns no menu
+ * blocks (content.raw, content.rendered, block_version) to a user who may not edit that menu.
+ *
+ * @param mixed $response WP_REST_Response.
+ * @param mixed $post     The menu post.
+ * @return mixed
+ */
+function omochix_core_nav_rest_closed( $response, $post = null ) {
+	if ( ! $post instanceof WP_Post || 'wp_navigation' !== $post->post_type || current_user_can( 'edit_post', (int) $post->ID ) ) {
+		return $response;
+	}
+	if ( is_object( $response ) && method_exists( $response, 'get_data' ) && method_exists( $response, 'set_data' ) ) {
+		$data = $response->get_data();
+		if ( is_array( $data ) && isset( $data['content'] ) && is_array( $data['content'] ) ) {
+			unset( $data['content']['raw'], $data['content']['block_version'] );
+			$data['content']['rendered']  = '';
+			$data['content']['protected'] = true;
+			$response->set_data( $data );
+		}
+	}
+	return $response;
+}
+
+/**
+ * Fail closed in REST search: while the security layer is unavailable, a user who may not edit menus
+ * searches /wp/v2/navigation without password-protected menus (no guessing at their content).
+ *
+ * @param mixed $args Query arguments.
+ * @return mixed
+ */
+function omochix_core_nav_query_closed( $args ) {
+	if ( is_array( $args ) && isset( $args['s'] ) && '' !== (string) $args['s'] && ! current_user_can( 'edit_theme_options' ) ) {
+		$args['has_password'] = false;
+	}
+	return $args;
+}
+
+/** Tells administrators that the security layer is unavailable (the reason only, no path). */
+function omochix_core_sec_layer_notice() {
+	if ( ! current_user_can( 'activate_plugins' ) ) {
+		return;
+	}
+	echo '<div class="notice notice-error"><p>' . esc_html(
+		sprintf(
+			/* translators: %s: reason */
+			__( 'OmochiX Core：セキュリティ層（includes/web2/security.php）を使えないため、ナビゲーションのブロックを表示していません（%s）。プラグインのファイルをすべてアップロードし直してください。', 'omochix-core' ),
+			omochix_core_sec_layer_problem()
+		)
+	) . '</p></div>';
+}
+omochix_core_sec_layer_load();
+
 // Web 2.0 modules (docs/web2/hooks/README.md). Loaded last and guarded: with
 // the loader missing or broken the plugin works as before. The loader loads
 // only modules on its fixed list (empty, default off) and checks each file
