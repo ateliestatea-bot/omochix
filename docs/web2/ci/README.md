@@ -194,6 +194,7 @@ release self-test: mode=fork-point event='pull_request' target='integrate/web2' 
 | `tests/web2/hooks/regression.php` | ローダーがあっても既存の機能が変わらないこと、モジュールのフォルダの安全条件 |
 | `tests/glossary/run.php` | Knowledge Hub の Core 側 |
 | `tests/glossary/theme.php` | Knowledge Hub のテーマ側 |
+| `tests/security/run.php` | Web 2.0 のセキュリティ層（`includes/web2/security.php`、sec stream）。ナビゲーションのブロックの参照と fallback（review N-1）。sec の PR を統合したあとに、この PR を統合します |
 
 - **追加した理由:** hooks ローダー（#75・#81）と Knowledge Hub（#79）は integrate/web2 に入っていますが、これまで CI は Lint PHP しか実行していませんでした。公開スイッチと許可リストの安全条件を、PR ごとに PHP 8.1 と 8.3 で確かめるためです。
 - **動き:**
