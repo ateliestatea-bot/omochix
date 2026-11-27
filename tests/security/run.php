@@ -17,8 +17,9 @@ function has_filter($h, $cb) { foreach ($GLOBALS['hooks'][$h] ?? [] as $p => $l)
 function get_post($p = null) { if ($p instanceof WP_Post) { return $p; } if (empty($p)) { return $GLOBALS['post'] ?? null; } return is_numeric($p) ? ($GLOBALS['posts'][(int) $p] ?? null) : null; }
 class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_password = '', $post_title = '', $post_date = '2026-01-01 00:00:00'; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 // WordPress's newest-menu query, as the fallback runs it: published, by date, newest first (records the arguments).
-class WP_Query { public $posts = []; function __construct($a) { $GLOBALS['queries'][] = $a; $GLOBALS['last_query'] = $a; $l = array_values(array_filter($GLOBALS['posts'], static fn($p) => $p->post_type === ($a['post_type'] ?? '') && $p->post_status === ($a['post_status'] ?? ''))); if (isset($a['date_query'][0])) { $d = $a['date_query'][0]; $l = array_values(array_filter($l, static fn($p) => $p->post_date >= $d['after'] && $p->post_date <= $d['before'])); } usort($l, static fn($x, $y) => strcmp($y->post_date, $x->post_date) ?: $y->ID <=> $x->ID); $this->posts = array_slice($l, 0, (int) ($a['posts_per_page'] ?? 10)); } }
+class WP_Query { public $posts = []; function __construct($a) { $GLOBALS['queries'][] = $a; $GLOBALS['last_query'] = $a; $l = array_values(array_filter($GLOBALS['posts'], static fn($p) => $p->post_type === ($a['post_type'] ?? '') && $p->post_status === ($a['post_status'] ?? ''))); if (isset($a['date_query'][0])) { $d = $a['date_query'][0]; $in = !empty($d['inclusive']); $shift = $GLOBALS['date_shift'] ?? ''; $l = array_values(array_filter($l, static fn($p) => '' === $shift && ($in ? ($p->post_date >= $d['after'] && $p->post_date <= $d['before']) : ($p->post_date > $d['after'] && $p->post_date < $d['before'])))); } usort($l, static fn($x, $y) => strcmp($y->post_date, $x->post_date) ?: $y->ID <=> $x->ID); $this->posts = array_slice($l, 0, (int) ($a['posts_per_page'] ?? 10)); } }
 function current_user_can($cap, ...$args) { return !empty($GLOBALS['caps'][$cap]); }
+function get_post_type_object($t) { return 'wp_navigation' === $t ? (object) ['cap' => (object) ['edit_posts' => 'edit_theme_options']] : null; }
 class WP_REST_Response { private $d; function __construct($d) { $this->d = $d; } function get_data() { return $this->d; } function set_data($d) { $this->d = $d; } }
 class WP_Block { public $parsed_block; function __construct($pb = []) { $this->parsed_block = $pb; } }
 function check($name, $ok, $detail = '') { global $pass, $fail; if ($ok) { $pass++; echo "PASS $name\n"; } else { $fail++; echo "FAIL $name" . ('' !== $detail ? "  [$detail]" : '') . "\n"; } }
@@ -101,11 +102,17 @@ $GLOBALS['posts'][$pwm]->post_date = '2026-04-01 00:00:00';
 $only([]);
 check('fallback: no menu at all: the page list WordPress chose is kept', $fb === omochix_core_security_nav_fallback($fb));
 $GLOBALS['posts'] = $saved;
+$GLOBALS['posts'][$menu]->post_date = '2026-07-01 00:00:00';
+$GLOBALS['date_shift'] = 'dst';
+check('fallback: if the newest menu is not found again by its own date (a local time that does not exist), it fails closed', [] === omochix_core_security_nav_fallback($fb));
+unset($GLOBALS['date_shift']);
+check('fallback: the same-moment check includes the boundary (inclusive)', $fb === omochix_core_security_nav_fallback($fb) && true === end($GLOBALS['queries'])['date_query'][0]['inclusive']);
+$GLOBALS['posts'][$menu]->post_date = '2026-05-01 00:00:00';
 check('fallback: an empty or junk fallback is passed through', [] === omochix_core_security_nav_fallback([]) && false === omochix_core_security_nav_fallback(false) && null === omochix_core_security_nav_fallback(null) && 'x' === omochix_core_security_nav_fallback('x'));
 check('fallback hook: registered once, last', 9999 === has_filter('block_core_navigation_render_fallback', 'omochix_core_security_nav_fallback') && 1 === count(array_filter(array_merge(...array_values($GLOBALS['hooks']['block_core_navigation_render_fallback'])), static fn($x) => 'omochix_core_security_nav_fallback' === $x[0])));
 
 // ------------------------------------------------------------ REST: /wp/v2/navigation (context=embed returns content.raw)
-$resp = static fn() => new WP_REST_Response(['id' => 1, 'title' => ['rendered' => 'T'], 'content' => ['raw' => '<!-- wp:navigation-link {"label":"SECRET"} /-->', 'rendered' => '', 'protected' => true, 'block_version' => 1]]);
+$resp = static fn() => new WP_REST_Response(['id' => 1, 'title' => ['rendered' => 'T'], 'content' => ['raw' => '<!-- wp:navigation-link {"label":"SECRET"} /-->', 'rendered' => '<a>SECRET-HTML</a>', 'protected' => false, 'block_version' => 1]]);
 $GLOBALS['caps'] = [];
 $r = omochix_core_security_nav_rest($resp(), get_post($pwm))->get_data();
 check('REST: a password-protected menu loses content.raw and block_version for a user who may not edit it; rendered empty, protected true, title kept', !isset($r['content']['raw']) && !isset($r['content']['block_version']) && '' === $r['content']['rendered'] && true === $r['content']['protected'] && ['rendered' => 'T'] === $r['title'] && false === strpos(json_encode($r), 'SECRET'));
@@ -115,6 +122,14 @@ $GLOBALS['caps'] = [];
 check('REST: a menu without a password, other post types and junk are untouched', isset(omochix_core_security_nav_rest($resp(), get_post($menu))->get_data()['content']['raw']) && isset(omochix_core_security_nav_rest($resp(), get_post($postpw))->get_data()['content']['raw']) && 'x' === omochix_core_security_nav_rest('x', get_post($pwm)) && isset(omochix_core_security_nav_rest($resp(), null)->get_data()['content']['raw']));
 $nocontent = new WP_REST_Response(['id' => 1, 'title' => ['rendered' => 'T']]);
 check('REST: a response without content (_fields) is left as it is', ['id' => 1, 'title' => ['rendered' => 'T']] === omochix_core_security_nav_rest($nocontent, get_post($pwm))->get_data());
+$GLOBALS['caps'] = [];
+$qa = ['post_type' => 'wp_navigation', 's' => '"example.org/pw', 'post__in' => [1]];
+check('REST search: a user who may not edit menus searches without password-protected menus (no guessing at their content)', false === omochix_core_security_nav_rest_query($qa)['has_password'] && $qa['s'] === omochix_core_security_nav_rest_query($qa)['s']);
+$GLOBALS['caps'] = ['edit_theme_options' => true];
+check('REST search: a user who may edit menus searches them all', !isset(omochix_core_security_nav_rest_query($qa)['has_password']));
+$GLOBALS['caps'] = [];
+check('REST search: no search, an empty search and junk are untouched', ['post_type' => 'wp_navigation'] === omochix_core_security_nav_rest_query(['post_type' => 'wp_navigation']) && ['s' => ''] === omochix_core_security_nav_rest_query(['s' => '']) && 'x' === omochix_core_security_nav_rest_query('x'));
+check('REST search hook: rest_wp_navigation_query, last', 9999 === has_filter('rest_wp_navigation_query', 'omochix_core_security_nav_rest_query'));
 check('REST hook: rest_prepare_wp_navigation, last, with both arguments', 9999 === has_filter('rest_prepare_wp_navigation', 'omochix_core_security_nav_rest') && [['omochix_core_security_nav_rest', 2]] === array_values(array_filter($GLOBALS['hooks']['rest_prepare_wp_navigation'][9999], static fn($x) => 'omochix_core_security_nav_rest' === $x[0])));
 
 // ------------------------------------------------------------ file rules

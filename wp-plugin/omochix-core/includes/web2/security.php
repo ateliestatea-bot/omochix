@@ -189,6 +189,17 @@ function omochix_core_security_nav_fallback( $blocks ) {
 	if ( count( $list ) > 20 ) {
 		return array();
 	}
+	// The newest menu itself must be among them; if the date could not be matched (a local time that
+	// does not exist, for example in a daylight-saving gap), the same-moment check failed: fail closed.
+	$found = false;
+	foreach ( $list as $post ) {
+		if ( $post instanceof WP_Post && (int) $post->ID === (int) $first->ID ) {
+			$found = true;
+		}
+	}
+	if ( ! $found ) {
+		return array();
+	}
 	foreach ( $list as $post ) {
 		if ( ! $post instanceof WP_Post || ! omochix_core_security_nav_ref_allowed( (int) $post->ID ) ) {
 			return array();
@@ -232,3 +243,28 @@ function omochix_core_security_nav_rest( $response, $post = null ) {
 	return $response;
 }
 add_filter( 'rest_prepare_wp_navigation', 'omochix_core_security_nav_rest', 9999, 2 );
+
+/**
+ * REST search: no guessing at a password-protected menu (review N-1,
+ * audit 7).
+ *
+ * /wp/v2/navigation?search=<text> matches the menu's content, so the answer
+ * (the menu or nothing) tells a logged-in user whether a password-protected
+ * menu contains that text, one guess at a time. For a user who may not edit
+ * menus, a search leaves password-protected menus out of the query.
+ *
+ * @param mixed $args Query arguments of the navigation REST controller.
+ * @return mixed
+ */
+function omochix_core_security_nav_rest_query( $args ) {
+	if ( ! is_array( $args ) || ! isset( $args['s'] ) || '' === (string) $args['s'] ) {
+		return $args;
+	}
+	$type = function_exists( 'get_post_type_object' ) ? get_post_type_object( 'wp_navigation' ) : null;
+	$cap  = ( $type && isset( $type->cap->edit_posts ) ) ? (string) $type->cap->edit_posts : 'edit_theme_options';
+	if ( ! current_user_can( $cap ) ) {
+		$args['has_password'] = false;
+	}
+	return $args;
+}
+add_filter( 'rest_wp_navigation_query', 'omochix_core_security_nav_rest_query', 9999 );
