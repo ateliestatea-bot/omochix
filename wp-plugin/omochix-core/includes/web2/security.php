@@ -130,3 +130,56 @@ function omochix_core_security_nav_block_args( $args, $name = '' ) {
 	return $args;
 }
 add_filter( 'register_block_type_args', 'omochix_core_security_nav_block_args', 9999, 2 );
+
+/**
+ * Navigation block without a reference: the fallback menu (review N-1, case
+ * "fallback").
+ *
+ * A navigation block without "ref" and without inner blocks shows a
+ * fallback: WP_Navigation_Fallback::get_fallback() takes the most recently
+ * published wp_navigation post and prints its blocks, without checking a
+ * password. So a password-protected menu reached visitors through any page
+ * with a bare navigation block (and contributors through the block renderer
+ * REST route).
+ *
+ * The same query WordPress runs is repeated (newest published menu by date);
+ * if that menu, or one published at the same moment, is not allowed (see
+ * omochix_core_security_nav_ref_allowed: password, wrong type ...), the
+ * fallback is emptied and the block renders nothing. Otherwise the fallback
+ * WordPress built (that menu, or the page list when there is no menu) is
+ * left as it is.
+ *
+ * @param mixed $blocks Fallback blocks.
+ * @return mixed
+ */
+function omochix_core_security_nav_fallback( $blocks ) {
+	if ( empty( $blocks ) || ! is_array( $blocks ) || ! class_exists( 'WP_Query' ) ) {
+		return $blocks;
+	}
+	$query = new WP_Query(
+		array(
+			'post_type'              => 'wp_navigation',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'order'                  => 'DESC',
+			'orderby'                => 'date',
+			'post_status'            => 'publish',
+			'posts_per_page'         => 2,
+		)
+	);
+	$posts = is_array( $query->posts ) ? array_values( $query->posts ) : array();
+	if ( array() === $posts ) {
+		return $blocks; // No menu: WordPress shows the page list.
+	}
+	$first = $posts[0];
+	if ( ! $first instanceof WP_Post || ! omochix_core_security_nav_ref_allowed( (int) $first->ID ) ) {
+		return array();
+	}
+	// Same date: WordPress could have taken either one.
+	if ( isset( $posts[1] ) && $posts[1] instanceof WP_Post && $posts[1]->post_date === $first->post_date && ! omochix_core_security_nav_ref_allowed( (int) $posts[1]->ID ) ) {
+		return array();
+	}
+	return $blocks;
+}
+add_filter( 'block_core_navigation_render_fallback', 'omochix_core_security_nav_fallback', 9999 );

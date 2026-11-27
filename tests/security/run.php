@@ -15,7 +15,9 @@ function add_filter($h, $cb, $p = 10, $a = 1) { $GLOBALS['hooks'][$h][$p][] = [$
 function has_filter($h, $cb) { foreach ($GLOBALS['hooks'][$h] ?? [] as $p => $l) { foreach ($l as $x) { if ($x[0] === $cb) { return $p; } } } return false; }
 // WordPress: get_post( 0 | '' | null ) falls back to the global post; get_post( numeric ) casts to int.
 function get_post($p = null) { if ($p instanceof WP_Post) { return $p; } if (empty($p)) { return $GLOBALS['post'] ?? null; } return is_numeric($p) ? ($GLOBALS['posts'][(int) $p] ?? null) : null; }
-class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_password = '', $post_title = ''; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
+class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_password = '', $post_title = '', $post_date = '2026-01-01 00:00:00'; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
+// WordPress's newest-menu query, as the fallback runs it: published, by date, newest first (records the arguments).
+class WP_Query { public $posts = []; function __construct($a) { $GLOBALS['last_query'] = $a; $l = array_values(array_filter($GLOBALS['posts'], static fn($p) => $p->post_type === ($a['post_type'] ?? '') && $p->post_status === ($a['post_status'] ?? ''))); usort($l, static fn($x, $y) => strcmp($y->post_date, $x->post_date)); $this->posts = array_slice($l, 0, (int) ($a['posts_per_page'] ?? 10)); } }
 class WP_Block { public $parsed_block; function __construct($pb = []) { $this->parsed_block = $pb; } }
 function check($name, $ok, $detail = '') { global $pass, $fail; if ($ok) { $pass++; echo "PASS $name\n"; } else { $fail++; echo "FAIL $name" . ('' !== $detail ? "  [$detail]" : '') . "\n"; } }
 $id = 100; $mk = static function (array $a) use (&$id) { $id++; $GLOBALS['posts'][$id] = new WP_Post(['ID' => $id] + $a); return $id; };
@@ -69,6 +71,25 @@ check('render: a menu or no reference calls WordPress with the same arguments; o
 $plain = static fn() => 'X';
 check('render: other block types, a type without a callback and junk are untouched', ['render_callback' => $plain] === omochix_core_security_nav_block_args(['render_callback' => $plain], 'core/block') && ['title' => 'N'] === omochix_core_security_nav_block_args(['title' => 'N'], 'core/navigation') && ['render_callback' => 'no_such_fn'] === omochix_core_security_nav_block_args(['render_callback' => 'no_such_fn'], 'core/navigation') && 'x' === omochix_core_security_nav_block_args('x', 'core/navigation') && ['render_callback' => $plain] === omochix_core_security_nav_block_args(['render_callback' => $plain]));
 check('hook: registered once, last, with both arguments', 9999 === has_filter('register_block_type_args', 'omochix_core_security_nav_block_args') && 1 === count(array_filter(array_merge(...array_values($GLOBALS['hooks']['register_block_type_args'])), static fn($x) => 'omochix_core_security_nav_block_args' === $x[0])) && [['omochix_core_security_nav_block_args', 2]] === array_values(array_filter($GLOBALS['hooks']['register_block_type_args'][9999], static fn($x) => 'omochix_core_security_nav_block_args' === $x[0])));
+
+// ------------------------------------------------------------ fallback (a navigation block without a reference)
+$fb = [['blockName' => 'core/navigation-link', 'attrs' => ['label' => 'x']]];
+$only = static function (array $keep) { $GLOBALS['posts'] = array_filter($GLOBALS['posts'], static fn($p) => 'wp_navigation' !== $p->post_type || in_array($p->ID, $keep, true)); };
+$saved = $GLOBALS['posts'];
+$GLOBALS['posts'][$menu]->post_date = '2026-05-01 00:00:00'; $GLOBALS['posts'][$pwm]->post_date = '2026-06-01 00:00:00';
+check('fallback: the newest published menu has a password: the fallback is emptied (nothing renders)', [] === omochix_core_security_nav_fallback($fb));
+$q = $GLOBALS['last_query'];
+check('fallback: the same query WordPress runs (published menus, newest by date)', 'wp_navigation' === $q['post_type'] && 'publish' === $q['post_status'] && 'date' === $q['orderby'] && 'DESC' === $q['order'] && 2 === $q['posts_per_page'] && true === $q['no_found_rows']);
+$GLOBALS['posts'][$pwm]->post_date = '2026-04-01 00:00:00';
+check('fallback: the newest menu is allowed: WordPress\'s fallback is kept as it is', $fb === omochix_core_security_nav_fallback($fb));
+$GLOBALS['posts'][$pwm]->post_date = '2026-05-01 00:00:00';
+check('fallback: a refused menu published at the same moment as the newest one empties it too (either could be taken)', [] === omochix_core_security_nav_fallback($fb));
+$GLOBALS['posts'][$pwm]->post_date = '2026-04-01 00:00:00';
+$only([]);
+check('fallback: no menu at all: the page list WordPress chose is kept', $fb === omochix_core_security_nav_fallback($fb));
+$GLOBALS['posts'] = $saved;
+check('fallback: an empty or junk fallback is passed through', [] === omochix_core_security_nav_fallback([]) && false === omochix_core_security_nav_fallback(false) && null === omochix_core_security_nav_fallback(null) && 'x' === omochix_core_security_nav_fallback('x'));
+check('fallback hook: registered once, last', 9999 === has_filter('block_core_navigation_render_fallback', 'omochix_core_security_nav_fallback') && 1 === count(array_filter(array_merge(...array_values($GLOBALS['hooks']['block_core_navigation_render_fallback'])), static fn($x) => 'omochix_core_security_nav_fallback' === $x[0])));
 
 // ------------------------------------------------------------ file rules
 $src = (string) file_get_contents($FILE);
