@@ -47,11 +47,22 @@ WordPress 本体との違い（意図した変更）：下書き・非公開・�
   - 許可されるメニューなら、本体が作った fallback のままです。メニューが1つも無いときの、固定ページの一覧（page list）もそのままです。
 - 注意：公開メニューが1つも無いと、本体は表示のついでにメニューを新しく作ることがあります（`wp_navigation_should_create_fallback`）。これは本体の動作で、この層は変えていません。
 
+## 異常時（fail-closed、hooks stream）
+- `omochix-core.php` は、このファイルが無い・例外や構文エラーで読み込めない・防御の関数かフィルターがそろわない、のどれかのときに、ナビゲーションのブロックをすべて空で描画します。
+- 理由は `error_log()` と、管理者向けの通知に出します。詳しくは `docs/web2/hooks/README.md` を見てください。
+- PHP の致命的エラー（関数の二重宣言など）は捕まえられないので、サイト全体が止まります。
+
+## リリース前の完全性検査（案。`tools/release/**` は release_only なので、リリースの PR で入れます）
+1. ZIP の中身：`includes/web2/security.php` が入っていて、sha256 がリリースのコミットの blob と一致すること。`omochix-core.php` に `omochix_core_sec_layer_load();` があること。
+2. 事前の検査：リリースの木で `php tests/security/run.php` と `php tests/web2/hooks/regression.php` が PASS すること。
+3. 反映後の確認（読み取りだけ）：管理画面に、セキュリティ層の通知が出ていないこと。PHP のエラーログに `OmochiX Core: the security layer` の行が無いこと。
+4. ロールバック：前の版の Core の ZIP に戻します。この層は状態を持たないので、DB の変更はありません。戻したあとは、ページキャッシュを消します（承認が要る操作です）。
+
 ## 守れない範囲
-- Core プラグインを無効にしたとき：この層は動きません。用語の行が DB に残っていれば、WordPress 本体の動作で N-1 が起きます。必要なら、別の常時ロードの場所（mu-plugin など）を検討します。
+- Core プラグインを無効にしたとき：この層も fail-closed も動きません。用語の行が DB に残っていれば、WordPress 本体の動作で N-1 が起きます。必要なら、別の常時ロードの場所（mu-plugin など）を検討します。
 - Core プラグインのファイルを、この層を含まない古い版に戻したとき（ロールバック）も、同じです。
 
 ## テスト
 - `php tests/security/run.php`：WordPress なしで、形式、参照先、ブロック、callback、フック、ファイルの規則（T-SAFE、独立性、PHP 8.1）を確かめます。
-- このファイルは、まだ CI のテストの一覧に入っていません。一覧に入れるのは ci stream の変更です（`.github/workflows/tests.yml` と `tools/ci/required-checks.json`）。
+- CI では、ci stream の変更で「Web 2.0 tests」の一覧に入ります（`.github/workflows/tests.yml` と `tools/ci/required-checks.json`）。PR の順は sec → ci → hooks → kh です。
 - hooks stream の `tests/web2/hooks/regression.php` は、読み込みの側（`OMOCHIX_WEB2_DISABLED` のときも読み込むこと、ファイルが無い・壊れているときに影響しないこと）を確かめます。
