@@ -105,7 +105,7 @@ jobs:
           exit $status
 
       - name: Web 2.0 tests
-        # The Web 2.0 hooks loader, the Knowledge Hub module and the security layer (docs/web2/). Like the Node
+        # The Web 2.0 hooks loader and the Knowledge Hub module (docs/web2/). Like the Node
         # tests, it still reports when an earlier step failed (the job stays failed), but not
         # when the run was cancelled. The loader reads module files with the tokenizer, so a
         # PHP without it must fail here rather than pass with every module refused.
@@ -117,11 +117,17 @@ jobs:
             tests/web2/hooks/run.php \
             tests/web2/hooks/regression.php \
             tests/glossary/run.php \
-            tests/glossary/theme.php \
-            tests/security/run.php
+            tests/glossary/theme.php
           do
             echo "::group::$test"
             php "$test" || status=1
             echo "::endgroup::"
           done
           exit $status
+
+      - name: Security layer tests
+        # The always-on Web 2.0 security layer (wp-plugin/omochix-core/includes/web2/security.php,
+        # docs/web2/sec/): navigation block references and the fallback menu (review N-1). Its own
+        # step, so the Web 2.0 tests step above stays exactly as the inventory pins it.
+        if: ${{ !cancelled() }}
+        run: php tests/security/run.php
