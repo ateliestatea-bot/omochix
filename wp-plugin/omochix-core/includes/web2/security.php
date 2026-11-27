@@ -44,7 +44,7 @@ function omochix_core_security_nav_ref_id( $value ) {
 	if ( is_float( $value ) ) {
 		return ( $value >= 1 && $value < 9007199254740992 && floor( $value ) === $value ) ? (int) $value : 0;
 	}
-	if ( is_string( $value ) && 1 === preg_match( '/^[1-9][0-9]{0,18}$/', $value ) ) {
+	if ( is_string( $value ) && 1 === preg_match( '/^[1-9][0-9]{0,18}\z/', $value ) ) {
 		$id = (int) $value;
 		return $id > 0 && $id < PHP_INT_MAX ? $id : 0;
 	}

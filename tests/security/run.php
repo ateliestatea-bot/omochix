@@ -39,7 +39,7 @@ $nb = static fn($attrs) => new WP_Block(['blockName' => 'core/navigation', 'attr
 
 // ------------------------------------------------------------ reference format
 check('format: int, digit string and whole float (the block renderer REST route passes floats) give the ID', $menu === omochix_core_security_nav_ref_id($menu) && $menu === omochix_core_security_nav_ref_id((string) $menu) && $menu === omochix_core_security_nav_ref_id((float) $menu));
-$junk = [0, -1, -$menu, 0.0, -1.0, $menu + 0.5, 1e30, INF, -INF, NAN, 9007199254740992.0, '0', '-1', '+' . $menu, '0' . $menu, ' ' . $menu, $menu . ' ', $menu . 'a', '1e3', '0x1f', '', 'abc', '9223372036854775807', '99999999999999999999', [$menu], ['ref' => $menu], true, false, null, (object) ['ID' => $menu], new WP_Post(['ID' => $menu, 'post_type' => 'wp_navigation'])];
+$junk = [0, -1, -$menu, 0.0, -1.0, $menu + 0.5, 1e30, INF, -INF, NAN, 9007199254740992.0, '0', '-1', '+' . $menu, '0' . $menu, ' ' . $menu, $menu . ' ', $menu . 'a', '1e3', '0x1f', $menu . "\n", '', 'abc', '9223372036854775807', '99999999999999999999', [$menu], ['ref' => $menu], true, false, null, (object) ['ID' => $menu], new WP_Post(['ID' => $menu, 'post_type' => 'wp_navigation'])];
 $bad = array_keys(array_filter($junk, static fn($v) => 0 !== omochix_core_security_nav_ref_id($v)));
 check('format: 0, negatives, fractions, huge or non-finite floats, signed, padded, leading-zero, hex or exponent strings, text, lists, booleans, null and objects give 0', [] === $bad, implode(',', $bad));
 $GLOBALS['post'] = get_post($menu);
