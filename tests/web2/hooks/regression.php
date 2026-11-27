@@ -266,7 +266,15 @@ foreach ($sides as $side => $s) {
 
     $rep = is_array($n) ? $n['report'] : ['files' => [], 'entries' => []];
     $declared = [];
-    foreach ($rep['files'] as $info) { $declared = array_merge($declared, $info['functions'] ?? []); }
+    // The security layer (sec stream) sits in the Core module folder but is not a module: omochix-core.php
+    // requires it on every request (checked above), so its functions are expected to exist.
+    $always = 'core' === $side ? ['includes/web2/security.php'] : [];
+    foreach ($rep['files'] as $rel => $info) { if (!in_array($rel, $always, true)) { $declared = array_merge($declared, $info['functions'] ?? []); } }
+    foreach ($always as $rel) {
+        if (isset($rep['files'][$rel])) {
+            rg_check("$side: the always-loaded $rel is no module entry, follows the loader rules and ran", !isset($rep['entries'][$rel]) && !isset($rep['files'][$rel]['error']) && [] !== ($rep['files'][$rel]['functions'] ?? []) && [] === array_diff($rep['files'][$rel]['functions'], $n['functions']));
+        }
+    }
     $bad_files = array_keys(array_filter($rep['files'], static function ($i) { return isset($i['error']); }));
     $bad_entries = array_filter($rep['entries'], static function ($e) { return '' !== $e['check']; });
     $ids = array_column($rep['entries'], 'id');
