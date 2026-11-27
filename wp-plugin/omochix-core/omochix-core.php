@@ -238,6 +238,18 @@ function omochix_core_deactivate() {
 }
 register_deactivation_hook( __FILE__, 'omochix_core_deactivate' );
 
+// Web 2.0 security layer (docs/web2/sec/README.md). Not a module: always
+// loaded, before the Web 2.0 block and also with OMOCHIX_WEB2_DISABLED, because
+// it only narrows what WordPress renders (it opens nothing). Guarded: with the
+// file missing or broken the plugin works as before.
+if ( is_readable( OMOCHIX_CORE_DIR . 'includes/web2/security.php' ) ) {
+	try {
+		require_once OMOCHIX_CORE_DIR . 'includes/web2/security.php';
+	} catch ( Throwable $omochix_core_error ) {
+		unset( $omochix_core_error );
+	}
+}
+
 // Web 2.0 modules (docs/web2/hooks/README.md). Loaded last and guarded: with
 // the loader missing or broken the plugin works as before. The loader loads
 // only modules on its fixed list (empty, default off) and checks each file

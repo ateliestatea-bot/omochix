@@ -168,6 +168,43 @@ foreach ($variants as $name => $mutate) {
     rg_check("core ($name): Industry Hub module still loaded, no admin notice", is_array($r) && true === $r['ih'] && '' === $r['notice']);
 }
 
+// ------------------------------------------------- Core: security layer (sec stream, review N-1)
+// includes/web2/security.php is not a module: omochix-core.php requires it before the Web 2.0 block, so
+// OMOCHIX_WEB2_DISABLED and an empty module list do not stop it; a missing or broken file changes nothing.
+$SEC_BLOCK = "\n// Web 2.0 security layer (docs/web2/sec/README.md). Not a module: always\n// loaded, before the Web 2.0 block and also with OMOCHIX_WEB2_DISABLED, because\n// it only narrows what WordPress renders (it opens nothing). Guarded: with the\n// file missing or broken the plugin works as before.\nif ( is_readable( OMOCHIX_CORE_DIR . 'includes/web2/security.php' ) ) {\n\ttry {\n\t\trequire_once OMOCHIX_CORE_DIR . 'includes/web2/security.php';\n\t} catch ( Throwable \$omochix_core_error ) {\n\t\tunset( \$omochix_core_error );\n\t}\n}\n";
+rg_check('core: the security block is in omochix-core.php once, right before the Web 2.0 block and outside it', 1 === substr_count($main, $SEC_BLOCK) && str_ends_with($main, $SEC_BLOCK . $CORE_BLOCK) && 1 === substr_count($main, "includes/web2/security.php' ) ) {"));
+$sec_probe = "<?php\nif ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}\nfunction omochix_core_security_probe_loaded() {\n\treturn true;\n}\n";
+$sec_file = 'includes/web2/security.php';
+$sec_run = static function ($name, $mutate) use ($plugin, $TMP, $sec_file) {
+    $d = $TMP . '/core-sec-' . md5($name);
+    rg_copy_tree($plugin, $d);
+    $mutate($d, "$d/$sec_file");
+    [$code, $r, $raw] = rg_child(['--core'], ['IH_PLUGIN_DIR' => $d]);
+    return [$code, $r, $raw];
+};
+$no_sec = static fn($fns) => array_values(array_filter((array) $fns, static fn($f) => 0 !== strpos($f, 'omochix_core_security_')));
+[$code, $base, $raw] = $sec_run('security file missing', static function ($d, $f) { @unlink($f); });
+rg_check('core (security file missing): loads with no PHP error and no output, Web 2.0 loader as before', 0 === $code && is_array($base) && 0 === $base['errors'] && '' === $base['out'] && true === $base['web2']['ran'] && [] === $base['web2']['modules'] && '' === $base['notice'], $raw);
+rg_check('core (security file missing): every other registration and function as in this tree', is_array($base) && $no_sec($base['functions']) === $no_sec($now['functions']) && true === $base['ih']);
+$disable = static function ($d) { $f = "$d/omochix-core.php"; file_put_contents($f, preg_replace('/^(<\?php\n)/', "\$1define( 'OMOCHIX_WEB2_DISABLED', true );\n", (string) file_get_contents($f), 1)); };
+foreach ([
+    'security layer present' => static function ($d, $f) use ($sec_probe) { file_put_contents($f, $sec_probe); },
+    'security layer present, Web 2.0 switched off (OMOCHIX_WEB2_DISABLED)' => static function ($d, $f) use ($sec_probe, $disable) { file_put_contents($f, $sec_probe); $disable($d); },
+] as $name => $mutate) {
+    [$code, $r, $raw] = $sec_run($name, $mutate);
+    rg_check("core ($name): loads with no PHP error and no output, and the security file ran", 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'] && in_array('omochix_core_security_probe_loaded', $r['functions'], true), $raw);
+    rg_check("core ($name): no module loaded, no notice, Industry Hub still loaded", is_array($r) && [] === $r['web2']['modules'] && '' === $r['notice'] && true === $r['ih']);
+}
+foreach ([
+    'security file that throws' => static function ($d, $f) { file_put_contents($f, "<?php\nthrow new RuntimeException('broken security layer');\n"); },
+    'security file cut short by an upload' => static function ($d, $f) use ($sec_probe) { file_put_contents($f, substr($sec_probe, 0, (int) (strlen($sec_probe) * 0.7))); },
+    'security file empty (0 bytes)' => static function ($d, $f) { file_put_contents($f, ''); },
+] as $name => $mutate) {
+    [$code, $r, $raw] = $sec_run($name, $mutate);
+    rg_check("core ($name): loads with no PHP error and no output", 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'], $raw);
+    rg_check("core ($name): same registrations and functions as with the file missing", is_array($r) && is_array($base) && $r['snap'] === $base['snap'] && $no_sec($r['functions']) === $no_sec($base['functions']) && true === $r['ih'] && '' === $r['notice']);
+}
+
 // ==================================================================== theme
 $theme = "$REPO/wp-theme/omochix-theme";
 $fn = (string) file_get_contents("$theme/functions.php");
