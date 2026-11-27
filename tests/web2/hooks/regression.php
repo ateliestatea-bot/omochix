@@ -77,14 +77,31 @@ if ('--core' === ($argv[1] ?? '')) {
     // What a navigation block would print after registration (no reference: the guard lets WordPress render it).
     $nav_args = apply_filters('register_block_type_args', ['render_callback' => static function () { return 'NAV'; }], 'core/navigation');
     $nav_probe = is_callable($nav_args['render_callback'] ?? null) ? (string) call_user_func($nav_args['render_callback'], [], '', null) : 'not callable';
+    // REST: what /wp/v2/navigation would return to a non-editor for a menu, and whether every navigation filter can run.
+    $GLOBALS['caps'] = [];
+    $rest_probe = 'no response class';
+    if (class_exists('WP_Post')) {
+        $rest_res = new class(['content' => ['raw' => 'MENU-BLOCKS', 'rendered' => 'MENU-HTML']]) { private $d; function __construct($d) { $this->d = $d; } function get_data() { return $this->d; } function set_data($d) { $this->d = $d; } };
+        try {
+            $out = apply_filters('rest_prepare_wp_navigation', $rest_res, new WP_Post(['ID' => 77, 'post_type' => 'wp_navigation', 'post_status' => 'publish', 'post_password' => 'pw']), null);
+            $rest_probe = false !== strpos(json_encode($out->get_data()), 'MENU-BLOCKS') ? 'raw' : 'stripped';
+            apply_filters('block_core_navigation_render_fallback', []);
+        } catch (Throwable $e) { $rest_probe = 'fatal ' . get_class($e); }
+    }
+    $GLOBALS['caps'] = ['*' => true, 'activate_plugins' => true];
     $fns = array_values(array_filter(get_defined_functions()['user'], static function ($f) { return 0 !== strpos($f, 'omochix_core_web2_') && 0 !== strpos($f, 'ih_') && false === strpos($f, '{closure'); }));
     sort($fns);
+    // A filter the plugin took off again leaves an empty list in the stub; drop those so the snapshot can sort.
+    foreach (['hooks', 'ih_load_hooks'] as $g) { foreach ((array) ($GLOBALS[$g] ?? []) as $h => $by) { foreach ($by as $p => $l) { if (!$l) { unset($GLOBALS[$g][$h][$p]); } } if (!$GLOBALS[$g][$h]) { unset($GLOBALS[$g][$h]); } } }
     $snap = ih_registration_snapshot();
     $GLOBALS['caps'] = ['*' => true, 'activate_plugins' => true];
     ob_start(); do_action('admin_notices'); $notice = (string) ob_get_clean();
+    $GLOBALS['caps'] = ['edit_posts' => true, 'edit_others_posts' => true];
+    ob_start(); do_action('admin_notices'); $notice_editor = (string) ob_get_clean();
+    $GLOBALS['caps'] = ['*' => true, 'activate_plugins' => true];
     $web2 = function_exists('omochix_core_web2_state') ? omochix_core_web2_state() : null;
-    echo "\n@@JSON@@" . json_encode(['out' => $load_out, 'errors' => $GLOBALS['fail'], 'snap' => $snap, 'functions' => $fns, 'ih' => omochix_core_industry_hub_loaded(), 'notice' => $notice, 'web2' => $web2,
-        'nav' => $nav_probe, 'closed' => function_exists('has_filter') && false !== has_filter('register_block_type_args', 'omochix_core_nav_render_closed'), 'problem' => function_exists('omochix_core_sec_layer_problem') ? omochix_core_sec_layer_problem() : null, 'log' => getenv('RG_ERRLOG') && is_file(getenv('RG_ERRLOG')) ? (string) file_get_contents(getenv('RG_ERRLOG')) : '',
+    echo "\n@@JSON@@" . json_encode(['out' => $load_out, 'errors' => $GLOBALS['fail'], 'snap' => $snap, 'functions' => $fns, 'ih' => omochix_core_industry_hub_loaded(), 'notice' => $notice, 'notice_editor' => $notice_editor, 'web2' => $web2,
+        'nav' => $nav_probe, 'rest' => $rest_probe, 'closed' => function_exists('has_filter') && false !== has_filter('register_block_type_args', 'omochix_core_nav_render_closed'), 'problem' => function_exists('omochix_core_sec_layer_problem') ? omochix_core_sec_layer_problem() : null, 'log' => getenv('RG_ERRLOG') && is_file(getenv('RG_ERRLOG')) ? (string) file_get_contents(getenv('RG_ERRLOG')) : '',
         'list' => function_exists('omochix_core_web2_modules') ? omochix_core_web2_modules() : null,
         'report' => rg_module_report(getenv('IH_PLUGIN_DIR'), 'includes/web2', 'omochix_core_web2_check', 'omochix_core_web2_declarations'),
         'gates' => rg_gates($web2, 'omochix_core_%s_public', null)]);
@@ -184,7 +201,7 @@ rg_check('core: the security block sits right before the Web 2.0 block, outside 
 rg_check('core: the security block reads no request data and no database handle', '' !== $sec_block && 0 === preg_match('/\$_(POST|GET|REQUEST|COOKIE|SERVER|FILES)|\$wpdb/', $sec_block));
 $sec_file = 'includes/web2/security.php';
 rg_check('core (this tree): the security layer ships with the plugin (merge the sec pull request first)', is_file("$plugin/$sec_file"));
-rg_check('core (this tree): the security layer is in place: no fail-closed filter, no notice, navigation renders', is_array($now) && false === $now['closed'] && '' === $now['problem'] && 'NAV' === $now['nav'] && '' === $now['notice']);
+rg_check('core (this tree): the security layer is in place: no fail-closed filter, no notice, navigation renders, REST strips a password menu', is_array($now) && false === $now['closed'] && '' === $now['problem'] && 'NAV' === $now['nav'] && 'stripped' === $now['rest'] && '' === $now['notice']);
 $sec_run = static function ($name, $mutate) use ($plugin, $TMP, $sec_file) {
     $d = $TMP . '/core-sec-' . md5($name);
     rg_copy_tree($plugin, $d);
@@ -203,12 +220,17 @@ foreach ([
     'security file empty (0 bytes)' => ['incomplete', static function ($d, $f) { file_put_contents($f, ''); }],
     'security file without its guard' => ['incomplete', static function ($d, $f) { file_put_contents($f, "<?php\nif ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}\nfunction omochix_core_security_other() {\n\treturn true;\n}\n"); }],
     'security guard filter taken off' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace("add_filter( 'register_block_type_args', 'omochix_core_security_nav_block_args', 9999, 2 );", '', $c)); }],
+    'security fallback filter taken off' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace("add_filter( 'block_core_navigation_render_fallback', 'omochix_core_security_nav_fallback', 9999 );", '', $c)); }],
+    'security fallback guard renamed' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace('omochix_core_security_nav_fallback', 'omochix_core_security_nav_fallback_x', $c)); }],
+    'security REST filter taken off' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace("add_filter( 'rest_prepare_wp_navigation', 'omochix_core_security_nav_rest', 9999, 2 );", '', $c)); }],
+    'security fallback function missing, its filter still registered' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace('function omochix_core_security_nav_fallback(', 'function omochix_core_security_nav_fallback_gone(', $c)); }],
+    'security REST guard renamed' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace('omochix_core_security_nav_rest', 'omochix_core_security_nav_rest_x', $c)); }],
     'security file missing, Web 2.0 switched off' => ['missing', static function ($d, $f) use ($disable) { @unlink($f); $disable($d); }],
 ] as $name => [$why, $mutate]) {
     [$code, $r, $raw] = $sec_run($name, $mutate);
     rg_check("core ($name): loads with no PHP error and no output; Industry Hub and the Web 2.0 loader unaffected", 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'] && true === $r['ih'] && [] === $r['web2']['modules'], $raw);
-    rg_check("core ($name): fails closed: navigation renders nothing", is_array($r) && true === $r['closed'] && '' === $r['nav']);
-    rg_check("core ($name): the reason is logged once and shown to administrators (no path)", is_array($r) && '' !== $r['problem'] && ('' === $why || $why === $r['problem'] || 0 === strpos($r['problem'], 'failed to load')) && 1 === substr_count($r['log'], 'OmochiX Core: the security layer') && false !== strpos($r['notice'], 'セキュリティ層') && false === strpos($r['notice'], $TMP), is_array($r) ? $r['problem'] . ' | ' . $r['log'] : '');
+    rg_check("core ($name): fails closed: navigation renders nothing, REST returns no menu blocks to non-editors, every navigation filter still runs", is_array($r) && true === $r['closed'] && '' === $r['nav'] && 'stripped' === $r['rest'], is_array($r) ? $r['rest'] : '');
+    rg_check("core ($name): the reason is logged once and shown to administrators (no path)", is_array($r) && '' !== $r['problem'] && ('' === $why || $why === $r['problem'] || 0 === strpos($r['problem'], 'failed to load')) && 1 === substr_count($r['log'], 'OmochiX Core: the security layer') && false !== strpos($r['notice'], 'セキュリティ層') && '' === $r['notice_editor'] && false === strpos($r['notice'], $TMP), is_array($r) ? $r['problem'] . ' | ' . $r['log'] : '');
 }
 
 // ==================================================================== theme
