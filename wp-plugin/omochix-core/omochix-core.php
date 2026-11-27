@@ -242,7 +242,8 @@ register_deactivation_hook( __FILE__, 'omochix_core_deactivate' );
 // loaded, before the Web 2.0 block and also with OMOCHIX_WEB2_DISABLED, because
 // it only narrows what WordPress renders (it opens nothing). Fail closed: when
 // the file is missing, cut short, throws or does not define its guards, every
-// navigation block renders nothing, REST returns no menu blocks to non-editors,
+// navigation block renders nothing, REST returns no menu blocks to non-editors
+// and searches no password-protected menu for them,
 // and the problem is logged and shown to administrators. The rest of the
 // plugin keeps working.
 /**
@@ -267,6 +268,7 @@ function omochix_core_sec_layer_load() {
 		'register_block_type_args'              => 'omochix_core_security_nav_block_args',
 		'block_core_navigation_render_fallback' => 'omochix_core_security_nav_fallback',
 		'rest_prepare_wp_navigation'            => 'omochix_core_security_nav_rest',
+		'rest_wp_navigation_query'              => 'omochix_core_security_nav_rest_query',
 	);
 	if ( '' === $why ) {
 		foreach ( $guards as $hook => $callback ) {
@@ -290,6 +292,7 @@ function omochix_core_sec_layer_load() {
 	omochix_core_sec_layer_problem( $why );
 	add_filter( 'register_block_type_args', 'omochix_core_nav_render_closed', 9999, 2 );
 	add_filter( 'rest_prepare_wp_navigation', 'omochix_core_nav_rest_closed', 9999, 2 );
+	add_filter( 'rest_wp_navigation_query', 'omochix_core_nav_query_closed', 9999 );
 	add_action( 'admin_notices', 'omochix_core_sec_layer_notice' );
 	error_log( 'OmochiX Core: the security layer (includes/web2/security.php) is ' . $why . '; navigation blocks render nothing until it is restored.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	return false;
@@ -345,6 +348,20 @@ function omochix_core_nav_rest_closed( $response, $post = null ) {
 		}
 	}
 	return $response;
+}
+
+/**
+ * Fail closed in REST search: while the security layer is unavailable, a user who may not edit menus
+ * searches /wp/v2/navigation without password-protected menus (no guessing at their content).
+ *
+ * @param mixed $args Query arguments.
+ * @return mixed
+ */
+function omochix_core_nav_query_closed( $args ) {
+	if ( is_array( $args ) && isset( $args['s'] ) && '' !== (string) $args['s'] && ! current_user_can( 'edit_theme_options' ) ) {
+		$args['has_password'] = false;
+	}
+	return $args;
 }
 
 /** Tells administrators that the security layer is unavailable (the reason only, no path). */
