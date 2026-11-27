@@ -1038,6 +1038,45 @@ check('N2-A closed: every term is hidden from non-editors on the comments screen
 $GLOBALS['ctx']['is_admin'] = false;
 unset($GLOBALS['posts'][$priv_t]);
 $hook = static fn($h, $cb) => array_values(array_filter(array_merge(...array_values($GLOBALS['hooks'][$h] ?? [[]])), static fn($x) => $cb === $x[0]));
+// ---------------------------------------------- N-1: navigation block "ref" (audit 3 of the N2 fix)
+// Reproduction (real WordPress 7.1.4, open, closed and with the module not loaded): <!-- wp:navigation {"ref":<term ID>} /-->
+// in an author's published post printed a hidden term's title (aria-label) and blocks to visitors; the block renderer REST
+// route did the same for a contributor. WordPress checks only that the post is published, not its type or a password.
+add_filter('omochix_core_glossary_public', $open);
+if (!class_exists('WP_Block')) { class WP_Block { public $parsed_block; function __construct($pb = []) { $this->parsed_block = $pb; } } }
+$navm = ih_add_post(['post_type' => 'wp_navigation', 'post_status' => 'publish', 'post_title' => 'Menu']);
+$navd = ih_add_post(['post_type' => 'wp_navigation', 'post_status' => 'draft', 'post_title' => 'Draft menu']);
+$hid_pass = gl_store('publish'); $GLOBALS['posts'][$hid_pass]->post_password = 'pw';
+$priv_n = gl_store('private');
+$nb = static fn($attrs) => new WP_Block(['blockName' => 'core/navigation', 'attrs' => $attrs]);
+check('N-1 ref: a navigation menu (int, digit string, or a whole float as the block renderer REST route passes it) is accepted, published or not (WordPress still shows only published menus)', omochix_core_glossary_nav_ref_ok($navm) && omochix_core_glossary_nav_ref_ok((string) $navm) && omochix_core_glossary_nav_ref_ok((float) $navm) && omochix_core_glossary_nav_ref_ok($navd));
+check('N-1 ref: a term in any state, another post type and an unknown ID are refused', !omochix_core_glossary_nav_ref_ok($hid_pub) && !omochix_core_glossary_nav_ref_ok($vis) && !omochix_core_glossary_nav_ref_ok($hid_draft) && !omochix_core_glossary_nav_ref_ok($hid_pass) && !omochix_core_glossary_nav_ref_ok($priv_n) && !omochix_core_glossary_nav_ref_ok($other) && !omochix_core_glossary_nav_ref_ok(999999) && !omochix_core_glossary_nav_ref_ok((string) $hid_pub) && !omochix_core_glossary_nav_ref_ok((float) $hid_pub));
+$junk = [0, -1, -$navm, 0.0, -1.0, (float) -$navm, $navm + 0.5, 1e30, INF, NAN, 9007199254740992.0, '0', '-1', '0' . $navm, ' ' . $navm, $navm . ' ', $navm . 'a', '+' . $navm, '1e3', 'abc', '', [$navm], ['ref' => $navm], true, false, null, (object) ['ID' => $navm], '99999999999999999999', PHP_INT_MAX, get_post($navm)];
+$GLOBALS['posts'][0] = get_post($navm); // WordPress: get_post(0) falls back to the global post, which may be a menu.
+$bad_junk = array_keys(array_filter($junk, static fn($v) => omochix_core_glossary_nav_ref_ok($v)));
+unset($GLOBALS['posts'][0]);
+check('N-1 ref: 0, negatives, fractions, huge or non-finite floats, padded or signed strings, text, lists, booleans, null, objects and overflowing numbers are refused (a menu\'s own ID in those forms too)', [] === $bad_junk, implode(',', $bad_junk));
+check('N-1 guard: a block without a reference is left to WordPress (inner blocks or its fallback)', omochix_core_glossary_nav_ref_guard([], $nb([])) && omochix_core_glossary_nav_ref_guard(['overlayMenu' => 'never'], $nb(['overlayMenu' => 'never'])) && omochix_core_glossary_nav_ref_guard([], null) && omochix_core_glossary_nav_ref_guard('x', 'y'));
+check('N-1 guard: a menu reference renders; a term reference does not, in "ref" or the legacy "navigationMenuId"', omochix_core_glossary_nav_ref_guard(['ref' => $navm], $nb(['ref' => $navm])) && !omochix_core_glossary_nav_ref_guard(['ref' => $hid_pub], $nb(['ref' => $hid_pub])) && !omochix_core_glossary_nav_ref_guard(['navigationMenuId' => $hid_pub], $nb(['navigationMenuId' => $hid_pub])) && !omochix_core_glossary_nav_ref_guard(['ref' => $navm, 'navigationMenuId' => $hid_pub], $nb(['ref' => $navm, 'navigationMenuId' => $hid_pub])));
+check('N-1 guard: a stored reference WordPress dropped as the wrong type ("abc", a list, true, null) fails closed instead of showing the fallback menu; stored and prepared must both be menus', !omochix_core_glossary_nav_ref_guard([], $nb(['ref' => 'abc'])) && !omochix_core_glossary_nav_ref_guard([], $nb(['ref' => [$hid_pub]])) && !omochix_core_glossary_nav_ref_guard([], $nb(['ref' => true])) && !omochix_core_glossary_nav_ref_guard([], $nb(['ref' => null])) && !omochix_core_glossary_nav_ref_guard(['ref' => $navm], $nb(['ref' => $hid_pub])) && !omochix_core_glossary_nav_ref_guard(['ref' => $hid_pub], $nb(['ref' => $navm])));
+$inner_calls = 0;
+$wrapped = omochix_core_glossary_nav_block_args(['render_callback' => static function ($a, $c, $b) use (&$inner_calls) { $inner_calls++; return 'NAV'; }, 'title' => 'Navigation'], 'core/navigation');
+$cb = $wrapped['render_callback'];
+check('N-1 render: the wrapped callback prints nothing for a term and calls WordPress for a menu or no reference', '' === $cb(['ref' => $hid_pub], '', $nb(['ref' => $hid_pub])) && '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && '' === $cb(['ref' => $hid_pass], '', $nb(['ref' => $hid_pass])) && 0 === $inner_calls && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])) && 'NAV' === $cb([], '', $nb([])) && 2 === $inner_calls && 'Navigation' === $wrapped['title']);
+$plain = static fn() => 'X';
+check('N-1 render: other blocks, a block type without a callback and junk arguments are untouched', ['render_callback' => $plain] === omochix_core_glossary_nav_block_args(['render_callback' => $plain], 'core/block') && ['title' => 'N'] === omochix_core_glossary_nav_block_args(['title' => 'N'], 'core/navigation') && ['render_callback' => 'no_such_fn'] === omochix_core_glossary_nav_block_args(['render_callback' => 'no_such_fn'], 'core/navigation') && 'x' === omochix_core_glossary_nav_block_args('x', 'core/navigation'));
+$GLOBALS['caps'] = ['edit_others_omx_glossaries' => true, 'edit_others_posts' => true];
+check('N-1 the same answer for editors (a page built for one viewer may be cached for the next)', '' === $cb(['ref' => $hid_pub], '', $nb(['ref' => $hid_pub])) && '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])));
+$GLOBALS['caps'] = [];
+remove_filter('omochix_core_glossary_public', $open);
+check('N-1 closed: the same rule (it does not depend on the switch or on what is visible)', '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])));
+$hook_n1 = array_values(array_filter(array_merge(...array_values($GLOBALS['hooks']['register_block_type_args'] ?? [[]])), static fn($x) => 'omochix_core_glossary_nav_block_args' === $x[0]));
+check('N-1 hook: the block type arguments are wrapped last, with both arguments', 9999 === has_filter('register_block_type_args', 'omochix_core_glossary_nav_block_args') && [['omochix_core_glossary_nav_block_args', 2]] === $hook_n1, wp_json_encode($hook_n1));
+$vis_src = (string) file_get_contents($PLUGIN . '/includes/web2/glossary-visibility.php');
+$n1_a = strpos($vis_src, 'function omochix_core_glossary_nav_ref_ok'); $n1_b = strpos($vis_src, "add_filter( 'register_block_type_args'");
+check('N-1 T-SAFE: the navigation guard reads no request data and no database handle', false !== $n1_a && $n1_b > $n1_a && 0 === preg_match('/\$_(POST|GET|REQUEST|COOKIE|SERVER|FILES)|\$wpdb|\bglobal\b/', substr($vis_src, $n1_a, $n1_b - $n1_a)));
+unset($GLOBALS['posts'][$navm], $GLOBALS['posts'][$navd], $GLOBALS['posts'][$hid_pass], $GLOBALS['posts'][$priv_n]);
+
 check('N2-A/B hooks: Query Loop vars, comments screen and admin titles run last, with the arguments they use', 9999 === has_filter('query_loop_block_query_vars', 'omochix_core_glossary_query_loop_vars') && 9999 === has_filter('comments_list_table_query_args', 'omochix_core_glossary_comments_screen_args') && 9999 === has_filter('the_title', 'omochix_core_glossary_admin_title') && 9999 === has_filter('the_posts', 'omochix_core_glossary_loop_posts') && [['omochix_core_glossary_loop_posts', 2]] === $hook('the_posts', 'omochix_core_glossary_loop_posts') && [['omochix_core_glossary_admin_title', 2]] === $hook('the_title', 'omochix_core_glossary_admin_title'));
 
 // ---------------------------------------------- F3: the REST autosave route never publishes

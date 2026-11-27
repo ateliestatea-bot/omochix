@@ -684,6 +684,98 @@ function omochix_core_glossary_admin_title( $title, $post_id = 0 ) {
 add_filter( 'the_title', 'omochix_core_glossary_admin_title', 9999, 2 );
 
 /**
+ * Navigation block: a menu reference must be a navigation menu (review N-1).
+ *
+ * WordPress renders the post that core/navigation's "ref" (or the legacy
+ * "navigationMenuId") points to: get_post( ref ), and if it is published its
+ * title (aria-label) and blocks go into the page. It never checks the post
+ * type or a password, so a term the visitor may not see (missing sources,
+ * verified in the future, password) is printed by any page an author
+ * publishes, and by the block renderer REST route for a contributor.
+ *
+ * Rule: when the block carries a reference, it is rendered only if every
+ * reference given (stored attributes and prepared attributes alike) is a
+ * positive whole number (an int, a whole float as the block renderer REST
+ * route passes it, or a string of digits) of an existing wp_navigation
+ * post. Anything else (another post type, an unknown ID, 0, a negative, a
+ * fraction, text, a list, true) renders nothing: no fallback
+ * menu, no title, no blocks. A block without a reference, and any reference
+ * to a real menu, is left to WordPress unchanged (it still shows only
+ * published menus). Same answer for every user and on every route.
+ *
+ * Where: the block's render_callback is wrapped when the block type is
+ * registered. Measured on the throwaway site (2026-11-27): every route that
+ * prints the block (page, nested group/columns, synced pattern, Query Loop,
+ * REST posts, block renderer GET/POST, feed) goes through it; pre_render_block
+ * also ran there, but a direct WP_Block::render() call skips it, and
+ * render_block_data can only drop the reference, which shows the fallback
+ * menu instead.
+ *
+ * @param mixed $value One reference value.
+ * @return bool
+ */
+function omochix_core_glossary_nav_ref_ok( $value ) {
+	if ( is_int( $value ) ) {
+		$id = $value;
+	} elseif ( is_float( $value ) && $value >= 1 && $value < 9007199254740992 && floor( $value ) === $value ) {
+		$id = (int) $value; // The block renderer REST route hands numbers over as floats (rest_sanitize_value_from_schema).
+	} elseif ( is_string( $value ) && 1 === preg_match( '/^[1-9][0-9]{0,18}$/', $value ) ) {
+		$id = (int) $value;
+	} else {
+		return false;
+	}
+	if ( $id <= 0 ) {
+		return false;
+	}
+	$post = get_post( $id );
+	return $post instanceof WP_Post && 'wp_navigation' === $post->post_type;
+}
+
+/**
+ * Whether a navigation block may be rendered (see above).
+ *
+ * @param mixed $attributes Prepared attributes.
+ * @param mixed $block      WP_Block (its parsed_block keeps the stored attributes).
+ * @return bool
+ */
+function omochix_core_glossary_nav_ref_guard( $attributes, $block = null ) {
+	$sets = array( is_array( $attributes ) ? $attributes : array() );
+	if ( $block instanceof WP_Block && isset( $block->parsed_block['attrs'] ) && is_array( $block->parsed_block['attrs'] ) ) {
+		$sets[] = $block->parsed_block['attrs'];
+	}
+	foreach ( $sets as $set ) {
+		foreach ( array( 'ref', 'navigationMenuId' ) as $key ) {
+			if ( array_key_exists( $key, $set ) && ! omochix_core_glossary_nav_ref_ok( $set[ $key ] ) ) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/**
+ * Wraps core/navigation's render_callback with the guard.
+ *
+ * @param mixed $args Block type arguments.
+ * @param mixed $name Block type name.
+ * @return mixed
+ */
+function omochix_core_glossary_nav_block_args( $args, $name = '' ) {
+	if ( 'core/navigation' !== $name || ! is_array( $args ) || empty( $args['render_callback'] ) || ! is_callable( $args['render_callback'] ) ) {
+		return $args;
+	}
+	$inner                   = $args['render_callback'];
+	$args['render_callback'] = static function ( $attributes, $content = '', $block = null ) use ( $inner ) {
+		if ( ! omochix_core_glossary_nav_ref_guard( $attributes, $block ) ) {
+			return '';
+		}
+		return call_user_func( $inner, $attributes, $content, $block );
+	};
+	return $args;
+}
+add_filter( 'register_block_type_args', 'omochix_core_glossary_nav_block_args', 9999, 2 );
+
+/**
  * What is indexable right now (gate G-B per term, gate G-C for the lists).
  *
  * @param bool $reset Forget the cached answer (tests).
