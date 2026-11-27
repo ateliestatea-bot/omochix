@@ -398,6 +398,396 @@ function omochix_core_glossary_oembed_post_id( $post_id ) {
 add_filter( 'oembed_request_post_id', 'omochix_core_glossary_oembed_post_id' );
 
 /**
+ * Most published terms there can be before the link search stops offering
+ * the glossary to non-editors at all (rather than listing every hidden one).
+ */
+if ( ! defined( 'OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX' ) ) {
+	define( 'OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX', 1000 );
+}
+
+/**
+ * Post types of a query without the glossary. Never empty: an empty list
+ * would mean "the default type" to WP_Query.
+ *
+ * @param mixed $types post_type of a query.
+ * @return string[]
+ */
+function omochix_core_glossary_types_without( $types ) {
+	$types = (array) $types;
+	if ( in_array( 'any', $types, true ) ) {
+		$types = array_keys( get_post_types( array( 'public' => true ) ) );
+	}
+	$left = array_values( array_diff( array_map( 'strval', $types ), array( 'omx_glossary' ) ) );
+	return $left ? $left : array( '__omx_none__' );
+}
+
+/**
+ * IDs of the terms in the given statuses that are hidden (gate G-B; for the
+ * default, the published ones). null when the glossary is closed or there
+ * are too many terms to list: then no term may be offered at all.
+ *
+ * @param string[] $statuses Statuses to look at.
+ * @return int[]|null
+ */
+function omochix_core_glossary_hidden_published_ids( array $statuses = array( 'publish' ) ) {
+	if ( ! omochix_core_glossary_public() ) {
+		return null;
+	}
+	$posts = get_posts( array( 'post_type' => 'omx_glossary', 'post_status' => array_values( $statuses ), 'posts_per_page' => OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX + 1, 'fields' => 'all', 'no_found_rows' => true, 'suppress_filters' => true ) );
+	if ( ! is_array( $posts ) || count( $posts ) > OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX ) {
+		return null;
+	}
+	$hidden = array();
+	foreach ( $posts as $p ) {
+		if ( ! omochix_core_glossary_visibility( $p )['visible'] ) {
+			$hidden[] = (int) $p->ID;
+		}
+	}
+	return $hidden;
+}
+
+/**
+ * Classic editor link search (admin-ajax wp-link-ajax, review N2).
+ *
+ * _WP_Editors::wp_link_query() searches every public post type in the
+ * "publish" status and returns the ID and title of each hit; it does not ask
+ * whether a term may be shown. Any user with the internal-linking nonce
+ * (contributors and up get it on the post editor) saw the title and ID of
+ * published terms that are hidden (rule problems, a password, the glossary
+ * closed). For everyone but editors the hidden terms are now left out of the
+ * query itself, so paging stays right; visible terms can still be linked.
+ * Runs last, so a filter that widens the statuses cannot bring them back:
+ * anything but "publish" drops the glossary from the search.
+ *
+ * @param mixed $query WP_Query arguments.
+ * @return mixed
+ */
+function omochix_core_glossary_link_query_args( $query ) {
+	if ( ! is_array( $query ) || omochix_core_glossary_current_user_is_editor() ) {
+		return $query;
+	}
+	$types = isset( $query['post_type'] ) ? (array) $query['post_type'] : array( 'post' );
+	if ( ! in_array( 'omx_glossary', $types, true ) && ! in_array( 'any', $types, true ) ) {
+		return $query;
+	}
+	$hidden = array( 'publish' ) === array_values( (array) ( $query['post_status'] ?? '' ) ) ? omochix_core_glossary_hidden_published_ids() : null;
+	if ( null === $hidden ) {
+		$query['post_type'] = omochix_core_glossary_types_without( $types );
+		return $query;
+	}
+	if ( $hidden ) {
+		$query['post__not_in'] = array_values( array_unique( array_merge( array_map( 'intval', (array) ( $query['post__not_in'] ?? array() ) ), $hidden ) ) );
+	}
+	return $query;
+}
+add_filter( 'wp_link_query_args', 'omochix_core_glossary_link_query_args', 9999 );
+
+/**
+ * The same for the results (a second line: whatever the query found, a
+ * term the user may not see is not returned).
+ *
+ * @param mixed $results Link query results.
+ * @return mixed
+ */
+function omochix_core_glossary_link_query_results( $results ) {
+	if ( ! is_array( $results ) || omochix_core_glossary_current_user_is_editor() ) {
+		return $results;
+	}
+	$out = array();
+	foreach ( $results as $r ) {
+		$id = is_array( $r ) ? (int) ( $r['ID'] ?? 0 ) : 0;
+		$p  = $id ? get_post( $id ) : null;
+		if ( is_array( $r ) && ( ! $id || ( $p && 'omx_glossary' !== $p->post_type ) || ( $p && omochix_core_glossary_visibility( $p )['visible'] ) ) ) {
+			$out[] = $r;
+		}
+	}
+	return $out;
+}
+add_filter( 'wp_link_query', 'omochix_core_glossary_link_query_results', 9999 );
+
+/**
+ * Media "Attach to" search (admin-ajax find_posts, review N2).
+ *
+ * wp_ajax_find_posts() checks only its nonce (authors and up get it on the
+ * media list) and lists every public post type in every status but trash, so
+ * it showed the titles of draft, scheduled, pending and private terms.
+ * Attaching a file to a post needs edit_post on that post, which only editors
+ * have for a term, so for everyone else no term is a choice there: the
+ * glossary is left out of every query run inside that request handler. The
+ * handler's own query uses suppress_filters, but pre_get_posts still runs.
+ *
+ * @param mixed $query WP_Query.
+ * @return void
+ */
+function omochix_core_glossary_find_posts_query( $query ) {
+	if ( ! is_object( $query ) || ! method_exists( $query, 'get' ) || ! doing_action( 'wp_ajax_find_posts' ) || omochix_core_glossary_current_user_is_editor() ) {
+		return;
+	}
+	$types = $query->get( 'post_type' );
+	$types = '' === $types || array() === $types ? array( 'post' ) : (array) $types;
+	if ( in_array( 'omx_glossary', $types, true ) || in_array( 'any', $types, true ) ) {
+		$query->set( 'post_type', omochix_core_glossary_types_without( $types ) );
+	}
+}
+add_action( 'pre_get_posts', 'omochix_core_glossary_find_posts_query', 9999 );
+
+/**
+ * read_post: a hidden term is not readable for anyone but editors.
+ *
+ * For a published post core maps read_post to "read", which every user has.
+ * The media list ("Uploaded to") and the media modal (uploadedToTitle) print
+ * the parent's title when read_post allows it, so a file attached to a
+ * published hidden term showed that term's title to authors (review N2,
+ * same leak). Unpublished terms already need the glossary's edit
+ * capabilities; visible terms stay readable to everyone.
+ *
+ * @param mixed $caps    Primitive capabilities so far.
+ * @param mixed $cap     Capability asked for.
+ * @param mixed $user_id User ID.
+ * @param mixed $args    Arguments (the post ID first).
+ * @return mixed
+ */
+function omochix_core_glossary_map_read_post( $caps, $cap = '', $user_id = 0, $args = array() ) {
+	if ( 'read_post' !== $cap || ! is_array( $caps ) || ! is_array( $args ) || empty( $args[0] ) ) {
+		return $caps;
+	}
+	// Core accepts a post object as well as an ID here.
+	$post = is_object( $args[0] ) ? get_post( (int) ( $args[0]->ID ?? 0 ) ) : get_post( (int) $args[0] );
+	if ( is_object( $post ) && 'revision' === ( $post->post_type ?? '' ) && (int) ( $post->post_parent ?? 0 ) > 0 ) {
+		$post = get_post( (int) $post->post_parent );
+	}
+	if ( ! is_object( $post ) || 'omx_glossary' !== ( $post->post_type ?? '' ) || omochix_core_glossary_visibility( $post )['visible'] ) {
+		return $caps;
+	}
+	// The user asked about, not the current user (user_can() runs this filter for any user).
+	$caps[] = 'edit_others_omx_glossaries';
+	return $caps;
+}
+add_filter( 'map_meta_cap', 'omochix_core_glossary_map_read_post', 10, 4 );
+
+/**
+ * Query Loop block (review N2, case B).
+ *
+ * build_query_vars_from_query_block() takes any viewable post type for the
+ * block, so a Query Loop set to the glossary, put into a post by an author
+ * or a contributor, listed hidden terms with their title, content and
+ * summary (block bindings) on the page, in REST and in the feeds, to
+ * visitors too. The pagination, total and no-results blocks build the same
+ * query through the same filter. Only published posts are asked for (so no
+ * draft, pending, scheduled or private term, in wp-admin either) and hidden
+ * published terms leave post__not_in and post__in alike, in the query
+ * itself, so pages and counts agree; a status other than the default (or
+ * "publish"), a closed glossary, or more terms than can be listed leaves the
+ * glossary out entirely. This holds for every viewer, editors included: a generic post is no place for a hidden term, and a
+ * page built for one viewer may be cached for the next. "any" never covers
+ * the glossary (it is excluded from search). The glossary's own templates
+ * do not use this filter and are not changed.
+ *
+ * @param mixed $query WP_Query arguments.
+ * @return mixed
+ */
+function omochix_core_glossary_query_loop_vars( $query ) {
+	if ( ! is_array( $query ) ) {
+		return $query;
+	}
+	$types = isset( $query['post_type'] ) && '' !== $query['post_type'] ? (array) $query['post_type'] : array( 'post' );
+	if ( ! in_array( 'omx_glossary', $types, true ) ) {
+		return $query;
+	}
+	$status = $query['post_status'] ?? '';
+	$plain  = '' === $status || array() === $status || array( 'publish' ) === array_values( (array) $status );
+	$hidden = $plain ? omochix_core_glossary_hidden_published_ids() : null;
+	if ( null === $hidden ) {
+		$query['post_type'] = omochix_core_glossary_types_without( $types );
+		return $query;
+	}
+	// Published only, stated: left at the default, WP_Query adds drafts, pending and scheduled posts in wp-admin
+	// (the block editor renders the post it opens) and private ones for whoever may read them.
+	$query['post_status'] = 'publish';
+	if ( $hidden ) {
+		$query['post__not_in'] = array_values( array_unique( array_merge( array_map( 'intval', (array) ( $query['post__not_in'] ?? array() ) ), $hidden ) ) );
+		// WP_Query ignores post__not_in once post__in is set (sticky "only", other filters): take them out there too.
+		// An emptied list must stay a list that finds nothing; an empty post__in would mean "no limit".
+		if ( ! empty( $query['post__in'] ) ) {
+			$in                = array_values( array_diff( array_map( 'intval', (array) $query['post__in'] ), $hidden ) );
+			$query['post__in'] = $in ? $in : array( 0 );
+		}
+	}
+	$query['omochix_glossary_loop'] = true; // Read back by omochix_core_glossary_loop_posts().
+	return $query;
+}
+add_filter( 'query_loop_block_query_vars', 'omochix_core_glossary_query_loop_vars', 9999 );
+
+/**
+ * The same for the posts a Query Loop query found (a second line: a filter
+ * that changes the query after the one above, or an ID WP_Query takes ahead
+ * of post__not_in, cannot bring a hidden term onto the page).
+ *
+ * @param mixed $posts Posts found.
+ * @param mixed $query WP_Query.
+ * @return mixed
+ */
+function omochix_core_glossary_loop_posts( $posts, $query = null ) {
+	if ( ! is_array( $posts ) || ! is_object( $query ) || ! method_exists( $query, 'get' ) || true !== $query->get( 'omochix_glossary_loop' ) ) {
+		return $posts;
+	}
+	$out = array();
+	foreach ( $posts as $p ) {
+		$p = is_object( $p ) ? $p : get_post( (int) $p );
+		if ( is_object( $p ) && ( 'omx_glossary' !== ( $p->post_type ?? '' ) || omochix_core_glossary_visibility( $p )['visible'] ) ) {
+			$out[] = $p;
+		}
+	}
+	return $out;
+}
+add_filter( 'the_posts', 'omochix_core_glossary_loop_posts', 9999, 2 );
+
+/**
+ * Comments screen for one post (wp-admin/edit-comments.php?p=<ID>, review
+ * N2, case A).
+ *
+ * The screen needs only edit_posts (contributors and up) and prints the
+ * post's title in its heading and in the HTML title, and a "view" link with
+ * the post type's label, for any ID, in any status. For a term the user may
+ * not see it is refused before anything is printed: the list query is built
+ * (prepare_items) before the header. Editors, other post types and the
+ * screen without a post are unchanged.
+ *
+ * @param mixed $args Comment query arguments of the list table.
+ * @return mixed
+ */
+function omochix_core_glossary_comments_screen_args( $args ) {
+	if ( is_array( $args ) && ! empty( $args['post_id'] ) && omochix_core_glossary_is_hidden_from_user( (int) $args['post_id'] ) ) {
+		wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'omochix-core' ), '', array( 'response' => 403 ) );
+	}
+	return $args;
+}
+add_filter( 'comments_list_table_query_args', 'omochix_core_glossary_comments_screen_args', 9999 );
+
+/**
+ * Admin screens: no title for a term the user may not see (a second line
+ * behind the comments screen and the media fix, for any other screen that
+ * prints a post's title by ID). Only in wp-admin and admin-ajax, only for
+ * glossary terms (and their revisions), and never for editors: front-end
+ * titles, feeds, REST, SEO output and e-mails are not touched.
+ *
+ * @param mixed $title   Title.
+ * @param mixed $post_id Post ID.
+ * @return mixed
+ */
+function omochix_core_glossary_admin_title( $title, $post_id = 0 ) {
+	if ( ! is_admin() || ! $post_id || ! is_numeric( $post_id ) ) {
+		return $title;
+	}
+	return omochix_core_glossary_is_hidden_from_user( (int) $post_id ) ? '' : $title;
+}
+add_filter( 'the_title', 'omochix_core_glossary_admin_title', 9999, 2 );
+
+/**
+ * Navigation block: a menu reference must be a navigation menu (review N-1).
+ *
+ * WordPress renders the post that core/navigation's "ref" (or the legacy
+ * "navigationMenuId") points to: get_post( ref ), and if it is published its
+ * title (aria-label) and blocks go into the page. It never checks the post
+ * type or a password, so a term the visitor may not see (missing sources,
+ * verified in the future, password) is printed by any page an author
+ * publishes, and by the block renderer REST route for a contributor.
+ *
+ * Rule: when the block carries a reference, it is rendered only if every
+ * reference given (stored attributes and prepared attributes alike) is a
+ * positive whole number (an int, a whole float as the block renderer REST
+ * route passes it, or a string of digits) of an existing wp_navigation
+ * post. Anything else (another post type, an unknown ID, 0, a negative, a
+ * fraction, text, a list, true) renders nothing: no fallback
+ * menu, no title, no blocks. A block without a reference, and any reference
+ * to a real menu, is left to WordPress unchanged (it still shows only
+ * published menus). Same answer for every user and on every route.
+ *
+ * Where: the block's render_callback is wrapped when the block type is
+ * registered. Measured on the throwaway site (2026-11-27): every route that
+ * prints the block (page, nested group/columns, synced pattern, Query Loop,
+ * REST posts, block renderer GET/POST, feed) goes through it; pre_render_block
+ * also ran there, but a direct WP_Block::render() call skips it, and
+ * render_block_data can only drop the reference, which shows the fallback
+ * menu instead.
+ *
+ * @param mixed $value One reference value.
+ * @return bool
+ */
+function omochix_core_glossary_nav_ref_ok( $value ) {
+	if ( is_int( $value ) ) {
+		$id = $value;
+	} elseif ( is_float( $value ) && $value >= 1 && $value < 9007199254740992 && floor( $value ) === $value ) {
+		$id = (int) $value; // The block renderer REST route hands numbers over as floats (rest_sanitize_value_from_schema).
+	} elseif ( is_string( $value ) && 1 === preg_match( '/^[1-9][0-9]{0,18}\z/', $value ) ) {
+		$id = (int) $value;
+	} else {
+		return false;
+	}
+	if ( $id <= 0 ) {
+		return false;
+	}
+	$post = get_post( $id );
+	return $post instanceof WP_Post && 'wp_navigation' === $post->post_type;
+}
+
+/**
+ * Whether a navigation block may be rendered (see above).
+ *
+ * @param mixed $attributes Prepared attributes.
+ * @param mixed $block      WP_Block (its parsed_block keeps the stored attributes).
+ * @return bool
+ */
+function omochix_core_glossary_nav_ref_guard( $attributes, $block = null ) {
+	$sets = array( is_array( $attributes ) ? $attributes : array() );
+	if ( $block instanceof WP_Block && isset( $block->parsed_block['attrs'] ) && is_array( $block->parsed_block['attrs'] ) ) {
+		$sets[] = $block->parsed_block['attrs'];
+	}
+	foreach ( $sets as $set ) {
+		foreach ( array( 'ref', 'navigationMenuId' ) as $key ) {
+			if ( array_key_exists( $key, $set ) && ! omochix_core_glossary_nav_ref_ok( $set[ $key ] ) ) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/**
+ * Wraps core/navigation's render_callback with the guard, unless the
+ * always-on security layer already does.
+ *
+ * @param mixed $args Block type arguments.
+ * @param mixed $name Block type name.
+ * @return mixed
+ */
+function omochix_core_glossary_nav_block_args( $args, $name = '' ) {
+	if ( 'core/navigation' !== $name || ! is_array( $args ) || empty( $args['render_callback'] ) || ! is_callable( $args['render_callback'] ) ) {
+		return $args;
+	}
+	// The always-on security layer (includes/web2/security.php, sec stream) wraps the same callback with a
+	// stricter rule (published, password-free menus only). While its filter is registered this one steps
+	// aside, so the callback is wrapped once; without it (file missing or broken) this one still applies.
+	if ( function_exists( 'omochix_core_security_nav_block_args' ) && false !== has_filter( 'register_block_type_args', 'omochix_core_security_nav_block_args' ) ) {
+		return $args;
+	}
+	// The same while Core has closed navigation because that layer could not be loaded (omochix-core.php,
+	// hooks stream): every navigation block renders nothing already.
+	if ( function_exists( 'omochix_core_nav_render_closed' ) && false !== has_filter( 'register_block_type_args', 'omochix_core_nav_render_closed' ) ) {
+		return $args;
+	}
+	$inner                   = $args['render_callback'];
+	$args['render_callback'] = static function ( $attributes, $content = '', $block = null ) use ( $inner ) {
+		if ( ! omochix_core_glossary_nav_ref_guard( $attributes, $block ) ) {
+			return '';
+		}
+		return call_user_func( $inner, $attributes, $content, $block );
+	};
+	return $args;
+}
+add_filter( 'register_block_type_args', 'omochix_core_glossary_nav_block_args', 9999, 2 );
+
+/**
  * What is indexable right now (gate G-B per term, gate G-C for the lists).
  *
  * @param bool $reset Forget the cached answer (tests).

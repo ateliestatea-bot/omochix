@@ -955,6 +955,148 @@ $GLOBALS['caps'] = []; $GLOBALS['posts'][$other]->post_status = 'draft';
 remove_filter('omochix_core_glossary_public', $open);
 check('F2 closed: every term is hidden, so getPingbacks answers "no such address" for any of them', omochix_core_glossary_xmlrpc_get_pingbacks($u($vis)) instanceof IXR_Error);
 
+// ---------------------------------------------- N2: link search, "Attach to" search, read_post (review N2)
+// Reproduction (real WordPress 7.1.4, glossary open): with the internal-linking nonce (post editor, contributors and up)
+// wp-link-ajax returned the ID and title of published hidden terms; with the find-posts nonce (media list, authors and up)
+// find_posts returned the titles of draft, scheduled, pending and private terms; the media list and the media modal
+// printed the title of a published hidden term as a file's parent ("Uploaded to"), because read_post allowed it.
+if (!function_exists('get_post_types')) { function get_post_types($args = [], $out = 'names') { $n = ['post' => 'post', 'page' => 'page', 'attachment' => 'attachment', 'omx_glossary' => 'omx_glossary']; return $n; } }
+$gl_q = static function (array $v) { return new class($v) { public $v; function __construct($v) { $this->v = $v; } function get($k) { return $this->v[$k] ?? ''; } function set($k, $x) { $this->v[$k] = $x; } }; };
+$gl_find = static function ($q) { $GLOBALS['action_stack'][] = 'wp_ajax_find_posts'; omochix_core_glossary_find_posts_query($q); array_pop($GLOBALS['action_stack']); return $q->v['post_type']; };
+$GLOBALS['caps'] = [];
+add_filter('omochix_core_glossary_public', $open);
+$lq = ['post_type' => ['post', 'page', 'omx_glossary'], 'suppress_filters' => true, 'post_status' => 'publish', 'posts_per_page' => 20, 'offset' => 0];
+$la = omochix_core_glossary_link_query_args($lq);
+check('N2 link search: published hidden terms are left out of the query for a non-editor (so paging stays right), visible terms are not', in_array($hid_pub, $la['post__not_in'], true) && !in_array($vis, $la['post__not_in'], true) && ['post', 'page', 'omx_glossary'] === $la['post_type'] && 20 === $la['posts_per_page']);
+check('N2 link search: an existing post__not_in is kept', in_array($other, omochix_core_glossary_link_query_args(['post__not_in' => [$other]] + $lq)['post__not_in'], true) && 'omx_glossary' !== get_post($other)->post_type && in_array($hid_pub, omochix_core_glossary_link_query_args(['post__not_in' => [$other]] + $lq)['post__not_in'], true));
+check('N2 link search: any status but "publish" (a filter widened it) drops the glossary from the search', ['post', 'page'] === omochix_core_glossary_link_query_args(['post_status' => ['publish', 'draft']] + $lq)['post_type'] && ['post', 'page'] === omochix_core_glossary_link_query_args(['post_status' => 'any'] + $lq)['post_type'] && ['post', 'page'] === omochix_core_glossary_link_query_args(array_diff_key($lq, ['post_status' => 1]))['post_type']);
+check('N2 link search: "any" type becomes the public types without the glossary; glossary alone becomes nothing', !in_array('omx_glossary', omochix_core_glossary_link_query_args(['post_type' => 'any', 'post_status' => 'draft'] + $lq)['post_type'], true) && ['__omx_none__'] === omochix_core_glossary_link_query_args(['post_type' => 'omx_glossary', 'post_status' => 'draft'] + $lq)['post_type']);
+check('N2 link search: a query without the glossary, a non-array and an editor\'s query are untouched', ['post_type' => ['post'], 'post_status' => 'publish'] === omochix_core_glossary_link_query_args(['post_type' => ['post'], 'post_status' => 'publish']) && 'x' === omochix_core_glossary_link_query_args('x'));
+$big = []; for ($i = 0; $i <= OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX; $i++) { $big[] = ih_add_post(['post_type' => 'omx_glossary', 'post_status' => 'publish', 'post_name' => 'big-' . $i]); }
+check('N2 link search: more published terms than can be listed: the glossary is left out of the search (fail closed)', null === omochix_core_glossary_hidden_published_ids() && ['post', 'page'] === omochix_core_glossary_link_query_args($lq)['post_type']);
+foreach ($big as $i) { unset($GLOBALS['posts'][$i]); }
+check('N2 link search: below the limit the list is back', is_array(omochix_core_glossary_hidden_published_ids()));
+$rows = [['ID' => $hid_pub, 'title' => 'h'], ['ID' => $vis, 'title' => 'v'], ['ID' => $other, 'title' => 'o'], ['ID' => 0, 'title' => 'z'], ['ID' => 999999, 'title' => 'gone'], 'junk'];
+check('N2 link results: a hidden term is not returned even if the query found it; visible terms and other posts are (a row for a post that cannot be read back is dropped too)', [$vis, $other, 0] === array_column(omochix_core_glossary_link_query_results($rows), 'ID') && 'x' === omochix_core_glossary_link_query_results('x'));
+check('N2 find_posts: inside the handler the glossary is left out for a non-editor (review: draft and scheduled titles were listed)', ['post', 'page'] === $gl_find($gl_q(['post_type' => ['post', 'page', 'omx_glossary'], 'post_status' => 'any'])) && ['__omx_none__'] === $gl_find($gl_q(['post_type' => 'omx_glossary'])) && !in_array('omx_glossary', $gl_find($gl_q(['post_type' => 'any'])), true) && ['post'] === $gl_find($gl_q(['post_type' => ['post']])));
+$q = $gl_q(['post_type' => ['post', 'omx_glossary']]); omochix_core_glossary_find_posts_query($q);
+check('N2 find_posts: queries outside that handler are untouched (front end, other admin screens)', ['post', 'omx_glossary'] === $q->v['post_type'] && null === omochix_core_glossary_find_posts_query('x'));
+check('N2 read_post: a hidden term needs the glossary\'s editor capability (media "Uploaded to" printed its title), for a revision too', ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$hid_pub]) && ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$rv_h]) && in_array('edit_others_omx_glossaries', omochix_core_glossary_map_read_post(['edit_others_omx_glossaries'], 'read_post', 7, [$hid_draft]), true));
+check('N2 read_post: a post object is judged like its ID (review F5: (int) of an object is 1, another post)', ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [get_post($hid_pub)]) && ['read'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [get_post($vis)]) && ['read'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [(object) []]));
+check('N2 read_post: a visible term, other posts, other capabilities and junk are untouched', ['read'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$vis]) && ['read'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$other]) && ['edit_x'] === omochix_core_glossary_map_read_post(['edit_x'], 'edit_post', 7, [$hid_pub]) && ['read'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, []) && 'x' === omochix_core_glossary_map_read_post('x', 'read_post', 7, [$hid_pub]));
+check('N2 the capability asked for is one only editors get at run time', omochix_core_glossary_user_has_cap(['edit_others_posts' => true])['edit_others_omx_glossaries'] && !isset(omochix_core_glossary_user_has_cap(['edit_posts' => true, 'edit_others_omx_glossaries' => true])['edit_others_omx_glossaries']));
+$GLOBALS['caps'] = ['edit_others_omx_glossaries' => true];
+check('N2 an editor keeps every term in the link search, its results and the "Attach to" search', $lq === omochix_core_glossary_link_query_args($lq) && $rows === omochix_core_glossary_link_query_results($rows) && ['post', 'omx_glossary'] === $gl_find($gl_q(['post_type' => ['post', 'omx_glossary']])));
+$GLOBALS['caps'] = [];
+remove_filter('omochix_core_glossary_public', $open);
+check('N2 closed: no term in the link search for a non-editor, and no term is readable', ['post', 'page'] === omochix_core_glossary_link_query_args($lq)['post_type'] && ['read', 'edit_others_omx_glossaries'] === omochix_core_glossary_map_read_post(['read'], 'read_post', 7, [$vis]));
+check('N2 hooks: link query args and results last, pre_get_posts last, map_meta_cap with its 4 arguments', 9999 === has_filter('wp_link_query_args', 'omochix_core_glossary_link_query_args') && 9999 === has_filter('wp_link_query', 'omochix_core_glossary_link_query_results') && 9999 === has_action('pre_get_posts', 'omochix_core_glossary_find_posts_query') && 10 === has_filter('map_meta_cap', 'omochix_core_glossary_map_read_post') && [['omochix_core_glossary_map_read_post', 4]] === array_values(array_filter($GLOBALS['hooks']['map_meta_cap'][10] ?? [], static fn($h) => 'omochix_core_glossary_map_read_post' === $h[0])));
+
+// ---------------------------------------------- N2 case B: Query Loop block (review of the N2 fix)
+// Reproduction (real WordPress 7.1.4, glossary open): a Query Loop set to the glossary in an author's published post listed
+// hidden terms (rule problems, a password, a future check date) with title, content and summary to visitors, in REST and feeds.
+add_filter('omochix_core_glossary_public', $open);
+$GLOBALS['caps'] = [];
+$priv_t = gl_store('private');
+$qv = ['post_type' => 'omx_glossary', 'order' => 'DESC', 'orderby' => 'date', 'post__not_in' => [], 'tax_query' => [], 'offset' => 0, 'posts_per_page' => 10];
+$qa = omochix_core_glossary_query_loop_vars($qv);
+check('N2-B Query Loop: hidden published terms are left out of the query itself (pages and counts agree), visible ones stay', in_array($hid_pub, $qa['post__not_in'], true) && !in_array($vis, $qa['post__not_in'], true) && 'omx_glossary' === $qa['post_type'] && 10 === $qa['posts_per_page'] && true === $qa['omochix_glossary_loop']);
+check('N2-B Query Loop: only published posts are asked for (review F1: left at the default, WP_Query adds drafts, pending and scheduled posts in wp-admin, private ones for readers)', 'publish' === $qa['post_status'] && 'publish' === omochix_core_glossary_query_loop_vars(['post_status' => 'publish'] + $qv)['post_status'] && 'publish' === omochix_core_glossary_query_loop_vars(['post_status' => []] + $qv)['post_status']);
+$qi = omochix_core_glossary_query_loop_vars(['post__in' => [$hid_pub, $vis, $other]] + $qv);
+check('N2-B Query Loop: hidden terms are taken out of post__in too (review F2: WP_Query ignores post__not_in once post__in is set, e.g. sticky "only")', [$vis, $other] === $qi['post__in'] && [0] === omochix_core_glossary_query_loop_vars(['post__in' => [$hid_pub]] + $qv)['post__in'] && !isset($qa['post__in']));
+$gl_lq = static function (array $v) { return new class($v) { public $v; function __construct($v) { $this->v = $v; } function get($k) { return $this->v[$k] ?? ''; } }; };
+$lp = [get_post($hid_pub), get_post($vis), get_post($other), get_post($hid_draft)];
+check('N2-B Query Loop results: a hidden term found anyway is dropped (second line); other posts and visible terms stay; other queries are untouched', [$vis, $other] === array_map(static fn($p) => $p->ID, omochix_core_glossary_loop_posts($lp, $gl_lq(['omochix_glossary_loop' => true]))) && $lp === omochix_core_glossary_loop_posts($lp, $gl_lq([])) && $lp === omochix_core_glossary_loop_posts($lp, $gl_lq(['omochix_glossary_loop' => 1])) && $lp === omochix_core_glossary_loop_posts($lp) && 'x' === omochix_core_glossary_loop_posts('x', $gl_lq(['omochix_glossary_loop' => true])) && [$vis] === array_map(static fn($p) => $p->ID, omochix_core_glossary_loop_posts([$vis, $hid_pub], $gl_lq(['omochix_glossary_loop' => true]))));
+check('N2-B Query Loop: mixed types keep every other type, and an earlier exclusion is kept', ['post', 'omx_glossary'] === omochix_core_glossary_query_loop_vars(['post_type' => ['post', 'omx_glossary']] + $qv)['post_type'] && in_array($other, omochix_core_glossary_query_loop_vars(['post__not_in' => [$other]] + $qv)['post__not_in'], true));
+check('N2-B Query Loop: "any", no type, other types and non-arrays are untouched ("any" never covers the glossary, it is excluded from search)', ['post_type' => 'any'] === omochix_core_glossary_query_loop_vars(['post_type' => 'any']) && ['x' => 1] === omochix_core_glossary_query_loop_vars(['x' => 1]) && ['post_type' => ''] === omochix_core_glossary_query_loop_vars(['post_type' => '']) && ['post_type' => ['page']] === omochix_core_glossary_query_loop_vars(['post_type' => ['page']]) && 'x' === omochix_core_glossary_query_loop_vars('x'));
+check('N2-B Query Loop: a status other than the default or "publish" drops the glossary (fail closed); "publish" alone keeps the list', ['post'] === omochix_core_glossary_query_loop_vars(['post_type' => ['post', 'omx_glossary'], 'post_status' => ['publish', 'draft']] + $qv)['post_type'] && ['__omx_none__'] === omochix_core_glossary_query_loop_vars(['post_status' => 'any'] + $qv)['post_type'] && 'omx_glossary' === omochix_core_glossary_query_loop_vars(['post_status' => 'publish'] + $qv)['post_type'] && 'omx_glossary' === omochix_core_glossary_query_loop_vars(['post_status' => []] + $qv)['post_type']);
+$GLOBALS['caps'] = ['edit_others_omx_glossaries' => true];
+check('N2-B Query Loop: editors get the same list (a page built for one viewer may be cached for the next)', $qa === omochix_core_glossary_query_loop_vars($qv));
+$GLOBALS['caps'] = [];
+$big = []; for ($i = 0; $i <= OMOCHIX_CORE_GLOSSARY_LINK_QUERY_MAX; $i++) { $big[] = ih_add_post(['post_type' => 'omx_glossary', 'post_status' => 'publish', 'post_name' => 'bigq-' . $i]); }
+check('N2-B Query Loop: more published terms than can be listed: no glossary (fail closed)', ['__omx_none__'] === omochix_core_glossary_query_loop_vars($qv)['post_type']);
+foreach ($big as $i) { unset($GLOBALS['posts'][$i]); }
+remove_filter('omochix_core_glossary_public', $open);
+check('N2-B Query Loop closed: no glossary at all', ['__omx_none__'] === omochix_core_glossary_query_loop_vars($qv)['post_type'] && ['post'] === omochix_core_glossary_query_loop_vars(['post_type' => ['post', 'omx_glossary']] + $qv)['post_type']);
+add_filter('omochix_core_glossary_public', $open);
+
+// ---------------------------------------------- N2 case A: the comments screen and admin titles
+// Reproduction: /wp-admin/edit-comments.php?p=<ID> (contributors and up) printed the title of a term in any status, glossary closed too.
+$die = static function ($id) { try { omochix_core_glossary_comments_screen_args(['post_id' => $id, 'number' => 20]); return false; } catch (RuntimeException $e) { return false !== strpos($e->getMessage(), 'wp_die'); } };
+check('N2-A comments screen: refused for a hidden published term, a draft and a private term (before anything is printed)', $die($hid_pub) && $die($hid_draft) && $die($priv_t));
+check('N2-A comments screen: a visible term, another post, an unknown ID and the screen without a post are unchanged', ['post_id' => $vis] === omochix_core_glossary_comments_screen_args(['post_id' => $vis]) && ['post_id' => $other] === omochix_core_glossary_comments_screen_args(['post_id' => $other]) && ['post_id' => 999999] === omochix_core_glossary_comments_screen_args(['post_id' => 999999]) && ['post_id' => 0] === omochix_core_glossary_comments_screen_args(['post_id' => 0]) && [] === omochix_core_glossary_comments_screen_args([]) && 'x' === omochix_core_glossary_comments_screen_args('x'));
+$GLOBALS['ctx']['is_admin'] = true;
+check('N2-A admin titles: none for a hidden term or its revision; visible terms, other posts and junk IDs keep theirs', '' === omochix_core_glossary_admin_title('T', $hid_pub) && '' === omochix_core_glossary_admin_title('T', $hid_draft) && '' === omochix_core_glossary_admin_title('T', $rv_h) && 'T' === omochix_core_glossary_admin_title('T', $vis) && 'T' === omochix_core_glossary_admin_title('T', $other) && 'T' === omochix_core_glossary_admin_title('T', 0) && 'T' === omochix_core_glossary_admin_title('T', 'abc') && 'T' === omochix_core_glossary_admin_title('T'));
+$GLOBALS['caps'] = ['edit_post' => true, 'edit_others_omx_glossaries' => true];
+check('N2-A editors keep the comments screen and every title', ['post_id' => $hid_draft] === omochix_core_glossary_comments_screen_args(['post_id' => $hid_draft]) && 'T' === omochix_core_glossary_admin_title('T', $hid_draft));
+$GLOBALS['caps'] = [];
+$GLOBALS['ctx']['is_admin'] = false;
+check('N2-A front end, feeds, REST and e-mails: titles are not touched outside wp-admin', 'T' === omochix_core_glossary_admin_title('T', $hid_pub));
+remove_filter('omochix_core_glossary_public', $open);
+$GLOBALS['ctx']['is_admin'] = true;
+check('N2-A closed: every term is hidden from non-editors on the comments screen and in admin titles', $die($vis) && '' === omochix_core_glossary_admin_title('T', $vis));
+$GLOBALS['ctx']['is_admin'] = false;
+unset($GLOBALS['posts'][$priv_t]);
+$hook = static fn($h, $cb) => array_values(array_filter(array_merge(...array_values($GLOBALS['hooks'][$h] ?? [[]])), static fn($x) => $cb === $x[0]));
+// ---------------------------------------------- N-1: navigation block "ref" (audit 3 of the N2 fix)
+// Reproduction (real WordPress 7.1.4, open, closed and with the module not loaded): <!-- wp:navigation {"ref":<term ID>} /-->
+// in an author's published post printed a hidden term's title (aria-label) and blocks to visitors; the block renderer REST
+// route did the same for a contributor. WordPress checks only that the post is published, not its type or a password.
+add_filter('omochix_core_glossary_public', $open);
+if (!class_exists('WP_Block')) { class WP_Block { public $parsed_block; function __construct($pb = []) { $this->parsed_block = $pb; } } }
+$navm = ih_add_post(['post_type' => 'wp_navigation', 'post_status' => 'publish', 'post_title' => 'Menu']);
+$navd = ih_add_post(['post_type' => 'wp_navigation', 'post_status' => 'draft', 'post_title' => 'Draft menu']);
+$hid_pass = gl_store('publish'); $GLOBALS['posts'][$hid_pass]->post_password = 'pw';
+$priv_n = gl_store('private');
+// With the whole plugin loaded the always-on security layer (sec stream) may have registered its own wrapper, and then the
+// glossary one steps aside. These checks are about the glossary wrapper itself: take the security filter off meanwhile.
+$rbta_saved = $GLOBALS['hooks']['register_block_type_args'] ?? null;
+$sec_off = static function () { foreach ($GLOBALS['hooks']['register_block_type_args'] ?? [] as $p => $l) { $GLOBALS['hooks']['register_block_type_args'][$p] = array_values(array_filter($l, static fn($x) => 'omochix_core_security_nav_block_args' !== $x[0])); } };
+$sec_off();
+$nb = static fn($attrs) => new WP_Block(['blockName' => 'core/navigation', 'attrs' => $attrs]);
+check('N-1 ref: a navigation menu (int, digit string, or a whole float as the block renderer REST route passes it) is accepted, published or not (WordPress still shows only published menus)', omochix_core_glossary_nav_ref_ok($navm) && omochix_core_glossary_nav_ref_ok((string) $navm) && omochix_core_glossary_nav_ref_ok((float) $navm) && omochix_core_glossary_nav_ref_ok($navd));
+check('N-1 ref: a term in any state, another post type and an unknown ID are refused', !omochix_core_glossary_nav_ref_ok($hid_pub) && !omochix_core_glossary_nav_ref_ok($vis) && !omochix_core_glossary_nav_ref_ok($hid_draft) && !omochix_core_glossary_nav_ref_ok($hid_pass) && !omochix_core_glossary_nav_ref_ok($priv_n) && !omochix_core_glossary_nav_ref_ok($other) && !omochix_core_glossary_nav_ref_ok(999999) && !omochix_core_glossary_nav_ref_ok((string) $hid_pub) && !omochix_core_glossary_nav_ref_ok((float) $hid_pub));
+$junk = [0, -1, -$navm, 0.0, -1.0, (float) -$navm, $navm + 0.5, 1e30, INF, NAN, 9007199254740992.0, '0', '-1', '0' . $navm, ' ' . $navm, $navm . ' ', $navm . 'a', '+' . $navm, '1e3', $navm . "\n", 'abc', '', [$navm], ['ref' => $navm], true, false, null, (object) ['ID' => $navm], '99999999999999999999', PHP_INT_MAX, get_post($navm)];
+$GLOBALS['posts'][0] = get_post($navm); // WordPress: get_post(0) falls back to the global post, which may be a menu.
+$bad_junk = array_keys(array_filter($junk, static fn($v) => omochix_core_glossary_nav_ref_ok($v)));
+unset($GLOBALS['posts'][0]);
+check('N-1 ref: 0, negatives, fractions, huge or non-finite floats, padded or signed strings, text, lists, booleans, null, objects and overflowing numbers are refused (a menu\'s own ID in those forms too)', [] === $bad_junk, implode(',', $bad_junk));
+check('N-1 guard: a block without a reference is left to WordPress (inner blocks or its fallback)', omochix_core_glossary_nav_ref_guard([], $nb([])) && omochix_core_glossary_nav_ref_guard(['overlayMenu' => 'never'], $nb(['overlayMenu' => 'never'])) && omochix_core_glossary_nav_ref_guard([], null) && omochix_core_glossary_nav_ref_guard('x', 'y'));
+check('N-1 guard: a menu reference renders; a term reference does not, in "ref" or the legacy "navigationMenuId"', omochix_core_glossary_nav_ref_guard(['ref' => $navm], $nb(['ref' => $navm])) && !omochix_core_glossary_nav_ref_guard(['ref' => $hid_pub], $nb(['ref' => $hid_pub])) && !omochix_core_glossary_nav_ref_guard(['navigationMenuId' => $hid_pub], $nb(['navigationMenuId' => $hid_pub])) && !omochix_core_glossary_nav_ref_guard(['ref' => $navm, 'navigationMenuId' => $hid_pub], $nb(['ref' => $navm, 'navigationMenuId' => $hid_pub])));
+check('N-1 guard: a stored reference WordPress dropped as the wrong type ("abc", a list, true, null) fails closed instead of showing the fallback menu; stored and prepared must both be menus', !omochix_core_glossary_nav_ref_guard([], $nb(['ref' => 'abc'])) && !omochix_core_glossary_nav_ref_guard([], $nb(['ref' => [$hid_pub]])) && !omochix_core_glossary_nav_ref_guard([], $nb(['ref' => true])) && !omochix_core_glossary_nav_ref_guard([], $nb(['ref' => null])) && !omochix_core_glossary_nav_ref_guard(['ref' => $navm], $nb(['ref' => $hid_pub])) && !omochix_core_glossary_nav_ref_guard(['ref' => $hid_pub], $nb(['ref' => $navm])));
+$inner_calls = 0;
+$wrapped = omochix_core_glossary_nav_block_args(['render_callback' => static function ($a, $c, $b) use (&$inner_calls) { $inner_calls++; return 'NAV'; }, 'title' => 'Navigation'], 'core/navigation');
+$cb = $wrapped['render_callback'];
+check('N-1 render: the wrapped callback prints nothing for a term and calls WordPress for a menu or no reference', '' === $cb(['ref' => $hid_pub], '', $nb(['ref' => $hid_pub])) && '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && '' === $cb(['ref' => $hid_pass], '', $nb(['ref' => $hid_pass])) && 0 === $inner_calls && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])) && 'NAV' === $cb([], '', $nb([])) && 2 === $inner_calls && 'Navigation' === $wrapped['title']);
+$plain = static fn() => 'X';
+check('N-1 render: other blocks, a block type without a callback and junk arguments are untouched', ['render_callback' => $plain] === omochix_core_glossary_nav_block_args(['render_callback' => $plain], 'core/block') && ['title' => 'N'] === omochix_core_glossary_nav_block_args(['title' => 'N'], 'core/navigation') && ['render_callback' => 'no_such_fn'] === omochix_core_glossary_nav_block_args(['render_callback' => 'no_such_fn'], 'core/navigation') && 'x' === omochix_core_glossary_nav_block_args('x', 'core/navigation'));
+$sec_cb_name = 'omochix_core_security_nav_block_args';
+if (!function_exists($sec_cb_name)) { function omochix_core_security_nav_block_args($args, $name = '') { return $args; } }
+add_filter('register_block_type_args', $sec_cb_name, 9999, 2);
+$sec_args = ['render_callback' => $plain, 'title' => 'Navigation'];
+check('N-1 one wrapper: while the always-on security layer\'s filter is registered, the glossary leaves the callback alone (wrapped once)', $sec_args === omochix_core_glossary_nav_block_args($sec_args, 'core/navigation'));
+$sec_off();
+if (!function_exists('omochix_core_nav_render_closed')) { function omochix_core_nav_render_closed($args, $name = '') { return $args; } }
+$closed_saved = $GLOBALS['hooks']['register_block_type_args'] ?? null;
+add_filter('register_block_type_args', 'omochix_core_nav_render_closed', 9999, 2);
+check('N-1 one wrapper: while Core has closed navigation (security layer unavailable) the glossary leaves the callback alone too', $sec_args === omochix_core_glossary_nav_block_args($sec_args, 'core/navigation'));
+$GLOBALS['hooks']['register_block_type_args'] = $closed_saved;
+check('N-1 one wrapper: without that filter (security file missing or broken) the glossary still wraps', $plain !== omochix_core_glossary_nav_block_args($sec_args, 'core/navigation')['render_callback']);
+$GLOBALS['caps'] = ['edit_others_omx_glossaries' => true, 'edit_others_posts' => true];
+check('N-1 the same answer for editors (a page built for one viewer may be cached for the next)', '' === $cb(['ref' => $hid_pub], '', $nb(['ref' => $hid_pub])) && '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])));
+$GLOBALS['caps'] = [];
+remove_filter('omochix_core_glossary_public', $open);
+check('N-1 closed: the same rule (it does not depend on the switch or on what is visible)', '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])));
+$hook_n1 = array_values(array_filter(array_merge(...array_values($GLOBALS['hooks']['register_block_type_args'] ?? [[]])), static fn($x) => 'omochix_core_glossary_nav_block_args' === $x[0]));
+check('N-1 hook: the block type arguments are wrapped last, with both arguments', 9999 === has_filter('register_block_type_args', 'omochix_core_glossary_nav_block_args') && [['omochix_core_glossary_nav_block_args', 2]] === $hook_n1, wp_json_encode($hook_n1));
+$vis_src = (string) file_get_contents($PLUGIN . '/includes/web2/glossary-visibility.php');
+$n1_a = strpos($vis_src, 'function omochix_core_glossary_nav_ref_ok'); $n1_b = strpos($vis_src, "add_filter( 'register_block_type_args'");
+check('N-1 T-SAFE: the navigation guard reads no request data and no database handle', false !== $n1_a && $n1_b > $n1_a && 0 === preg_match('/\$_(POST|GET|REQUEST|COOKIE|SERVER|FILES)|\$wpdb|\bglobal\b/', substr($vis_src, $n1_a, $n1_b - $n1_a)));
+unset($GLOBALS['posts'][$navm], $GLOBALS['posts'][$navd], $GLOBALS['posts'][$hid_pass], $GLOBALS['posts'][$priv_n]);
+if (null === $rbta_saved) { unset($GLOBALS['hooks']['register_block_type_args']); } else { $GLOBALS['hooks']['register_block_type_args'] = $rbta_saved; }
+
+check('N2-A/B hooks: Query Loop vars, comments screen and admin titles run last, with the arguments they use', 9999 === has_filter('query_loop_block_query_vars', 'omochix_core_glossary_query_loop_vars') && 9999 === has_filter('comments_list_table_query_args', 'omochix_core_glossary_comments_screen_args') && 9999 === has_filter('the_title', 'omochix_core_glossary_admin_title') && 9999 === has_filter('the_posts', 'omochix_core_glossary_loop_posts') && [['omochix_core_glossary_loop_posts', 2]] === $hook('the_posts', 'omochix_core_glossary_loop_posts') && [['omochix_core_glossary_admin_title', 2]] === $hook('the_title', 'omochix_core_glossary_admin_title'));
+
 // ---------------------------------------------- F3: the REST autosave route never publishes
 // The autosave controller saves the post from what rest_pre_insert returns (it does not stop on an error),
 // never stores meta or categories, and never fires rest_after_insert. So the status is taken off there.
