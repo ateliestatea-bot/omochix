@@ -62,10 +62,16 @@ Web 2.0 の各機能（用語集など）を、既存の機能を壊さずに1�
   - 通知の文字列は `esc_html` を通します。
 
 ## セキュリティ層（sec stream、常に読み込む）
-- `omochix-core.php` は、Web 2.0 のブロックの直前に `includes/web2/security.php` を直接読み込みます（`is_readable` と try/catch で守ります）。
+- `omochix-core.php` は、Web 2.0 のブロックの直前で `omochix_core_sec_layer_load()` を呼び、`includes/web2/security.php` を直接読み込みます。
 - これはモジュールではありません。ローダーのリストにも載せません。WordPress 本体が描画するものを狭めるだけなので、`OMOCHIX_WEB2_DISABLED` が true のときも、モジュールのリストが空のときも読み込みます。
-- ファイルが無いとき、例外を出すとき、途中で切れているとき、空のときは、何もしないで先に進みます（`tests/web2/hooks/regression.php`）。
+- **fail-closed**：次のどれかのときは、ナビゲーションのブロックをすべて空で描画します（`omochix_core_nav_render_closed`）。ほかの機能は、そのまま動きます。
+  - ファイルが無い。
+  - 読み込みで例外や構文エラーが出た（途中で切れたアップロードを含む）。
+  - 読み込めても、防御の関数かフィルターがそろっていない。
+- 理由は、`error_log()` に1要求につき1回書きます。管理者（`activate_plugins`）には、管理画面に通知を出します。どちらにも、パスは書きません。
+- 防げないこと：`security.php` が、ほかの関数と同じ名前の関数を宣言するなど、PHP が致命的エラーで止まる場合は、サイト全体が止まります（ローダーと同じ制限です）。
 - 中身と規則は `docs/web2/sec/README.md` を見てください。
+- テストは `tests/web2/hooks/regression.php` です。この木に `security.php` があることも確かめるので、sec の PR を先に統合してください。
 
 ## ローダー自身がしないこと
 
@@ -158,4 +164,4 @@ php tests/web2/hooks/regression.php
 | どこで | 方法 |
 |---|---|
 | 統合ブランチ | revert の PR |
-| 本番（リリース後） | ① `wp-config.php` に `OMOCHIX_WEB2_DISABLED`（運営者）<br>② `includes/web2-loader.php`／`inc/web2-loader.php` を削除する（`is_readable` で読み飛ばされる）<br>（`OMOCHIX_WEB2_DISABLED` はセキュリティ層を止めません。セキュリティ層だけを外すときは `includes/web2/security.php` を削除します）<br>③ 通常のリリースのロールバック（`docs/Beta-Deployment-Runbook.md`） |
+| 本番（リリース後） | ① `wp-config.php` に `OMOCHIX_WEB2_DISABLED`（運営者）<br>② `includes/web2-loader.php`／`inc/web2-loader.php` を削除する（`is_readable` で読み飛ばされる）<br>（`OMOCHIX_WEB2_DISABLED` はセキュリティ層を止めません。`includes/web2/security.php` を削除すると、ナビゲーションのブロックが空になります。元に戻すときは、前の版の Core を入れ直します）<br>③ 通常のリリースのロールバック（`docs/Beta-Deployment-Runbook.md`） |

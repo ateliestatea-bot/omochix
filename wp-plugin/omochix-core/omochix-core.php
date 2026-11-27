@@ -240,15 +240,83 @@ register_deactivation_hook( __FILE__, 'omochix_core_deactivate' );
 
 // Web 2.0 security layer (docs/web2/sec/README.md). Not a module: always
 // loaded, before the Web 2.0 block and also with OMOCHIX_WEB2_DISABLED, because
-// it only narrows what WordPress renders (it opens nothing). Guarded: with the
-// file missing or broken the plugin works as before.
-if ( is_readable( OMOCHIX_CORE_DIR . 'includes/web2/security.php' ) ) {
-	try {
-		require_once OMOCHIX_CORE_DIR . 'includes/web2/security.php';
-	} catch ( Throwable $omochix_core_error ) {
-		unset( $omochix_core_error );
+// it only narrows what WordPress renders (it opens nothing). Fail closed: when
+// the file is missing, cut short, throws or does not define its guard, every
+// navigation block renders nothing, and the problem is logged and shown to
+// administrators. The rest of the plugin keeps working.
+/**
+ * Loads the security layer; true when its navigation guard is in place.
+ *
+ * @return bool
+ */
+function omochix_core_sec_layer_load() {
+	$file = OMOCHIX_CORE_DIR . 'includes/web2/security.php';
+	$why  = '';
+	if ( ! is_readable( $file ) ) {
+		$why = 'missing';
+	} else {
+		try {
+			require_once $file;
+		} catch ( Throwable $omochix_core_error ) {
+			$why = 'failed to load (' . get_class( $omochix_core_error ) . ')';
+			unset( $omochix_core_error );
+		}
 	}
+	if ( '' === $why && ! ( function_exists( 'omochix_core_security_nav_block_args' ) && function_exists( 'omochix_core_security_nav_fallback' ) && false !== has_filter( 'register_block_type_args', 'omochix_core_security_nav_block_args' ) && false !== has_filter( 'block_core_navigation_render_fallback', 'omochix_core_security_nav_fallback' ) ) ) {
+		$why = 'incomplete';
+	}
+	if ( '' === $why ) {
+		return true;
+	}
+	omochix_core_sec_layer_problem( $why );
+	add_filter( 'register_block_type_args', 'omochix_core_nav_render_closed', 9999, 2 );
+	add_action( 'admin_notices', 'omochix_core_sec_layer_notice' );
+	error_log( 'OmochiX Core: the security layer (includes/web2/security.php) is ' . $why . '; navigation blocks render nothing until it is restored.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	return false;
 }
+
+/**
+ * Why the security layer is unavailable ('' when it is in place).
+ *
+ * @param string|null $set Reason to record (loader only).
+ * @return string
+ */
+function omochix_core_sec_layer_problem( $set = null ) {
+	static $why = '';
+	if ( is_string( $set ) ) {
+		$why = $set;
+	}
+	return $why;
+}
+
+/**
+ * Fail closed: core/navigation renders nothing while the security layer is unavailable.
+ *
+ * @param mixed $args Block type arguments.
+ * @param mixed $name Block type name.
+ * @return mixed
+ */
+function omochix_core_nav_render_closed( $args, $name = '' ) {
+	if ( 'core/navigation' === $name && is_array( $args ) ) {
+		$args['render_callback'] = '__return_empty_string';
+	}
+	return $args;
+}
+
+/** Tells administrators that the security layer is unavailable (the reason only, no path). */
+function omochix_core_sec_layer_notice() {
+	if ( ! current_user_can( 'activate_plugins' ) ) {
+		return;
+	}
+	echo '<div class="notice notice-error"><p>' . esc_html(
+		sprintf(
+			/* translators: %s: reason */
+			__( 'OmochiX Core：セキュリティ層（includes/web2/security.php）を使えないため、ナビゲーションのブロックを表示していません（%s）。プラグインのファイルをすべてアップロードし直してください。', 'omochix-core' ),
+			omochix_core_sec_layer_problem()
+		)
+	) . '</p></div>';
+}
+omochix_core_sec_layer_load();
 
 // Web 2.0 modules (docs/web2/hooks/README.md). Loaded last and guarded: with
 // the loader missing or broken the plugin works as before. The loader loads

@@ -68,10 +68,15 @@ function rg_gates(?array $state, $format, $arg) {
 }
 
 if ('--core' === ($argv[1] ?? '')) {
-    // IH_PLUGIN_DIR (read by the stub) points at the copy to load.
+    // IH_PLUGIN_DIR (read by the stub) points at the copy to load. RG_ERRLOG: where error_log() writes.
+    if (getenv('RG_ERRLOG')) { ini_set('error_log', getenv('RG_ERRLOG')); }
+    if (!function_exists('__return_empty_string')) { function __return_empty_string() { return ''; } }
     ob_start();
     require $REPO . '/tests/industry-hub/stub.php';
     $load_out = (string) ob_get_clean();
+    // What a navigation block would print after registration (no reference: the guard lets WordPress render it).
+    $nav_args = apply_filters('register_block_type_args', ['render_callback' => static function () { return 'NAV'; }], 'core/navigation');
+    $nav_probe = is_callable($nav_args['render_callback'] ?? null) ? (string) call_user_func($nav_args['render_callback'], [], '', null) : 'not callable';
     $fns = array_values(array_filter(get_defined_functions()['user'], static function ($f) { return 0 !== strpos($f, 'omochix_core_web2_') && 0 !== strpos($f, 'ih_') && false === strpos($f, '{closure'); }));
     sort($fns);
     $snap = ih_registration_snapshot();
@@ -79,6 +84,7 @@ if ('--core' === ($argv[1] ?? '')) {
     ob_start(); do_action('admin_notices'); $notice = (string) ob_get_clean();
     $web2 = function_exists('omochix_core_web2_state') ? omochix_core_web2_state() : null;
     echo "\n@@JSON@@" . json_encode(['out' => $load_out, 'errors' => $GLOBALS['fail'], 'snap' => $snap, 'functions' => $fns, 'ih' => omochix_core_industry_hub_loaded(), 'notice' => $notice, 'web2' => $web2,
+        'nav' => $nav_probe, 'closed' => function_exists('has_filter') && false !== has_filter('register_block_type_args', 'omochix_core_nav_render_closed'), 'problem' => function_exists('omochix_core_sec_layer_problem') ? omochix_core_sec_layer_problem() : null, 'log' => getenv('RG_ERRLOG') && is_file(getenv('RG_ERRLOG')) ? (string) file_get_contents(getenv('RG_ERRLOG')) : '',
         'list' => function_exists('omochix_core_web2_modules') ? omochix_core_web2_modules() : null,
         'report' => rg_module_report(getenv('IH_PLUGIN_DIR'), 'includes/web2', 'omochix_core_web2_check', 'omochix_core_web2_declarations'),
         'gates' => rg_gates($web2, 'omochix_core_%s_public', null)]);
@@ -169,40 +175,40 @@ foreach ($variants as $name => $mutate) {
 }
 
 // ------------------------------------------------- Core: security layer (sec stream, review N-1)
-// includes/web2/security.php is not a module: omochix-core.php requires it before the Web 2.0 block, so
-// OMOCHIX_WEB2_DISABLED and an empty module list do not stop it; a missing or broken file changes nothing.
-$SEC_BLOCK = "\n// Web 2.0 security layer (docs/web2/sec/README.md). Not a module: always\n// loaded, before the Web 2.0 block and also with OMOCHIX_WEB2_DISABLED, because\n// it only narrows what WordPress renders (it opens nothing). Guarded: with the\n// file missing or broken the plugin works as before.\nif ( is_readable( OMOCHIX_CORE_DIR . 'includes/web2/security.php' ) ) {\n\ttry {\n\t\trequire_once OMOCHIX_CORE_DIR . 'includes/web2/security.php';\n\t} catch ( Throwable \$omochix_core_error ) {\n\t\tunset( \$omochix_core_error );\n\t}\n}\n";
-rg_check('core: the security block is in omochix-core.php once, right before the Web 2.0 block and outside it', 1 === substr_count($main, $SEC_BLOCK) && str_ends_with($main, $SEC_BLOCK . $CORE_BLOCK) && 1 === substr_count($main, "includes/web2/security.php' ) ) {"));
-$sec_probe = "<?php\nif ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}\nfunction omochix_core_security_probe_loaded() {\n\treturn true;\n}\n";
+// includes/web2/security.php is not a module: omochix-core.php loads it before the Web 2.0 block, so OMOCHIX_WEB2_DISABLED
+// and an empty module list do not stop it. Fail closed: missing, cut short, throwing or incomplete -> every navigation
+// block renders nothing, error_log() says why, administrators see a notice; the rest of the plugin is unchanged.
+$sec_at = strpos($main, "\n// Web 2.0 security layer (docs/web2/sec/README.md).");
+$sec_block = false === $sec_at ? '' : substr($main, $sec_at, strlen($main) - strlen($CORE_BLOCK) - $sec_at);
+rg_check('core: the security block sits right before the Web 2.0 block, outside it, and runs once', '' !== $sec_block && str_ends_with($main, $sec_block . $CORE_BLOCK) && 1 === substr_count($main, "\nomochix_core_sec_layer_load();\n") && str_ends_with($sec_block, "\nomochix_core_sec_layer_load();\n") && false === strpos($sec_block, 'OMOCHIX_WEB2_DISABLED )'));
+rg_check('core: the security block reads no request data and no database handle', '' !== $sec_block && 0 === preg_match('/\$_(POST|GET|REQUEST|COOKIE|SERVER|FILES)|\$wpdb/', $sec_block));
 $sec_file = 'includes/web2/security.php';
+rg_check('core (this tree): the security layer ships with the plugin (merge the sec pull request first)', is_file("$plugin/$sec_file"));
+rg_check('core (this tree): the security layer is in place: no fail-closed filter, no notice, navigation renders', is_array($now) && false === $now['closed'] && '' === $now['problem'] && 'NAV' === $now['nav'] && '' === $now['notice']);
 $sec_run = static function ($name, $mutate) use ($plugin, $TMP, $sec_file) {
     $d = $TMP . '/core-sec-' . md5($name);
     rg_copy_tree($plugin, $d);
     $mutate($d, "$d/$sec_file");
-    [$code, $r, $raw] = rg_child(['--core'], ['IH_PLUGIN_DIR' => $d]);
-    return [$code, $r, $raw];
+    $log = "$d.log"; @unlink($log);
+    return rg_child(['--core'], ['IH_PLUGIN_DIR' => $d, 'RG_ERRLOG' => $log]);
 };
-$no_sec = static fn($fns) => array_values(array_filter((array) $fns, static fn($f) => 0 !== strpos($f, 'omochix_core_security_')));
-[$code, $base, $raw] = $sec_run('security file missing', static function ($d, $f) { @unlink($f); });
-rg_check('core (security file missing): loads with no PHP error and no output, Web 2.0 loader as before', 0 === $code && is_array($base) && 0 === $base['errors'] && '' === $base['out'] && true === $base['web2']['ran'] && [] === $base['web2']['modules'] && '' === $base['notice'], $raw);
-rg_check('core (security file missing): every other registration and function as in this tree', is_array($base) && $no_sec($base['functions']) === $no_sec($now['functions']) && true === $base['ih']);
 $disable = static function ($d) { $f = "$d/omochix-core.php"; file_put_contents($f, preg_replace('/^(<\?php\n)/', "\$1define( 'OMOCHIX_WEB2_DISABLED', true );\n", (string) file_get_contents($f), 1)); };
+[$code, $r, $raw] = $sec_run('Web 2.0 switched off', static function ($d, $f) use ($disable) { $disable($d); });
+rg_check('core (Web 2.0 switched off, OMOCHIX_WEB2_DISABLED): the security layer is still in place, no module loaded', 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'] && false === $r['closed'] && 'NAV' === $r['nav'] && '' === $r['notice'] && '' === $r['log'] && [] === $r['web2']['modules'] && true === $r['ih'], $raw);
 foreach ([
-    'security layer present' => static function ($d, $f) use ($sec_probe) { file_put_contents($f, $sec_probe); },
-    'security layer present, Web 2.0 switched off (OMOCHIX_WEB2_DISABLED)' => static function ($d, $f) use ($sec_probe, $disable) { file_put_contents($f, $sec_probe); $disable($d); },
-] as $name => $mutate) {
+    'security file missing' => ['missing', static function ($d, $f) { @unlink($f); }],
+    'security file that throws' => ['failed to load (RuntimeException)', static function ($d, $f) { file_put_contents($f, "<?php\nthrow new RuntimeException('broken security layer');\n"); }],
+    'security file with a syntax error' => ['failed to load (ParseError)', static function ($d, $f) { file_put_contents($f, "<?php\nfunction omochix_core_security_nav_block_args( \$a {\n"); }],
+    'security file cut short by an upload' => ['', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, substr($c, 0, (int) (strlen($c) * 0.6))); }],
+    'security file empty (0 bytes)' => ['incomplete', static function ($d, $f) { file_put_contents($f, ''); }],
+    'security file without its guard' => ['incomplete', static function ($d, $f) { file_put_contents($f, "<?php\nif ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}\nfunction omochix_core_security_other() {\n\treturn true;\n}\n"); }],
+    'security guard filter taken off' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace("add_filter( 'register_block_type_args', 'omochix_core_security_nav_block_args', 9999, 2 );", '', $c)); }],
+    'security file missing, Web 2.0 switched off' => ['missing', static function ($d, $f) use ($disable) { @unlink($f); $disable($d); }],
+] as $name => [$why, $mutate]) {
     [$code, $r, $raw] = $sec_run($name, $mutate);
-    rg_check("core ($name): loads with no PHP error and no output, and the security file ran", 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'] && in_array('omochix_core_security_probe_loaded', $r['functions'], true), $raw);
-    rg_check("core ($name): no module loaded, no notice, Industry Hub still loaded", is_array($r) && [] === $r['web2']['modules'] && '' === $r['notice'] && true === $r['ih']);
-}
-foreach ([
-    'security file that throws' => static function ($d, $f) { file_put_contents($f, "<?php\nthrow new RuntimeException('broken security layer');\n"); },
-    'security file cut short by an upload' => static function ($d, $f) use ($sec_probe) { file_put_contents($f, substr($sec_probe, 0, (int) (strlen($sec_probe) * 0.7))); },
-    'security file empty (0 bytes)' => static function ($d, $f) { file_put_contents($f, ''); },
-] as $name => $mutate) {
-    [$code, $r, $raw] = $sec_run($name, $mutate);
-    rg_check("core ($name): loads with no PHP error and no output", 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'], $raw);
-    rg_check("core ($name): same registrations and functions as with the file missing", is_array($r) && is_array($base) && $r['snap'] === $base['snap'] && $no_sec($r['functions']) === $no_sec($base['functions']) && true === $r['ih'] && '' === $r['notice']);
+    rg_check("core ($name): loads with no PHP error and no output; Industry Hub and the Web 2.0 loader unaffected", 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'] && true === $r['ih'] && [] === $r['web2']['modules'], $raw);
+    rg_check("core ($name): fails closed: navigation renders nothing", is_array($r) && true === $r['closed'] && '' === $r['nav']);
+    rg_check("core ($name): the reason is logged once and shown to administrators (no path)", is_array($r) && '' !== $r['problem'] && ('' === $why || $why === $r['problem'] || 0 === strpos($r['problem'], 'failed to load')) && 1 === substr_count($r['log'], 'OmochiX Core: the security layer') && false !== strpos($r['notice'], 'セキュリティ層') && false === strpos($r['notice'], $TMP), is_array($r) ? $r['problem'] . ' | ' . $r['log'] : '');
 }
 
 // ==================================================================== theme
