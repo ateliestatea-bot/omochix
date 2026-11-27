@@ -1048,6 +1048,11 @@ $navm = ih_add_post(['post_type' => 'wp_navigation', 'post_status' => 'publish',
 $navd = ih_add_post(['post_type' => 'wp_navigation', 'post_status' => 'draft', 'post_title' => 'Draft menu']);
 $hid_pass = gl_store('publish'); $GLOBALS['posts'][$hid_pass]->post_password = 'pw';
 $priv_n = gl_store('private');
+// With the whole plugin loaded the always-on security layer (sec stream) may have registered its own wrapper, and then the
+// glossary one steps aside. These checks are about the glossary wrapper itself: take the security filter off meanwhile.
+$rbta_saved = $GLOBALS['hooks']['register_block_type_args'] ?? null;
+$sec_off = static function () { foreach ($GLOBALS['hooks']['register_block_type_args'] ?? [] as $p => $l) { $GLOBALS['hooks']['register_block_type_args'][$p] = array_values(array_filter($l, static fn($x) => 'omochix_core_security_nav_block_args' !== $x[0])); } };
+$sec_off();
 $nb = static fn($attrs) => new WP_Block(['blockName' => 'core/navigation', 'attrs' => $attrs]);
 check('N-1 ref: a navigation menu (int, digit string, or a whole float as the block renderer REST route passes it) is accepted, published or not (WordPress still shows only published menus)', omochix_core_glossary_nav_ref_ok($navm) && omochix_core_glossary_nav_ref_ok((string) $navm) && omochix_core_glossary_nav_ref_ok((float) $navm) && omochix_core_glossary_nav_ref_ok($navd));
 check('N-1 ref: a term in any state, another post type and an unknown ID are refused', !omochix_core_glossary_nav_ref_ok($hid_pub) && !omochix_core_glossary_nav_ref_ok($vis) && !omochix_core_glossary_nav_ref_ok($hid_draft) && !omochix_core_glossary_nav_ref_ok($hid_pass) && !omochix_core_glossary_nav_ref_ok($priv_n) && !omochix_core_glossary_nav_ref_ok($other) && !omochix_core_glossary_nav_ref_ok(999999) && !omochix_core_glossary_nav_ref_ok((string) $hid_pub) && !omochix_core_glossary_nav_ref_ok((float) $hid_pub));
@@ -1065,6 +1070,13 @@ $cb = $wrapped['render_callback'];
 check('N-1 render: the wrapped callback prints nothing for a term and calls WordPress for a menu or no reference', '' === $cb(['ref' => $hid_pub], '', $nb(['ref' => $hid_pub])) && '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && '' === $cb(['ref' => $hid_pass], '', $nb(['ref' => $hid_pass])) && 0 === $inner_calls && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])) && 'NAV' === $cb([], '', $nb([])) && 2 === $inner_calls && 'Navigation' === $wrapped['title']);
 $plain = static fn() => 'X';
 check('N-1 render: other blocks, a block type without a callback and junk arguments are untouched', ['render_callback' => $plain] === omochix_core_glossary_nav_block_args(['render_callback' => $plain], 'core/block') && ['title' => 'N'] === omochix_core_glossary_nav_block_args(['title' => 'N'], 'core/navigation') && ['render_callback' => 'no_such_fn'] === omochix_core_glossary_nav_block_args(['render_callback' => 'no_such_fn'], 'core/navigation') && 'x' === omochix_core_glossary_nav_block_args('x', 'core/navigation'));
+$sec_cb_name = 'omochix_core_security_nav_block_args';
+if (!function_exists($sec_cb_name)) { function omochix_core_security_nav_block_args($args, $name = '') { return $args; } }
+add_filter('register_block_type_args', $sec_cb_name, 9999, 2);
+$sec_args = ['render_callback' => $plain, 'title' => 'Navigation'];
+check('N-1 one wrapper: while the always-on security layer\'s filter is registered, the glossary leaves the callback alone (wrapped once)', $sec_args === omochix_core_glossary_nav_block_args($sec_args, 'core/navigation'));
+$sec_off();
+check('N-1 one wrapper: without that filter (security file missing or broken) the glossary still wraps', $plain !== omochix_core_glossary_nav_block_args($sec_args, 'core/navigation')['render_callback']);
 $GLOBALS['caps'] = ['edit_others_omx_glossaries' => true, 'edit_others_posts' => true];
 check('N-1 the same answer for editors (a page built for one viewer may be cached for the next)', '' === $cb(['ref' => $hid_pub], '', $nb(['ref' => $hid_pub])) && '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])));
 $GLOBALS['caps'] = [];
@@ -1076,6 +1088,7 @@ $vis_src = (string) file_get_contents($PLUGIN . '/includes/web2/glossary-visibil
 $n1_a = strpos($vis_src, 'function omochix_core_glossary_nav_ref_ok'); $n1_b = strpos($vis_src, "add_filter( 'register_block_type_args'");
 check('N-1 T-SAFE: the navigation guard reads no request data and no database handle', false !== $n1_a && $n1_b > $n1_a && 0 === preg_match('/\$_(POST|GET|REQUEST|COOKIE|SERVER|FILES)|\$wpdb|\bglobal\b/', substr($vis_src, $n1_a, $n1_b - $n1_a)));
 unset($GLOBALS['posts'][$navm], $GLOBALS['posts'][$navd], $GLOBALS['posts'][$hid_pass], $GLOBALS['posts'][$priv_n]);
+if (null === $rbta_saved) { unset($GLOBALS['hooks']['register_block_type_args']); } else { $GLOBALS['hooks']['register_block_type_args'] = $rbta_saved; }
 
 check('N2-A/B hooks: Query Loop vars, comments screen and admin titles run last, with the arguments they use', 9999 === has_filter('query_loop_block_query_vars', 'omochix_core_glossary_query_loop_vars') && 9999 === has_filter('comments_list_table_query_args', 'omochix_core_glossary_comments_screen_args') && 9999 === has_filter('the_title', 'omochix_core_glossary_admin_title') && 9999 === has_filter('the_posts', 'omochix_core_glossary_loop_posts') && [['omochix_core_glossary_loop_posts', 2]] === $hook('the_posts', 'omochix_core_glossary_loop_posts') && [['omochix_core_glossary_admin_title', 2]] === $hook('the_title', 'omochix_core_glossary_admin_title'));
 

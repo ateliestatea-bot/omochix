@@ -754,7 +754,8 @@ function omochix_core_glossary_nav_ref_guard( $attributes, $block = null ) {
 }
 
 /**
- * Wraps core/navigation's render_callback with the guard.
+ * Wraps core/navigation's render_callback with the guard, unless the
+ * always-on security layer already does.
  *
  * @param mixed $args Block type arguments.
  * @param mixed $name Block type name.
@@ -762,6 +763,12 @@ function omochix_core_glossary_nav_ref_guard( $attributes, $block = null ) {
  */
 function omochix_core_glossary_nav_block_args( $args, $name = '' ) {
 	if ( 'core/navigation' !== $name || ! is_array( $args ) || empty( $args['render_callback'] ) || ! is_callable( $args['render_callback'] ) ) {
+		return $args;
+	}
+	// The always-on security layer (includes/web2/security.php, sec stream) wraps the same callback with a
+	// stricter rule (published, password-free menus only). While its filter is registered this one steps
+	// aside, so the callback is wrapped once; without it (file missing or broken) this one still applies.
+	if ( function_exists( 'omochix_core_security_nav_block_args' ) && false !== has_filter( 'register_block_type_args', 'omochix_core_security_nav_block_args' ) ) {
 		return $args;
 	}
 	$inner                   = $args['render_callback'];
