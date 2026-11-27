@@ -1,0 +1,11 @@
+# OmochiX Design Library: the live-demo sources (demo.php, demo.css, demo.js) are read on the server by
+# inc/design-library-demo.php from the file path and assembled into the sandboxed demo document; browsers
+# never need these URLs. Never served over HTTP (G14 PREVIEW: the full source is not handed out as a file).
+# Apache / LiteSpeed. Same rule as assets/data/design/.htaccess.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

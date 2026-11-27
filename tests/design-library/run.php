@@ -190,5 +190,53 @@ check('N4: the terms page does not open the Design Library gate', 0 === omochix_
 check('N4: the terms slug is not under /design/ (no clash with the Design Library rewrite rules)', 0 !== strpos(OMOCHIX_DESIGN_TERMS_PATH . '/', OMOCHIX_DESIGN_PATH . '/') && !preg_match('#^design/(web|video|app|components)(/|$)#', OMOCHIX_DESIGN_TERMS_PATH) && OMOCHIX_DESIGN_SITEMAP_PATH !== OMOCHIX_DESIGN_TERMS_PATH);
 $GLOBALS['stub']['pages'] = []; omochix_design_reset_cache();
 
+// ---------------------------------------------- G14 PREVIEW: access (who may get the full prompt and code)
+stub_page('publish');
+$cat = omochix_design_get_catalog()['items'];
+$WEBV = array_merge($WEB, $VIDEO);
+check('G14: no shipped work has access; every one is preview + disabled', array_reduce($WEBV, static function ($c, $s) use ($cat) { return $c && !isset($cat[$s]['access']) && ['scope' => 'preview', 'distribution' => 'disabled'] === omochix_design_access($cat[$s]); }, true));
+check('G14: no shipped work shows its prompt or code (all 12)', array_reduce($WEBV, static function ($c, $s) use ($cat) { return $c && !omochix_design_can_show_sources($cat[$s]); }, true));
+check('G14: list and top say nothing about prompts while no work shows them', !omochix_design_any_sources_public('') && !omochix_design_any_sources_public('web') && !omochix_design_any_sources_public('video'));
+$acc = static function (array $over) {
+    $GLOBALS['stub']['filters']['omochix_design_catalog_data'] = [static function ($d) use ($over) {
+        foreach ($d['items'] as $i => $it) { if (isset($over[$it['slug']])) { if ('draft' === $over[$it['slug']]) { $d['items'][$i]['status'] = 'draft'; } else { $d['items'][$i]['access'] = $over[$it['slug']]; } } }
+        return $d;
+    }];
+    omochix_design_reset_cache(); stub_page('publish');
+    $GLOBALS['stub']['pages']['design-library-terms'] = new WP_Post(['ID' => 88, 'post_name' => 'design-library-terms', 'post_status' => 'publish']); unset($GLOBALS['omochix_design_terms_url']);
+    return omochix_design_get_catalog()['items'];
+};
+$c2 = $acc(['3d-interactive' => ['scope' => 'full', 'distribution' => 'free'], 'data-chart-explainer' => ['scope' => 'full', 'distribution' => 'free'],
+            'bento-saas' => ['scope' => 'full', 'distribution' => 'paid'], 'liquid-glass' => ['scope' => 'full', 'distribution' => 'disabled'],
+            'dark-luxury' => ['scope' => 'preview', 'distribution' => 'disabled']]);
+check('G14: full + free shows the sources (Web and video)', omochix_design_can_show_sources($c2['3d-interactive']) && omochix_design_can_show_sources($c2['data-chart-explainer']));
+check('G14: full + paid never shows the sources (no purchase check exists)', isset($c2['bento-saas']['access']) && !omochix_design_can_show_sources($c2['bento-saas']));
+check('G14: full + disabled and preview + disabled show nothing', !omochix_design_can_show_sources($c2['liquid-glass']) && !omochix_design_can_show_sources($c2['dark-luxury']));
+check('G14: a full + free work makes the list text mention prompts (only its medium)', omochix_design_any_sources_public('web') && omochix_design_any_sources_public('video') && omochix_design_any_sources_public(''));
+unset($GLOBALS['stub']['pages']['design-library-terms'], $GLOBALS['omochix_design_terms_url']);
+check('G14: full + free without a published terms page shows nothing (the wording refers to the terms)', '' === omochix_design_terms_url() && !omochix_design_can_show_sources($c2['3d-interactive']) && !omochix_design_any_sources_public(''));
+foreach (['draft', 'private'] as $st) {
+    $GLOBALS['stub']['pages']['design-library-terms'] = new WP_Post(['ID' => 88, 'post_name' => 'design-library-terms', 'post_status' => $st]); unset($GLOBALS['omochix_design_terms_url']);
+    check("G14: full + free with a $st terms page shows nothing", !omochix_design_can_show_sources($c2['3d-interactive']));
+}
+$c3 = $acc(['bento-saas' => ['scope' => 'full', 'distribution' => 'paid']]);
+check('G14: only paid works -> the list text still says nothing about prompts', !omochix_design_any_sources_public('') && !omochix_design_any_sources_public('web'));
+$c4 = $acc(['3d-interactive' => ['scope' => 'preview', 'distribution' => 'free'], 'aurora-gradient' => ['scope' => 'FULL', 'distribution' => 'FREE'], 'micro-interactions' => ['scope' => 'full', 'distribution' => 'free', 'x' => 1]]);
+check('G14: an invalid access pair drops the work (C3), it does not open it', !isset($c4['3d-interactive']) && !isset($c4['aurora-gradient']) && !isset($c4['micro-interactions']) && !omochix_design_is_public('web', '3d-interactive'));
+check('G14: omochix_design_access() fails closed on a bad array it is handed directly', ['scope' => 'preview', 'distribution' => 'disabled'] === omochix_design_access(['access' => ['scope' => 'full', 'distribution' => 'gift']]) && ['scope' => 'preview', 'distribution' => 'disabled'] === omochix_design_access(['access' => 'full']));
+$c5 = $acc(['3d-interactive' => 'draft']);
+check('G14 PRIVATE: a draft work is not public and never shows sources, even with full + free data', !omochix_design_is_public('web', '3d-interactive') && !omochix_design_can_show_sources(array_merge($c5['3d-interactive'], ['access' => ['scope' => 'full', 'distribution' => 'free']])));
+$c6 = $acc(['3d-interactive' => ['scope' => 'full', 'distribution' => 'free']]);
+stub_page(null);
+check('G14: with the gate closed (no design page) a full + free work shows nothing (C1 first)', !omochix_design_can_show_sources($c6['3d-interactive']) && !omochix_design_any_sources_public(''));
+stub_page('publish');
+$GLOBALS['stub']['pages']['design-library-terms'] = new WP_Post(['ID' => 88, 'post_name' => 'design-library-terms', 'post_status' => 'publish']); unset($GLOBALS['omochix_design_terms_url']);
+$GLOBALS['stub']['env'] = 'production';
+check('G14: access does not touch the demo gate or indexing (production: full + free, still verified-local -> no demo, noindex)', omochix_design_can_show_sources($c6['3d-interactive']) && !omochix_design_demo_allowed($c6['3d-interactive']) && !omochix_design_is_indexable($c6['3d-interactive']));
+$GLOBALS['stub']['env'] = 'local';
+$GLOBALS['stub']['filters']['omochix_design_catalog_data'] = []; omochix_design_reset_cache(); stub_page('publish');
+check('G14: back to the shipped catalog: 12 works, none shows sources', 12 === count(omochix_design_get_items('')) && !omochix_design_any_sources_public(''));
+$GLOBALS['stub']['pages'] = []; omochix_design_reset_cache();
+
 echo "\n$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

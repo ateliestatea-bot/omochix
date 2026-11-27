@@ -1,23 +1,35 @@
 {
-  "release": "Theme 1.33.1 (G13 preparation: page template for the Design Library usage terms page; publish gate stays closed, every work stays verified-local)",
-  "note": "Theme only, on production 1.33.0 (release commit b3dcd3c = main, deployed 2026-11-25 16:56 JST). Baseline: the 1.33.0 release manifest (292 files, sha256 f5830e5a..., identical to the deploy record). Core stays 1.10.0. 1 added file and 2 replaced, 3 steps: page-design-library-terms.php first (renders the page \"design-library-terms\" with the shared static-page layout; without it the page would fall back to index.php and show no content), then inc/shell.php (one more name in the omochix_shell_page_enabled() list, so the new page gets the same editorial shell as /terms/; no other condition changes), then style.css last (version 1.33.1, switch file). No rewrite rule, no database change; the page itself is created and published in G13 with its own approval; the Design Library gate stays closed. The result is 293 files. Rollback has two distinct forms, see after_rollback: A (normal) restores the 2 replaced files and keeps the added template; B (full) also removes the template and needs its own owner approval.",
+  "release": "Theme 1.33.2 (G14 PREVIEW: optional catalog key access; the full prompt and code are printed only for access full + free, so all 12 works are view-only by default; the demo sources are no longer served as static files; publish gate stays closed, every work stays verified-local)",
+  "note": "Theme only, on production 1.33.1 (released from main 3678fe2, PR #90, deployed 2026-11-26 16:10 JST). Baseline: the 1.33.1 release manifest (293 files, sha256 e3bdd78e..., identical to the deploy record). Core stays 1.10.0. 1 added and 5 replaced files, 6 steps: assets/design/demos/.htaccess first (denies HTTP access to the demo.php / demo.css / demo.js files, which inc/design-library-demo.php reads from the file path; same rule as assets/data/design/.htaccess), then catalog.schema.json (documents the optional access key; not read at runtime), then inc/design-library.php (validator accepts access; omochix_design_access(), omochix_design_can_show_sources(), omochix_design_any_sources_public(); list meta text), then template-parts/design-library/detail.php (calls those functions, so it must come after inc/design-library.php: prompt / code / copy buttons / TOC links / license wording only for full + free, otherwise the view-only notice and the contact link; credit line D-2), then page-design.php (list lead), then style.css last (version 1.33.2, switch file). catalog.json is not changed: no work has access, so every work is preview + disabled. No rewrite rule, no database change; the Design Library gate stays closed, so no intermediate state is visible. The result is 294 files. Rollback has two forms, see after_rollback: A (normal) restores the 5 replaced files and keeps the added .htaccess; B (full) also removes it and needs its own owner approval.",
   "packages": {
     "theme": {
       "name": "omochix-theme",
       "dir": "wp-theme/omochix-theme",
       "target": "themes/omochix-theme",
-      "baseline": "tools/release/baseline/omochix-theme-1.33.0.sha256",
-      "baseline_version": "1.33.0"
+      "baseline": "tools/release/baseline/omochix-theme-1.33.1.sha256",
+      "baseline_version": "1.33.1"
     }
   },
   "order": [
     [
       "theme",
-      "page-design-library-terms.php"
+      "assets/design/demos/.htaccess"
     ],
     [
       "theme",
-      "inc/shell.php"
+      "assets/data/design/catalog.schema.json"
+    ],
+    [
+      "theme",
+      "inc/design-library.php"
+    ],
+    [
+      "theme",
+      "template-parts/design-library/detail.php"
+    ],
+    [
+      "theme",
+      "page-design.php"
     ],
     [
       "theme",
@@ -36,7 +48,7 @@
         "theme",
         "style.css"
       ],
-      "check": "Existing 101 URLs unchanged from the 1.33.0 baseline taken twice right before the deploy (status, headers, canonical, robots, PHP errors); the sitemaps keep exactly the URLs of that baseline; /design/, /design/web/, /design/video/, a work detail, a demo URL and /design-sitemap.xml still answer 404 (gate closed; the demo 404 keeps its sandbox CSP, no-store and noindex); /design-library-terms/ answers 404 until G13 publishes it; robots.txt unchanged; style.css?ver=1.33.1; the public static files match the manifest; assets/data/design/catalog.json and catalog.schema.json answer 403 or 404 with no JSON body, also with a cache-busting query, as HEAD and on a second request."
+      "check": "Existing 101 URLs unchanged from the 1.33.1 baseline taken twice right before the deploy (status, headers, canonical, robots, PHP errors); the sitemaps keep exactly the URLs of that baseline; /design/, /design/web/, /design/video/, a work detail, a demo URL and /design-sitemap.xml still answer 404 (gate closed; the demo 404 keeps its sandbox CSP, no-store and noindex); /design-library-terms/ answers 404; robots.txt unchanged; style.css?ver=1.33.2; the public static files match the manifest; assets/data/design/catalog.json and catalog.schema.json answer 403 or 404 with no JSON body, also with a cache-busting query, as HEAD and on a second request; every assets/design/demos/<slug>/demo.css, demo.js and demo.php answers 403 or 404 with no source in the body, also with a cache-busting query, as HEAD and on a second request; posters, loops, videos and the demo runtime still answer 200; GA4 stays off (no gtag.js)."
     }
   },
   "rollback_order": [
@@ -46,7 +58,19 @@
     ],
     [
       "theme",
-      "inc/shell.php"
+      "page-design.php"
+    ],
+    [
+      "theme",
+      "template-parts/design-library/detail.php"
+    ],
+    [
+      "theme",
+      "inc/design-library.php"
+    ],
+    [
+      "theme",
+      "assets/data/design/catalog.schema.json"
     ]
   ],
   "after_apply": [
@@ -54,8 +78,10 @@
     "Run gate B checks (public GETs)."
   ],
   "after_rollback": [
+    "ROLLBACK PRECONDITION (both forms): if the Design Library gate is open (the design page is published, G14a; /design/ answers 200 for a visitor), STOP and get a separate approval to set the design page back to draft first, then confirm /design/, a work detail and /design/web/ answer 404 for a visitor. Only then roll back: the 1.33.1 detail.php prints the full prompt and code with copy buttons for every published work, so rolling back with the gate open would publish them.",
     "No rewrite rule or database change to undo. Cache purge and OPcache reset only with separate approval.",
-    "ROLLBACK A (normal, the default of deploy.py rollback): restores the 2 replaced files, style.css first and then inc/shell.php, to their 1.33.0 content. The added page-design-library-terms.php STAYS. Result: 293 files = the 292 files of the 1.33.0 manifest, byte-identical, plus that one file. Do not report this as the complete 1.33.0 file set. Check: the 101 URLs match the 1.33.0 state, style.css?ver=1.33.0, verify --want production PASS (it does not look at the added file). If the design-library-terms page is already published it keeps showing its text, without the editorial shell.",
-    "ROLLBACK B (full, back to exactly 1.33.0): rollback A plus removal of the added template with --remove-added. Use --remove-added ONLY with the owner's explicit approval for this run; it is never part of rollback A. Before removing: confirm that the design-library-terms page is not published (/design-library-terms/ answers 404 for a visitor). If it is published, stop and ask for a separate approval to set the page back to draft first (a production content change): with the template removed a published page falls back to index.php and shows no terms text while the Design Library terms link still points to it. deploy.py removes the file only when its path is the planned step target and its SHA-256 equals the release SHA-256 recorded in the plan; check both in the plan before the run and the 'remove' line in the log after it. After removing: confirm directly that themes/omochix-theme/page-design-library-terms.php does not exist (verify --want production cannot prove this), then confirm the theme is exactly the 292 files of the 1.33.0 manifest (sha256 f5830e5a...): no missing, changed or extra file."
+    "Check the 101 URLs match the 1.33.1 state and style.css?ver=1.33.1.",
+    "ROLLBACK A (normal, the default of deploy.py rollback): restores the 5 replaced files, style.css first and inc/design-library.php before catalog.schema.json last, to their 1.33.1 content. The added assets/design/demos/.htaccess STAYS: the demo sources stay closed to HTTP and the live demo keeps working (it reads the files on the server). Result: 294 files = the 293 files of the 1.33.1 manifest, byte-identical, plus that one file. Do not report this as the complete 1.33.1 file set. Check: the 101 URLs match the 1.33.1 state, style.css?ver=1.33.1, verify --want production PASS (it does not look at the added file).",
+    "ROLLBACK B (full, back to exactly 1.33.1): rollback A plus removal of the added .htaccess with --remove-added. Use --remove-added ONLY with the owner's explicit approval for this run; it is never part of rollback A. Removing it makes the 18 demo.css / demo.js files public over HTTP again (the 1.33.1 state). deploy.py removes the file only when its path is the planned step target and its SHA-256 equals the release SHA-256 recorded in the plan; check both in the plan before the run and the 'remove' line in the log after it. After removing: confirm directly that themes/omochix-theme/assets/design/demos/.htaccess does not exist (verify --want production cannot prove this), then confirm the theme is exactly the 293 files of the 1.33.1 manifest (sha256 e3bdd78e...): no missing, changed or extra file."
   ]
 }

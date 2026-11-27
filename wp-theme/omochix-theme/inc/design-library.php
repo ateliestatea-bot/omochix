@@ -257,7 +257,7 @@ function omochix_design_shape_errors($raw_item) {
         return ['item'];
     }
     $lists   = ['use_cases', 'motion_types', 'technologies', 'styles', 'motions', 'industries', 'palette', 'fonts', 'materials', 'customization', 'steps'];
-    $objects = ['preview', 'deliverables', 'credits', 'verification', 'related', 'audit', 'video', 'prompt', 'motionStudio'];
+    $objects = ['preview', 'deliverables', 'credits', 'verification', 'related', 'audit', 'video', 'prompt', 'motionStudio', 'access'];
     $bad = [];
     foreach ($lists as $k) {
         if (property_exists($raw_item, $k) && !is_array($raw_item->$k)) {
@@ -289,7 +289,7 @@ function omochix_design_validate_item($item, $where) {
     $e = [];
     $required = ['id', 'slug', 'medium', 'status', 'title', 'summary', 'description', 'use_cases', 'motion_types', 'technologies', 'styles', 'motions',
         'industries', 'level', 'palette', 'fonts', 'poster', 'preview', 'materials', 'customization', 'credits', 'verification', 'related', 'audit'];
-    $optional = ['posterFallback', 'loop', 'loopFallback', 'video', 'prompt', 'steps', 'deliverables', 'motionStudio', 'fictionalBrand'];
+    $optional = ['posterFallback', 'loop', 'loopFallback', 'video', 'prompt', 'steps', 'deliverables', 'motionStudio', 'fictionalBrand', 'access'];
     if (!omochix_design_has_keys($item, $required, $optional)) {
         return ["$where: unknown or missing keys"];
     }
@@ -475,6 +475,15 @@ function omochix_design_validate_item($item, $where) {
         }
         if (!$ok) {
             $e[] = "$where: motionStudio must be {templateId, status unverified|verified, settings?: scalar values}";
+        }
+    }
+    if (array_key_exists('access', $item)) {
+        // G14 PREVIEW: optional; absent = preview + disabled. Only the pairs in omochix_design_access_modes() are accepted.
+        $ac    = $item['access'];
+        $modes = omochix_design_access_modes();
+        if (!omochix_design_has_keys($ac, ['scope', 'distribution']) || !is_string($ac['scope']) || !is_string($ac['distribution'])
+            || !isset($modes[$ac['scope']]) || !in_array($ac['distribution'], $modes[$ac['scope']], true)) {
+            $e[] = "$where: access must be {scope preview|full, distribution disabled|free|paid}; scope preview allows only distribution disabled";
         }
     }
     $a = $item['audit'];
@@ -752,6 +761,60 @@ function omochix_design_verified_here(array $item) {
         return in_array($state, ['verified-local', 'verified-production'], true);
     }
     return 'verified-production' === $state;
+}
+
+/* -------------------------------------------------------------------------
+ * Access (G14 PREVIEW): what a public work's detail page may hand out.
+ * Independent of status (draft = PRIVATE, C4) and of the verification state
+ * (live demo, indexing). It can only withhold more, never publish anything.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * access.scope => the access.distribution values it allows. PRIVATE is not an
+ * access value: it is status "draft" (C4), so no second private switch exists.
+ */
+function omochix_design_access_modes() {
+    return ['preview' => ['disabled'], 'full' => ['disabled', 'free', 'paid']];
+}
+
+/** The item's access, ['scope' => 'preview', 'distribution' => 'disabled'] when absent or not a valid pair (fail-closed). */
+function omochix_design_access(array $item) {
+    $closed = ['scope' => 'preview', 'distribution' => 'disabled'];
+    $ac     = $item['access'] ?? null;
+    $modes  = omochix_design_access_modes();
+    if (!is_array($ac) || !is_string($ac['scope'] ?? null) || !is_string($ac['distribution'] ?? null)
+        || !isset($modes[$ac['scope']]) || !in_array($ac['distribution'], $modes[$ac['scope']], true)) {
+        return $closed;
+    }
+    return ['scope' => $ac['scope'], 'distribution' => $ac['distribution']];
+}
+
+/**
+ * Whether the full prompt and source code (and their copy buttons) may be
+ * printed for this request. Only a public work with scope full and
+ * distribution free, and only while the usage terms page is published (the
+ * wording printed next to the sources grants use "within the terms", so it
+ * must never appear without them). "paid" stays closed: there is no
+ * server-side purchase check yet, and that check (never a client claim) is
+ * the only thing that may open it later. Decided on the server; the template
+ * prints nothing otherwise (no CSS hiding).
+ */
+function omochix_design_can_show_sources(array $item) {
+    if (!omochix_design_is_public((string) ($item['medium'] ?? ''), (string) ($item['slug'] ?? ''))) {
+        return false;
+    }
+    $ac = omochix_design_access($item);
+    return 'full' === $ac['scope'] && 'free' === $ac['distribution'] && '' !== omochix_design_terms_url();
+}
+
+/** Whether any public work of the medium ('' = all public mediums) shows its prompt and code (list and meta texts say so only then). */
+function omochix_design_any_sources_public($medium = '') {
+    foreach (omochix_design_get_items($medium) as $item) {
+        if (omochix_design_can_show_sources($item)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -1316,7 +1379,9 @@ add_filter('slim_seo_meta_description', static function ($description) {
         return $cur['item']['description'];
     }
     if (in_array($cur['view'], ['top', 'list'], true)) {
-        return __('Web デザインと動画モーションの作品を、動くプレビューつきで見比べられます。用途・表現・技術で絞り込み、制作手順とプロンプトも確認できます。', 'omochix');
+        return omochix_design_any_sources_public('list' === $cur['view'] ? $cur['medium'] : '')
+            ? __('Web デザインと動画モーションの作品を、動くプレビューつきで見比べられます。用途・表現・技術で絞り込み、制作手順とプロンプトも確認できます。', 'omochix')
+            : __('Web デザインと動画モーションの作品を、動くプレビューつきで見比べられます。用途・表現・技術で絞り込み、制作手順と技術の解説も確認できます。', 'omochix');
     }
     return $description;
 });

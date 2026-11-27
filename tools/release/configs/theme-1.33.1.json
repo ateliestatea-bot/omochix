@@ -1,0 +1,61 @@
+{
+  "release": "Theme 1.33.1 (G13 preparation: page template for the Design Library usage terms page; publish gate stays closed, every work stays verified-local)",
+  "note": "Theme only, on production 1.33.0 (release commit b3dcd3c = main, deployed 2026-11-25 16:56 JST). Baseline: the 1.33.0 release manifest (292 files, sha256 f5830e5a..., identical to the deploy record). Core stays 1.10.0. 1 added file and 2 replaced, 3 steps: page-design-library-terms.php first (renders the page \"design-library-terms\" with the shared static-page layout; without it the page would fall back to index.php and show no content), then inc/shell.php (one more name in the omochix_shell_page_enabled() list, so the new page gets the same editorial shell as /terms/; no other condition changes), then style.css last (version 1.33.1, switch file). No rewrite rule, no database change; the page itself is created and published in G13 with its own approval; the Design Library gate stays closed. The result is 293 files. Rollback has two distinct forms, see after_rollback: A (normal) restores the 2 replaced files and keeps the added template; B (full) also removes the template and needs its own owner approval.",
+  "packages": {
+    "theme": {
+      "name": "omochix-theme",
+      "dir": "wp-theme/omochix-theme",
+      "target": "themes/omochix-theme",
+      "baseline": "tools/release/baseline/omochix-theme-1.33.0.sha256",
+      "baseline_version": "1.33.0"
+    }
+  },
+  "order": [
+    [
+      "theme",
+      "page-design-library-terms.php"
+    ],
+    [
+      "theme",
+      "inc/shell.php"
+    ],
+    [
+      "theme",
+      "style.css"
+    ]
+  ],
+  "switches": [
+    [
+      "theme",
+      "style.css"
+    ]
+  ],
+  "gates": {
+    "B": {
+      "after": [
+        "theme",
+        "style.css"
+      ],
+      "check": "Existing 101 URLs unchanged from the 1.33.0 baseline taken twice right before the deploy (status, headers, canonical, robots, PHP errors); the sitemaps keep exactly the URLs of that baseline; /design/, /design/web/, /design/video/, a work detail, a demo URL and /design-sitemap.xml still answer 404 (gate closed; the demo 404 keeps its sandbox CSP, no-store and noindex); /design-library-terms/ answers 404 until G13 publishes it; robots.txt unchanged; style.css?ver=1.33.1; the public static files match the manifest; assets/data/design/catalog.json and catalog.schema.json answer 403 or 404 with no JSON body, also with a cache-busting query, as HEAD and on a second request."
+    }
+  },
+  "rollback_order": [
+    [
+      "theme",
+      "style.css"
+    ],
+    [
+      "theme",
+      "inc/shell.php"
+    ]
+  ],
+  "after_apply": [
+    "Do not reset OPcache or purge caches unless separately approved.",
+    "Run gate B checks (public GETs)."
+  ],
+  "after_rollback": [
+    "No rewrite rule or database change to undo. Cache purge and OPcache reset only with separate approval.",
+    "ROLLBACK A (normal, the default of deploy.py rollback): restores the 2 replaced files, style.css first and then inc/shell.php, to their 1.33.0 content. The added page-design-library-terms.php STAYS. Result: 293 files = the 292 files of the 1.33.0 manifest, byte-identical, plus that one file. Do not report this as the complete 1.33.0 file set. Check: the 101 URLs match the 1.33.0 state, style.css?ver=1.33.0, verify --want production PASS (it does not look at the added file). If the design-library-terms page is already published it keeps showing its text, without the editorial shell.",
+    "ROLLBACK B (full, back to exactly 1.33.0): rollback A plus removal of the added template with --remove-added. Use --remove-added ONLY with the owner's explicit approval for this run; it is never part of rollback A. Before removing: confirm that the design-library-terms page is not published (/design-library-terms/ answers 404 for a visitor). If it is published, stop and ask for a separate approval to set the page back to draft first (a production content change): with the template removed a published page falls back to index.php and shows no terms text while the Design Library terms link still points to it. deploy.py removes the file only when its path is the planned step target and its SHA-256 equals the release SHA-256 recorded in the plan; check both in the plan before the run and the 'remove' line in the log after it. After removing: confirm directly that themes/omochix-theme/page-design-library-terms.php does not exist (verify --want production cannot prove this), then confirm the theme is exactly the 292 files of the 1.33.0 manifest (sha256 f5830e5a...): no missing, changed or extra file."
+  ]
+}

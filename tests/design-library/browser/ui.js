@@ -225,7 +225,12 @@ async function listChecks(type, browser) {
     check(type + ' top keyword ロゴ -> Logo Reveal Short and Brand Typography Motion ("ロゴを使わず")', JSON.stringify(await vis()) === '["Logo Reveal Short","Brand Typography Motion"]' && (await secs()) === '01');
     await cx.close();
 
-    /* video detail: nothing loads or plays until asked; controls work; copy buttons */
+    /* video detail: nothing loads or plays until asked; controls work; copy buttons (G14: on a FULL+FREE work, set by the access fixture file) */
+    var ACCESS_FILE = L.SITE + '/design-access-test.json';
+    var dropAccess = function () { if (fs.existsSync(ACCESS_FILE)) fs.unlinkSync(ACCESS_FILE); };
+    process.once('exit', dropAccess); // never leave the site in FULL state if this run aborts
+    fs.writeFileSync(ACCESS_FILE, JSON.stringify({ 'data-chart-explainer': { scope: 'full', distribution: 'free' } }));
+    try {
     var cv = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     if (type === 'chromium') await cv.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
     var vreq = [];
@@ -247,6 +252,9 @@ async function listChecks(type, browser) {
     var prompt = await pv.textContent('#dl-prompt-text');
     check(type + ' copy button: visible with JS, reports the result' + (clip !== null ? ', clipboard holds the prompt' : ''), copyVisible && /コピーしました|コピーできませんでした/.test(copyText) && (clip === null || clip === prompt), [copyVisible, copyText]);
     check(type + ' video detail: no create / generate / Motion Studio control', (await pv.locator('text=/Motion Studio で作る|この作品を作る|生成する/').count()) === 0 && (await pv.locator('[data-dl-motion-studio]').count()) === 0);
+    } finally { dropAccess(); }
+    await pv.goto(BASE + '/design/video/data-chart-explainer/');
+    check(type + ' PREVIEW video detail: no copy button and no prompt text, the usage notice is shown', (await pv.locator('[data-dl-copy]').count()) === 0 && (await pv.locator('#dl-prompt-text').count()) === 0 && (await pv.locator('[data-dl-preview]').count()) === 1);
     await cv.close();
 
     /* no JavaScript */

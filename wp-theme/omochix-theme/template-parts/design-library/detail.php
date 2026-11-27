@@ -32,7 +32,10 @@ $omx_poster  = omochix_design_asset_url($omx_item['posterFallback'] ?? $omx_item
 $omx_state   = omochix_design_verification_state($omx_item);
 $omx_ver     = $omx_item['verification'];
 $omx_related = omochix_design_related($omx_item);
-$omx_code    = ('web' === $omx_medium && !empty($omx_item['deliverables']['showCode'])) ? omochix_design_demo_sources($omx_item) : null;
+$omx_sources = omochix_design_can_show_sources($omx_item); // G14: full prompt and code only for access full + free (server-side; nothing is printed otherwise)
+$omx_prompt  = $omx_sources && !empty($omx_item['prompt']);
+$omx_code    = ($omx_sources && 'web' === $omx_medium && !empty($omx_item['deliverables']['showCode'])) ? omochix_design_demo_sources($omx_item) : null;
+$omx_contact = function_exists('omochix_get_published_page_url') ? omochix_get_published_page_url('contact') : '';
 $omx_label   = static function (array $map, array $values) { return implode('・', array_map(static function ($v) use ($map) { return $map[$v]; }, $values)); };
 $omx_video   = $omx_item['video'] ?? null;
 $omx_terms   = omochix_design_terms_url(); // N4: '' until the terms page (G13) is published; then the notice links to it
@@ -120,7 +123,7 @@ $omx_terms   = omochix_design_terms_url(); // N4: '' until the terms page (G13) 
         <nav class="dl-toc" aria-label="<?php esc_attr_e('このページの内容', 'omochix'); ?>">
             <a href="#dl-d-about"><?php esc_html_e('概要と技術', 'omochix'); ?></a>
             <?php if (!empty($omx_item['steps'])) : ?><a href="#dl-d-steps"><?php esc_html_e('制作手順', 'omochix'); ?></a><?php endif; ?>
-            <?php if (!empty($omx_item['prompt'])) : ?><a href="#dl-d-prompt"><?php esc_html_e('プロンプト', 'omochix'); ?></a><?php endif; ?>
+            <?php if ($omx_prompt) : ?><a href="#dl-d-prompt"><?php esc_html_e('プロンプト', 'omochix'); ?></a><?php endif; ?>
             <?php if ($omx_code) : ?><a href="#dl-d-code"><?php esc_html_e('コード', 'omochix'); ?></a><?php endif; ?>
             <a href="#dl-d-verify"><?php esc_html_e('検証情報', 'omochix'); ?></a>
         </nav>
@@ -134,7 +137,7 @@ $omx_terms   = omochix_design_terms_url(); // N4: '' until the terms page (G13) 
                         <h3><?php esc_html_e('使っている素材', 'omochix'); ?></h3>
                         <ul class="dl-list">
                             <?php foreach ($omx_item['materials'] as $omx_m) : ?>
-                                <li><?php echo esc_html($omx_m['name']); ?> <span class="dl-muted">（<?php echo esc_html($omx_mtypes[$omx_m['type']] . '・' . ('original' === $omx_m['source'] ? __('自作', 'omochix') : __('端末に入っているもの', 'omochix'))); ?>）</span></li>
+                                <li><?php echo esc_html($omx_m['name']); ?> <span class="dl-muted">（<?php echo esc_html($omx_mtypes[$omx_m['type']] . '・' . ('original' === $omx_m['source'] ? __('OmochiX 制作', 'omochix') : __('端末に入っているもの', 'omochix'))); ?>）</span></li>
                             <?php endforeach; ?>
                         </ul>
                     <?php endif; ?>
@@ -145,7 +148,11 @@ $omx_terms   = omochix_design_terms_url(); // N4: '' until the terms page (G13) 
                                 <dt><?php echo esc_html($omx_c['label']); ?></dt><dd><?php echo esc_html($omx_c['description']); ?></dd>
                             <?php endforeach; ?>
                         </dl>
-                        <p class="dl-muted"><?php esc_html_e('このページで値を変える機能はまだありません。プロンプトやコードの該当箇所を書き換えて使ってください。', 'omochix'); ?></p>
+                        <?php if ($omx_sources) : ?>
+                            <p class="dl-muted"><?php esc_html_e('このページで値を変える機能はまだありません。プロンプトやコードの該当箇所を書き換えて使ってください。', 'omochix'); ?></p>
+                        <?php else : ?>
+                            <p class="dl-muted"><?php esc_html_e('このページで値を変える機能はまだありません。', 'omochix'); ?></p>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </section>
 
@@ -160,7 +167,17 @@ $omx_terms   = omochix_design_terms_url(); // N4: '' until the terms page (G13) 
                     </section>
                 <?php endif; ?>
 
-                <?php if (!empty($omx_item['prompt'])) : ?>
+                <?php if (!$omx_sources) : ?>
+                    <section class="dl-block" aria-labelledby="dl-d-usage" data-dl-preview>
+                        <h2 id="dl-d-usage"><?php esc_html_e('この作品の利用について', 'omochix'); ?></h2>
+                        <p class="dl-muted"><?php esc_html_e('この作品はデザイン・モーションの参考として公開しています。現時点ではコード・プロンプト・素材の配布および商用利用の許諾は行っていません。利用可能な範囲は今後、作品ごとにご案内します。', 'omochix'); ?></p>
+                        <?php if ('' !== $omx_contact) : ?>
+                            <p class="dl-muted"><?php esc_html_e('感想や、次に見たいデザインのリクエストは', 'omochix'); ?><a href="<?php echo esc_url($omx_contact); ?>" data-dl-contact><?php esc_html_e('お問い合わせ', 'omochix'); ?></a><?php esc_html_e('からお寄せください。', 'omochix'); ?></p>
+                        <?php endif; ?>
+                    </section>
+                <?php endif; ?>
+
+                <?php if ($omx_prompt) : ?>
                     <section class="dl-block" aria-labelledby="dl-d-prompt">
                         <div class="dl-block__head">
                             <h2 id="dl-d-prompt"><?php esc_html_e('AI に頼むときのプロンプト', 'omochix'); ?></h2>
@@ -174,7 +191,7 @@ $omx_terms   = omochix_design_terms_url(); // N4: '' until the terms page (G13) 
                 <?php if ($omx_code) : ?>
                     <section class="dl-block" aria-labelledby="dl-d-code">
                         <h2 id="dl-d-code"><?php esc_html_e('コード', 'omochix'); ?></h2>
-                        <p class="dl-muted"><?php esc_html_e('ライブデモと同じソースです（OmochiX の自作。サイト側の共通ランタイムは含みません）。', 'omochix'); ?></p>
+                        <p class="dl-muted"><?php esc_html_e('ライブデモと同じソースです（OmochiX 制作。サイト側の共通ランタイムは含みません）。', 'omochix'); ?></p>
                         <p class="dl-muted dl-terms-note" data-dl-terms><?php esc_html_e('コードとプロンプトは、利用条件の範囲で自分の制作物に使えます。作品の中の架空のブランド名・ロゴ・画像・動画は使えません。自分の名前に置き換えてください。', 'omochix'); ?><?php if ('' !== $omx_terms) : ?> <a href="<?php echo esc_url($omx_terms); ?>" data-dl-terms-link><?php esc_html_e('利用条件を読む', 'omochix'); ?></a><?php endif; ?></p>
                         <?php foreach (['html' => 'HTML', 'css' => 'CSS', 'js' => 'JavaScript'] as $omx_lang => $omx_name) : ?>
                             <?php if ('' === trim($omx_code[$omx_lang])) { continue; } ?>
@@ -217,7 +234,7 @@ $omx_terms   = omochix_design_terms_url(); // N4: '' until the terms page (G13) 
                         <?php endforeach; ?>
                     </dd>
                     <dt><?php esc_html_e('作者・出典', 'omochix'); ?></dt>
-                    <dd><?php echo esc_html($omx_item['credits']['author'] . '（' . __('自作・オリジナル', 'omochix') . '）'); ?><?php if (!empty($omx_item['credits']['notes'])) : ?><br><span class="dl-muted"><?php echo esc_html($omx_item['credits']['notes']); ?></span><?php endif; ?></dd>
+                    <dd><?php /* translators: %s: author (OmochiX). G14 D-2: the works were made with AI tools; no wording that suggests otherwise. */ echo esc_html(sprintf(__('制作：%s（AIツールを活用）', 'omochix'), $omx_item['credits']['author'])); ?><?php if (!empty($omx_item['credits']['notes'])) : ?><br><span class="dl-muted"><?php echo esc_html($omx_item['credits']['notes']); ?></span><?php endif; ?></dd>
                     <?php if (!empty($omx_item['motionStudio'])) : ?>
                         <dt><?php esc_html_e('Motion Studio', 'omochix'); ?></dt>
                         <dd data-dl-motion-studio><?php echo esc_html(sprintf(__('対応テンプレート：%1$s（%2$s）', 'omochix'), $omx_item['motionStudio']['templateId'], 'verified' === $omx_item['motionStudio']['status'] ? __('対応を確認済み', 'omochix') : __('対応は未確認', 'omochix'))); ?><br><span class="dl-muted"><?php esc_html_e('このサイトから Motion Studio を開く機能はありません。', 'omochix'); ?></span></dd>

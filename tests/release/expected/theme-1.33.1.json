@@ -1,0 +1,50 @@
+{
+  "release": "Theme 1.33.1 (G13 preparation: page template for the Design Library usage terms page; publish gate stays closed, every work stays verified-local)",
+  "commit": "3678fe2b15c9b850bbe0ac683a9370632cdb28e1",
+  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.33.1 tree (G13-T1; released from main 3678fe2, PR #90, deployed 2026-11-26 16:10 JST) against the production 1.33.0 manifest (b3dcd3c, sha256 f5830e5a...); the gate and the tests compare the real tree and the config against these values, never the config against itself. 1 added (page-design-library-terms.php) and 2 replaced (inc/shell.php, style.css), 3 steps. Order rule: inc/shell.php after the added template and before style.css. Rollback A restores the 2 replaced files (style.css first, inc/shell.php last); the added template stays unless the owner approves --remove-added (rollback B).",
+  "versions": {
+    "core": "1.10.0",
+    "theme": "1.33.1"
+  },
+  "packages": {
+    "theme": {
+      "baseline_sha256": "f5830e5aa464e33eddb32fbf9fab4fad7ef17a655536672c92135333dc7c615b",
+      "files": 293,
+      "add": 1,
+      "replace": 2
+    }
+  },
+  "unchanged": {
+    "core": {
+      "dir": "wp-plugin/omochix-core",
+      "baseline": "tools/release/baseline/omochix-core-1.10.0.sha256",
+      "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
+    }
+  },
+  "steps": 3,
+  "changed_paths_sha256": "0c06b32d21cec27638a5ee964645bc7045e82b8c351e431e9039f07d57c93993",
+  "forbidden": {
+    "pattern": "#labs|svg-motion|logo-motion#i",
+    "allowed": []
+  },
+  "order_rules": [
+    {
+      "path": "theme:inc/shell.php",
+      "after_every": "add",
+      "before_every": "replace",
+      "except": []
+    }
+  ],
+  "switches": [
+    "theme:style.css"
+  ],
+  "gates": [
+    "B"
+  ],
+  "rollback": {
+    "first": "theme:style.css",
+    "last": "theme:inc/shell.php",
+    "count": 2
+  },
+  "core_version_markers": 11
+}
