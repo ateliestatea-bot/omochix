@@ -4,7 +4,7 @@
 
 ## 読み込み
 - Web 2.0 のモジュールではありません。Web 2.0 のローダーは読み込みません。モジュールの目印（`omochix-web2-module:`）もありません。
-- `omochix-core.php` が、Web 2.0 のブロックより前に、直接読み込みます（hooks stream の変更）。ファイルが無いとき、または読み込みで例外が出たときは、何もしないで先に進みます。
+- `omochix-core.php` が、Web 2.0 のブロックより前に、直接読み込みます（hooks stream の変更）。ファイルが無いとき、読み込めないとき、防御がそろわないときは、fail-closed になります（下の「異常時」を見てください）。
 - そのため、次のどの状態でも動きます。
   - モジュールのリストが空のとき（今の本番）
   - `OMOCHIX_WEB2_DISABLED` が true のとき
@@ -47,9 +47,15 @@ WordPress 本体との違い（意図した変更）：下書き・非公開・�
   - 許可されるメニューなら、本体が作った fallback のままです。メニューが1つも無いときの、固定ページの一覧（page list）もそのままです。
 - 注意：公開メニューが1つも無いと、本体は表示のついでにメニューを新しく作ることがあります（`wp_navigation_should_create_fallback`）。これは本体の動作で、この層は変えていません。
 
+## N-1（REST）：パスワード付きメニューの本文
+- WordPress 本体は、`wp_navigation` の `content.raw` に `embed` の文脈を足します。`raw` にはパスワードの確認が無いので、`/wp/v2/navigation/<id>?context=embed` と一覧の経路で、パスワード付きのメニューの中身が未ログインの人に返っていました（Fable の監査6、P2）。
+- 規則：`rest_prepare_wp_navigation`（優先度 9999）で、パスワード付きのメニューは、そのメニューを編集できない人には、`content.raw` と `content.block_version` を外し、`content.rendered` を空、`content.protected` を true にします。
+- タイトルは、WordPress ではパスワード付きの投稿でも公開されるので、そのままです。
+- 下書き・ゴミ箱のメニューは、本体が 401 を返します。
+
 ## 異常時（fail-closed、hooks stream）
-- `omochix-core.php` は、このファイルが無い・例外や構文エラーで読み込めない・防御の関数かフィルターがそろわない、のどれかのときに、ナビゲーションのブロックをすべて空で描画します。
-- 理由は `error_log()` と、管理者向けの通知に出します。詳しくは `docs/web2/hooks/README.md` を見てください。
+- `omochix-core.php` は、このファイルが無い・例外や構文エラーで読み込めない・3つの防御（参照、fallback、REST）の関数かフィルターがそろわない、のどれかのときに、ナビゲーションのブロックをすべて空で描画し、REST では編集できない人にメニューの中身を返しません。
+- 理由は `error_log()`（壊れている間は1要求につき1行。量が多くなるので、リリース前の検査で見つけます）と、管理者向けの通知に出します。詳しくは `docs/web2/hooks/README.md` を見てください。
 - PHP の致命的エラー（関数の二重宣言など）は捕まえられないので、サイト全体が止まります。
 
 ## リリース前の完全性検査（案。`tools/release/**` は release_only なので、リリースの PR で入れます）
@@ -64,5 +70,5 @@ WordPress 本体との違い（意図した変更）：下書き・非公開・�
 
 ## テスト
 - `php tests/security/run.php`：WordPress なしで、形式、参照先、ブロック、callback、フック、ファイルの規則（T-SAFE、独立性、PHP 8.1）を確かめます。
-- CI では、ci stream の変更で「Web 2.0 tests」の一覧に入ります（`.github/workflows/tests.yml` と `tools/ci/required-checks.json`）。PR の順は sec → ci → hooks → kh です。
+- CI では、ci stream の変更で、必須の「Tests (PHP 8.1)」と「Tests (PHP 8.3)」に、専用の手順「Security layer tests」として入ります（`.github/workflows/tests.yml` と `tools/ci/required-checks.json`）。固定されている「Web 2.0 tests」の手順は変えません（変えると、CI change guard が必須チェックを弱める変更と判定するためです）。PR の順は sec → ci → hooks → kh です。
 - hooks stream の `tests/web2/hooks/regression.php` は、読み込みの側（`OMOCHIX_WEB2_DISABLED` のときも読み込むこと、ファイルが無い・壊れているときに影響しないこと）を確かめます。

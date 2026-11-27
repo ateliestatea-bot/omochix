@@ -143,7 +143,7 @@ add_filter( 'register_block_type_args', 'omochix_core_security_nav_block_args', 
  * REST route).
  *
  * The same query WordPress runs is repeated (newest published menu by date);
- * if that menu, or one published at the same moment, is not allowed (see
+ * if that menu, or any menu published at the same moment, is not allowed (see
  * omochix_core_security_nav_ref_allowed: password, wrong type ...), the
  * fallback is emptied and the block renders nothing. Otherwise the fallback
  * WordPress built (that menu, or the page list when there is no menu) is
@@ -156,30 +156,79 @@ function omochix_core_security_nav_fallback( $blocks ) {
 	if ( empty( $blocks ) || ! is_array( $blocks ) || ! class_exists( 'WP_Query' ) ) {
 		return $blocks;
 	}
-	$query = new WP_Query(
-		array(
-			'post_type'              => 'wp_navigation',
-			'no_found_rows'          => true,
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-			'order'                  => 'DESC',
-			'orderby'                => 'date',
-			'post_status'            => 'publish',
-			'posts_per_page'         => 2,
-		)
+	$args  = array(
+		'post_type'              => 'wp_navigation',
+		'no_found_rows'          => true,
+		'update_post_meta_cache' => false,
+		'update_post_term_cache' => false,
+		'order'                  => 'DESC',
+		'orderby'                => 'date',
+		'post_status'            => 'publish',
+		'posts_per_page'         => 1,
 	);
-	$posts = is_array( $query->posts ) ? array_values( $query->posts ) : array();
-	if ( array() === $posts ) {
+	$query = new WP_Query( $args ); // The very query WordPress runs for the fallback.
+	$first = is_array( $query->posts ) && isset( $query->posts[0] ) ? $query->posts[0] : null;
+	if ( null === $first ) {
 		return $blocks; // No menu: WordPress shows the page list.
 	}
-	$first = $posts[0];
 	if ( ! $first instanceof WP_Post || ! omochix_core_security_nav_ref_allowed( (int) $first->ID ) ) {
 		return array();
 	}
-	// Same date: WordPress could have taken either one.
-	if ( isset( $posts[1] ) && $posts[1] instanceof WP_Post && $posts[1]->post_date === $first->post_date && ! omochix_core_security_nav_ref_allowed( (int) $posts[1]->ID ) ) {
+	// Menus published at the same moment: WordPress could have taken any of them. Up to 20 are
+	// checked; more than that at one moment fails closed.
+	$args['posts_per_page'] = 21;
+	$args['date_query']     = array(
+		array(
+			'after'     => $first->post_date,
+			'before'    => $first->post_date,
+			'inclusive' => true,
+		),
+	);
+	$same = new WP_Query( $args );
+	$list = is_array( $same->posts ) ? $same->posts : array();
+	if ( count( $list ) > 20 ) {
 		return array();
+	}
+	foreach ( $list as $post ) {
+		if ( ! $post instanceof WP_Post || ! omochix_core_security_nav_ref_allowed( (int) $post->ID ) ) {
+			return array();
+		}
 	}
 	return $blocks;
 }
 add_filter( 'block_core_navigation_render_fallback', 'omochix_core_security_nav_fallback', 9999 );
+
+/**
+ * REST: no raw blocks of a password-protected navigation menu (review N-1,
+ * audit 6).
+ *
+ * WordPress adds the "embed" context to content.raw of wp_navigation
+ * (WP_Navigation_Fallback::update_wp_navigation_post_schema), and raw
+ * content has no password check: /wp/v2/navigation/<id>?context=embed and
+ * the list route returned the blocks of a password-protected menu to
+ * visitors. For such a menu, unless the user may edit it, content.raw and
+ * content.block_version are removed and content.rendered stays empty (as
+ * WordPress already makes it); content.protected stays true. The title is
+ * public for every password-protected post in WordPress and is left alone.
+ *
+ * @param mixed $response WP_REST_Response.
+ * @param mixed $post     The menu post.
+ * @return mixed
+ */
+function omochix_core_security_nav_rest( $response, $post = null ) {
+	if ( ! $post instanceof WP_Post || 'wp_navigation' !== $post->post_type || '' === (string) $post->post_password ) {
+		return $response;
+	}
+	if ( current_user_can( 'edit_post', (int) $post->ID ) || ! is_object( $response ) || ! method_exists( $response, 'get_data' ) || ! method_exists( $response, 'set_data' ) ) {
+		return $response;
+	}
+	$data = $response->get_data();
+	if ( is_array( $data ) && isset( $data['content'] ) && is_array( $data['content'] ) ) {
+		unset( $data['content']['raw'], $data['content']['block_version'] );
+		$data['content']['rendered']  = '';
+		$data['content']['protected'] = true;
+		$response->set_data( $data );
+	}
+	return $response;
+}
+add_filter( 'rest_prepare_wp_navigation', 'omochix_core_security_nav_rest', 9999, 2 );

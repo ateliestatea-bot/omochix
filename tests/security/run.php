@@ -17,7 +17,9 @@ function has_filter($h, $cb) { foreach ($GLOBALS['hooks'][$h] ?? [] as $p => $l)
 function get_post($p = null) { if ($p instanceof WP_Post) { return $p; } if (empty($p)) { return $GLOBALS['post'] ?? null; } return is_numeric($p) ? ($GLOBALS['posts'][(int) $p] ?? null) : null; }
 class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_password = '', $post_title = '', $post_date = '2026-01-01 00:00:00'; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 // WordPress's newest-menu query, as the fallback runs it: published, by date, newest first (records the arguments).
-class WP_Query { public $posts = []; function __construct($a) { $GLOBALS['last_query'] = $a; $l = array_values(array_filter($GLOBALS['posts'], static fn($p) => $p->post_type === ($a['post_type'] ?? '') && $p->post_status === ($a['post_status'] ?? ''))); usort($l, static fn($x, $y) => strcmp($y->post_date, $x->post_date)); $this->posts = array_slice($l, 0, (int) ($a['posts_per_page'] ?? 10)); } }
+class WP_Query { public $posts = []; function __construct($a) { $GLOBALS['queries'][] = $a; $GLOBALS['last_query'] = $a; $l = array_values(array_filter($GLOBALS['posts'], static fn($p) => $p->post_type === ($a['post_type'] ?? '') && $p->post_status === ($a['post_status'] ?? ''))); if (isset($a['date_query'][0])) { $d = $a['date_query'][0]; $l = array_values(array_filter($l, static fn($p) => $p->post_date >= $d['after'] && $p->post_date <= $d['before'])); } usort($l, static fn($x, $y) => strcmp($y->post_date, $x->post_date) ?: $y->ID <=> $x->ID); $this->posts = array_slice($l, 0, (int) ($a['posts_per_page'] ?? 10)); } }
+function current_user_can($cap, ...$args) { return !empty($GLOBALS['caps'][$cap]); }
+class WP_REST_Response { private $d; function __construct($d) { $this->d = $d; } function get_data() { return $this->d; } function set_data($d) { $this->d = $d; } }
 class WP_Block { public $parsed_block; function __construct($pb = []) { $this->parsed_block = $pb; } }
 function check($name, $ok, $detail = '') { global $pass, $fail; if ($ok) { $pass++; echo "PASS $name\n"; } else { $fail++; echo "FAIL $name" . ('' !== $detail ? "  [$detail]" : '') . "\n"; } }
 $id = 100; $mk = static function (array $a) use (&$id) { $id++; $GLOBALS['posts'][$id] = new WP_Post(['ID' => $id] + $a); return $id; };
@@ -79,17 +81,41 @@ $saved = $GLOBALS['posts'];
 $GLOBALS['posts'][$menu]->post_date = '2026-05-01 00:00:00'; $GLOBALS['posts'][$pwm]->post_date = '2026-06-01 00:00:00';
 check('fallback: the newest published menu has a password: the fallback is emptied (nothing renders)', [] === omochix_core_security_nav_fallback($fb));
 $q = $GLOBALS['last_query'];
-check('fallback: the same query WordPress runs (published menus, newest by date)', 'wp_navigation' === $q['post_type'] && 'publish' === $q['post_status'] && 'date' === $q['orderby'] && 'DESC' === $q['order'] && 2 === $q['posts_per_page'] && true === $q['no_found_rows']);
+$GLOBALS['queries'] = []; omochix_core_security_nav_fallback($fb); $q = $GLOBALS['queries'][0];
+check('fallback: first the very query WordPress runs (published menus, newest by date, one)', ['post_type' => 'wp_navigation', 'no_found_rows' => true, 'update_post_meta_cache' => false, 'update_post_term_cache' => false, 'order' => 'DESC', 'orderby' => 'date', 'post_status' => 'publish', 'posts_per_page' => 1] === $q);
 $GLOBALS['posts'][$pwm]->post_date = '2026-04-01 00:00:00';
 check('fallback: the newest menu is allowed: WordPress\'s fallback is kept as it is', $fb === omochix_core_security_nav_fallback($fb));
 $GLOBALS['posts'][$pwm]->post_date = '2026-05-01 00:00:00';
 check('fallback: a refused menu published at the same moment as the newest one empties it too (either could be taken)', [] === omochix_core_security_nav_fallback($fb));
+$GLOBALS['posts'][$pwm]->post_date = '2026-04-01 00:00:00';
+$tie = []; for ($t = 0; $t < 3; $t++) { $tie[] = $mk(['post_type' => 'wp_navigation', 'post_date' => '2026-05-01 00:00:00']); }
+check('fallback: three or more allowed menus at the same moment keep the fallback', $fb === omochix_core_security_nav_fallback($fb));
+$GLOBALS['posts'][$tie[0]]->post_password = 'x';
+check('fallback: a refused one among three or more at the same moment empties it (not only the first two are checked)', [] === omochix_core_security_nav_fallback($fb));
+$GLOBALS['posts'][$tie[0]]->post_password = '';
+for ($t = 0; $t < 20; $t++) { $tie[] = $mk(['post_type' => 'wp_navigation', 'post_date' => '2026-05-01 00:00:00']); }
+check('fallback: more than 20 menus at one moment fails closed', [] === omochix_core_security_nav_fallback($fb));
+foreach ($tie as $t) { unset($GLOBALS['posts'][$t]); }
+$GLOBALS['posts'][$pwm]->post_date = '2026-05-01 00:00:00';
 $GLOBALS['posts'][$pwm]->post_date = '2026-04-01 00:00:00';
 $only([]);
 check('fallback: no menu at all: the page list WordPress chose is kept', $fb === omochix_core_security_nav_fallback($fb));
 $GLOBALS['posts'] = $saved;
 check('fallback: an empty or junk fallback is passed through', [] === omochix_core_security_nav_fallback([]) && false === omochix_core_security_nav_fallback(false) && null === omochix_core_security_nav_fallback(null) && 'x' === omochix_core_security_nav_fallback('x'));
 check('fallback hook: registered once, last', 9999 === has_filter('block_core_navigation_render_fallback', 'omochix_core_security_nav_fallback') && 1 === count(array_filter(array_merge(...array_values($GLOBALS['hooks']['block_core_navigation_render_fallback'])), static fn($x) => 'omochix_core_security_nav_fallback' === $x[0])));
+
+// ------------------------------------------------------------ REST: /wp/v2/navigation (context=embed returns content.raw)
+$resp = static fn() => new WP_REST_Response(['id' => 1, 'title' => ['rendered' => 'T'], 'content' => ['raw' => '<!-- wp:navigation-link {"label":"SECRET"} /-->', 'rendered' => '', 'protected' => true, 'block_version' => 1]]);
+$GLOBALS['caps'] = [];
+$r = omochix_core_security_nav_rest($resp(), get_post($pwm))->get_data();
+check('REST: a password-protected menu loses content.raw and block_version for a user who may not edit it; rendered empty, protected true, title kept', !isset($r['content']['raw']) && !isset($r['content']['block_version']) && '' === $r['content']['rendered'] && true === $r['content']['protected'] && ['rendered' => 'T'] === $r['title'] && false === strpos(json_encode($r), 'SECRET'));
+$GLOBALS['caps'] = ['edit_post' => true];
+check('REST: a user who may edit the menu keeps the raw blocks', isset(omochix_core_security_nav_rest($resp(), get_post($pwm))->get_data()['content']['raw']));
+$GLOBALS['caps'] = [];
+check('REST: a menu without a password, other post types and junk are untouched', isset(omochix_core_security_nav_rest($resp(), get_post($menu))->get_data()['content']['raw']) && isset(omochix_core_security_nav_rest($resp(), get_post($postpw))->get_data()['content']['raw']) && 'x' === omochix_core_security_nav_rest('x', get_post($pwm)) && isset(omochix_core_security_nav_rest($resp(), null)->get_data()['content']['raw']));
+$nocontent = new WP_REST_Response(['id' => 1, 'title' => ['rendered' => 'T']]);
+check('REST: a response without content (_fields) is left as it is', ['id' => 1, 'title' => ['rendered' => 'T']] === omochix_core_security_nav_rest($nocontent, get_post($pwm))->get_data());
+check('REST hook: rest_prepare_wp_navigation, last, with both arguments', 9999 === has_filter('rest_prepare_wp_navigation', 'omochix_core_security_nav_rest') && [['omochix_core_security_nav_rest', 2]] === array_values(array_filter($GLOBALS['hooks']['rest_prepare_wp_navigation'][9999], static fn($x) => 'omochix_core_security_nav_rest' === $x[0])));
 
 // ------------------------------------------------------------ file rules
 $src = (string) file_get_contents($FILE);
