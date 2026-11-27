@@ -116,6 +116,10 @@ function ruleErrors(data) {
             if (entry !== 'demos/' + it.slug + '/' || !fs.existsSync(path.join(ASSETS, entry || '', 'demo.php'))) errs.push(at + ': preview.entry');
             if (it.medium === 'web' && (!it.deliverables || !it.deliverables.html || it.deliverables.html.file !== entry)) errs.push(at + ': deliverables.html.file');
         }
+        if ('access' in it && it.access && typeof it.access === 'object') {
+            var MODES = { preview: ['disabled'], full: ['disabled', 'free', 'paid'] };
+            if (!Object.prototype.hasOwnProperty.call(MODES, it.access.scope) || MODES[it.access.scope].indexOf(it.access.distribution) === -1) errs.push(at + ': access pair (preview allows only disabled)');
+        }
         var ver = it.verification;
         if (ver && ver.state !== 'unverified' && (ver.checked === null || !ver.environments || ver.environments.length === 0)) errs.push(at + ': verified state needs a date and environments');
     });
@@ -214,7 +218,19 @@ var MUT = [
     ['empty fictionalBrand', function (d) { d.items[W].fictionalBrand = ''; }],
     ['fictionalBrand over 40 characters', function (d) { d.items[W].fictionalBrand = 'x'.repeat(41); }],
     ['fictionalBrand not a string', function (d) { d.items[W].fictionalBrand = 5; }],
-    ['control character in fictionalBrand', function (d) { d.items[W].fictionalBrand = 'IKIMA\n'; }]
+    ['control character in fictionalBrand', function (d) { d.items[W].fictionalBrand = 'IKIMA\n'; }],
+    ['access with an unknown scope', function (d) { d.items[W].access = { scope: 'public', distribution: 'disabled' }; }],
+    ['access with scope private (PRIVATE is status draft)', function (d) { d.items[W].access = { scope: 'private', distribution: 'disabled' }; }],
+    ['access with an unknown distribution', function (d) { d.items[W].access = { scope: 'full', distribution: 'open' }; }],
+    ['access with upper-case values', function (d) { d.items[W].access = { scope: 'FULL', distribution: 'FREE' }; }],
+    ['access preview + free (preview hands out nothing)', function (d) { d.items[W].access = { scope: 'preview', distribution: 'free' }; }],
+    ['access preview + paid', function (d) { d.items[V].access = { scope: 'preview', distribution: 'paid' }; }],
+    ['access without distribution', function (d) { d.items[W].access = { scope: 'full' }; }],
+    ['access with an unknown key', function (d) { d.items[W].access = { scope: 'full', distribution: 'free', price: 100 }; }],
+    ['access scope not a string', function (d) { d.items[W].access = { scope: true, distribution: 'free' }; }],
+    ['access as a string', function (d) { d.items[W].access = 'full'; }],
+    ['access as a list', function (d) { d.items[W].access = ['full', 'free']; }],
+    ['access with a prototype-key scope', function (d) { d.items[W].access = { scope: 'constructor', distribution: 'free' }; }]
 ];
 MUT.forEach(function (m) {
     var d = clone(catalog); m[1](d);
@@ -231,6 +247,13 @@ MUT.forEach(function (m) {
     var p = phpResult(null, txt);
     check('reject {} / [] swap in PHP: ' + m[0], p.errors.length > 0 && p.items.length < catalog.items.length, p.errors.slice(0, 1));
 });
+// G14: the valid access pairs are accepted by the schema, the rules and PHP, on a Web and a video work.
+[['preview', 'disabled'], ['full', 'disabled'], ['full', 'free'], ['full', 'paid']].forEach(function (pair) {
+    var d = clone(catalog); d.items[W].access = { scope: pair[0], distribution: pair[1] }; d.items[V].access = { scope: pair[0], distribution: pair[1] };
+    var errs = schemaErrors(d).concat(ruleErrors(d)); var p = phpResult(d);
+    check('accept access ' + pair.join(' + ') + ' (schema, rules and PHP)', errs.length === 0 && p.errors.length === 0 && p.items.length === catalog.items.length, [errs.slice(0, 2), p.errors.slice(0, 2)]);
+});
+check('G14: the shipped catalog sets no access (all 12 works are preview + disabled by default)', catalog.items.every(function (i) { return !('access' in i); }));
 var dup = clone(catalog); dup.items[1].slug = dup.items[0].slug;
 var pd = phpResult(dup);
 check('php: duplicate slug keeps the first item, drops the second', pd.items.indexOf(catalog.items[0].slug) !== -1 && pd.items.indexOf(catalog.items[1].slug) === -1);
@@ -382,17 +405,21 @@ check('fictionalBrand: HONYOI is the brand in brand-typography\'s own text', JSO
 /* ---------- 4. static files ---------- */
 function walk(dir) { return fs.readdirSync(dir, { withFileTypes: true }).reduce(function (a, e) { var f = path.join(dir, e.name); return a.concat(e.isDirectory() ? walk(f) : [f]); }, []); }
 var files = walk(ASSETS).map(function (f) { return path.relative(ASSETS, f).split(path.sep).join('/'); });
-var allowed = /^(posters\/[a-z0-9-]+\.(avif|webp)|loops\/[a-z0-9-]+\.(webm|mp4)|videos\/[a-z0-9-]+\.(webm|mp4)|demos\/[a-z0-9-]+\/demo\.(php|css|js)|runtime\/demo-runtime\.js)$/;
-check('static: only posters, loops, videos, demo sources and the runtime under assets/design', files.every(function (f) { return allowed.test(f); }), files.filter(function (f) { return !allowed.test(f); }));
+var allowed = /^(posters\/[a-z0-9-]+\.(avif|webp)|loops\/[a-z0-9-]+\.(webm|mp4)|videos\/[a-z0-9-]+\.(webm|mp4)|demos\/[a-z0-9-]+\/demo\.(php|css|js)|runtime\/demo-runtime\.js|demos\/\.htaccess)$/;
+check('static: only posters, loops, videos, demo sources, the runtime and the demo-sources .htaccess (G14) under assets/design', files.every(function (f) { return allowed.test(f); }), files.filter(function (f) { return !allowed.test(f); }));
 check('static: no .html / .htm / .svg / .xml file (would run in the site origin)', files.every(function (f) { return !/\.(html?|svg|xml|xhtml)$/i.test(f); }));
 var published = catalog.items.filter(function (i) { return i.status === 'published' && ['web', 'video'].indexOf(i.medium) !== -1; });
-var shipped = { 'runtime/demo-runtime.js': 1 };
+var shipped = { 'runtime/demo-runtime.js': 1, 'demos/.htaccess': 1 };
 published.forEach(function (i) {
     ['poster', 'posterFallback', 'loop', 'loopFallback'].forEach(function (k) { if (i[k]) shipped[i[k]] = 1; });
     if (i.video) { shipped[i.video.mp4] = 1; if (i.video.webm) shipped[i.video.webm] = 1; }
     if (i.preview.entry) files.filter(function (f) { return f.indexOf(i.preview.entry) === 0; }).forEach(function (f) { shipped[f] = 1; });
 });
 var orphan = files.filter(function (f) { return !shipped[f]; });
+var dh = fs.existsSync(path.join(ASSETS, 'demos/.htaccess')) ? fs.readFileSync(path.join(ASSETS, 'demos/.htaccess'), 'utf8') : '';
+var ch = fs.readFileSync(path.join(ASSETS, '../data/design/.htaccess'), 'utf8');
+var rule = function (t) { return t.slice(t.indexOf('<IfModule mod_authz_core.c>')); };
+check('G14: assets/design/demos/.htaccess denies every request with the same rule as the catalog guard (Require all denied / Deny from all)', '' !== dh && /Require all denied/.test(dh) && /Deny from all/.test(dh) && rule(dh) === rule(ch) && !/Allow from|granted|<Files/i.test(rule(dh)));
 check('package: every design asset belongs to a published work (nothing draft or orphaned ships)', orphan.length === 0, orphan);
 files.filter(function (f) { return /demo\.php$/.test(f); }).forEach(function (f) {
     var src = fs.readFileSync(path.join(ASSETS, f), 'utf8');

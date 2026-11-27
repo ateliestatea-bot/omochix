@@ -1,17 +1,17 @@
 {
-  "release": "Theme 1.33.1 (G13 preparation: page template for the Design Library usage terms page; publish gate stays closed, every work stays verified-local)",
+  "release": "Theme 1.33.2 (G14 PREVIEW: optional catalog key access; the full prompt and code are printed only for access full + free, so all 12 works are view-only by default; the demo sources are no longer served as static files; publish gate stays closed, every work stays verified-local)",
   "commit": "HEAD",
-  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.33.1 tree (G13-T1, local) against the production 1.33.0 manifest (b3dcd3c, sha256 f5830e5a...); the gate and the tests compare the real tree and the config against these values, never the config against itself. 1 added (page-design-library-terms.php) and 2 replaced (inc/shell.php, style.css), 3 steps. Order rule: inc/shell.php after the added template and before style.css. Rollback A restores the 2 replaced files (style.css first, inc/shell.php last); the added template stays unless the owner approves --remove-added (rollback B).",
+  "note": "Independent expectations for tools/release/release.json. Recorded by hand from the 1.33.2 tree (G14 PREVIEW, local RC) against the production 1.33.1 manifest (main 3678fe2, sha256 e3bdd78e...); the gate and the tests compare the real tree and the config against these values, never the config against itself. 1 added (assets/design/demos/.htaccess) and 5 replaced (catalog.schema.json, inc/design-library.php, template-parts/design-library/detail.php, page-design.php, style.css), 6 steps; catalog.json unchanged. Order rules: the demo-sources .htaccess before every replace; inc/design-library.php after the .htaccess and before every replace except catalog.schema.json (documentation, not read at runtime). Rollback A restores the 5 replaced files (style.css first, catalog.schema.json last); the added .htaccess stays unless the owner approves --remove-added (rollback B).",
   "versions": {
     "core": "1.10.0",
-    "theme": "1.33.1"
+    "theme": "1.33.2"
   },
   "packages": {
     "theme": {
-      "baseline_sha256": "f5830e5aa464e33eddb32fbf9fab4fad7ef17a655536672c92135333dc7c615b",
-      "files": 293,
+      "baseline_sha256": "e3bdd78e8fa69c3c50315bc0c529952e4c9985854523b975fe5a3f554317a864",
+      "files": 294,
       "add": 1,
-      "replace": 2
+      "replace": 5
     }
   },
   "unchanged": {
@@ -21,18 +21,26 @@
       "baseline_sha256": "2843d2b869b67e7afbb804af99877e34728a4396054a0c3ee8843fab749c0ff9"
     }
   },
-  "steps": 3,
-  "changed_paths_sha256": "0c06b32d21cec27638a5ee964645bc7045e82b8c351e431e9039f07d57c93993",
+  "steps": 6,
+  "changed_paths_sha256": "b6aaa94d1882f66be8f449e9645aa9846d53fa7a5ba298c43395e70f796a2019",
   "forbidden": {
     "pattern": "#labs|svg-motion|logo-motion#i",
     "allowed": []
   },
   "order_rules": [
     {
-      "path": "theme:inc/shell.php",
+      "path": "theme:assets/design/demos/.htaccess",
       "after_every": "add",
       "before_every": "replace",
       "except": []
+    },
+    {
+      "path": "theme:inc/design-library.php",
+      "after_every": "add",
+      "before_every": "replace",
+      "except": [
+        "theme:assets/data/design/catalog.schema.json"
+      ]
     }
   ],
   "switches": [
@@ -43,8 +51,8 @@
   ],
   "rollback": {
     "first": "theme:style.css",
-    "last": "theme:inc/shell.php",
-    "count": 2
+    "last": "theme:assets/data/design/catalog.schema.json",
+    "count": 5
   },
   "core_version_markers": 11
 }

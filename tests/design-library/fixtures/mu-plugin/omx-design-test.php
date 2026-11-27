@@ -16,6 +16,9 @@
  *    believe it cannot send headers (B9 fail-closed check);
  *  - a request with "X-OMX-Test-Hsts: 1" gets an HSTS header queued early, to
  *    check the demo endpoint keeps headers it does not own;
+ *  - while "<site>/design-access-test.json" exists ({slug: {scope, distribution}
+ *    | "draft"}), those works get that access (G14 PREVIEW / FULL tests) or
+ *    status draft (PRIVATE); the file is written and removed by the tests;
  *  - a request with "X-OMX-Test-Schema: 1" prints, in <head>, what Slim SEO
  *    would print from its schema graph: a minimal WebPage + BreadcrumbList
  *    passed through the real "slim_seo_schema_graph" filter (Slim SEO itself
@@ -33,6 +36,16 @@ if ('local' !== wp_get_environment_type() || 0 !== strpos((string) home_url('/')
 define('OMX_DESIGN_TEST_FIXTURES', dirname(__DIR__)); // __DIR__ is the real path even when this file is symlinked into mu-plugins
 define('OMX_DESIGN_TEST_FLAG', dirname(ABSPATH) . '/design-isolation-test.on');
 define('OMX_DESIGN_UNVERIFIED_FLAG', dirname(ABSPATH) . '/design-isolation-unverified.on');
+define('OMX_DESIGN_ACCESS_FILE', dirname(ABSPATH) . '/design-access-test.json');
+
+/** The access fixture: slug => {scope, distribution} or "draft". [] when the file is absent or not JSON. */
+function omx_design_test_access() {
+    if (!is_file(OMX_DESIGN_ACCESS_FILE)) {
+        return [];
+    }
+    $a = json_decode((string) file_get_contents(OMX_DESIGN_ACCESS_FILE), true);
+    return is_array($a) ? $a : [];
+}
 
 add_filter('omochix_design_catalog_data', static function ($data) {
     if (!is_file(OMX_DESIGN_UNVERIFIED_FLAG) || !is_array($data) || !isset($data['items']) || !is_array($data['items'])) {
@@ -64,6 +77,25 @@ add_filter('omochix_design_catalog_data', static function ($data) {
     return $data;
 });
 
+add_filter('omochix_design_catalog_data', static function ($data) {
+    $acc = omx_design_test_access();
+    if (!$acc || !is_array($data) || !isset($data['items']) || !is_array($data['items'])) {
+        return $data;
+    }
+    foreach ($data['items'] as $i => $item) {
+        $slug = is_array($item) ? ($item['slug'] ?? '') : '';
+        if (!isset($acc[$slug])) {
+            continue;
+        }
+        if ('draft' === $acc[$slug]) {
+            $data['items'][$i]['status'] = 'draft';
+        } else {
+            $data['items'][$i]['access'] = $acc[$slug];
+        }
+    }
+    return $data;
+}, 30);
+
 // The object-decoded copy (used for the {} / [] check) gets the same edits, item for item.
 add_filter('omochix_design_catalog_raw', static function ($raw, $data) {
     unset($data);
@@ -88,6 +120,17 @@ add_filter('omochix_design_catalog_raw', static function ($raw, $data) {
             if ($item instanceof stdClass && isset($item->verification) && $item->verification instanceof stdClass) {
                 $item->verification->state = 'unverified';
             }
+        }
+    }
+    $acc = omx_design_test_access();
+    foreach ($acc ? $raw->items : [] as $item) {
+        if (!$item instanceof stdClass || !isset($item->slug, $acc[$item->slug])) {
+            continue;
+        }
+        if ('draft' === $acc[$item->slug]) {
+            $item->status = 'draft';
+        } else {
+            $item->access = json_decode((string) wp_json_encode($acc[$item->slug]));
         }
     }
     return $raw;

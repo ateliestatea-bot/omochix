@@ -87,13 +87,45 @@ $detail = req('/design/web/3d-interactive/');
 check('detail: iframe sandbox="allow-scripts" only, lazy, titled, no-referrer (B2 markup)', 1 === preg_match('#<iframe[^>]*data-dl-demo[^>]*sandbox="allow-scripts"[^>]*loading="lazy"[^>]*referrerpolicy="no-referrer"[^>]*title="[^"]+"#', $detail['body']) && false === strpos($detail['body'], 'allow-same-origin'));
 check('detail: unique title', false !== strpos($detail['body'], '<title>3D Interactive — Web デザインの見本'));
 check('detail: canonical is the detail URL even without Slim SEO (review finding 2)', false !== strpos($detail['body'], 'rel="canonical" href="' . $base . '/design/web/3d-interactive/"') && false !== strpos($list['body'], 'rel="canonical" href="' . $base . '/design/web/"'));
-check('detail (Web): steps, prompt with copy, code (HTML/CSS/JS), verification, credits, Motion Gallery links', false !== strpos($detail['body'], 'id="dl-d-steps"') && false !== strpos($detail['body'], 'data-dl-copy="dl-prompt-text"') && 3 === substr_count($detail['body'], 'class="dl-codebox"') && false !== strpos($detail['body'], 'data-dl-verification="verified-local"') && false !== strpos($detail['body'], '/learn/motion/orbit/'));
-check('detail (Web): the code is escaped text (no live markup from the demo)', false === strpos($detail['body'], '<canvas class="kd-canvas"') && false !== strpos($detail['body'], '&lt;canvas class=&quot;kd-canvas&quot;'));
+check('detail (Web, PREVIEW default): steps, verification, credits (D-2), Motion Gallery links, the usage notice and the contact link', false !== strpos($detail['body'], 'id="dl-d-steps"') && false !== strpos($detail['body'], 'data-dl-verification="verified-local"') && false !== strpos($detail['body'], '/learn/motion/orbit/') && false !== strpos($detail['body'], '制作：OmochiX（AIツールを活用）') && false !== strpos($detail['body'], 'data-dl-preview') && false !== strpos($detail['body'], 'href="' . $base . '/contact/" data-dl-contact'));
+$PREVIEW_ABSENT = ['data-dl-copy', 'id="dl-prompt-text"', 'id="dl-d-prompt"', 'id="dl-d-code"', 'href="#dl-d-prompt"', 'href="#dl-d-code"', 'class="dl-codebox"', 'data-dl-terms', '利用条件の範囲で自分の制作物に使えます', '書き換えて使ってください', 'AI に頼むときのプロンプト', '&lt;canvas class=&quot;kd-canvas&quot;', '<canvas class="kd-canvas"'];
+$preview_leak = static function ($body, $slug) use ($PREVIEW_ABSENT) {
+    $hit = array_values(array_filter($PREVIEW_ABSENT, static function ($n) use ($body) { return false !== strpos($body, $n); }));
+    $cat = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/wp-theme/omochix-theme/assets/data/design/catalog.json'), true);
+    foreach ($cat['items'] as $it) {
+        if ($it['slug'] === $slug && !empty($it['prompt']['text'])) {
+            // Fragments of the prompt that no other (public) field of the work contains: e.g. a summary may start like the prompt.
+            $pt = $it['prompt']['text']; $others = json_encode(array_diff_key($it, ['prompt' => 1]), JSON_UNESCAPED_UNICODE); $frags = [];
+            // A rendered label can match one short fragment by chance, so the prompt counts as leaked when at least half of
+            // its unique 20-character fragments (and at least 2) are in the HTML; a printed prompt contains all of them.
+            for ($o = 0; $o + 20 <= mb_strlen($pt); $o += 20) { $f = mb_substr($pt, $o, 20); if (false === strpos($others, $f)) { $frags[] = $f; } }
+            if (count($frags) < 4) { $hit[] = 'too few unique prompt fragments to test with'; }
+            $found = 0;
+            foreach ($frags as $f) { if (false !== strpos($body, $f) || false !== strpos($body, htmlspecialchars($f, ENT_QUOTES))) { $found++; } }
+            if ($found >= max(2, (int) ceil(count($frags) / 2))) { $hit[] = 'prompt text'; }
+        }
+        if ($it['slug'] === $slug && 'web' === $it['medium']) {
+            $css = (string) file_get_contents(dirname(__DIR__, 2) . '/wp-theme/omochix-theme/assets/design/demos/' . $slug . '/demo.css');
+            $js  = (string) file_get_contents(dirname(__DIR__, 2) . '/wp-theme/omochix-theme/assets/design/demos/' . $slug . '/demo.js');
+            foreach ([substr(trim($css), 0, 60), substr(trim($js), 0, 60), htmlspecialchars(substr(trim($js), 0, 60), ENT_QUOTES)] as $frag) { if ('' !== $frag && false !== strpos($body, $frag)) { $hit[] = 'source text'; } }
+        }
+    }
+    return $hit;
+};
+$catalog_g14 = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/wp-theme/omochix-theme/assets/data/design/catalog.json'), true)['items'];
+$pub_web = array_values(array_map(static function ($i) { return $i['slug']; }, array_filter($catalog_g14, static function ($i) { return 'web' === $i['medium'] && 'published' === $i['status']; })));
+$pub_video = array_values(array_map(static function ($i) { return $i['slug']; }, array_filter($catalog_g14, static function ($i) { return 'video' === $i['medium'] && 'published' === $i['status']; })));
+check('G14: the PREVIEW checks cover every published work of the catalog (' . count($pub_web) . ' Web + ' . count($pub_video) . ' video)', 9 === count($pub_web) && 3 === count($pub_video));
+foreach ($pub_web as $s) {
+    $pd = req("/design/web/$s/");
+    $leak = $preview_leak($pd['body'], $s);
+    check("PREVIEW web $s: 200, no full prompt / code / copy button / TOC link / license wording in the HTML, the usage notice is there", 200 === $pd['code'] && !$leak && false !== strpos($pd['body'], '現時点ではコード・プロンプト・素材の配布および商用利用の許諾は行っていません'), implode(', ', $leak));
+}
 foreach ($videos as $s) {
     $vd = req("/design/video/$s/");
     $body = $vd['body'];
     check("detail video $s: <video controls preload=none> with webm + mp4, no iframe, no demo link, no code block", 1 === preg_match('#<video class="dl-stage__video" controls playsinline muted preload="none"#', $body) && false !== strpos($body, "videos/$s.webm") && false !== strpos($body, "videos/$s.mp4") && false === strpos($body, '<iframe') && false === strpos($body, '/design/demo/') && false === strpos($body, 'dl-codebox'));
-    check("detail video $s: steps, prompt, verification and credits shown", false !== strpos($body, 'id="dl-d-steps"') && false !== strpos($body, 'id="dl-prompt-text"') && false !== strpos($body, 'data-dl-verification="verified-local"') && false !== strpos($body, '自作・オリジナル'));
+    check("detail video $s: steps, verification and credits shown; PREVIEW: no prompt, no copy, the usage notice", false !== strpos($body, 'id="dl-d-steps"') && !$preview_leak($body, $s) && false !== strpos($body, 'data-dl-verification="verified-local"') && false !== strpos($body, '制作：OmochiX（AIツールを活用）') && false !== strpos($body, 'data-dl-preview'));
     check("detail video $s: no create / generate / Motion Studio button", !preg_match('#(Motion Studio で作る|この作品を作る|生成する|data-dl-motion-studio|localhost:3000)#u', $body));
     $f = req("/wp-content/themes/omochix-theme/assets/design/videos/$s.mp4", ['method' => 'HEAD']);
     check("video file $s.mp4 is served as video/mp4", 200 === $f['code'] && 0 === strpos(hv($f, 'content-type'), 'video/mp4'));
@@ -141,6 +173,42 @@ foreach (['posters/isolation-probe.avif', 'demos/isolation-probe/demo.php', 'pos
     $served = preg_match('#^(image|video)/#', hv($r, 'content-type')) || false !== strpos($r['body'], 'Isolation probe') || false !== strpos($r['body'], '__probe');
     check("B10 $p is not in the theme and not served", !file_exists(dirname(__DIR__, 2) . '/wp-theme/omochix-theme/assets/design/' . $p) && !$served, $r['code'] . ' ' . hv($r, 'content-type'));
 }
+
+// ------------------------------------------------------------ G14 PREVIEW / FULL / PAID / PRIVATE (access fixture file)
+foreach ($pub_video as $s) {
+    $bv = req("/design/video/$s/");
+    check("PREVIEW video $s: 200, no prompt in the HTML, the usage notice is there", 200 === $bv['code'] && !$preview_leak($bv['body'], $s) && false !== strpos($bv['body'], 'data-dl-preview'));
+}
+$lt = req('/design/'); $lw = req('/design/web/');
+check('PREVIEW lists: the lead says code / prompts are not handed out, and does not promise prompts', false !== strpos($lt['body'], 'data-dl-preview-note') && false === strpos($lt['body'], 'AI に頼むときのプロンプトをまとめています') && false !== strpos($lw['body'], 'data-dl-preview-note'));
+// FULL+FREE needs the published usage terms page (omochix_design_can_show_sources(), review L2/N1): say so plainly if the site lacks it.
+$tp = req('/design-library-terms/');
+check('precondition for the FULL+FREE checks: the local site publishes /design-library-terms/ (200)', 200 === $tp['code'], (string) $tp['code']);
+$accfile = $site . '/design-access-test.json';
+register_shutdown_function(static function () use ($accfile) { if (is_file($accfile)) { unlink($accfile); } }); // never leave the site in FULL / draft state
+file_put_contents($accfile, json_encode(['3d-interactive' => ['scope' => 'full', 'distribution' => 'free'], 'data-chart-explainer' => ['scope' => 'full', 'distribution' => 'free'],
+    'bento-saas' => ['scope' => 'full', 'distribution' => 'paid'], 'logo-reveal-short' => ['scope' => 'full', 'distribution' => 'paid'],
+    'liquid-glass' => ['scope' => 'full', 'distribution' => 'disabled'], 'dark-luxury' => 'draft']));
+$fd = req('/design/web/3d-interactive/');
+check('FULL+FREE web: steps, prompt with copy, code (HTML/CSS/JS), verification, credits, Motion Gallery links (the pre-G14 detail)', false !== strpos($fd['body'], 'id="dl-d-steps"') && false !== strpos($fd['body'], 'data-dl-copy="dl-prompt-text"') && 3 === substr_count($fd['body'], 'class="dl-codebox"') && false !== strpos($fd['body'], 'data-dl-verification="verified-local"') && false !== strpos($fd['body'], '/learn/motion/orbit/') && false !== strpos($fd['body'], 'href="#dl-d-prompt"') && false !== strpos($fd['body'], 'href="#dl-d-code"'));
+$ctl = $preview_leak($fd['body'], '3d-interactive');
+check('control: the leak detector finds the prompt text and the source text on the FULL+FREE page (so PREVIEW "nothing found" means something)', in_array('prompt text', $ctl, true) && in_array('source text', $ctl, true), implode(', ', $ctl));
+check('FULL+FREE web: the code is escaped text (no live markup from the demo)', false === strpos($fd['body'], '<canvas class="kd-canvas"') && false !== strpos($fd['body'], '&lt;canvas class=&quot;kd-canvas&quot;'));
+check('FULL+FREE web: the usage wording of the terms is back (data-dl-terms), no PREVIEW notice', 2 === substr_count($fd['body'], 'data-dl-terms>') && false === strpos($fd['body'], 'data-dl-preview'));
+$fv = req('/design/video/data-chart-explainer/');
+check('FULL+FREE video: prompt with copy, no code block, no PREVIEW notice', false !== strpos($fv['body'], 'id="dl-prompt-text"') && false !== strpos($fv['body'], 'data-dl-copy="dl-prompt-text"') && false === strpos($fv['body'], 'dl-codebox') && false === strpos($fv['body'], 'data-dl-preview'));
+foreach (['bento-saas' => 'web', 'logo-reveal-short' => 'video', 'liquid-glass' => 'web'] as $s => $m) {
+    $pp = req("/design/$m/$s/");
+    $leak = $preview_leak($pp['body'], $s);
+    check("FULL+" . ('liquid-glass' === $s ? 'DISABLED' : 'PAID') . " $m $s: 200 and nothing of the full prompt / code (no purchase check exists)", 200 === $pp['code'] && !$leak && false !== strpos($pp['body'], 'data-dl-preview'), implode(', ', $leak));
+}
+$pv2 = req('/design/web/bento-saas/?paid=1&purchased=1&entitlement=1');
+check('FULL+PAID: query parameters claiming a purchase change nothing (noindex filtered list aside, no sources)', !$preview_leak($pv2['body'], 'bento-saas'));
+check('PRIVATE (status draft): the detail and the demo are 404 and the list does not show it', 404 === req('/design/web/dark-luxury/')['code'] && 404 === req('/design/demo/web/dark-luxury/')['code'] && false === strpos(req('/design/web/')['body'], '/design/web/dark-luxury/'));
+$lf = req('/design/web/');
+check('FULL+FREE in the medium: the Web list lead mentions prompts again', false !== strpos($lf['body'], 'AI に頼むときのプロンプトをまとめています') && false === strpos($lf['body'], 'data-dl-preview-note'));
+unlink($accfile);
+check('access fixture removed: 3d-interactive is PREVIEW again', !$preview_leak(req('/design/web/3d-interactive/')['body'], '3d-interactive'));
 
 // ------------------------------------------------------------ demo gate (every item treated as unverified)
 unlink($flag);

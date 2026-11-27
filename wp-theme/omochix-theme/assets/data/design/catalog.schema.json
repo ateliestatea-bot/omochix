@@ -121,6 +121,30 @@
             }
           ]
         },
+        "access": {
+          "description": "G14 PREVIEW. Optional; absent = scope preview + distribution disabled (the full prompt and code are not printed). Allowed pairs: preview + disabled, full + disabled, full + free (the detail page prints the prompt and code), full + paid (stays closed until a server-side purchase check exists). PRIVATE is status draft, not an access value. The pair rule is checked by the PHP validator and tests/design-library/catalog-check.js.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scope",
+            "distribution"
+          ],
+          "properties": {
+            "scope": {
+              "enum": [
+                "preview",
+                "full"
+              ]
+            },
+            "distribution": {
+              "enum": [
+                "disabled",
+                "free",
+                "paid"
+              ]
+            }
+          }
+        },
         "fictionalBrand": {
           "description": "The fictional brand name shown inside the work (detail notice N3, poster alt N6, structured data N7). Optional: only when the work's own content shows a brand name; never invented.",
           "allOf": [
