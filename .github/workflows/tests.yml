@@ -124,3 +124,10 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
+
+      - name: Security layer tests
+        # The always-on Web 2.0 security layer (wp-plugin/omochix-core/includes/web2/security.php,
+        # docs/web2/sec/): navigation block references and the fallback menu (review N-1). Its own
+        # step, so the Web 2.0 tests step above stays exactly as the inventory pins it.
+        if: ${{ !cancelled() }}
+        run: php tests/security/run.php
