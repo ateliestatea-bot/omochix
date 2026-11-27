@@ -1076,6 +1076,11 @@ add_filter('register_block_type_args', $sec_cb_name, 9999, 2);
 $sec_args = ['render_callback' => $plain, 'title' => 'Navigation'];
 check('N-1 one wrapper: while the always-on security layer\'s filter is registered, the glossary leaves the callback alone (wrapped once)', $sec_args === omochix_core_glossary_nav_block_args($sec_args, 'core/navigation'));
 $sec_off();
+if (!function_exists('omochix_core_nav_render_closed')) { function omochix_core_nav_render_closed($args, $name = '') { return $args; } }
+$closed_saved = $GLOBALS['hooks']['register_block_type_args'] ?? null;
+add_filter('register_block_type_args', 'omochix_core_nav_render_closed', 9999, 2);
+check('N-1 one wrapper: while Core has closed navigation (security layer unavailable) the glossary leaves the callback alone too', $sec_args === omochix_core_glossary_nav_block_args($sec_args, 'core/navigation'));
+$GLOBALS['hooks']['register_block_type_args'] = $closed_saved;
 check('N-1 one wrapper: without that filter (security file missing or broken) the glossary still wraps', $plain !== omochix_core_glossary_nav_block_args($sec_args, 'core/navigation')['render_callback']);
 $GLOBALS['caps'] = ['edit_others_omx_glossaries' => true, 'edit_others_posts' => true];
 check('N-1 the same answer for editors (a page built for one viewer may be cached for the next)', '' === $cb(['ref' => $hid_pub], '', $nb(['ref' => $hid_pub])) && '' === $cb(['ref' => $vis], '', $nb(['ref' => $vis])) && 'NAV' === $cb(['ref' => $navm], '', $nb(['ref' => $navm])));

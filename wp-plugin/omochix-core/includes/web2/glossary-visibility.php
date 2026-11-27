@@ -771,6 +771,11 @@ function omochix_core_glossary_nav_block_args( $args, $name = '' ) {
 	if ( function_exists( 'omochix_core_security_nav_block_args' ) && false !== has_filter( 'register_block_type_args', 'omochix_core_security_nav_block_args' ) ) {
 		return $args;
 	}
+	// The same while Core has closed navigation because that layer could not be loaded (omochix-core.php,
+	// hooks stream): every navigation block renders nothing already.
+	if ( function_exists( 'omochix_core_nav_render_closed' ) && false !== has_filter( 'register_block_type_args', 'omochix_core_nav_render_closed' ) ) {
+		return $args;
+	}
 	$inner                   = $args['render_callback'];
 	$args['render_callback'] = static function ( $attributes, $content = '', $block = null ) use ( $inner ) {
 		if ( ! omochix_core_glossary_nav_ref_guard( $attributes, $block ) ) {
