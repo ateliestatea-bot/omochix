@@ -42,6 +42,7 @@ function omochix_core_glossary_files() {
 		'includes/web2/glossary-visibility.php',
 		'includes/web2/glossary-guard.php',
 		'admin/web2/glossary-admin.php',
+		'admin/web2/glossary-import.php',
 	);
 }
 
