@@ -282,9 +282,8 @@ add_filter( 'rest_wp_navigation_query', 'omochix_core_security_nav_rest_query', 
  *
  * For a user who cannot edit others' posts, such a row (and a revision of
  * one) is answered like an ID that does not exist: "(no title)", no
- * comments, zero counts. A row the user wrote stays visible to them (glossary
- * terms are written by editors only; other plugins' rows keep working for
- * their authors). Registered post types are left to WordPress and to
+ * comments, zero counts. Authorship does not count (a former editor keeps no
+ * access to terms they wrote). Registered post types are left to WordPress and to
  * the module that registers them. The screen is recognised by its own list
  * query, so no request data is read.
  *
@@ -313,11 +312,9 @@ function omochix_core_security_orphan_row_masked( $post ) {
 	if ( '' === $type || post_type_exists( $type ) ) {
 		return false;
 	}
-	// A row the user wrote is theirs to see (the rows of another plugin's switched-off post type, for example).
-	$me = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
-	if ( $me > 0 && (int) $owner->post_author === $me ) {
-		return false;
-	}
+	// Only the user's current capability counts, never the row's author: an editor who wrote a private
+	// term and was later made an author must not keep seeing it (the glossary itself grants nothing for
+	// authorship either). Other plugins' rows lose their title here too for such users, on this screen only.
 	return ! current_user_can( 'edit_others_posts' );
 }
 
