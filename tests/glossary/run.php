@@ -1227,7 +1227,7 @@ omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
 // =================================================== T-SAFE: static
 $src = '';
 $ADMIN_FILE = 'admin/web2/glossary-admin.php';
-foreach (array_diff(omochix_core_glossary_files(), [$ADMIN_FILE]) as $f) { $src .= file_get_contents("$PLUGIN/$f"); }
+foreach (array_filter(omochix_core_glossary_files(), static fn($f) => 0 !== strpos($f, 'admin/web2/')) as $f) { $src .= file_get_contents("$PLUGIN/$f"); }
 $src .= file_get_contents("$PLUGIN/includes/web2/glossary-loader.php");
 $ids = []; $vars = [];
 foreach (token_get_all($src) as $t) { if (is_array($t) && T_STRING === $t[0]) { $ids[] = strtolower($t[1]); } if (is_array($t) && T_VARIABLE === $t[0]) { $vars[] = $t[1]; } if (is_array($t) && in_array($t[0], [T_EVAL, T_INCLUDE, T_INCLUDE_ONCE, T_REQUIRE], true)) { $ids[] = 'T_' . strtoupper($t[1]); } }
@@ -1264,6 +1264,9 @@ $scenarios = [
     'the admin file missing (KH-A)' => static function ($d) { unlink("$d/admin/web2/glossary-admin.php"); },
     'the admin file cut short (KH-A)' => static function ($d) { $f = "$d/admin/web2/glossary-admin.php"; $c = file_get_contents($f); file_put_contents($f, substr($c, 0, (int) (strlen($c) * 0.5))); },
     'the admin file with a syntax error (KH-A)' => static function ($d) { $f = "$d/admin/web2/glossary-admin.php"; file_put_contents($f, str_replace('function omochix_core_glossary_admin_fields() {', 'function omochix_core_glossary_admin_fields( {', file_get_contents($f))); },
+    'the importer file missing (KH-B)' => static function ($d) { unlink("$d/admin/web2/glossary-import.php"); },
+    'the importer file cut short (KH-B)' => static function ($d) { $f = "$d/admin/web2/glossary-import.php"; $c = file_get_contents($f); file_put_contents($f, substr($c, 0, (int) (strlen($c) * 0.5))); },
+    'the importer file with a syntax error (KH-B)' => static function ($d) { $f = "$d/admin/web2/glossary-import.php"; file_put_contents($f, str_replace('function omochix_core_glossary_import_can() {', 'function omochix_core_glossary_import_can( {', file_get_contents($f))); },
     'a file that prints while loading' => static function ($d) { $f = "$d/includes/web2/glossary-caps.php"; file_put_contents($f, str_replace("add_filter( 'user_has_cap'", "echo 'leak';\nadd_filter( 'user_has_cap'", file_get_contents($f))); },
 ];
 foreach ($scenarios as $name => $mutate) {
@@ -1295,7 +1298,7 @@ $post_save = static function ($id, array $raw, $nonce = null) {
 };
 $snap = static function ($id) { return array_map(static fn($k) => get_post_meta($id, $k, true), array_combine(array_keys(omochix_core_glossary_meta_fields()), array_keys(omochix_core_glossary_meta_fields()))); };
 
-check('KH-A loader: the admin file is one of the glossary files (all or nothing, loaded last)', 'admin/web2/glossary-admin.php' === array_slice(omochix_core_glossary_files(), -1)[0] && function_exists('omochix_core_glossary_admin_save'));
+check('KH-A loader: the admin and importer files are glossary files (all or nothing, loaded after the model)', ['admin/web2/glossary-admin.php', 'admin/web2/glossary-import.php'] === array_slice(omochix_core_glossary_files(), -2) && function_exists('omochix_core_glossary_admin_save') && function_exists('omochix_core_glossary_import_plan'));
 check('KH-A hooks: boxes, save (save_post_omx_glossary only), columns', 10 === has_action('add_meta_boxes_omx_glossary', 'omochix_core_glossary_admin_boxes') && 10 === has_action('save_post_omx_glossary', 'omochix_core_glossary_admin_save') && false === has_action('save_post', 'omochix_core_glossary_admin_save') && 10 === has_filter('manage_omx_glossary_posts_columns', 'omochix_core_glossary_admin_columns') && 10 === has_action('manage_omx_glossary_posts_custom_column', 'omochix_core_glossary_admin_cell'));
 
 // ---- boxes and rendering
@@ -1454,6 +1457,219 @@ for ($i = 0; $i < $n; $i++) {
 check('KH-A T-SAFE: every value printed goes through esc_html, esc_attr, esc_textarea, selected or checked', [] === $bad_echo, implode(',', array_unique($bad_echo)));
 check('KH-A T-SAFE: no printf/print and no echo of a function result that is not escaped', 0 === preg_match('/\bprintf\s*\(|\bprint\s+[\'"$]/', $adm_code) && 0 === preg_match('/echo\s+(?!\'|esc_|selected|checked)/', $adm_code));
 $GLOBALS['caps'] = [];
+
+// ======================================================= KH-B JSON importer (drafts only)
+// The stub does not unslash, so the test data has no quotes or backslashes (the isolated WordPress run covers them).
+if (!function_exists('wp_insert_post')) { function wp_insert_post($a, $err = false) { $a = apply_filters('wp_insert_post_data', $a, $a); return ih_add_post($a); } }
+if (!function_exists('get_page_by_path')) { function get_page_by_path($path, $o = 'OBJECT', $type = 'page') { foreach ($GLOBALS['posts'] as $p) { if ($type === $p->post_type && $path === ($GLOBALS['page_uri'][$p->ID] ?? $p->post_name)) { return $p; } } return null; } }
+if (!function_exists('wp_generate_password')) { function wp_generate_password($n = 12, $s = true, $x = false) { return substr(bin2hex(random_bytes($n)), 0, $n); } }
+if (!function_exists('wp_get_session_token')) { function wp_get_session_token() { return $GLOBALS['session_token'] ?? 'session-a'; } }
+if (!function_exists('wp_hash')) { function wp_hash($d, $scheme = 'auth') { return hash_hmac('sha256', (string) $d, 'test-salt-' . $scheme); } }
+if (!function_exists('add_submenu_page')) { function add_submenu_page(...$a) { $GLOBALS['submenus'][] = $a; return 'hook'; } }
+if (!function_exists('metadata_exists')) { function metadata_exists($t, $id, $k) { return isset($GLOBALS['meta'][$id][$k]); } }
+if (!function_exists('clean_post_cache')) { function clean_post_cache($id) {} }
+$GLOBALS['caps'] = ['manage_options' => true, 'edit_others_omx_glossaries' => true, 'edit_post' => true, 'edit_others_posts' => true, 'edit_posts' => true];
+$kbT = static function ($slug, array $over = []) {
+    $t = array_replace(gl_valid(), ['slug' => $slug, 'title' => '用語' . $slug, 'aliases' => ['別名' . $slug],
+        'content_html' => '<p>' . str_repeat('この段落はテスト用の文章で、意味のある説明ではありません。', 16) . '</p><h2>見出し</h2><ul><li>項目</li></ul>',
+        'related' => ['glossary' => [], 'tools' => [], 'learn_pages' => [], 'practice' => [], 'industries' => []]]);
+    foreach ($over as $k => $v) { if (null === $v) { unset($t[$k]); } else { $t[$k] = $v; } }
+    return $t;
+};
+$kbFile = static fn(array $terms) => json_encode(['schema' => 'omochix-glossary-import/1', 'terms' => array_values($terms)], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$kbCount = static fn() => count(array_filter($GLOBALS['posts'], static fn($p) => 'omx_glossary' === $p->post_type));
+$kbFind = static function ($slug) { foreach ($GLOBALS['posts'] as $p) { if ('omx_glossary' === $p->post_type && $slug === $p->post_name) { return $p; } } return null; };
+$kbRun = static function ($bytes) { $plan = omochix_core_glossary_import_plan($bytes); $tok = $plan['ok'] ? omochix_core_glossary_import_approve('import', $plan['sha'], $plan['fingerprint'], $plan['counts']) : ''; return [$plan, $tok]; };
+
+check('KH-B menu: one page under the glossary, manage_options', (static function () { $GLOBALS['submenus'] = []; omochix_core_glossary_import_menu(); return 1 === count($GLOBALS['submenus']) && 'edit.php?post_type=omx_glossary' === $GLOBALS['submenus'][0][0] && 'manage_options' === $GLOBALS['submenus'][0][3]; })());
+
+// ---- 50 terms: dry-run writes nothing, apply creates drafts, the same file again changes nothing
+$fifty = [];
+for ($i = 1; $i <= 50; $i++) { $fifty[] = $kbT('kb-' . $i, ['category' => 0 === $i % 2 ? 'llm' : 'basics', 'related' => ['glossary' => [1 === $i ? 'kb-2' : 'kb-1'], 'tools' => [], 'learn_pages' => [], 'practice' => [], 'industries' => []]]); }
+$f50 = $kbFile($fifty);
+$posts0 = $kbCount(); $meta0 = json_encode($GLOBALS['meta']); $tr0 = json_encode(array_filter(array_keys($GLOBALS['transients'] ?? []), static fn($k) => 0 !== strpos($k, 'omochix_core_glossary_import_ap_')));
+$plan = omochix_core_glossary_import_plan($f50);
+check('KH-B dry-run 50 terms: all new, no error, publish rules met; nothing written', $plan['ok'] && 50 === $plan['counts']['create'] && 0 === $plan['counts']['error'] && [] === array_filter($plan['rows'], static fn($r) => $r['publish']) && $posts0 === $kbCount() && $meta0 === json_encode($GLOBALS['meta']), json_encode($plan['counts']));
+check('KH-B dry-run: the SHA-256 is that of the file', hash('sha256', $f50) === $plan['sha']);
+[$plan, $tok] = $kbRun($f50);
+$res = omochix_core_glossary_import_apply($f50, $tok);
+$k1 = $kbFind('kb-1'); $k2 = $kbFind('kb-2');
+check('KH-B apply: 50 drafts created, every one a draft with its slug, meta, category and related term', $res['ok'] && 50 === count($res['done']) && $posts0 + 50 === $kbCount() && $k1 && 'draft' === $k1->post_status && 'kb-1' === $k1->post_name && 'てすとようご' === get_post_meta($k1->ID, 'glossary_reading', true) && [$k2->ID] === get_post_meta($k1->ID, 'related_glossary_ids', true) && [$k1->ID] === get_post_meta($k2->ID, 'related_glossary_ids', true) && ['llm'] === wp_get_object_terms($k2->ID, 'omx_glossary_category', ['fields' => 'slugs']), $res['message'] . json_encode($res['failed'], JSON_UNESCAPED_UNICODE));
+check('KH-B apply: no post of another type and no status other than draft', [] === array_filter($res['done'], static fn($d) => 'draft' !== get_post($d['id'])->post_status || 'omx_glossary' !== get_post($d['id'])->post_type));
+$plan = omochix_core_glossary_import_plan($f50);
+check('KH-B same file again: 50 unchanged (mutual related terms included), nothing to create', $plan['ok'] && 50 === $plan['counts']['unchanged'] && 0 === $plan['counts']['create'], json_encode($plan['counts']));
+[$plan, $tok] = $kbRun($f50); $n = $kbCount(); $res = omochix_core_glossary_import_apply($f50, $tok);
+check('KH-B same file applied again: no duplicate, nothing written', $res['ok'] && $n === $kbCount() && [] === $res['done']);
+
+// ---- update an existing draft, with a backup
+$fifty[2]['summary'] = 'これは更新したあとの要約で、取り込みで既存の下書きを更新できることを確かめるための文章です。';
+$f50b = $kbFile($fifty);
+$before3 = omochix_core_glossary_import_post_state($kbFind('kb-3')->ID);
+[$plan, $tok] = $kbRun($f50b);
+$row3 = array_values(array_filter($plan['rows'], static fn($r) => 'kb-3' === $r['slug']))[0];
+check('KH-B existing draft: one update, the changed field named, the rest unchanged', 1 === $plan['counts']['update'] && 49 === $plan['counts']['unchanged'] && ['glossary_summary'] === $row3['changes']);
+$res = omochix_core_glossary_import_apply($f50b, $tok);
+check('KH-B existing draft updated, still a draft, backup holds the old values', $res['ok'] && 'draft' === $kbFind('kb-3')->post_status && $fifty[2]['summary'] === get_post_meta($kbFind('kb-3')->ID, 'glossary_summary', true) && 1 === count($res['backup']['updated']) && $before3 === $res['backup']['updated'][0]['before'] && gl_valid()['summary'] === $res['backup']['updated'][0]['meta']['glossary_summary']);
+$backup = json_encode($res['backup'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+// ---- restore
+$bad = json_decode($backup, true); $bad['updated'][0]['meta']['glossary_summary'] = 'すり替え';
+$badp = omochix_core_glossary_import_restore_plan(json_encode($bad, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+check('KH-B restore: a backup changed by hand is refused by its signature (while the genuine one is restorable)', !$badp['ok'] && [] === $badp['rows'] && false !== strpos(implode(' ', $badp['errors']), '書き換えられて'));
+$rp = omochix_core_glossary_import_restore_plan($backup);
+check('KH-B restore dry-run: the updated draft can go back; nothing written', $rp['ok'] && 1 === count($rp['rows']) && 'restore' === $rp['rows'][0]['action'] && $fifty[2]['summary'] === get_post_meta($kbFind('kb-3')->ID, 'glossary_summary', true));
+$rtok = omochix_core_glossary_import_approve('restore', $rp['sha'], $rp['fingerprint'], []);
+$rr = omochix_core_glossary_import_restore_apply($backup, $rtok);
+check('KH-B restore: the draft is back to its state before the import, still a draft', $rr['ok'] && $before3 === omochix_core_glossary_import_post_state($kbFind('kb-3')->ID) && 'draft' === $kbFind('kb-3')->post_status, json_encode($rr, JSON_UNESCAPED_UNICODE));
+$rp = omochix_core_glossary_import_restore_plan($backup);
+check('KH-B restore: once restored (or changed since the import), the draft is not overwritten again', !$rp['ok'] && 'conflict' === $rp['rows'][0]['action']);
+check('KH-B restore: a token for an import cannot be used for a restore', is_string(omochix_core_glossary_import_claim('restore', omochix_core_glossary_import_approve('import', 'x', 'y', []))));
+
+// ---- live terms are never touched
+$kbFind('kb-4')->post_status = 'publish';
+foreach (['publish', 'future', 'private', 'pending', 'trash'] as $st) {
+    $kbFind('kb-4')->post_status = $st;
+    $p = omochix_core_glossary_import_plan($f50b);
+    $r4 = array_values(array_filter($p['rows'], static fn($r) => 'kb-4' === $r['slug']))[0];
+    check("KH-B existing $st term with the same slug: conflict, the whole file cannot be applied (no token)", !$p['ok'] && 'conflict' === $r4['action'] && 1 === $p['counts']['conflict']);
+}
+$kbFind('kb-4')->post_status = 'draft';
+
+// ---- the file itself
+$bad_files = [
+    'not JSON' => '{"schema":',
+    'a list, not an object' => '[1,2]',
+    'wrong schema' => json_encode(['schema' => 'x', 'terms' => [$kbT('kb-x')]]),
+    'an extra top-level key' => json_encode(['schema' => 'omochix-glossary-import/1', 'terms' => [$kbT('kb-x')], 'status' => 'publish']),
+    'no terms' => json_encode(['schema' => 'omochix-glossary-import/1', 'terms' => []]),
+    '101 terms' => $kbFile(array_map(static fn($i) => $kbT('kb-m' . $i), range(1, 101))),
+    'not UTF-8' => "{\"schema\":\"omochix-glossary-import/1\",\"terms\":[\"\xff\"]}",
+    'over 3 MB' => str_repeat(' ', 3 * 1024 * 1024 + 1),
+    'empty' => '',
+];
+foreach ($bad_files as $why => $b) { $p = omochix_core_glossary_import_plan($b); check("KH-B file refused ($why): an error, no row, not applicable", !$p['ok'] && [] !== $p['errors'] && [] === $p['rows']); }
+$big = $kbFile([$kbT('kb-big', ['content_html' => '<p>' . str_repeat('あ', 1100000) . '</p>'])]);
+check('KH-B a valid JSON file over 3 MB is refused by its size before decoding', strlen($big) > 3 * 1024 * 1024 && [] !== preg_grep('/大きすぎます/u', omochix_core_glossary_import_plan($big)['errors']));
+
+// ---- one term at a time
+$cases = [
+    'duplicate slug in the file' => [[$kbT('kb-d'), $kbT('kb-d')], 'slug：このファイルの中で重複'],
+    'unknown field' => [[$kbT('kb-e', ['post_status' => 'publish'])], 'post_status：未知の項目'],
+    'reserved slug' => [[$kbT('feed')], 'slug：'],
+    'reading too long' => [[$kbT('kb-e', ['reading' => str_repeat('あ', 61)])], 'glossary_reading：保存すると値が変わります'],
+    'summary too long' => [[$kbT('kb-e', ['summary' => str_repeat('あ', 121)])], 'glossary_summary：保存すると値が変わります'],
+    'title too long' => [[$kbT('kb-e', ['title' => str_repeat('あ', 41)])], 'title：'],
+    'markup in the summary' => [[$kbT('kb-e', ['summary' => '<b>' . gl_valid()['summary'] . '</b>'])], 'glossary_summary：'],
+    'a type mismatch' => [[$kbT('kb-e', ['review_days' => '180'])], 'review_days：整数'],
+    'http URL' => [[$kbT('kb-e', ['sources' => [['url' => 'http://docs.example.org/a', 'title' => 'T', 'publisher' => 'P', 'kind' => 'docs', 'checked_on' => '2026-11-20']]])], 'sources[0].url'],
+    'internal IP URL' => [[$kbT('kb-e', ['sources' => [['url' => 'https://10.0.0.1/a', 'title' => 'T', 'publisher' => 'P', 'kind' => 'docs', 'checked_on' => '2026-11-20']]])], 'sources[0].url'],
+    'token in a URL' => [[$kbT('kb-e', ['sources' => [['url' => 'https://docs.example.org/a?access_token=abc', 'title' => 'T', 'publisher' => 'P', 'kind' => 'docs', 'checked_on' => '2026-11-20']]])], 'sources[0].url'],
+    'a secret in the text' => [[$kbT('kb-e', ['content_html' => '<p>' . str_repeat('説明の文章です。', 60) . ' AKIAABCDEFGHIJKLMNOP</p>'])], '秘密情報らしい文字列'],
+    'forbidden HTML' => [[$kbT('kb-e', ['content_html' => '<p>' . str_repeat('説明の文章です。', 60) . '</p><script>x</script>'])], 'content_html：'],
+    'unknown category' => [[$kbT('kb-e', ['category' => 'no-such-category'])], 'category：「no-such-category」というカテゴリはありません'],
+    'nine sources' => [[$kbT('kb-e', ['sources' => array_map(static fn($i) => ['url' => "https://docs.example.org/s$i", 'title' => 'T', 'publisher' => 'P', 'kind' => 'docs', 'checked_on' => '2026-11-20'], range(1, 9))])], 'glossary_sources：'],
+];
+foreach ($cases as $why => [$case_terms, $needle]) { // Not $terms: at the top level that is the stub's $GLOBALS['terms'].
+    $p = omochix_core_glossary_import_plan($kbFile($case_terms));
+    $msgs = array_merge(...array_map(static fn($r) => $r['errors'], $p['rows']));
+    check("KH-B term refused ($why): error, not applicable", !$p['ok'] && [] !== array_filter($msgs, static fn($m) => false !== strpos($m, $needle)), json_encode($msgs, JSON_UNESCAPED_UNICODE));
+}
+$p = omochix_core_glossary_import_plan($kbFile([$kbT('kb-e', ['content_html' => '<p>' . str_repeat('説明の文章です。', 60) . ' AKIAABCDEFGHIJKLMNOP</p>'])]));
+check('KH-B a secret is named by kind, never echoed', false === strpos(json_encode($p, JSON_UNESCAPED_UNICODE), 'AKIAABCDEFGHIJKLMNOP'));
+check('KH-B no category is created by an import', null === ih_term('omx_glossary_category', 'no-such-category'));
+$p = omochix_core_glossary_import_plan($kbFile([$kbT('kb-inc', ['summary' => '短い', 'sources' => [], 'verified_on' => null])]));
+check('KH-B an unfinished term can be imported as a draft, but is never called publishable', $p['ok'] && 1 === $p['counts']['create'] && [] !== $p['rows'][0]['publish']);
+
+// ---- related: unknown, self, circular, wrong type
+$tool = ih_add_post(['post_type' => 'ai_tool', 'post_status' => 'publish', 'post_name' => 'kb-tool', 'post_title' => 'Tool']);
+ih_add_post(['post_type' => 'post', 'post_status' => 'publish', 'post_name' => 'kb-not-a-tool', 'post_title' => 'A post']);
+$p = omochix_core_glossary_import_plan($kbFile([$kbT('kb-r1', ['related' => ['glossary' => ['kb-r1', 'kb-r2', 'kb-none'], 'tools' => ['kb-tool', 'kb-not-a-tool'], 'learn_pages' => [], 'practice' => [], 'industries' => []]]), $kbT('kb-r2', ['related' => ['glossary' => ['kb-r1'], 'tools' => [], 'learn_pages' => [], 'practice' => [], 'industries' => []]])]));
+$r1 = $p['rows'][0];
+check('KH-B related: self dropped, unknown term and a post of the wrong type dropped with warnings; nothing created', $p['ok'] && ['@kb-r2'] === $r1['values']['meta']['related_glossary_ids'] && [$tool] === $r1['values']['meta']['related_tool_ids'] && 3 === count(array_filter($r1['warnings'], static fn($w) => 0 === strpos($w, 'related.'))) && null === $kbFind('kb-none'));
+[$p, $tok] = $kbRun($f = $kbFile([$kbT('kb-r1', ['related' => ['glossary' => ['kb-r2'], 'tools' => [], 'learn_pages' => [], 'practice' => [], 'industries' => []]]), $kbT('kb-r2', ['related' => ['glossary' => ['kb-r1'], 'tools' => [], 'learn_pages' => [], 'practice' => [], 'industries' => []]])]));
+$res = omochix_core_glossary_import_apply($f, $tok);
+check('KH-B related: two terms pointing at each other (circular) are both linked, once', $res['ok'] && [$kbFind('kb-r2')->ID] === get_post_meta($kbFind('kb-r1')->ID, 'related_glossary_ids', true) && [$kbFind('kb-r1')->ID] === get_post_meta($kbFind('kb-r2')->ID, 'related_glossary_ids', true));
+check('KH-B other post type with the same slug: a warning only, never touched', [] !== array_filter(omochix_core_glossary_import_plan($kbFile([$kbT('kb-not-a-tool')]))['rows'][0]['warnings'], static fn($w) => false !== strpos($w, '種類「post」')));
+
+// ---- approval: no dry-run, SHA-256, change after dry-run, reuse, expiry, other session or user
+$fx = $kbFile([$kbT('kb-a1')]); $fy = $kbFile([$kbT('kb-a2')]);
+$n = $kbCount();
+check('KH-B no dry-run: an empty or made-up token applies nothing', !omochix_core_glossary_import_apply($fx, '')['ok'] && !omochix_core_glossary_import_apply($fx, str_repeat('a', 32))['ok'] && $n === $kbCount());
+[$p, $tok] = $kbRun($fx);
+$r = omochix_core_glossary_import_apply($fy, $tok);
+check('KH-B SHA-256: another file with the approval of the first applies nothing', !$r['ok'] && false !== strpos($r['message'], 'SHA-256') && $n === $kbCount());
+check('KH-B the approval is used up even by a refused apply (no second try with it)', !omochix_core_glossary_import_apply($fx, $tok)['ok'] && $n === $kbCount());
+[$p, $tok] = $kbRun($f50b);
+update_post_meta($kbFind('kb-5')->ID, 'glossary_en', 'Changed Meanwhile');
+$r = omochix_core_glossary_import_apply($f50b, $tok);
+check('KH-B change after the dry-run (an existing draft edited): nothing applied, dry-run again', !$r['ok'] && false !== strpos($r['message'], '変わりました') && 'Changed Meanwhile' === get_post_meta($kbFind('kb-5')->ID, 'glossary_en', true));
+[$p, $tok] = $kbRun($fx);
+wp_insert_term('新しいカテゴリ', 'omx_glossary_category', ['slug' => 'kb-new-cat']);
+check('KH-B change after the dry-run (a category added): nothing applied', !omochix_core_glossary_import_apply($fx, $tok)['ok'] && $n === $kbCount());
+[$p, $tok] = $kbRun($fx);
+$first = omochix_core_glossary_import_claim('import', $tok); $second = omochix_core_glossary_import_claim('import', $tok);
+check('KH-B double submit: the approval is taken once; the second request is refused', is_array($first) && is_string($second));
+[$p, $tok] = $kbRun($fx); $pin = omochix_core_glossary_clock();
+omochix_core_glossary_clock($pin + 16 * 60);
+check('KH-B an approval older than 15 minutes is refused', !omochix_core_glossary_import_apply($fx, $tok)['ok'] && $n === $kbCount());
+omochix_core_glossary_clock($pin);
+[$p, $tok] = $kbRun($fx); $GLOBALS['session_token'] = 'session-b';
+check('KH-B an approval from another login session is refused', !omochix_core_glossary_import_apply($fx, $tok)['ok'] && $n === $kbCount());
+unset($GLOBALS['session_token']);
+
+// ---- a failure in the middle, then a second run
+$fz = $kbFile([$kbT('kb-f1'), $kbT('kb-f2'), $kbT('kb-f3')]);
+$break = static function ($d) { if ('kb-f2' === ($d['post_name'] ?? '')) { $d['post_name'] = 'kb-f2-2'; } return $d; };
+add_filter('wp_insert_post_data', $break, 1, 1);
+[$p, $tok] = $kbRun($fz); $r = omochix_core_glossary_import_apply($fz, $tok);
+remove_filter('wp_insert_post_data', $break, 1);
+check('KH-B failure in the middle (WordPress changed the slug): stops, the row before is done, the failed row is listed for a manual check, the rest untouched', !$r['ok'] && ['kb-f1'] === array_column($r['done'], 'slug') && 'kb-f2' === $r['failed']['slug'] && false !== strpos($r['failed']['reason'], 'slug') && 1 === count($r['manual']) && null === $kbFind('kb-f3'));
+[$p, $tok] = $kbRun($fz); $r = omochix_core_glossary_import_apply($fz, $tok);
+check('KH-B second run after the failure: the done row is unchanged, the rest are created', $r['ok'] && ['kb-f2', 'kb-f3'] === array_column($r['done'], 'slug') && 1 === $p['counts']['unchanged']);
+check('KH-B the lock is released after an apply (also after a failure)', !isset($GLOBALS['options']['omochix_core_glossary_import_lock']));
+
+// ---- who may use it
+$fw = $kbFile([$kbT('kb-w')]);
+foreach (['editor without manage_options' => ['edit_others_omx_glossaries' => true, 'edit_others_posts' => true], 'author' => ['edit_posts' => true, 'publish_posts' => true], 'contributor' => ['edit_posts' => true], 'demoted editor' => ['edit_posts' => true], 'administrator without the glossary capability' => ['manage_options' => true]] as $who => $caps) {
+    $GLOBALS['caps'] = $caps;
+    $_POST = ['omochix_glossary_import_step' => 'dryrun', 'omochix_glossary_import_nonce' => 'nonce-omochix_glossary_import_dryrun'];
+    $h = omochix_core_glossary_import_handle_post(); $_POST = [];
+    check("KH-B $who: refused before reading the file", false === omochix_core_glossary_import_can() && isset($h['error']) && !isset($h['plan']));
+}
+$GLOBALS['caps'] = ['manage_options' => true, 'edit_others_omx_glossaries' => true, 'edit_post' => true, 'edit_others_posts' => true, 'edit_posts' => true];
+foreach (['wrong nonce' => 'nonce-x', 'nonce of another step' => 'nonce-omochix_glossary_import_apply'] as $why => $nv) {
+    $_POST = ['omochix_glossary_import_step' => 'dryrun', 'omochix_glossary_import_nonce' => $nv];
+    $h = omochix_core_glossary_import_handle_post(); $_POST = [];
+    check("KH-B $why: refused by the nonce check, before the file is read", isset($h['error']) && !isset($h['plan']) && false !== strpos($h['error'], 'nonce'));
+}
+$_POST = ['omochix_glossary_import_step' => 'dryrun', 'omochix_glossary_import_nonce' => 'nonce-omochix_glossary_import_dryrun'];
+$h = omochix_core_glossary_import_handle_post(); $_POST = [];
+check('KH-B a file that was not uploaded through PHP is refused (no path from the request is read)', isset($h['error']) && !isset($h['plan']));
+$_POST = ['omochix_glossary_import_step' => 'publish', 'omochix_glossary_import_nonce' => 'nonce-omochix_glossary_import_publish'];
+check('KH-B only the four steps exist (no status or other action from the request)', null === omochix_core_glossary_import_handle_post()); $_POST = [];
+
+// ---- T-SAFE of the importer
+$imp_src = (string) file_get_contents("$PLUGIN/admin/web2/glossary-import.php");
+$imp_code = implode('', array_map(static fn($t) => is_array($t) ? (in_array($t[0], [T_COMMENT, T_DOC_COMMENT], true) ? '' : $t[1]) : $t, token_get_all($imp_src)));
+$fn_body = static function ($name) use ($imp_code) { $a = strpos($imp_code, "function $name("); return false === $a ? '' : substr($imp_code, $a, strpos($imp_code, "\n}\n", $a) - $a); };
+$hp = $fn_body('omochix_core_glossary_import_handle_post'); $hu = $fn_body('omochix_core_glossary_import_handle_upload');
+check('KH-B T-SAFE: $_POST only in handle_post, after the nonce and the capability; $_FILES only in handle_upload', '' !== $hp && '' !== $hu && 0 === preg_match('/\$_POST/', str_replace($hp, '', $imp_code)) && 0 === preg_match('/\$_FILES/', str_replace($hu, '', $imp_code)) && strpos($hp, 'wp_verify_nonce') < strpos($hp, "\$_POST['omochix_glossary_import_token']") && strpos($hp, 'omochix_core_glossary_import_can()') < strpos($hp, 'omochix_core_glossary_import_handle_upload('));
+check('KH-B T-SAFE: the upload is read only from PHP\'s own temporary file (is_uploaded_file first), never a path from the request', false !== strpos($hu, 'is_uploaded_file( $f[\'tmp_name\'] )') && strpos($hu, 'is_uploaded_file') < strpos($hu, 'file_get_contents') && 1 === substr_count($imp_code, 'file_get_contents('));
+check('KH-B T-SAFE: no $_GET, $_REQUEST, $_COOKIE, $_SERVER, $wpdb, globals, eval, shell, file writes, remote calls, cron, roles or routes', 0 === preg_match('/\$_(GET|REQUEST|COOKIE|SERVER|ENV)|\$wpdb|\bglobal\b|\$GLOBALS|\beval\b|shell_exec|\bexec\(|system\(|file_put_contents|fopen|unlink|wp_remote_|curl_|wp_schedule|spawn_cron|add_role|add_cap|register_rest_route|header\(|wp_delete_post|wp_trash_post|wp_publish_post/', $imp_code));
+check('KH-B T-SAFE: the only option written is the import lock', 2 === preg_match_all('/add_option\(/', $imp_code) && 0 === preg_match('/update_option\(/', $imp_code) && 0 === preg_match('/(add_option|delete_option|get_option)\(\s*+(?!OMOCHIX_CORE_GLOSSARY_IMPORT_LOCK)/', $imp_code));
+check('KH-B T-SAFE: no post status from anywhere but the literal draft', 1 === preg_match_all("/\\['post_status'\\]\s*=(?!>)/", $imp_code) && 0 === preg_match("/'post_status'\s*=>\s*\\$/", $imp_code) && false !== strpos($imp_code, "\$post['post_status'] = 'draft';"));
+$bad_echo = []; $toks = token_get_all($imp_src); $nt = count($toks);
+for ($i = 0; $i < $nt; $i++) {
+    if (!is_array($toks[$i]) || T_ECHO !== $toks[$i][0]) { continue; }
+    $stack = [];
+    for ($j = $i + 1; $j < $nt && ';' !== $toks[$j]; $j++) {
+        $t = $toks[$j];
+        if ('(' === $t) { $prev = $j - 1; while ($prev > $i && is_array($toks[$prev]) && T_WHITESPACE === $toks[$prev][0]) { $prev--; } $stack[] = is_array($toks[$prev]) && T_STRING === $toks[$prev][0] ? $toks[$prev][1] : '('; continue; }
+        if (')' === $t) { array_pop($stack); continue; }
+        if (is_array($t) && T_VARIABLE === $t[0] && !array_filter($stack, static fn($f) => in_array($f, ['esc_html', 'esc_attr', 'esc_textarea', 'esc_url'], true))) { $bad_echo[] = $toks[$i][2]; }
+    }
+}
+check('KH-B T-SAFE: every printed value is escaped', [] === $bad_echo, implode(',', array_unique($bad_echo)));
 
 // ===================================== regression: Core alone unchanged
 check('regression: Core does not load the glossary by itself (only the Web 2.0 loader may)', false === strpos((string) file_get_contents("$PLUGIN/omochix-core.php"), 'glossary'));
