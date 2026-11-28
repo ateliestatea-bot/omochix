@@ -29,13 +29,18 @@ if ('--child' === ($argv[1] ?? '')) {
     ob_start();
     require $REPO . '/tests/industry-hub/stub.php';
     ob_end_clean();
+    // A callback whose function WordPress defines only after the plugins load (pluggable.php): must survive a failed load.
+    add_filter('determine_current_user', 'wp_validate_auth_cookie_defined_later', 10);
     $before = gl_hook_names();
     ob_start();
     try { require $argv[2] . '/includes/web2/glossary-loader.php'; $ex = ''; } catch (Throwable $e) { $ex = get_class($e); }
+    $removed = [];
+    $after_names = gl_hook_names();
+    foreach ($before as $hook => $list) { foreach (array_diff($list, $after_names[$hook] ?? []) as $cb) { $removed[] = "$hook $cb"; } }
     $out = (string) ob_get_clean();
     $added = [];
     foreach (gl_hook_names() as $hook => $list) { foreach (array_diff($list, $before[$hook] ?? []) as $cb) { $added[] = "$hook $cb"; } }
-    echo "\n@@JSON@@" . json_encode(['loaded' => function_exists('omochix_core_glossary_loaded') && omochix_core_glossary_loaded(), 'problems' => function_exists('omochix_core_glossary_load') ? omochix_core_glossary_load()['problems'] : null, 'added' => $added, 'out' => $out, 'exception' => $ex, 'errors' => $GLOBALS['fail']]);
+    echo "\n@@JSON@@" . json_encode(['loaded' => function_exists('omochix_core_glossary_loaded') && omochix_core_glossary_loaded(), 'problems' => function_exists('omochix_core_glossary_load') ? omochix_core_glossary_load()['problems'] : null, 'added' => $added, 'out' => $out, 'exception' => $ex, 'errors' => $GLOBALS['fail'], 'removed' => $removed]);
     exit(0);
 }
 
@@ -1221,7 +1226,8 @@ omochix_core_glossary_pending(null); omochix_core_glossary_rest_approved(null);
 
 // =================================================== T-SAFE: static
 $src = '';
-foreach (omochix_core_glossary_files() as $f) { $src .= file_get_contents("$PLUGIN/$f"); }
+$ADMIN_FILE = 'admin/web2/glossary-admin.php';
+foreach (array_diff(omochix_core_glossary_files(), [$ADMIN_FILE]) as $f) { $src .= file_get_contents("$PLUGIN/$f"); }
 $src .= file_get_contents("$PLUGIN/includes/web2/glossary-loader.php");
 $ids = []; $vars = [];
 foreach (token_get_all($src) as $t) { if (is_array($t) && T_STRING === $t[0]) { $ids[] = strtolower($t[1]); } if (is_array($t) && T_VARIABLE === $t[0]) { $vars[] = $t[1]; } if (is_array($t) && in_array($t[0], [T_EVAL, T_INCLUDE, T_INCLUDE_ONCE, T_REQUIRE], true)) { $ids[] = 'T_' . strtoupper($t[1]); } }
@@ -1248,20 +1254,206 @@ $child = static function ($dir) {
 };
 [$code, $r] = $child($copy('full', static function ($d) {}));
 check('T-LD-1 complete copy: loaded, hooks added, no output', 0 === $code && true === $r['loaded'] && [] !== $r['added'] && '' === $r['out'] && 0 === $r['errors']);
+check('T-LD-1 complete copy: no callback that was there before is removed', [] === $r['removed']);
 $scenarios = [
     'a file missing' => static function ($d) { unlink("$d/includes/web2/glossary-guard.php"); },
     'a file cut short (no end marker)' => static function ($d) { $f = "$d/includes/web2/glossary-visibility.php"; $c = file_get_contents($f); file_put_contents($f, substr($c, 0, (int) (strlen($c) * 0.7))); },
     'a file from another version' => static function ($d) { $f = "$d/includes/web2/glossary-meta.php"; file_put_contents($f, str_replace('omochix-glossary-version: 1', 'omochix-glossary-version: 2', file_get_contents($f))); },
     'a file replaced by a symbolic link' => static function ($d) { $f = "$d/includes/web2/glossary-caps.php"; rename($f, "$f.real"); symlink("$f.real", $f); },
     'a file that throws while loading' => static function ($d) { $f = "$d/includes/web2/glossary-guard.php"; file_put_contents($f, str_replace("add_action( 'admin_notices', 'omochix_core_glossary_hold_notice' );", "add_action( 'admin_notices', 'omochix_core_glossary_hold_notice' );\nthrow new RuntimeException( 'boom' );", file_get_contents($f))); },
+    'the admin file missing (KH-A)' => static function ($d) { unlink("$d/admin/web2/glossary-admin.php"); },
+    'the admin file cut short (KH-A)' => static function ($d) { $f = "$d/admin/web2/glossary-admin.php"; $c = file_get_contents($f); file_put_contents($f, substr($c, 0, (int) (strlen($c) * 0.5))); },
+    'the admin file with a syntax error (KH-A)' => static function ($d) { $f = "$d/admin/web2/glossary-admin.php"; file_put_contents($f, str_replace('function omochix_core_glossary_admin_fields() {', 'function omochix_core_glossary_admin_fields( {', file_get_contents($f))); },
     'a file that prints while loading' => static function ($d) { $f = "$d/includes/web2/glossary-caps.php"; file_put_contents($f, str_replace("add_filter( 'user_has_cap'", "echo 'leak';\nadd_filter( 'user_has_cap'", file_get_contents($f))); },
 ];
 foreach ($scenarios as $name => $mutate) {
     [$code, $r, $raw] = $child($copy(md5($name), $mutate));
     $left = array_values(array_filter($r['added'] ?? ['?'], static fn($h) => 0 !== strpos($h, 'admin_notices ')));
     check("T-LD-1 $name: not loaded, no hook left but the notice, no output, no fatal error", 0 === $code && false === $r['loaded'] && [] === $left && '' === $r['out'] && '' === $r['exception'], $raw);
+    check("T-LD-1 $name: no callback that was there before is removed (WordPress pluggable functions defined later included)", is_array($r) && [] === $r['removed'], is_array($r) ? implode(', ', $r['removed']) : $raw);
 }
 exec('rm -rf ' . escapeshellarg($TMP));
+
+// ======================================================= KH-A admin screens
+// Boxes, save, list columns (admin/web2/glossary-admin.php). The stub's current_user_can() reads $GLOBALS['caps']:
+// an editor of the term has edit_post (the glossary maps it to edit_others_posts); a demoted former editor has none.
+if (!function_exists('get_page_uri')) { function get_page_uri($p) { $p = get_post($p); return $p ? (string) ($GLOBALS['page_uri'][$p->ID] ?? $p->post_name) : ''; } }
+$ED = ['edit_post' => true, 'edit_posts' => true, 'edit_others_posts' => true];
+$form = static function ($id, array $over = []) {
+    $d = omochix_core_glossary_term_data(get_post($id));
+    $rows = [];
+    for ($i = 0; $i < 8; $i++) { $rows[] = $d['sources'][$i] ?? ['url' => '', 'title' => '', 'publisher' => '', 'kind' => '', 'checked_on' => '']; }
+    $f = ['reading' => $d['reading'], 'en' => $d['en'] ?? '', 'aliases' => implode("\n", $d['aliases'] ?? []), 'summary' => $d['summary'], 'level' => $d['level'] ?? '', 'sources' => $rows, 'verified_on' => $d['verified_on'], 'review_days' => (string) $d['review_days'], 'ai_assisted' => $d['ai_assisted'] ? '1' : ''];
+    foreach (['rel_glossary' => 'related_glossary_ids', 'rel_tools' => 'related_tool_ids', 'rel_learn' => 'related_learn_page_ids', 'rel_practice' => 'related_practice_ids', 'rel_industry' => 'related_industry_ids'] as $k => $m) { $f[$k] = array_merge([''], array_map('strval', (array) get_post_meta($id, $m, true))); }
+    return array_replace($f, $over);
+};
+$post_save = static function ($id, array $raw, $nonce = null) {
+    $_POST = ['omochix_glossary_admin_nonce' => $nonce ?? ('nonce-omochix_glossary_admin_save_' . $id), 'omx_gl' => wp_slash($raw)];
+    omochix_core_glossary_admin_save($id, get_post($id));
+    $_POST = [];
+    return omochix_core_glossary_admin_messages($id);
+};
+$snap = static function ($id) { return array_map(static fn($k) => get_post_meta($id, $k, true), array_combine(array_keys(omochix_core_glossary_meta_fields()), array_keys(omochix_core_glossary_meta_fields()))); };
+
+check('KH-A loader: the admin file is one of the glossary files (all or nothing, loaded last)', 'admin/web2/glossary-admin.php' === array_slice(omochix_core_glossary_files(), -1)[0] && function_exists('omochix_core_glossary_admin_save'));
+check('KH-A hooks: boxes, save (save_post_omx_glossary only), columns', 10 === has_action('add_meta_boxes_omx_glossary', 'omochix_core_glossary_admin_boxes') && 10 === has_action('save_post_omx_glossary', 'omochix_core_glossary_admin_save') && false === has_action('save_post', 'omochix_core_glossary_admin_save') && 10 === has_filter('manage_omx_glossary_posts_columns', 'omochix_core_glossary_admin_columns') && 10 === has_action('manage_omx_glossary_posts_custom_column', 'omochix_core_glossary_admin_cell'));
+
+// ---- boxes and rendering
+$aid = gl_store('draft');
+$GLOBALS['caps'] = $ED; $GLOBALS['meta_boxes'] = [];
+omochix_core_glossary_admin_boxes(get_post($aid));
+check('KH-A boxes: an editor gets the five boxes (basics, sources, review, related, quality)', ['omochix-glossary-basics', 'omochix-glossary-sources', 'omochix-glossary-review', 'omochix-glossary-related', 'omochix-glossary-quality'] === array_column($GLOBALS['meta_boxes'], 0));
+foreach (['author or contributor' => ['edit_posts' => true], 'subscriber' => ['read' => true], 'visitor' => []] as $who => $caps) {
+    $GLOBALS['caps'] = $caps; $GLOBALS['meta_boxes'] = [];
+    omochix_core_glossary_admin_boxes(get_post($aid));
+    ob_start(); omochix_core_glossary_admin_box_basics(get_post($aid)); omochix_core_glossary_admin_box_sources(get_post($aid)); omochix_core_glossary_admin_cell('omx_gl_category', $aid); $o = ob_get_clean();
+    check("KH-A boxes: $who gets no box, prints nothing, sees no list cell", [] === $GLOBALS['meta_boxes'] && '' === $o);
+}
+$GLOBALS['caps'] = $ED;
+update_post_meta($aid, 'glossary_en', '"><script>alert(1)</script>');
+ob_start(); omochix_core_glossary_admin_box_basics(get_post($aid)); $o = ob_get_clean();
+check('KH-A render: the nonce is for this post; stored values are escaped (no markup from the value)', false !== strpos($o, 'name="omochix_glossary_admin_nonce" value="nonce-omochix_glossary_admin_save_' . $aid . '"') && false === strpos($o, '<script>') && false !== strpos($o, '&lt;script&gt;') && false !== strpos($o, 'てすとようご'));
+update_post_meta($aid, 'glossary_en', 'Test Term');
+ob_start(); omochix_core_glossary_admin_box_sources(get_post($aid)); $o = ob_get_clean();
+check('KH-A render: eight source rows, the stored one filled in', 8 === substr_count($o, '[checked_on]') && false !== strpos($o, 'value="https://docs.example.org/spec"'));
+ob_start(); omochix_core_glossary_admin_box_quality(get_post($aid)); $o = ob_get_clean();
+check('KH-A quality: a complete term meets the publish rules; closed switch means not indexed', false !== strpos($o, '公開の条件を満たしています') && false !== strpos($o, '公開スイッチが閉じています'));
+
+// ---- save: normal values are stored and shown again
+$m = $post_save($aid, $form($aid, ['reading' => 'あたらしいよみ', 'en' => 'New Term', 'aliases' => "別名A\n別名B", 'level' => 'advanced', 'review_days' => '90', 'ai_assisted' => '']));
+check('KH-A save: valid values are stored (reading, en, aliases, level, review days, AI use)', 'あたらしいよみ' === get_post_meta($aid, 'glossary_reading', true) && 'New Term' === get_post_meta($aid, 'glossary_en', true) && ['別名A', '別名B'] === get_post_meta($aid, 'glossary_aliases', true) && 'advanced' === get_post_meta($aid, 'glossary_level', true) && 90 === get_post_meta($aid, 'glossary_review_days', true) && false === get_post_meta($aid, 'glossary_ai_assisted', true) && [] === $m, json_encode($m, JSON_UNESCAPED_UNICODE));
+ob_start(); omochix_core_glossary_admin_box_basics(get_post($aid)); $o = ob_get_clean();
+check('KH-A save: the stored values are shown again', false !== strpos($o, 'あたらしいよみ') && false !== strpos($o, "別名A\n別名B") && false !== strpos($o, 'value="advanced" selected="selected"'));
+check('KH-A save: the box save never publishes (the publish guard decides)', 'draft' === get_post($aid)->post_status);
+
+// ---- invalid input never replaces a valid stored value
+$before = $snap($aid);
+$m = $post_save($aid, $form($aid, ['reading' => 'カタカナ', 'summary' => '短い', 'level' => 'expert', 'review_days' => '9999', 'verified_on' => '2099-01-01']));
+$after = $snap($aid);
+check('KH-A invalid: reading, summary, level, review days and a future date are refused; the stored values stay', $before['glossary_reading'] === $after['glossary_reading'] && $before['glossary_summary'] === $after['glossary_summary'] && $before['glossary_level'] === $after['glossary_level'] && $before['glossary_review_days'] === $after['glossary_review_days'] && $before['glossary_verified_on'] === $after['glossary_verified_on']);
+check('KH-A invalid: the editor is told why, per field', [] !== preg_grep('/^reading：/u', $m) && [] !== preg_grep('/^summary：/u', $m) && [] !== preg_grep('/^level：/u', $m) && [] !== preg_grep('/^review_days：/u', $m) && [] !== preg_grep('/^verified_on：/u', $m), json_encode($m, JSON_UNESCAPED_UNICODE));
+$fresh = ih_add_post(['post_type' => 'omx_glossary', 'post_status' => 'draft', 'post_name' => 'fresh-term', 'post_title' => '新しい用語']);
+$m = $post_save($fresh, ['reading' => 'カタカナ', 'summary' => '短い要約', 'sources' => []]);
+check('KH-A invalid on an empty draft: work in progress is kept (nothing valid to protect), the publish rules still list it', 'カタカナ' === get_post_meta($fresh, 'glossary_reading', true) && '短い要約' === get_post_meta($fresh, 'glossary_summary', true) && [] !== omochix_core_glossary_publish_problems(get_post($fresh)));
+$m = $post_save($aid, $form($aid, ['en' => '<b>x</b>', 'aliases' => "<script>a</script>\nテスト用語"]));
+check('KH-A invalid: markup and an alias equal to the title are refused (stored values stay)', 'New Term' === get_post_meta($aid, 'glossary_en', true) && ['別名A', '別名B'] === get_post_meta($aid, 'glossary_aliases', true));
+
+// ---- sources: 0, 9, unsafe URLs
+$src0 = get_post_meta($aid, 'glossary_sources', true);
+$rows = array_fill(0, 8, ['url' => '', 'title' => '', 'publisher' => '', 'kind' => '', 'checked_on' => '']);
+$m = $post_save($aid, $form($aid, ['sources' => $rows]));
+check('KH-A sources 0: removing every source of a valid term is refused (at least one primary source)', $src0 === get_post_meta($aid, 'glossary_sources', true) && [] !== preg_grep('/^sources：/u', $m));
+$nine = []; for ($i = 0; $i < 9; $i++) { $nine[] = ['url' => "https://docs.example.org/s$i", 'title' => "T$i", 'publisher' => 'P', 'kind' => 'docs', 'checked_on' => '2026-11-20']; }
+$m = $post_save($aid, $form($aid, ['sources' => $nine]));
+check('KH-A sources 9: the ninth is not stored, the editor is told', 8 === count(get_post_meta($aid, 'glossary_sources', true)) && [] !== preg_grep('/8 件まで/u', $m));
+foreach (['http' => 'http://docs.example.org/a', 'IP' => 'https://10.0.0.1/a', 'localhost' => 'https://localhost/a', 'user:pass' => 'https://u:p@docs.example.org/a', 'token' => 'https://docs.example.org/a?access_token=x', 'javascript' => 'javascript:alert(1)', 'port' => 'https://docs.example.org:8443/a'] as $why => $url) {
+    $keep = get_post_meta($aid, 'glossary_sources', true);
+    $rows = $keep; $rows[1] = ['url' => $url, 'title' => 'X', 'publisher' => 'P', 'kind' => 'docs', 'checked_on' => '2026-11-20'];
+    $m = $post_save($aid, $form($aid, ['sources' => $rows]));
+    check("KH-A sources unsafe URL ($why): refused, the valid stored sources stay, the message names the row, not the URL", $keep === get_post_meta($aid, 'glossary_sources', true) && [] !== preg_grep('/2 件目の URL は保存できません/u', $m) && [] === preg_grep('/' . preg_quote($url, '/') . '/', $m));
+}
+$m = $post_save($fresh, ['sources' => [['url' => 'https://10.0.0.1/x', 'title' => 'X', 'publisher' => 'P', 'kind' => 'docs', 'checked_on' => '2026-11-20'], ['url' => 'https://docs.example.org/ok', 'title' => 'OK', 'publisher' => 'P', 'kind' => 'docs', 'checked_on' => '2026-11-20']]]);
+check('KH-A sources unsafe URL on an empty draft: the unsafe row is never stored, the safe one is', ['https://docs.example.org/ok'] === array_column(get_post_meta($fresh, 'glossary_sources', true), 'url'));
+check('KH-A sources: a malformed sources value (not a list of rows) is refused', [] !== preg_grep('/^sources：/u', omochix_core_glossary_admin_parse(['sources' => 'x'])['errors']));
+
+// ---- review state
+$rv = static fn($v, $days = 180) => omochix_core_glossary_admin_review_state(['verified_on' => $v, 'review_days' => $days], '2026-11-24');
+check('KH-A review: due date and state (ok, soon within 30 days, review after the due date, overdue after the 30-day grace, unknown)', 'ok' === $rv('2026-11-20')['state'] && '2027-05-19' === $rv('2026-11-20')['due'] && 'soon' === $rv('2026-06-10')['state'] && 'review' === $rv('2026-05-20')['state'] && 'overdue' === $rv('2026-04-01')['state'] && 'unknown' === $rv('')['state'] && 'unknown' === $rv('2026-13-40')['state']);
+check('KH-A review: the boundaries (due day itself is still in time; grace ends after 30 days)', 'soon' === $rv('2026-05-28')['state'] && 0 === $rv('2026-05-28')['days'] && 'review' === $rv('2026-05-27')['state'] && 'review' === $rv('2026-04-28')['state'] && -30 === $rv('2026-04-28')['days'] && 'overdue' === $rv('2026-04-27')['state']);
+
+// ---- related IDs
+$tool = ih_add_post(['post_type' => 'ai_tool', 'post_status' => 'publish', 'post_title' => 'Tool']);
+$tool_draft = ih_add_post(['post_type' => 'ai_tool', 'post_status' => 'draft', 'post_title' => 'Draft tool']);
+$tool_pw = ih_add_post(['post_type' => 'ai_tool', 'post_status' => 'publish', 'post_title' => 'PW tool', 'post_password' => 'x']);
+$apost = ih_add_post(['post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'A post']);
+$learn = ih_add_post(['post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Learn page', 'post_name' => 'basics']); $GLOBALS['page_uri'][$learn] = 'learn/basics';
+$other_page = ih_add_post(['post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'About', 'post_name' => 'about']); $GLOBALS['page_uri'][$other_page] = 'about';
+$other_term = gl_store('draft', ['post' => ['post_name' => 'other-term', 'post_title' => '別の用語']]);
+$m = $post_save($aid, $form($aid, ['rel_tools' => ['', (string) $tool, (string) $tool_draft, (string) $tool_pw, (string) $apost, '-1', 'x'], 'rel_learn' => ['', (string) $learn, (string) $other_page], 'rel_glossary' => ['', (string) $other_term, (string) $aid]]));
+check('KH-A related: only published tools without a password are linked (drafts, passwords, other types, junk refused)', [$tool] === get_post_meta($aid, 'related_tool_ids', true) && count(preg_grep('/^AI Tools：ID/u', $m)) >= 3);
+check('KH-A related: Learn only below /learn/; a glossary term but not the term itself', [$learn] === get_post_meta($aid, 'related_learn_page_ids', true) && [$other_term] === get_post_meta($aid, 'related_glossary_ids', true));
+$GLOBALS['posts'][$tool]->post_status = 'draft';
+$post_save($aid, $form($aid));
+check('KH-A related: an ID stored earlier is kept when its target is unpublished later (the public page hides it)', [$tool] === get_post_meta($aid, 'related_tool_ids', true));
+$GLOBALS['posts'][$tool]->post_status = 'publish';
+$many = []; for ($i = 0; $i < 8; $i++) { $many[] = (string) ih_add_post(['post_type' => 'ai_tool', 'post_status' => 'publish', 'post_title' => "Tool $i"]); }
+$m = $post_save($aid, $form($aid, ['rel_tools' => array_merge([''], $many)]));
+check('KH-A related: at most 6 tools (the rest is not stored, the editor is told)', 6 === count(get_post_meta($aid, 'related_tool_ids', true)) && [] !== preg_grep('/6件まで/u', $m));
+$post_save($aid, $form($aid, ['rel_tools' => ['']]));
+check('KH-A related: an empty selection clears the list', [] === get_post_meta($aid, 'related_tool_ids', true));
+$GLOBALS['caps'] = ['edit_post' => false] + $ED;
+check('KH-A related: a glossary term the user may not edit cannot be linked', false === omochix_core_glossary_admin_related_ok($other_term, 'related_glossary_ids', $aid, []));
+$GLOBALS['caps'] = $ED;
+
+// ---- who may save: nonce, capability, demotion, revisions
+$before = $snap($aid);
+$change = $form($aid, ['reading' => 'かわったよみ']);
+$post_save($aid, $change, 'nonce-wrong');
+$post_save($aid, $change, 'nonce-omochix_glossary_admin_save_' . $fresh);
+$_POST = ['omx_gl' => $change]; omochix_core_glossary_admin_save($aid, get_post($aid)); $_POST = [];
+check('KH-A CSRF: a missing, wrong or other post\'s nonce saves nothing', $before === $snap($aid));
+foreach (['demoted editor (now author)' => ['edit_posts' => true, 'publish_posts' => true], 'contributor' => ['edit_posts' => true], 'subscriber' => ['read' => true], 'visitor' => []] as $who => $caps) {
+    $GLOBALS['caps'] = $caps;
+    $post_save($aid, $change);
+    check("KH-A permission: $who saves nothing, even with a valid nonce", $before === $snap($aid));
+}
+$GLOBALS['caps'] = $ED;
+$rev = ih_add_post(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $aid]);
+$post_save($rev, $change);
+check('KH-A revision: a revision ID is never saved through the boxes', [] === array_filter($snap($rev)));
+$adm_src = (string) file_get_contents("$PLUGIN/admin/web2/glossary-admin.php");
+check('KH-A autosave and REST: the save returns before reading input during an autosave or a REST request', 1 === preg_match("/DOING_AUTOSAVE.*REST_REQUEST.*wp_is_post_revision.*wp_is_post_autosave.*\\n\\t\\treturn;/s", substr($adm_src, strpos($adm_src, 'function omochix_core_glossary_admin_save('), 600)));
+
+// ---- live terms keep the publish rules
+$live = gl_store('publish', ['post' => ['post_name' => 'live-term', 'post_title' => '公開中の用語']]);
+$post_save($live, $form($live)); // The stub has no registered defaults: store the empty related lists once.
+$before = $snap($live);
+$rows = array_fill(0, 8, ['url' => '', 'title' => '', 'publisher' => '', 'kind' => '', 'checked_on' => '']);
+$rows[0] = ['url' => 'https://news.example.org/a', 'title' => 'News', 'publisher' => 'P', 'kind' => 'media', 'checked_on' => '2026-11-20'];
+$m = $post_save($live, $form($live, ['sources' => $rows]));
+check('KH-A live: removing the only primary source of a live term is refused (field kept)', $before === $snap($live) && [] !== preg_grep('/一次情報/u', $m));
+$rows = get_post_meta($live, 'glossary_sources', true); $rows[0]['checked_on'] = '2026-11-23';
+$m = $post_save($live, $form($live, ['sources' => $rows, 'reading' => 'こうかいちゅう']));
+check('KH-A live: a save whose values together would fail (a source checked after the verification date) stores nothing at all', $before === $snap($live) && [] !== preg_grep('/公開中の用語は/u', $m) && [] !== preg_grep('/^verified_on：/u', $m));
+$m = $post_save($live, $form($live, ['reading' => 'こうかいちゅう']));
+check('KH-A live: a save that keeps a live term passing is stored', 'こうかいちゅう' === get_post_meta($live, 'glossary_reading', true) && 'publish' === get_post($live)->post_status);
+update_post_meta($live, 'glossary_summary', '短い');
+$m = $post_save($live, $form($live, ['reading' => 'なおしたよみ']));
+check('KH-A live: a live term that fails already can still be corrected step by step (only new failures are refused)', 'なおしたよみ' === get_post_meta($live, 'glossary_reading', true));
+
+// ---- list columns
+$cols = omochix_core_glossary_admin_columns(['cb' => '', 'title' => 'Title', 'date' => 'Date']);
+check('KH-A columns: category, sources, verified, due and quality, right after the title', ['cb', 'title', 'omx_gl_category', 'omx_gl_sources', 'omx_gl_verified', 'omx_gl_due', 'omx_gl_quality', 'date'] === array_keys($cols));
+$cell = static function ($c, $id) { ob_start(); omochix_core_glossary_admin_cell($c, $id); return ob_get_clean(); };
+check('KH-A columns: values for an editor', 'basics' === $cell('omx_gl_category', $aid) && '8' === $cell('omx_gl_sources', $aid) && 'OK' === $cell('omx_gl_quality', $aid) && false !== strpos($cell('omx_gl_quality', $fresh), '公開できません') && false !== strpos($cell('omx_gl_due', $aid), '期限内'));
+check('KH-A columns: other columns and other post types print nothing', '' === $cell('title', $aid) && '' === $cell('omx_gl_category', $apost));
+
+// ---- T-SAFE of the admin file
+$adm_code = implode('', array_map(static fn($t) => is_array($t) ? (in_array($t[0], [T_COMMENT, T_DOC_COMMENT], true) ? '' : $t[1]) : $t, token_get_all($adm_src)));
+$save_at = strpos($adm_code, 'function omochix_core_glossary_admin_save(');
+$save_end = strpos($adm_code, "\n}\n", $save_at);
+$outside = substr($adm_code, 0, $save_at) . substr($adm_code, $save_end);
+check('KH-A T-SAFE: $_POST is read only in the save function, after the nonce is verified and before nothing else', 0 === preg_match('/\$_POST/', $outside) && strpos($adm_code, 'wp_verify_nonce', $save_at) < strpos($adm_code, "\$_POST['omx_gl']", $save_at) && strpos($adm_code, 'omochix_core_glossary_admin_can( $post )', $save_at) < strpos($adm_code, "\$_POST['omx_gl']", $save_at));
+check('KH-A T-SAFE: no $_GET, $_REQUEST, $_COOKIE, $_SERVER, $_FILES, $wpdb, globals, eval, shell, file writes, remote calls, roles or routes', 0 === preg_match('/\$_(GET|REQUEST|COOKIE|SERVER|FILES|ENV)|\$wpdb|\bglobal\b|\$GLOBALS|\beval\b|shell_exec|\bexec\(|system\(|file_put_contents|fopen|wp_remote_|add_role|add_cap|register_rest_route|update_option|add_option|header\(/', $adm_code));
+$bad_echo = [];
+foreach (token_get_all($adm_src) as $i => $t) { }
+$toks = token_get_all($adm_src); $n = count($toks);
+for ($i = 0; $i < $n; $i++) {
+    if (!is_array($toks[$i]) || T_ECHO !== $toks[$i][0]) { continue; }
+    $stack = []; $line = $toks[$i][2];
+    for ($j = $i + 1; $j < $n && ';' !== $toks[$j]; $j++) {
+        $t = $toks[$j];
+        if ('(' === $t) { $prev = $j - 1; while ($prev > $i && is_array($toks[$prev]) && T_WHITESPACE === $toks[$prev][0]) { $prev--; } $stack[] = is_array($toks[$prev]) && T_STRING === $toks[$prev][0] ? $toks[$prev][1] : '('; continue; }
+        if (')' === $t) { array_pop($stack); continue; }
+        if (is_array($t) && T_VARIABLE === $t[0]) {
+            $safe = (bool) array_filter($stack, static fn($f) => in_array($f, ['esc_html', 'esc_attr', 'esc_textarea', 'esc_url', 'selected', 'checked'], true));
+            if (!$safe) { $bad_echo[] = $line; }
+        }
+    }
+}
+check('KH-A T-SAFE: every value printed goes through esc_html, esc_attr, esc_textarea, selected or checked', [] === $bad_echo, implode(',', array_unique($bad_echo)));
+check('KH-A T-SAFE: no printf/print and no echo of a function result that is not escaped', 0 === preg_match('/\bprintf\s*\(|\bprint\s+[\'"$]/', $adm_code) && 0 === preg_match('/echo\s+(?!\'|esc_|selected|checked)/', $adm_code));
+$GLOBALS['caps'] = [];
 
 // ===================================== regression: Core alone unchanged
 check('regression: Core does not load the glossary by itself (only the Web 2.0 loader may)', false === strpos((string) file_get_contents("$PLUGIN/omochix-core.php"), 'glossary'));
