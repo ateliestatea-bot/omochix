@@ -90,6 +90,31 @@ if ('--core' === ($argv[1] ?? '')) {
             $rest_probe .= (is_array($qa) && false === ($qa['has_password'] ?? null)) ? '+search-closed' : '+search-open';
         } catch (Throwable $e) { $rest_probe = 'fatal ' . get_class($e); }
     }
+    // Comments screen (P3-1): a private row of an unregistered post type, its revision, an ordinary post; a user who
+    // cannot edit others' posts (also one who wrote the row), then an editor. Whatever answers (layer or fail-closed).
+    $comments_probe = 'no post class';
+    if (class_exists('WP_Post')) {
+        $GLOBALS['posts'][9901] = new WP_Post(['ID' => 9901, 'post_type' => 'omx_glossary', 'post_status' => 'private', 'post_title' => 'SECRET-TERM', 'post_author' => 1]);
+        $GLOBALS['posts'][9902] = new WP_Post(['ID' => 9902, 'post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => 9901, 'post_title' => 'SECRET-TERM', 'post_author' => 1]);
+        $GLOBALS['posts'][9903] = new WP_Post(['ID' => 9903, 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'A POST']);
+        $had_rev = isset($GLOBALS['registered']['post_types']['revision']);
+        $GLOBALS['registered']['post_types']['revision'] = true; // WordPress registers revisions; the stub does not.
+        try {
+            $GLOBALS['caps'] = ['edit_posts' => true];
+            $before = apply_filters('the_title', 'SECRET-TERM', 9901);
+            $qa = apply_filters('comments_list_table_query_args', ['post_id' => 9901, 'number' => 20]);
+            $qp = apply_filters('comments_list_table_query_args', ['post_id' => 9903, 'number' => 20]);
+            $t = [apply_filters('the_title', 'SECRET-TERM', 9901), apply_filters('the_title', 'SECRET-TERM', 9902), apply_filters('the_title', 'A POST', 9903), apply_filters('the_title', 'X', 0)];
+            $c = apply_filters('wp_count_comments', [], 9901); $cp = apply_filters('wp_count_comments', [], 9903);
+            $GLOBALS['caps'] = ['edit_posts' => true, 'edit_others_posts' => true];
+            $te = apply_filters('the_title', 'SECRET-TERM', 9901);
+            $ok = 'SECRET-TERM' === $before && in_array(9901, (array) ($qa['post__not_in'] ?? []), true) && 9901 === $qa['post_id'] && !isset($qp['post__not_in'])
+                && ['', '', 'A POST', 'X'] === $t && is_object($c) && 0 === $c->total_comments && 0 === $c->all && [] === $cp && 'SECRET-TERM' === $te;
+            $comments_probe = $ok ? 'hidden' : 'open ' . json_encode([$before, $qa, $t, $c, $te]);
+        } catch (Throwable $e) { $comments_probe = 'fatal ' . get_class($e); }
+        if (!$had_rev) { unset($GLOBALS['registered']['post_types']['revision']); }
+        unset($GLOBALS['posts'][9901], $GLOBALS['posts'][9902], $GLOBALS['posts'][9903]);
+    }
     $GLOBALS['caps'] = ['*' => true, 'activate_plugins' => true];
     $fns = array_values(array_filter(get_defined_functions()['user'], static function ($f) { return 0 !== strpos($f, 'omochix_core_web2_') && 0 !== strpos($f, 'ih_') && false === strpos($f, '{closure'); }));
     sort($fns);
@@ -103,7 +128,7 @@ if ('--core' === ($argv[1] ?? '')) {
     $GLOBALS['caps'] = ['*' => true, 'activate_plugins' => true];
     $web2 = function_exists('omochix_core_web2_state') ? omochix_core_web2_state() : null;
     echo "\n@@JSON@@" . json_encode(['out' => $load_out, 'errors' => $GLOBALS['fail'], 'snap' => $snap, 'functions' => $fns, 'ih' => omochix_core_industry_hub_loaded(), 'notice' => $notice, 'notice_editor' => $notice_editor, 'web2' => $web2,
-        'nav' => $nav_probe, 'rest' => $rest_probe, 'closed' => function_exists('has_filter') && false !== has_filter('register_block_type_args', 'omochix_core_nav_render_closed'), 'problem' => function_exists('omochix_core_sec_layer_problem') ? omochix_core_sec_layer_problem() : null, 'log' => getenv('RG_ERRLOG') && is_file(getenv('RG_ERRLOG')) ? (string) file_get_contents(getenv('RG_ERRLOG')) : '',
+        'nav' => $nav_probe, 'rest' => $rest_probe, 'comments' => $comments_probe, 'comments_closed' => function_exists('has_filter') && false !== has_filter('the_title', 'omochix_core_comments_title_closed') && false !== has_filter('comments_list_table_query_args', 'omochix_core_comments_args_closed') && false !== has_filter('wp_count_comments', 'omochix_core_comments_count_closed'), 'sec_comment_filters' => function_exists('has_filter') ? array_values(array_filter(['the_title' => 'omochix_core_security_comments_title', 'comments_list_table_query_args' => 'omochix_core_security_comments_args', 'wp_count_comments' => 'omochix_core_security_comments_count'], static function ($cb, $h) { return false !== has_filter($h, $cb); }, ARRAY_FILTER_USE_BOTH)) : [], 'closed' => function_exists('has_filter') && false !== has_filter('register_block_type_args', 'omochix_core_nav_render_closed'), 'problem' => function_exists('omochix_core_sec_layer_problem') ? omochix_core_sec_layer_problem() : null, 'log' => getenv('RG_ERRLOG') && is_file(getenv('RG_ERRLOG')) ? (string) file_get_contents(getenv('RG_ERRLOG')) : '',
         'list' => function_exists('omochix_core_web2_modules') ? omochix_core_web2_modules() : null,
         'report' => rg_module_report(getenv('IH_PLUGIN_DIR'), 'includes/web2', 'omochix_core_web2_check', 'omochix_core_web2_declarations'),
         'gates' => rg_gates($web2, 'omochix_core_%s_public', null)]);
@@ -204,6 +229,7 @@ rg_check('core: the security block reads no request data and no database handle'
 $sec_file = 'includes/web2/security.php';
 rg_check('core (this tree): the security layer ships with the plugin (merge the sec pull request first)', is_file("$plugin/$sec_file"));
 rg_check('core (this tree): the security layer is in place: no fail-closed filter, no notice, navigation renders, REST strips a password menu', is_array($now) && false === $now['closed'] && '' === $now['problem'] && 'NAV' === $now['nav'] && 'stripped+search-closed' === $now['rest'] && '' === $now['notice']);
+rg_check('core (this tree): the comments screen is guarded by the security layer itself (P3-1), no fail-closed comments filter', is_array($now) && 'hidden' === $now['comments'] && false === $now['comments_closed'] && 3 === count($now['sec_comment_filters']), is_array($now) ? $now['comments'] : '');
 $sec_run = static function ($name, $mutate) use ($plugin, $TMP, $sec_file) {
     $d = $TMP . '/core-sec-' . md5($name);
     rg_copy_tree($plugin, $d);
@@ -213,7 +239,7 @@ $sec_run = static function ($name, $mutate) use ($plugin, $TMP, $sec_file) {
 };
 $disable = static function ($d) { $f = "$d/omochix-core.php"; file_put_contents($f, preg_replace('/^(<\?php\n)/', "\$1define( 'OMOCHIX_WEB2_DISABLED', true );\n", (string) file_get_contents($f), 1)); };
 [$code, $r, $raw] = $sec_run('Web 2.0 switched off', static function ($d, $f) use ($disable) { $disable($d); });
-rg_check('core (Web 2.0 switched off, OMOCHIX_WEB2_DISABLED): the security layer is still in place, no module loaded', 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'] && false === $r['closed'] && 'NAV' === $r['nav'] && '' === $r['notice'] && '' === $r['log'] && [] === $r['web2']['modules'] && true === $r['ih'], $raw);
+rg_check('core (Web 2.0 switched off, OMOCHIX_WEB2_DISABLED): the security layer is still in place, no module loaded', 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'] && false === $r['closed'] && 'NAV' === $r['nav'] && '' === $r['notice'] && '' === $r['log'] && [] === $r['web2']['modules'] && true === $r['ih'] && 'hidden' === $r['comments'] && false === $r['comments_closed'], $raw);
 foreach ([
     'security file missing' => ['missing', static function ($d, $f) { @unlink($f); }],
     'security file that throws' => ['failed to load (RuntimeException)', static function ($d, $f) { file_put_contents($f, "<?php\nthrow new RuntimeException('broken security layer');\n"); }],
@@ -229,10 +255,18 @@ foreach ([
     'security REST search filter taken off' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace("add_filter( 'rest_wp_navigation_query', 'omochix_core_security_nav_rest_query', 9999 );", '', $c)); }],
     'security REST guard renamed' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace('omochix_core_security_nav_rest', 'omochix_core_security_nav_rest_x', $c)); }],
     'security file missing, Web 2.0 switched off' => ['missing', static function ($d, $f) use ($disable) { @unlink($f); $disable($d); }],
+    'security comments list filter taken off' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace("add_filter( 'comments_list_table_query_args', 'omochix_core_security_comments_args', 10 );", '', $c)); }],
+    'security comments title filter taken off' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace("add_filter( 'the_title', 'omochix_core_security_comments_title', 9999, 2 );", '', $c)); }],
+    'security comments count filter taken off' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace("add_filter( 'wp_count_comments', 'omochix_core_security_comments_count', 9999, 2 );", '', $c)); }],
+    'security comments title function missing, its filter still registered' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace('function omochix_core_security_comments_title(', 'function omochix_core_security_comments_title_gone(', $c)); }],
+    'security comments helper missing (the callbacks would call it)' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace('function omochix_core_security_orphan_row_masked(', 'function omochix_core_security_orphan_row_masked_gone(', $c)); }],
+    'security navigation helper missing (the callbacks would call it)' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); file_put_contents($f, str_replace('function omochix_core_security_nav_render_allowed(', 'function omochix_core_security_nav_render_allowed_gone(', $c)); }],
+    'security comments filters only (navigation part cut out)' => ['incomplete', static function ($d, $f) { $c = (string) file_get_contents($f); $i = strpos($c, "/**\n * Comments screen:"); file_put_contents($f, "<?php\nif ( ! defined( 'ABSPATH' ) ) {\n\texit;\n}\n" . substr($c, $i)); }],
 ] as $name => [$why, $mutate]) {
     [$code, $r, $raw] = $sec_run($name, $mutate);
     rg_check("core ($name): loads with no PHP error and no output; Industry Hub and the Web 2.0 loader unaffected", 0 === $code && is_array($r) && 0 === $r['errors'] && '' === $r['out'] && true === $r['ih'] && [] === $r['web2']['modules'], $raw);
     rg_check("core ($name): fails closed: navigation renders nothing, REST returns no menu blocks to non-editors, every navigation filter still runs", is_array($r) && true === $r['closed'] && '' === $r['nav'] && 'stripped+search-closed' === $r['rest'], is_array($r) ? $r['rest'] : '');
+    rg_check("core ($name): fails closed on the comments screen too (P3-1): hidden title, empty list, zero count for a non-editor; posts and editors unaffected; no comments callback without its functions", is_array($r) && true === $r['comments_closed'] && 'hidden' === $r['comments'], is_array($r) ? $r['comments'] . ' ' . json_encode($r['sec_comment_filters']) : '');
     rg_check("core ($name): the reason is logged once and shown to administrators (no path)", is_array($r) && '' !== $r['problem'] && ('' === $why || $why === $r['problem'] || 0 === strpos($r['problem'], 'failed to load')) && 1 === substr_count($r['log'], 'OmochiX Core: the security layer') && false !== strpos($r['notice'], 'セキュリティ層') && '' === $r['notice_editor'] && false === strpos($r['notice'], $TMP), is_array($r) ? $r['problem'] . ' | ' . $r['log'] : '');
 }
 
