@@ -243,7 +243,8 @@ register_deactivation_hook( __FILE__, 'omochix_core_deactivate' );
 // it only narrows what WordPress renders (it opens nothing). Fail closed: when
 // the file is missing, cut short, throws or does not define its guards, every
 // navigation block renders nothing, REST returns no menu blocks to non-editors
-// and searches no password-protected menu for them,
+// and searches no password-protected menu for them, the comments screen hides
+// rows of unregistered post types from non-editors (P3-1),
 // and the problem is logged and shown to administrators. The rest of the
 // plugin keeps working.
 /**
@@ -264,38 +265,181 @@ function omochix_core_sec_layer_load() {
 			unset( $omochix_core_error );
 		}
 	}
-	$guards = array(
-		'register_block_type_args'              => 'omochix_core_security_nav_block_args',
-		'block_core_navigation_render_fallback' => 'omochix_core_security_nav_fallback',
-		'rest_prepare_wp_navigation'            => 'omochix_core_security_nav_rest',
-		'rest_wp_navigation_query'              => 'omochix_core_security_nav_rest_query',
+	// Each group: the filters (hook => callback) the layer must have registered, and the functions those
+	// callbacks call. Navigation (review N-1) and the comments screen (P3-1).
+	$groups = array(
+		'navigation' => array(
+			array(
+				'register_block_type_args'              => 'omochix_core_security_nav_block_args',
+				'block_core_navigation_render_fallback' => 'omochix_core_security_nav_fallback',
+				'rest_prepare_wp_navigation'            => 'omochix_core_security_nav_rest',
+				'rest_wp_navigation_query'              => 'omochix_core_security_nav_rest_query',
+			),
+			array( 'omochix_core_security_nav_ref_id', 'omochix_core_security_nav_ref_allowed', 'omochix_core_security_nav_render_allowed' ),
+		),
+		'comments'   => array(
+			array(
+				'comments_list_table_query_args' => 'omochix_core_security_comments_args',
+				'the_title'                      => 'omochix_core_security_comments_title',
+				'wp_count_comments'              => 'omochix_core_security_comments_count',
+			),
+			array( 'omochix_core_security_orphan_row_masked', 'omochix_core_security_comments_masked', 'omochix_core_security_comments_screen' ),
+		),
 	);
 	if ( '' === $why ) {
-		foreach ( $guards as $hook => $callback ) {
-			if ( ! function_exists( $callback ) || false === has_filter( $hook, $callback ) ) {
-				$why = 'incomplete';
-				break;
+		foreach ( $groups as $group ) {
+			foreach ( $group[0] as $hook => $callback ) {
+				if ( ! function_exists( $callback ) || false === has_filter( $hook, $callback ) ) {
+					$why = 'incomplete';
+				}
+			}
+			foreach ( $group[1] as $helper ) {
+				if ( ! function_exists( $helper ) ) {
+					$why = 'incomplete';
+				}
 			}
 		}
 	}
 	if ( '' === $why ) {
 		return true;
 	}
-	// A broken copy may have registered a filter whose function is missing: running it would be a
-	// fatal error, so such a filter is taken off (working guards stay).
-	foreach ( $guards as $hook => $callback ) {
-		$priority = has_filter( $hook, $callback );
-		if ( false !== $priority && ! function_exists( $callback ) ) {
-			remove_filter( $hook, $callback, $priority );
+	// A broken copy may have registered a filter whose function, or a function it calls, is missing:
+	// running it would be a fatal error, so that group's filters are taken off. Working groups stay.
+	foreach ( $groups as $group ) {
+		$whole = true;
+		foreach ( array_merge( array_values( $group[0] ), $group[1] ) as $fn ) {
+			if ( ! function_exists( $fn ) ) {
+				$whole = false;
+			}
+		}
+		foreach ( $group[0] as $hook => $callback ) {
+			$priority = has_filter( $hook, $callback );
+			if ( false !== $priority && ( ! $whole || ! function_exists( $callback ) ) ) {
+				remove_filter( $hook, $callback, $priority );
+			}
 		}
 	}
 	omochix_core_sec_layer_problem( $why );
 	add_filter( 'register_block_type_args', 'omochix_core_nav_render_closed', 9999, 2 );
 	add_filter( 'rest_prepare_wp_navigation', 'omochix_core_nav_rest_closed', 9999, 2 );
 	add_filter( 'rest_wp_navigation_query', 'omochix_core_nav_query_closed', 9999 );
+	add_filter( 'comments_list_table_query_args', 'omochix_core_comments_args_closed', 10 );
+	add_filter( 'the_title', 'omochix_core_comments_title_closed', 9999, 2 );
+	add_filter( 'wp_count_comments', 'omochix_core_comments_count_closed', 9999, 2 );
 	add_action( 'admin_notices', 'omochix_core_sec_layer_notice' );
-	error_log( 'OmochiX Core: the security layer (includes/web2/security.php) is ' . $why . '; navigation blocks render nothing until it is restored.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( 'OmochiX Core: the security layer (includes/web2/security.php) is ' . $why . '; navigation blocks render nothing and the comments screen hides rows of unregistered post types until it is restored.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	return false;
+}
+
+/**
+ * Fail closed on the comments screen (P3-1) while the security layer is unavailable: the same rule as
+ * the layer, kept here so it does not depend on that file. For a user who cannot edit others' posts
+ * now, a row of a post type nobody registered (and a revision of one) is answered like an ID that does
+ * not exist. Authorship never counts. Registered post types are left alone.
+ *
+ * @param mixed $post A post ID or WP_Post.
+ * @return bool
+ */
+function omochix_core_comments_row_closed( $post ) {
+	if ( ! $post instanceof WP_Post ) {
+		// get_post( 0 | '' | null ) would fall back to the global post: only a positive ID is looked up.
+		$post = ( is_int( $post ) || ( is_string( $post ) && ctype_digit( $post ) ) ) && (int) $post > 0 ? get_post( (int) $post ) : null;
+	}
+	if ( ! $post instanceof WP_Post || ! function_exists( 'post_type_exists' ) ) {
+		return false;
+	}
+	$owner = $post;
+	if ( 'revision' === (string) $post->post_type ) {
+		$owner = (int) $post->post_parent > 0 ? get_post( (int) $post->post_parent ) : null;
+		if ( ! $owner instanceof WP_Post ) {
+			return false;
+		}
+	}
+	$type = (string) $owner->post_type;
+	if ( '' === $type || post_type_exists( $type ) ) {
+		return false;
+	}
+	return ! current_user_can( 'edit_others_posts' );
+}
+
+/**
+ * State of the fail-closed comments screen: whether a comments list was built on this request, and the
+ * rows hidden on it.
+ *
+ * @param int  $add    An ID to remember (0: none).
+ * @param bool $screen True to mark the screen.
+ * @return array{screen: bool, ids: array<int, true>}
+ */
+function omochix_core_comments_closed_state( $add = 0, $screen = false ) {
+	static $state = array(
+		'screen' => false,
+		'ids'    => array(),
+	);
+	if ( true === $screen ) {
+		$state['screen'] = true;
+	}
+	if ( is_int( $add ) && $add > 0 ) {
+		$state['ids'][ $add ] = true;
+	}
+	return $state;
+}
+
+/**
+ * Fail closed: the comments list of a hidden row lists nothing (post_id is kept).
+ *
+ * @param mixed $args WP_Comment_Query arguments of the comments list table.
+ * @return mixed
+ */
+function omochix_core_comments_args_closed( $args ) {
+	omochix_core_comments_closed_state( 0, true );
+	if ( ! is_array( $args ) || empty( $args['post_id'] ) || ! is_numeric( $args['post_id'] ) ) {
+		return $args;
+	}
+	$id = (int) $args['post_id'];
+	if ( $id <= 0 || ! omochix_core_comments_row_closed( $id ) ) {
+		return $args;
+	}
+	omochix_core_comments_closed_state( $id );
+	$not                  = isset( $args['post__not_in'] ) && is_array( $args['post__not_in'] ) ? $args['post__not_in'] : array();
+	$not[]                = $id;
+	$args['post__not_in'] = $not;
+	return $args;
+}
+
+/**
+ * Fail closed: on the comments screen a hidden row has no title ("(no title)", as for an unknown ID).
+ *
+ * @param mixed $title   Title.
+ * @param mixed $post_id Post ID.
+ * @return mixed
+ */
+function omochix_core_comments_title_closed( $title, $post_id = 0 ) {
+	if ( ! omochix_core_comments_closed_state()['screen'] || ! is_numeric( $post_id ) || (int) $post_id <= 0 ) {
+		return $title;
+	}
+	return omochix_core_comments_row_closed( (int) $post_id ) ? '' : $title;
+}
+
+/**
+ * Fail closed: a hidden row counts zero comments, as for an unknown ID.
+ *
+ * @param mixed $count   Counts so far.
+ * @param mixed $post_id Post ID (0: the whole site).
+ * @return mixed
+ */
+function omochix_core_comments_count_closed( $count, $post_id = 0 ) {
+	if ( ! is_numeric( $post_id ) || ! isset( omochix_core_comments_closed_state()['ids'][ (int) $post_id ] ) ) {
+		return $count;
+	}
+	return (object) array(
+		'approved'       => 0,
+		'moderated'      => 0,
+		'spam'           => 0,
+		'trash'          => 0,
+		'post-trashed'   => 0,
+		'total_comments' => 0,
+		'all'            => 0,
+	);
 }
 
 /**
@@ -372,7 +516,7 @@ function omochix_core_sec_layer_notice() {
 	echo '<div class="notice notice-error"><p>' . esc_html(
 		sprintf(
 			/* translators: %s: reason */
-			__( 'OmochiX Core：セキュリティ層（includes/web2/security.php）を使えないため、ナビゲーションのブロックを表示していません（%s）。プラグインのファイルをすべてアップロードし直してください。', 'omochix-core' ),
+			__( 'OmochiX Core：セキュリティ層（includes/web2/security.php）を使えないため、ナビゲーションのブロックを表示せず、コメント画面では登録されていない投稿タイプの行を隠しています（%s）。プラグインのファイルをすべてアップロードし直してください。', 'omochix-core' ),
 			omochix_core_sec_layer_problem()
 		)
 	) . '</p></div>';
