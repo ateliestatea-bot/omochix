@@ -15,10 +15,13 @@ function add_filter($h, $cb, $p = 10, $a = 1) { $GLOBALS['hooks'][$h][$p][] = [$
 function has_filter($h, $cb) { foreach ($GLOBALS['hooks'][$h] ?? [] as $p => $l) { foreach ($l as $x) { if ($x[0] === $cb) { return $p; } } } return false; }
 // WordPress: get_post( 0 | '' | null ) falls back to the global post; get_post( numeric ) casts to int.
 function get_post($p = null) { if ($p instanceof WP_Post) { return $p; } if (empty($p)) { return $GLOBALS['post'] ?? null; } return is_numeric($p) ? ($GLOBALS['posts'][(int) $p] ?? null) : null; }
-class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_password = '', $post_title = '', $post_date = '2026-01-01 00:00:00'; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
+class WP_Post { public $ID = 0, $post_type = 'post', $post_status = 'publish', $post_password = '', $post_title = '', $post_date = '2026-01-01 00:00:00', $post_parent = 0, $post_author = 7; function __construct($a = []) { foreach ($a as $k => $v) { $this->$k = $v; } } }
 // WordPress's newest-menu query, as the fallback runs it: published, by date, newest first (records the arguments).
 class WP_Query { public $posts = []; function __construct($a) { $GLOBALS['queries'][] = $a; $GLOBALS['last_query'] = $a; $l = array_values(array_filter($GLOBALS['posts'], static fn($p) => $p->post_type === ($a['post_type'] ?? '') && $p->post_status === ($a['post_status'] ?? ''))); if (isset($a['date_query'][0])) { $d = $a['date_query'][0]; $in = !empty($d['inclusive']); $shift = $GLOBALS['date_shift'] ?? ''; $l = array_values(array_filter($l, static fn($p) => '' === $shift && ($in ? ($p->post_date >= $d['after'] && $p->post_date <= $d['before']) : ($p->post_date > $d['after'] && $p->post_date < $d['before'])))); } usort($l, static fn($x, $y) => strcmp($y->post_date, $x->post_date) ?: $y->ID <=> $x->ID); $this->posts = array_slice($l, 0, (int) ($a['posts_per_page'] ?? 10)); } }
+function get_current_user_id() { return (int) ($GLOBALS['me'] ?? 0); }
 function current_user_can($cap, ...$args) { return !empty($GLOBALS['caps'][$cap]); }
+// Post types WordPress knows on this request (the glossary type is missing while its module is off).
+function post_type_exists($t) { return in_array($t, $GLOBALS['registered'] ?? ['post', 'page', 'attachment', 'revision', 'wp_block', 'wp_navigation'], true); }
 function get_post_type_object($t) { return 'wp_navigation' === $t ? (object) ['cap' => (object) ['edit_posts' => 'edit_theme_options']] : null; }
 class WP_REST_Response { private $d; function __construct($d) { $this->d = $d; } function get_data() { return $this->d; } function set_data($d) { $this->d = $d; } }
 class WP_Block { public $parsed_block; function __construct($pb = []) { $this->parsed_block = $pb; } }
@@ -131,6 +134,64 @@ $GLOBALS['caps'] = [];
 check('REST search: no search, an empty search and junk are untouched', ['post_type' => 'wp_navigation'] === omochix_core_security_nav_rest_query(['post_type' => 'wp_navigation']) && ['s' => ''] === omochix_core_security_nav_rest_query(['s' => '']) && 'x' === omochix_core_security_nav_rest_query('x'));
 check('REST search hook: rest_wp_navigation_query, last', 9999 === has_filter('rest_wp_navigation_query', 'omochix_core_security_nav_rest_query'));
 check('REST hook: rest_prepare_wp_navigation, last, with both arguments', 9999 === has_filter('rest_prepare_wp_navigation', 'omochix_core_security_nav_rest') && [['omochix_core_security_nav_rest', 2]] === array_values(array_filter($GLOBALS['hooks']['rest_prepare_wp_navigation'][9999], static fn($x) => 'omochix_core_security_nav_rest' === $x[0])));
+
+// ------------------------------------------------------------ comments screen (P3-1): rows of a post type nobody registered
+$GLOBALS['caps'] = [];
+$tdraft = $mk(['post_type' => 'omx_glossary', 'post_status' => 'draft']);
+$tfut   = $mk(['post_type' => 'omx_glossary', 'post_status' => 'future']);
+$tpriv  = $mk(['post_type' => 'omx_glossary', 'post_status' => 'private']);
+$trev   = $mk(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $term]);
+$prev   = $mk(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $apost]);
+$orev   = $mk(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => 0]);
+$grev   = $mk(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => 999998]);
+$terms  = [$term, $termpw, $tdraft, $tfut, $tpriv, $trev];
+check('comments: before any comments list was built, titles are left alone (the filter only acts on that screen)', 'T' === omochix_core_security_comments_title('T', $term) && false === omochix_core_security_comments_screen());
+check('comments: a row of an unregistered post type, every status (published, password, draft, scheduled, private) and its revision, is masked for a user who cannot edit others\' posts', [] === array_filter($terms, static fn($i) => !omochix_core_security_orphan_row_masked($i)) && omochix_core_security_orphan_row_masked(get_post($term)) && omochix_core_security_orphan_row_masked((string) $term));
+check('comments: posts, pages, menus, synced patterns, revisions of posts, revisions without a parent or with a missing parent, unknown IDs and junk are not masked', [] === array_filter([$apost, $postpw, $page, $menu, $wpblk, $prev, $orev, $grev, 999999, 0, -1, null, 'abc', [$term]], static fn($i) => omochix_core_security_orphan_row_masked($i)));
+$GLOBALS['caps'] = [];
+$GLOBALS['post'] = get_post($term);
+check('comments: ID 0, "" and null never fall back to the global post (get_post( 0 ) would)', !omochix_core_security_orphan_row_masked(0) && !omochix_core_security_orphan_row_masked('') && !omochix_core_security_orphan_row_masked(null) && !omochix_core_security_orphan_row_masked('0') && !omochix_core_security_orphan_row_masked(' ' . $term) && !omochix_core_security_orphan_row_masked((float) $term));
+unset($GLOBALS['post']);
+// Role changed after writing (review of PR #97): an editor or administrator wrote private and draft terms
+// (and their revisions), then was made an author or contributor. Only the current capability counts.
+$GLOBALS['me'] = 7;
+$own = [$mk(['post_type' => 'omx_glossary', 'post_status' => 'private', 'post_author' => 7]), $mk(['post_type' => 'omx_glossary', 'post_status' => 'draft', 'post_author' => 7])];
+$own[] = $mk(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $own[0], 'post_author' => 7]);
+$own[] = $mk(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $own[1], 'post_author' => 7]);
+check('comments: rows the user wrote while an editor (private, draft and their revisions) are masked once the user cannot edit others\' posts (authorship grants nothing)', [] === array_filter($own, static fn($i) => !omochix_core_security_orphan_row_masked($i)));
+$GLOBALS['caps'] = ['edit_others_posts' => true];
+check('comments: the same rows are visible again while the user is an editor', [] === array_filter($own, static fn($i) => omochix_core_security_orphan_row_masked($i)));
+$GLOBALS['caps'] = [];
+$trev8 = $mk(['post_type' => 'revision', 'post_status' => 'inherit', 'post_parent' => $term, 'post_author' => 7]);
+check('comments: a revision the user saved of someone else\'s row is masked too', omochix_core_security_orphan_row_masked($trev8));
+unset($GLOBALS['me']);
+$GLOBALS['caps'] = ['edit_others_posts' => true];
+check('comments: editors and administrators (edit_others_posts) still see every row', [] === array_filter($terms, static fn($i) => omochix_core_security_orphan_row_masked($i)));
+$GLOBALS['caps'] = [];
+$GLOBALS['registered'] = ['post', 'page', 'attachment', 'revision', 'wp_block', 'wp_navigation', 'omx_glossary'];
+check('comments: once the post type is registered (module loaded), its rows are left to WordPress and the module', [] === array_filter($terms, static fn($i) => omochix_core_security_orphan_row_masked($i)));
+unset($GLOBALS['registered']);
+$base = ['post_id' => $term, 'status' => 'all', 'number' => 20];
+$a1 = omochix_core_security_comments_args($base);
+check('comments list: a masked row lists no comments (post__not_in), post_id is kept for later filters, the rest is untouched', [$term] === $a1['post__not_in'] && $term === $a1['post_id'] && 'all' === $a1['status'] && 20 === $a1['number'] && true === omochix_core_security_comments_screen());
+$a2 = omochix_core_security_comments_args(['post_id' => (string) $tdraft, 'post__not_in' => [5]]);
+check('comments list: a post_id given as a digit string is handled; an existing post__not_in is kept', [5, $tdraft] === $a2['post__not_in']);
+check('comments list: posts, unknown IDs, the whole-site list (post_id 0 or missing) and junk are untouched', ['post_id' => $apost] === omochix_core_security_comments_args(['post_id' => $apost]) && ['post_id' => 999999] === omochix_core_security_comments_args(['post_id' => 999999]) && ['post_id' => 0] === omochix_core_security_comments_args(['post_id' => 0]) && ['status' => 'all'] === omochix_core_security_comments_args(['status' => 'all']) && ['post_id' => 'x'] === omochix_core_security_comments_args(['post_id' => 'x']) && 'x' === omochix_core_security_comments_args('x'));
+$GLOBALS['caps'] = ['edit_others_posts' => true];
+check('comments list: for an editor the masked row is listed as usual', !isset(omochix_core_security_comments_args(['post_id' => $tpriv])['post__not_in']));
+$GLOBALS['caps'] = [];
+$GLOBALS['me'] = 7;
+check('comments title: a former editor sees no title of the rows they wrote (private, draft, revisions)', [] === array_filter($own, static fn($x) => '' !== omochix_core_security_comments_title('T', $x)));
+unset($GLOBALS['me']);
+check('comments title: on the screen, a masked row has no title ("(no title)", as for an ID that does not exist), also in the "In response to" column', [] === array_filter($terms, static fn($i) => '' !== omochix_core_security_comments_title('T', $i)) && '' === omochix_core_security_comments_title('T', (string) $term));
+check('comments title: posts, unknown IDs, ID 0 and junk keep their title', 'T' === omochix_core_security_comments_title('T', $apost) && 'T' === omochix_core_security_comments_title('T', 999999) && 'T' === omochix_core_security_comments_title('T', 0) && 'T' === omochix_core_security_comments_title('T') && 'T' === omochix_core_security_comments_title('T', 'abc') && 'T' === omochix_core_security_comments_title('T', null));
+$GLOBALS['caps'] = ['edit_others_posts' => true];
+check('comments title: an editor sees the title', 'T' === omochix_core_security_comments_title('T', $term) && 'T' === omochix_core_security_comments_title('T', $own[0]));
+$GLOBALS['caps'] = [];
+$zero = (object) ['approved' => 0, 'moderated' => 0, 'spam' => 0, 'trash' => 0, 'post-trashed' => 0, 'total_comments' => 0, 'all' => 0];
+check('comments count: a masked row counts zero, the shape WordPress gives an ID that does not exist', $zero == omochix_core_security_comments_count([], $term) && $zero == omochix_core_security_comments_count([], (string) $tdraft));
+check('comments count: other posts, rows not asked for on the screen, the whole site (0) and junk let WordPress count', [] === omochix_core_security_comments_count([], $apost) && [] === omochix_core_security_comments_count([], $tfut) && [] === omochix_core_security_comments_count([], 0) && [] === omochix_core_security_comments_count([], 'x') && 'k' === omochix_core_security_comments_count('k', 999999));
+check('comments hooks: list query at 10 (before the module\'s own check), title and count last, with both arguments', 10 === has_filter('comments_list_table_query_args', 'omochix_core_security_comments_args') && 9999 === has_filter('the_title', 'omochix_core_security_comments_title') && 9999 === has_filter('wp_count_comments', 'omochix_core_security_comments_count') && [['omochix_core_security_comments_title', 2]] === array_values(array_filter($GLOBALS['hooks']['the_title'][9999], static fn($x) => 'omochix_core_security_comments_title' === $x[0])) && [['omochix_core_security_comments_count', 2]] === array_values(array_filter($GLOBALS['hooks']['wp_count_comments'][9999], static fn($x) => 'omochix_core_security_comments_count' === $x[0])));
 
 // ------------------------------------------------------------ file rules
 $src = (string) file_get_contents($FILE);
