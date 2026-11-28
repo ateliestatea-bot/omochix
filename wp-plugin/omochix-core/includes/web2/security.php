@@ -268,3 +268,149 @@ function omochix_core_security_nav_rest_query( $args ) {
 	return $args;
 }
 add_filter( 'rest_wp_navigation_query', 'omochix_core_security_nav_rest_query', 9999 );
+
+/**
+ * Comments screen: rows of a post type nobody registered (review P3-1).
+ *
+ * wp-admin/edit-comments.php?p=<ID> prints the title of any post row, in the
+ * HTML title and the heading, to every user who may moderate or write posts
+ * (contributors and authors too), without asking whether they may see that
+ * post. Rows of a post type that is not registered (glossary terms while the
+ * glossary module is off, unloaded or stopped by OMOCHIX_WEB2_DISABLED, or
+ * the rows of any removed post type) have no capability WordPress could ask,
+ * so their titles reached people who could never open them.
+ *
+ * For a user who cannot edit others' posts, such a row (and a revision of
+ * one) is answered like an ID that does not exist: "(no title)", no
+ * comments, zero counts. A row the user wrote stays visible to them (glossary
+ * terms are written by editors only; other plugins' rows keep working for
+ * their authors). Registered post types are left to WordPress and to
+ * the module that registers them. The screen is recognised by its own list
+ * query, so no request data is read.
+ *
+ * What it does NOT cover: with the Core plugin deactivated or rolled back to
+ * a version without this file, nothing here runs.
+ *
+ * @param mixed $post A post ID or WP_Post.
+ * @return bool Whether the current user may not see this row on the comments screen.
+ */
+function omochix_core_security_orphan_row_masked( $post ) {
+	if ( ! $post instanceof WP_Post ) {
+		// get_post( 0 | '' | null ) would fall back to the global post: only a positive ID is looked up.
+		$post = ( is_int( $post ) || ( is_string( $post ) && ctype_digit( $post ) ) ) && (int) $post > 0 ? get_post( (int) $post ) : null;
+	}
+	if ( ! $post instanceof WP_Post || ! function_exists( 'post_type_exists' ) ) {
+		return false;
+	}
+	$owner = $post;
+	if ( 'revision' === (string) $post->post_type ) {
+		$owner = (int) $post->post_parent > 0 ? get_post( (int) $post->post_parent ) : null;
+		if ( ! $owner instanceof WP_Post ) {
+			return false;
+		}
+	}
+	$type = (string) $owner->post_type;
+	if ( '' === $type || post_type_exists( $type ) ) {
+		return false;
+	}
+	// A row the user wrote is theirs to see (the rows of another plugin's switched-off post type, for example).
+	$me = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
+	if ( $me > 0 && (int) $owner->post_author === $me ) {
+		return false;
+	}
+	return ! current_user_can( 'edit_others_posts' );
+}
+
+/**
+ * The IDs masked on this request's comments screen (see above).
+ *
+ * @param int $add An ID to remember, or 0 to only read.
+ * @return array<int, true>
+ */
+function omochix_core_security_comments_masked( $add = 0 ) {
+	static $ids = array();
+	if ( is_int( $add ) && $add > 0 ) {
+		$ids[ $add ] = true;
+	}
+	return $ids;
+}
+
+/**
+ * Whether this request has shown a comments list (edit-comments.php or the
+ * post editor's comments box).
+ *
+ * @param bool $set True to mark it.
+ * @return bool
+ */
+function omochix_core_security_comments_screen( $set = false ) {
+	static $on = false;
+	if ( true === $set ) {
+		$on = true;
+	}
+	return $on;
+}
+
+/**
+ * The list query: comments of a masked row are not listed (an ID that does
+ * not exist lists none either). post_id stays as it is, so later filters
+ * still see what was asked for.
+ *
+ * @param mixed $args WP_Comment_Query arguments of the comments list table.
+ * @return mixed
+ */
+function omochix_core_security_comments_args( $args ) {
+	omochix_core_security_comments_screen( true );
+	if ( ! is_array( $args ) || empty( $args['post_id'] ) || ! is_numeric( $args['post_id'] ) ) {
+		return $args;
+	}
+	$id = (int) $args['post_id'];
+	if ( $id <= 0 || ! omochix_core_security_orphan_row_masked( $id ) ) {
+		return $args;
+	}
+	omochix_core_security_comments_masked( $id );
+	$not                  = isset( $args['post__not_in'] ) && is_array( $args['post__not_in'] ) ? $args['post__not_in'] : array();
+	$not[]                = $id;
+	$args['post__not_in'] = $not;
+	return $args;
+}
+add_filter( 'comments_list_table_query_args', 'omochix_core_security_comments_args', 10 );
+
+/**
+ * Title on the comments screen: a masked row (and, in the "In response to"
+ * column, any row of an unregistered post type) has no title for this user.
+ * WordPress then prints "(no title)", as for an ID that does not exist.
+ *
+ * @param mixed $title   Title.
+ * @param mixed $post_id Post ID.
+ * @return mixed
+ */
+function omochix_core_security_comments_title( $title, $post_id = 0 ) {
+	if ( ! omochix_core_security_comments_screen() || ! is_numeric( $post_id ) || (int) $post_id <= 0 ) {
+		return $title;
+	}
+	return omochix_core_security_orphan_row_masked( (int) $post_id ) ? '' : $title;
+}
+add_filter( 'the_title', 'omochix_core_security_comments_title', 9999, 2 );
+
+/**
+ * Comment counts of a masked row: zero, as for an ID that does not exist.
+ *
+ * @param mixed $count   Counts so far (an empty array lets WordPress count).
+ * @param mixed $post_id Post ID (0: the whole site).
+ * @return mixed
+ */
+function omochix_core_security_comments_count( $count, $post_id = 0 ) {
+	if ( ! is_numeric( $post_id ) || ! isset( omochix_core_security_comments_masked()[ (int) $post_id ] ) ) {
+		return $count;
+	}
+	return (object) array(
+		'approved'       => 0,
+		'moderated'      => 0,
+		'spam'           => 0,
+		'trash'          => 0,
+		'post-trashed'   => 0,
+		'total_comments' => 0,
+		'all'            => 0,
+	);
+}
+add_filter( 'wp_count_comments', 'omochix_core_security_comments_count', 9999, 2 );
