@@ -41,6 +41,7 @@ function omochix_core_glossary_files() {
 		'includes/web2/glossary-meta.php',
 		'includes/web2/glossary-visibility.php',
 		'includes/web2/glossary-guard.php',
+		'admin/web2/glossary-admin.php',
 	);
 }
 
@@ -68,8 +69,11 @@ function omochix_core_glossary_file_ok( $dir, $file ) {
 }
 
 /**
- * Remove every hook callback defined in the given files, and any callback
- * that can no longer be called (its file failed before defining it).
+ * Remove every hook callback defined in the given files, and any glossary
+ * callback that can no longer be called (its file failed before defining it).
+ * Callbacks of anyone else are never touched, even when their function does
+ * not exist yet (WordPress defines its pluggable functions after loading the
+ * plugins; removing wp_validate_auth_cookie logged every user out).
  *
  * @param string[] $paths Absolute paths.
  * @return void
@@ -94,7 +98,9 @@ function omochix_core_glossary_unhook( array $paths ) {
 						continue;
 					}
 				} catch ( Throwable $e ) {
-					if ( ! is_callable( $fn ) ) {
+					// Only the glossary's own functions: a WordPress function that is not defined yet
+					// (pluggable.php loads after the plugins: wp_validate_auth_cookie ...) must stay hooked.
+					if ( is_string( $fn ) && 0 === strpos( $fn, 'omochix_core_glossary_' ) && ! is_callable( $fn ) ) {
 						remove_filter( $hook, $fn, $priority );
 					}
 					continue;
